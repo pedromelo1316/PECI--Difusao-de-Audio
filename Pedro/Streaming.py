@@ -69,5 +69,5 @@ if __name__ == '__main__':
     stop_event = threading.Event()
     input_thread = threading.Thread(target=check_input, args=(stop_event,))
     input_thread.start()
-    streaming("https://www.youtube.com/live/jfKfPfyJRdk?si=RE1Wmy099eHkcH7y", print, stop_event, 'streaming.mp3')
+    streaming("https://www.youtube.com/live/jfKfPfyJRdk", print, stop_event, 'streaming.mp3')
     input_thread.join()

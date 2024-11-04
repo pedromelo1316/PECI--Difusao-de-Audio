@@ -1,9 +1,9 @@
 import threading
 import subprocess
 import yt_dlp
-from pydub import AudioSegment
-from io import BytesIO
-import pydub.playback
+import queue
+import wave
+import pyaudio
 import time
 
 def get_audio_stream_url(youtube_url):
@@ -20,13 +20,13 @@ def get_audio_stream_url(youtube_url):
                 return f['url']
     raise Exception("No audio stream found")
 
-def read_audio_stream(url, buffer, buffer_lock, stop_event):
-    """ Lê o stream de áudio e armazena os dados no buffer. """
+def read_audio_stream(url, audio_queue, stop_event):
+    """ Lê o stream de áudio e armazena os dados na fila. """
     command = [
         'ffmpeg',
         '-i', url,
         '-vn',  # No video
-        '-f', 'mp3',  # Output format
+        '-f', 'wav',  # Output format
         'pipe:1'  # Output to stdout
     ]
 
@@ -34,37 +34,48 @@ def read_audio_stream(url, buffer, buffer_lock, stop_event):
 
     try:
         while not stop_event.is_set():
-            data = process.stdout.read(512)  # Lê 4 KB de dados
+            print(process.stdout.readable())
+            data = process.stdout.read(4096)  # Lê 4 KB de dados
             
             if not data:
+                print("No more data, exiting...")
                 break
-            
-            with buffer_lock:
-                buffer.extend(data)  # Adiciona dados ao buffer
-                print("Buffer size:", len(buffer))  
+            else:
+                print("Há dados")
+                audio_queue.put(data)
+                print(f"Queue size {audio_queue.qsize()}")
     finally:
+        print("Closing the process...")
         process.terminate()
         process.wait()
 
-def play_audio(buffer, buffer_lock, stop_event):
-    """ Reproduz continuamente o áudio a partir do buffer. """
-    while not stop_event.is_set():
-        time.sleep(0.1)  # Pequeno atraso para gerenciar o fluxo
+def play_audio_from_queue(audio_queue, stop_event):
+    """ Reproduz continuamente o áudio a partir da fila. """
+    p = pyaudio.PyAudio()
+    count = 0
+    stream = p.open(format=pyaudio.paInt16,
+                    channels=2,
+                    rate=44100,
+                    output=True)
 
-        with buffer_lock:
-            if len(buffer) >= 256:  # Verifica se há dados suficientes
-                audio_data = bytes(buffer)  # Junta todos os dados do buffer
-                audio_segment = AudioSegment.from_file(BytesIO(audio_data), format="mp3")
-                pydub.playback.play(audio_segment)
-                buffer.clear()  # Limpa o buffer após reproduzir
-            elif len(buffer) > 0:
-                print("Not enough data in buffer for playback, waiting for more...")
-            
+    try:
+        while not stop_event.is_set():
+            if not audio_queue.empty():
+                data = audio_queue.get()
+                stream.write(data)
+                print(f"Playing audio... Queue size: {audio_queue.qsize()}")
+            else:
+                time.sleep(0.1)
+                print("Queue is empty, waiting for data...")
+    finally:
+        print("Closing the stream")
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
 
 if __name__ == '__main__':
-    youtube_url = "https://www.youtube.com/watch?v=mix9YfaaNa0&ab_channel=twentyonepilots"  # URL do YouTube
-    buffer = bytearray()
-    buffer_lock = threading.Lock()
+    youtube_url = "https://www.youtube.com/live/36YnV9STBqc?si=labGt2YFC7__QGr7"  # URL do YouTube
+    audio_queue = queue.Queue()
     stop_event = threading.Event()
 
     # Obter a URL do stream de áudio
@@ -72,20 +83,17 @@ if __name__ == '__main__':
     print(f"Streaming from URL: {stream_url}")
 
     # Inicia a thread de leitura do stream de áudio
-    read_thread = threading.Thread(target=read_audio_stream, args=(stream_url, buffer, buffer_lock, stop_event))
+    read_thread = threading.Thread(target=read_audio_stream, args=(stream_url, audio_queue, stop_event))
     read_thread.start()
 
     # Inicia a thread de reprodução de áudio
-    playback_thread = threading.Thread(target=play_audio, args=(buffer, buffer_lock, stop_event))
-    playback_thread.start()
+    playback_thread = threading.Thread(target=play_audio_from_queue, args=(audio_queue, stop_event))
 
     try:
-        while True:
-            time.sleep(1)  # Mantém o programa em execução
+        playback_thread.start()
+        playback_thread.join()
     except KeyboardInterrupt:
-        print("\nStopping...")
         stop_event.set()
-
-    read_thread.join()
-    playback_thread.join()
-    print("Program terminated.")
+        playback_thread.join()
+        read_thread.join()
+        print("Playback stopped.")
