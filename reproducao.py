@@ -34,15 +34,10 @@ def read_audio_stream(url, audio_queue, stop_event, queue_lock):
 
     try:
         while not stop_event.is_set():
-            data = process.stdout.read(4096*2)  # Lê 8 KB de dados
-            
-            if not data:
-                print("No more data, exiting...")
-                break
-            else:
-                with queue_lock:  # Lock ao escrever na fila
-                    audio_queue.put(data)
-                    print(f"Queue size {audio_queue.qsize()}")
+            data = process.stdout.read(4096)  # Lê 4 KB de dados
+            if data:
+                audio_queue.put(data)
+                print(f"Queue size {audio_queue.qsize()}")
     finally:
         print("Closing the process...")
         process.terminate()
@@ -58,21 +53,19 @@ def play_audio_from_queue(audio_queue, stop_event, queue_lock):
 
     try:
         while not stop_event.is_set():
-            with queue_lock:  # Lock ao ler da fila
-                if not audio_queue.empty():
-                    data = audio_queue.get()
-                else:
-                    data = None
+            if not audio_queue.empty():
+                data = audio_queue.get()
+            else:
+                data = None
             
             if data:
                 stream.write(data)
                 print(f"\rPlaying audio... Queue size: {audio_queue.qsize()}", end="")
-                flag = True
+
             else:
-                time.sleep(0.1)
                 print("Queue is empty, waiting for data...")
-                if flag:
-                    break
+                while audio_queue.empty() and not stop_event.is_set():
+                    time.sleep(0.1)
     finally:
         print("Closing the stream")
         stream.stop_stream()
