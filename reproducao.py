@@ -1,8 +1,10 @@
+import threading
 import subprocess
 import yt_dlp
+import queue
+import wave
 import pyaudio
 import time
-import threading
 
 def get_audio_stream_url(youtube_url):
     ydl_opts = {
@@ -18,72 +20,80 @@ def get_audio_stream_url(youtube_url):
                 return f['url']
     raise Exception("No audio stream found")
 
+def read_audio_stream(url, audio_queue, stop_event):
+    """ Lê o stream de áudio e armazena os dados na fila. """
+    command = [
+        'ffmpeg',
+        '-i', url,
+        '-vn',  # No video
+        '-f', 'wav',  # Output format
+        'pipe:1'  # Output to stdout
+    ]
 
-def play_audio(url):
-    """ Reproduz continuamente o áudio a partir do fluxo de dados do FFmpeg. """
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+
+    try:
+        while not stop_event.is_set():
+            print(process.stdout.readable())
+            data = process.stdout.read(4096)  # Lê 4 KB de dados
+            
+            if not data:
+                print("No more data, exiting...")
+                break
+            else:
+                print("Há dados")
+                audio_queue.put(data)
+                print(f"Queue size {audio_queue.qsize()}")
+    finally:
+        print("Closing the process...")
+        process.terminate()
+        process.wait()
+
+def play_audio_from_queue(audio_queue, stop_event):
+    """ Reproduz continuamente o áudio a partir da fila. """
     p = pyaudio.PyAudio()
+    count = 0
     stream = p.open(format=pyaudio.paInt16,
                     channels=2,
                     rate=44100,
                     output=True)
-    
-    # Define o comando FFmpeg para acessar o stream ao vivo
-    command = [
-        'ffmpeg',
-        '-reconnect', '1',
-        '-reconnect_streamed', '1',
-        '-reconnect_delay_max', '2',      # Reduzido para reconectar mais rápido
-        '-fflags', 'nobuffer',            # Desativa o buffer
-        '-i', url,
-        '-vn',
-        '-f', 'wav',
-        '-acodec', 'pcm_s16le',
-        '-ar', '44100',
-        '-ac', '2',
-        'pipe:1'
-    ]
 
-    # Loop de execução e reconexão
-    while True:
-        print("Starting FFmpeg stream...")
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=32768)
-
-        def log_ffmpeg_errors():
-            """ Lê o stderr do ffmpeg continuamente para diagnóstico """
-            for line in process.stderr:
-                print(f"FFmpeg log: {line.decode('utf-8').strip()}")
-
-        # Rodar o logger em uma thread separada
-        threading.Thread(target=log_ffmpeg_errors, daemon=True).start()
-
-        try:
-            while True:
-                data = process.stdout.read(8192)  # Ler dados em blocos maiores para eficiência
-
-                if data:
-                    stream.write(data)
-                    print(f"Playing Audio Data size {len(data)}")
-                else:
-                    print("No data received, attempting to restart FFmpeg...")
-                    break  # Quebra o loop para reiniciar o processo FFmpeg
-
-        except Exception as e:
-            print(f"Error during playback: {e}")
-        
-        finally:
-            process.terminate()
-            process.wait()
-            print("Restarting FFmpeg stream...")
-            time.sleep(1)  # Pausa curta antes de tentar reconectar
-            break
-
-    # Fechando o stream de áudio quando o loop for interrompido
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
-    print("Playback terminated.")
+    try:
+        while not stop_event.is_set():
+            if not audio_queue.empty():
+                data = audio_queue.get()
+                stream.write(data)
+                print(f"Playing audio... Queue size: {audio_queue.qsize()}")
+            else:
+                time.sleep(0.1)
+                print("Queue is empty, waiting for data...")
+    finally:
+        print("Closing the stream")
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
 
 if __name__ == '__main__':
-    youtube_url = "https://www.youtube.com/live/36YnV9STBqc?si=labGt2YFC7__QGr7"
-    url = get_audio_stream_url(youtube_url)
-    play_audio(url)
+    youtube_url = "https://www.youtube.com/live/36YnV9STBqc?si=labGt2YFC7__QGr7"  # URL do YouTube
+    audio_queue = queue.Queue()
+    stop_event = threading.Event()
+
+    # Obter a URL do stream de áudio
+    stream_url = get_audio_stream_url(youtube_url)
+    print(f"Streaming from URL: {stream_url}")
+
+    # Inicia a thread de leitura do stream de áudio
+    read_thread = threading.Thread(target=read_audio_stream, args=(stream_url, audio_queue, stop_event))
+    read_thread.start()
+
+    # Inicia a thread de reprodução de áudio
+    playback_thread = threading.Thread(target=play_audio_from_queue, args=(audio_queue, stop_event))
+
+    try:
+        playback_thread.start()
+        playback_thread.join()
+    except KeyboardInterrupt:
+        stop_event.set()
+        playback_thread.join()
+        read_thread.join()
+        print("Playback stopped.")
