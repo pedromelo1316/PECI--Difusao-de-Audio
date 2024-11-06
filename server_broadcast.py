@@ -1,28 +1,91 @@
 import socket
+import threading
 import subprocess
-import os
+import yt_dlp
+import queue
 import time
 
-def udp_server(host="192.168.53.109", port=8080, url='https://www.youtube.com/watch?v=Wjg6IUL2Pq4'):
+def get_audio_stream_url(youtube_url):
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'quiet': True,
+        'no_warnings': True,
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info_dict = ydl.extract_info(youtube_url, download=False)
+        formats = info_dict.get('formats', [info_dict])
+        for f in formats:
+            if f.get('acodec') != 'none':
+                return f['url']
+    raise Exception("No audio stream found")
 
-    # Create a UDP socket
+def read_audio_stream(url, audio_queue, stop_event):
+    """ Reads the audio stream and puts data into the queue. """
+    command = [
+        'ffmpeg',
+        '-i', url,
+        '-vn',  # No video
+        '-f', 'wav',  # Output format
+        'pipe:1'  # Output to stdout
+    ]
+
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+
+    try:
+        while not stop_event.is_set():
+            data = process.stdout.read(4096)
+            if not data:
+                break
+            audio_queue.put(data)
+            
+    finally:
+        process.terminate()
+        process.wait()
+
+def broadcast_audio(audio_queue, stop_event, broadcast_address, packet_size=1024):
+    """ Continuously sends audio data via UDP broadcast in smaller packets. """
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-    # Enable broadcasting mode
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
-    # Define broadcast address and port
-    broadcast_address = ('192.168.53.255', 8080)
-    message = b'Hello, network!'
-
-    # Send the message
-    sock.sendto(message, broadcast_address)
-    print("Broadcast message sent on port 8080.")
-
-
-    
-
-    
+    try:
+        while not stop_event.is_set():
+            if not audio_queue.empty():
+                data = audio_queue.get()
+                
+                # Split data into packets of `packet_size`
+                for i in range(0, len(data), packet_size):
+                    packet = data[i:i+packet_size]
+                    sock.sendto(packet, broadcast_address)
+                
+                
+                print(f"Broadcasting audio data...")
+            else:
+                time.sleep(0.1)
+    finally:
+        sock.close()
 
 if __name__ == '__main__':
-    udp_server()
+    youtube_url = "https://www.youtube.com/live/36YnV9STBqc?si=labGt2YFC7__QGr7"
+    audio_queue = queue.Queue()
+    stop_event = threading.Event()
+
+    # Set broadcast address and port
+    broadcast_address = ('172.20.10.15', 8080)
+
+    # Start audio reading thread
+    stream_url = get_audio_stream_url(youtube_url)
+    read_thread = threading.Thread(target=read_audio_stream, args=(stream_url, audio_queue, stop_event))
+    read_thread.start()
+
+    # Start broadcasting thread
+    broadcast_thread = threading.Thread(target=broadcast_audio, args=(audio_queue, stop_event, broadcast_address))
+    broadcast_thread.start()
+
+    try:
+        read_thread.join()
+        broadcast_thread.join()
+    except KeyboardInterrupt:
+        stop_event.set()
+        read_thread.join()
+        broadcast_thread.join()
+        print("Broadcast stopped.")
