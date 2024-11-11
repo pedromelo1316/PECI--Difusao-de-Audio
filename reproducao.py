@@ -20,8 +20,8 @@ def get_audio_stream_url(youtube_url):
                 return f['url']
     raise Exception("No audio stream found")
 
-def read_audio_stream(url, audio_queue, stop_event, queue_lock):
-    """ Lê o stream de áudio e armazena os dados na fila com lock. """
+def read_audio_stream(url, audio_queue, stop_event):
+    """ Lê o stream de áudio e armazena os dados na fila. """
     command = [
         'ffmpeg',
         '-i', url,
@@ -30,27 +30,29 @@ def read_audio_stream(url, audio_queue, stop_event, queue_lock):
         'pipe:1'  # Output to stdout
     ]
 
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 
     try:
         while not stop_event.is_set():
-            data = process.stdout.read(4096*2)  # Lê 8 KB de dados
+            print(process.stdout.readable())
+            data = process.stdout.read(4096)  # Lê 4 KB de dados
             
             if not data:
                 print("No more data, exiting...")
                 break
             else:
-                with queue_lock:  # Lock ao escrever na fila
-                    audio_queue.put(data)
-                    print(f"Queue size {audio_queue.qsize()}")
+                print("Há dados")
+                audio_queue.put(data)
+                print(f"Queue size {audio_queue.qsize()}")
     finally:
         print("Closing the process...")
         process.terminate()
         process.wait()
 
-def play_audio_from_queue(audio_queue, stop_event, queue_lock):
-    """ Reproduz continuamente o áudio a partir da fila com lock. """
+def play_audio_from_queue(audio_queue, stop_event):
+    """ Reproduz continuamente o áudio a partir da fila. """
     p = pyaudio.PyAudio()
+    count = 0
     stream = p.open(format=pyaudio.paInt16,
                     channels=2,
                     rate=44100,
@@ -58,20 +60,13 @@ def play_audio_from_queue(audio_queue, stop_event, queue_lock):
 
     try:
         while not stop_event.is_set():
-            with queue_lock:  # Lock ao ler da fila
-                if not audio_queue.empty():
-                    data = audio_queue.get()
-                else:
-                    data = None
-            
-            if data:
+            if not audio_queue.empty():
+                data = audio_queue.get()
                 stream.write(data)
-                print(f"\rPlaying audio... Queue size: {audio_queue.qsize()}", end="")
-                flag = True
+                print(f"Playing audio... Queue size: {audio_queue.qsize()}")
             else:
                 time.sleep(0.1)
                 print("Queue is empty, waiting for data...")
-                
     finally:
         print("Closing the stream")
         stream.stop_stream()
@@ -79,32 +74,26 @@ def play_audio_from_queue(audio_queue, stop_event, queue_lock):
         p.terminate()
 
 if __name__ == '__main__':
-    t1 = time.time()
     youtube_url = "https://www.youtube.com/live/36YnV9STBqc?si=labGt2YFC7__QGr7"  # URL do YouTube
     audio_queue = queue.Queue()
     stop_event = threading.Event()
-    queue_lock = threading.Lock()  # Lock para sincronizar o acesso à fila
 
     # Obter a URL do stream de áudio
     stream_url = get_audio_stream_url(youtube_url)
     print(f"Streaming from URL: {stream_url}")
 
     # Inicia a thread de leitura do stream de áudio
-    read_thread = threading.Thread(target=read_audio_stream, args=(stream_url, audio_queue, stop_event, queue_lock))
+    read_thread = threading.Thread(target=read_audio_stream, args=(stream_url, audio_queue, stop_event))
     read_thread.start()
 
     # Inicia a thread de reprodução de áudio
-    playback_thread = threading.Thread(target=play_audio_from_queue, args=(audio_queue, stop_event, queue_lock))
+    playback_thread = threading.Thread(target=play_audio_from_queue, args=(audio_queue, stop_event))
 
     try:
         playback_thread.start()
         playback_thread.join()
-        print(f"Tempo total: {time.time() - t1:.2f} segundos")
     except KeyboardInterrupt:
         stop_event.set()
         playback_thread.join()
         read_thread.join()
         print("Playback stopped.")
-
-
-    

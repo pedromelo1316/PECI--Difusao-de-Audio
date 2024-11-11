@@ -15,7 +15,6 @@ def play_audio_from_queue(audio_queue, stop_event, min_buffer_size=3000):
     # Espera a fila encher até um certo ponto antes de iniciar a reprodução
     while audio_queue.qsize() < min_buffer_size and not stop_event.is_set():
         print("Waiting for buffer to fill...")
-        time.sleep(0.1)
 
     try:
         while not stop_event.is_set():
@@ -25,7 +24,6 @@ def play_audio_from_queue(audio_queue, stop_event, min_buffer_size=3000):
                 print(f"Playing audio... Queue size: {audio_queue.qsize()}")
             else:
                 print("Buffer underrun, waiting for more data...")
-                time.sleep(0.05)  # Pequena espera para evitar travamentos
     finally:
         stream.stop_stream()
         stream.close()
