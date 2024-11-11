@@ -20,27 +20,29 @@ def get_audio_stream_url(youtube_url):
     raise Exception("No audio stream found")
 
 def read_audio_stream(url, audio_queue, stop_event):
-    """ Reads the audio stream and puts data into the queue. """
-    command = [
-        'ffmpeg',
-        '-i', url,
-        '-vn',  # No video
-        '-f', 'wav',  # Output format
-        'pipe:1'  # Output to stdout
-    ]
+    """ Reads the audio stream and puts data into the queue. Restarts ffmpeg on error. """
+    while not stop_event.is_set():
+        command = [
+            'ffmpeg',
+            '-i', url,
+            '-vn',  # No video
+            '-f', 'wav',  # Output format
+            'pipe:1'  # Output to stdout
+        ]
 
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            while not stop_event.is_set():
+                data = process.stdout.read(4096)
+                if not data:
+                    break  # No data, likely process failed
+                audio_queue.put(data)
+        finally:
+            process.terminate()
+            process.wait()
 
-    try:
-        while not stop_event.is_set():
-            data = process.stdout.read(4096)
-            if not data:
-                break
-            audio_queue.put(data)
-            
-    finally:
-        process.terminate()
-        process.wait()
+        print("Reconnecting to audio stream...")
+        time.sleep(1)
 
 def broadcast_audio(audio_queue, stop_event, broadcast_address, packet_size=1024):
     """ Continuously sends audio data via UDP broadcast in smaller packets. """
@@ -49,24 +51,23 @@ def broadcast_audio(audio_queue, stop_event, broadcast_address, packet_size=1024
 
     try:
         while not stop_event.is_set():
-            if not audio_queue.empty():
-                data = audio_queue.get()
-                
+            try:
+                data = audio_queue.get(timeout=0.5)  # Wait for up to 0.5 sec for new data
                 # Split data into packets of `packet_size`
                 for i in range(0, len(data), packet_size):
                     packet = data[i:i+packet_size]
                     sock.sendto(packet, broadcast_address)
                 
-                
-                print(f"Broadcasting audio data...")
-            else:
-                time.sleep(0.1)
+                print(f"Broadcasting audio data... Queue size: {len(data)}")
+            except queue.Empty:
+                # Continue waiting for new data if queue is empty
+                continue
     finally:
         sock.close()
 
 if __name__ == '__main__':
     youtube_url = "https://www.youtube.com/live/36YnV9STBqc?si=labGt2YFC7__QGr7"
-    audio_queue = queue.Queue()
+    audio_queue = queue.Queue(maxsize=50)
     stop_event = threading.Event()
 
     # Set broadcast address and port
