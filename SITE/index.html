@@ -1,0 +1,503 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Difusão Áudio</title>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/bxslider/4.2.12/jquery.bxslider.css">
+  <link rel="stylesheet" href="css/animate.css">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+  <link rel="stylesheet" type="text/css" href="style.css"/>
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+  <!-- Font Google -->
+  <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Conheça o projeto Difusão Áudio e nossa equipe.">
+  <meta name="keywords" content="Projeto, Difusão, Áudio, Equipe, Tutores, Alunos">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    body, h1, h2, h3, h4, h5, h6 {
+      font-family: "Lato", sans-serif;
+    }
+  
+    .w3-bar, h1, button {
+      font-family: "Montserrat", sans-serif;
+    }
+  
+    .fa-anchor, .fa-coffee {
+      font-size: 200px;
+    }
+  
+    .w3-bar-item:hover, .w3-button:hover {
+      color: #40a0ff !important;
+    }
+  
+    .w3-center h3, .w3-center h4 {
+      font-family: "Montserrat", sans-serif;
+    }
+  
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+  
+    .col-md-3 {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 30px;
+      flex: 1 1 100%; /* Garante que as colunas se ajustem quando necessário */
+    }
+  
+    
+
+    .objective-image {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
+    /* Estilo geral da seção de objetivos */
+.objetivos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Organiza os objetivos em várias colunas responsivas */
+  gap: 20px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+}
+
+/* Estilo para cada objetivo */
+.objetivo {
+  background-color: white;
+  padding: 20px;
+  border: 2px solid #ddd; /* Borda clara para os quadrados */
+  border-radius: 10px; /* Cantos arredondados */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave para destacar */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Efeito de hover nos objetivos */
+.objetivo:hover {
+  transform: translateY(-5px); /* Leve elevação do quadrado */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Sombra mais forte ao passar o mouse */
+}
+
+/* Estilo do título dentro de cada objetivo */
+.objetivo h3 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+/* Estilo da descrição de cada objetivo */
+.objetivo p {
+  font-size: 1rem;
+  color: #555;
+}
+
+/* Adicionando um efeito de borda e animação */
+.objetivo:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background: linear-gradient(45deg, #ff7e5f, #feb47b);
+  background-clip: padding-box;
+  transition: border-color 0.3s ease;
+}
+
+.objetivo:hover:before {
+  border-color: #ff7e5f; /* Cor da borda ao passar o mouse */
+}
+
+
+/* General Section Styling */
+.feature {
+  padding: 60px 20px; /* Adds more space around the section */
+  background-color: #f8f9fa; /* Light gray background for subtle contrast */
+  text-align: center; /* Centers content in the section */
+}
+
+/* Heading Styling */
+.feature h2 {
+  font-size: 2.5rem;
+  color: #333; /* Darker color for better readability */
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+/* Image Styling */
+.feature img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px; /* Rounded corners for modern style */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth animation on hover */
+}
+
+.feature img:hover {
+  transform: scale(1.05); /* Subtle zoom effect on hover */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Intensified shadow on hover */
+}
+
+/* Responsive Styling */
+@media (min-width: 768px) {
+  .feature {
+    padding: 80px 40px; /* Increased padding on larger screens */
+  }
+
+  .feature h2 {
+    font-size: 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .feature {
+    padding: 100px 60px; /* Further increased padding for wide screens */
+  }
+
+  .feature h2 {
+    font-size: 3.5rem;
+  }
+}
+
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<div class="w3-top">
+  <div class="w3-bar w3-white w3-wide w3-padding w3-card">
+    <a href="#home" class="w3-bar-item w3-button"><b>Difusão</b> Áudio Wireless</a>
+    <div class="w3-right">
+      <a href="#projeto" class="w3-bar-item w3-button">Projeto</a>
+      <a href="#M1" class="w3-bar-item w3-button">Resultados Esperados</a>
+      <a href="#M2" class="w3-bar-item w3-button">Arquiteura</a>
+      <a href="#Equipa" class="w3-bar-item w3-button">Equipa</a>
+      <a href="javascript:void(0);" class="w3-bar-item w3-button w3-hide-large w3-hide-medium" onclick="toggleNav()" aria-label="Menu">☰</a>    </div>
+  </div>
+</div>
+
+<!-- Navbar para telas pequenas -->
+<div id="smallNav" class="w3-bar-block w3-white w3-hide w3-large">
+  <a href="#projeto" class="w3-bar-item w3-button">Projeto</a>
+  <a href="#M1" class="w3-bar-item w3-button">M1</a>
+  <a href="#M2" class="w3-bar-item w3-button">M2</a>
+  <a href="#Equipa" class="w3-bar-item w3-button">Equipa</a>
+  
+</div>
+
+<script>
+function toggleNav() {
+  const x = document.getElementById("smallNav");
+  x.classList.toggle("w3-hide");
+}
+</script>
+
+<!-- Header -->
+<header class="w3-display-container w3-content w3-wide" style="max-width:1500px;" id="home">
+  <img class="w3-image" src="image1.png" alt="Architecture" width="1200" height="800">
+  <div class="w3-display-middle w3-margin-top w3-center">
+  </div>
+</header>
+<section class="about section-padding prelative" data-scroll-index='1' id="projeto">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="sectioner-header text-center">
+          <h3>Contexto</h3>
+          <span class="line"></span>
+          <p>Este projeto visa desenvolver um sistema de áudio digital wireless de alta-fidelidade, flexível e centralizado, capaz de gerir múltiplos canais de áudio em diferentes zonas. Adaptável a espaços diversos, oferece uma experiência auditiva imersiva e personalizável, com uma instalação simplificada e controlo remoto.</p>          <h3>Motivação</h3>
+          <span class="line"></span>
+          <p>A maioria dos sistemas de áudio ainda usa cabos, limitando a flexibilidade. As opções sem fio são escassas e focadas em casos específicos, deixando espaço para um sistema multi-canal sem fio, versátil, para ambientes variados.</p>
+          <h2>Objetivos</h2>
+          <span class="line"></span>
+          
+   
+          <div class="row objectives-row">
+            <div class="col-md-3">
+              <div class="icon-box wow fadeInUp" data-wow-delay="0.2s">
+                <img src="/Raspberry_Pi_4_Model_B_-_Side.jpg" alt="Imagem para Unidade de Controlo Central" class="objective-image">  
+                <h5>Desenhar a Unidade de Controlo Central</h5>
+                <br>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="icon-box wow fadeInUp" data-wow-delay="0.4s">
+                <img src="/nrf24l01_module.webp" alt="Imagem para Unidade de Controlo Central" class="objective-image">  
+                <h5>Adicionar Capacidades Sem Fios</h5>
+                <br>
+                <br>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="icon-box wow fadeInUp" data-wow-delay="0.6s">
+                <img src="/teensy3.jpg" alt="Imagem para Unidade de Controlo Central" class="objective-image">  
+                <h5>Desenhar o Recetor</h5>
+                <br>
+                <br>
+                <br>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="icon-box wow fadeInUp" data-wow-delay="0.8s">
+                <img src="/lat-removebg-preview.png" alt="Imagem para Unidade de Controlo Central" class="objective-image">  
+                <h5>Reduzir os efeitos da latência e das interrupções.</h5>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-------About End-------> 
+
+
+<!-------Features Start------->
+<section class="feature section-padding" data-scroll-index='2' id="M1">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="sectioner-header text-center">
+          <h3>Resultados Esperados</h3>
+          <span class="line"></span>
+          <p></p>
+        </div>
+        <div class="section-content text-center">
+          <div class="row">
+            <div class="col-md-4 col-sm-12">
+              <div class="media single-feature wow fadeInUp" data-wow-delay="0.2s">
+                <div class="media-body text-right media-right-margin">
+                  <h5>Objetivo Principal</h5>
+                  <p>O projeto visa desenvolver um sistema sem fios de difusão de áudio digital, versátil e de alta fidelidade, para uso de diversos ambientes como lojas, hotéis e estádios​.</p>
+                </div>
+                <div class="media-right icon-border">
+                  <span class="fa fa-volume-up" aria-hidden="true"></span> <!-- ícone de som -->
+                </div>
+              </div>
+              <div class="media single-feature wow fadeInUp" data-wow-delay="0.4s">
+                <div class="media-body text-right media-right-margin">
+                  <h5>Produto Final​</h5>
+                  <p>Sistema sem fios de difusão de áudio de alta qualidade, facilmente escalável e controlável remotamente</p>
+                </div>
+                <div class="media-right icon-border">
+                  <span class="fa fa-headphones" aria-hidden="true"></span> <!-- ícone de fones de ouvido -->
+                </div>
+              </div>
+              <div class="media single-feature wow fadeInUp" data-wow-delay="0.6s">
+                <div class="media-body text-right media-right-margin">
+                  <h5>Desenvolvimento do Protocolo de Comunicação</h5>
+                  <p>O protocolo permitirá a transmissão de áudio sem fio de maneira estável e sem interrupções, otimizando a qualidade do som em diferentes ambientes.</p>
+                </div>
+                <div class="media-right icon-border">
+                  <span class="fa fa-wifi" aria-hidden="true"></span> <!-- ícone de wifi -->
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4 d-none d-md-block d-lg-block">
+              <div class="feature-mobile">
+                <img src="image.png" class="img-fluid wow fadeInUp" />
+              </div>
+            </div>
+            <div class="col-md-4 col-sm-12">
+              <div class="media single-feature wow fadeInUp" data-wow-delay="0.2s">
+                <div class="media-left icon-border media-right-margin">
+                  <span class="fa fa-random" aria-hidden="true"></span> <!-- ícone de sincronização -->
+                </div>
+                <div class="media-body text-left">
+                  <h5>Sincronização entre as zonas​</h5>
+                  <p>O sistema garante a perfeita sincronização de áudio em múltiplas zonas, proporcionando uma experiência consistente.</p>
+                </div>
+              </div>
+              <div class="media single-feature wow fadeInUp" data-wow-delay="0.4s">
+                <div class="media-left icon-border media-right-margin">
+                  <span class="fa fa-tv" aria-hidden="true"></span> <!-- ícone de controle remoto -->
+                </div>
+                <div class="media-body text-left">
+                  <h5>Interface amigável para controlo remoto​</h5>
+                  <p>A interface de controle remoto é intuitiva, permitindo fácil acesso e ajustes a partir de dispositivos móveis ou desktops.</p>
+                </div>
+              </div>
+              <div class="media single-feature wow fadeInUp" data-wow-delay="0.6s">
+                <div class="media-left icon-border media-right-margin">
+                  <span class="fa fa-microphone-alt" aria-hidden="true"></span> <!-- ícone de qualidade de áudio -->
+                </div>
+                <div class="media-body text-left">
+                  <h5>Alta qualidade de áudio, sem interrupções ou latência percetível</h5>
+                  <p>O sistema assegura uma boa experiência de áudio, com mínima latência e sem falhas.</p>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-------Features End-------> 
+
+<!-------Features Start------->
+<!-------Features Start------->
+<section class="feature section-padding" data-scroll-index="2" id="M2" aria-labelledby="system-architecture-heading">
+  <div class="container">
+    <h2 id="system-architecture-heading">Arquitetura do Sistema</h2>
+    <figure>
+      <img src="/ARQUITETURA.png" alt="Diagrama da arquitetura do sistema">
+    </figure>
+  </div>
+</section>
+
+<!-------Features End-------> 
+
+<!-------Team Start------->
+<section class="team section-padding" data-scroll-index='3' id="Equipa">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="sectioner-header text-center">
+          <h3>Equipa</h3>
+          <span class="line"></span>
+          
+        </div>
+        <div class="section-content text-center">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="team-detail wow bounce" data-wow-delay="0.2s"> <img src="dabid.png" class="img-fluid"/>
+                <h4>David Pelicano</h4>
+                <p>113391</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="team-detail wow bounce" data-wow-delay="0.4s"> <img src="henrique.jpg" class="img-fluid"/>
+                <h4>Henrique Ferreira</h4>
+                <p>113600</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="team-detail wow bounce" data-wow-delay="0.6s"> <img src="/MARTINELIpng" class="img-fluid"/>
+                <h4>Martina Duque</h4>
+                <p>113261</p>
+              </div>
+            </div>
+          </div>
+          <div class="section-content text-center">
+            <div class="row">
+              <div class="col-md-4">
+                <div class="team-detail wow bounce" data-wow-delay="0.2s"> <img src="PEDRO.jpeg" class="img-fluid"/>
+                  <h4>Pedro Melo</h4>
+                  <p>114208</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="team-detail wow bounce" data-wow-delay="0.4s"> <img src="sofia.jpg" class="img-fluid"/>
+                  <h4>Sofia Marrafa</h4>
+                  <p>114591</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="team-detail wow bounce" data-wow-delay="0.6s"> <img src="tomazio.jpg" class="img-fluid"/>
+                  <h4>Tomás Oliveira </h4>
+                  <p>113939</p>
+                </div>
+              </div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-------Team End-------> 
+
+<!-------Tutors Start-------> 
+<section class="team section-padding" data-scroll-index='3'>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="sectioner-header text-center">
+          <h3>Orientadores</h3>
+          <span class="line"></span>
+        </div>
+        <div class="section-content text-center">
+          <div class="row justify-content-center">
+            <div class="col-md-4 text-center">
+              <div class="team-detail wow bounce" data-wow-delay="0.2s"> 
+                <img src="tutor1.png" class="img-fluid"/>
+                <h4>Daniel Albuquerque​</h4>
+                <p></p>
+              </div>
+            </div>
+            <div class="col-md-4 text-center">
+              <div class="team-detail wow bounce" data-wow-delay="0.4s"> 
+                <img src="t2.png" class="img-fluid"/>
+                <h4>Guilherme Campos ​</h4>
+                <p></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-------Tutors End-------> 
+
+
+
+
+
+<!-- Footer -->
+<footer class="w3-center" style="background-color: #74c1eb; ; padding: 32px;">
+  <p>Projeto de Engenharia de Computadores e Informática</p>
+  <div class="w3-xlarge w3-section">
+    <a href="https://github.com/davidpelicano0911/PECI--Difus-o-de-udio" class="w3-hover-opacity"><i class="fa fa-github"></i></a>
+  </div>
+</footer>
+
+<script>
+  $(document).ready(function() {
+    // Seletor para todos os links na navbar que possuem um "href" iniciando com "#"
+    $('.w3-bar a[href^="#"], .w3-bar-block a[href^="#"]').on('click', function(event) {
+      event.preventDefault();
+      
+      // Anima a rolagem suave até o elemento alvo
+      $('html, body').animate({
+        scrollTop: $($.attr(this, 'href')).offset().top
+      }, 800); // 800 é a duração da rolagem em milissegundos
+    });
+  });
+
+  function toggleNav() {
+    const smallNav = document.getElementById("smallNav");
+    smallNav.classList.toggle("w3-hide");
+  }
+
+  // Acessibilidade: permite fechar o menu ao pressionar 'Esc'
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && !document.getElementById("smallNav").classList.contains("w3-hide")) {
+      toggleNav();
+    }
+  });
+</script>
