@@ -68,7 +68,7 @@ if __name__ == '__main__':
     stop_event = threading.Event()
 
     # Set broadcast address and port
-    broadcast_address = ('192.168.248.255', 8080)
+    broadcast_address = ('192.168.1.255', 8080)
 
     # Start audio reading thread
     stream_url = get_audio_stream_url(youtube_url)
