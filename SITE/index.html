@@ -1,5 +1,4 @@
-
-<!DOC</style>TYPE html>
+<!DOCTYPE html>
 <html lang="en">
 </div><head>
   <title>Difusão Áudio</title>
@@ -26,7 +25,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <style>
     body, h1, h2, h3, h4, h5, h6 {
-      font-family: "Montserrat", sans-serif;
+      font-family: "Lato", sans-serif;
     }
   
     .w3-bar, h1, button {
@@ -58,59 +57,21 @@
       margin-bottom: 30px;
       flex: 1 1 100%; /* Garante que as colunas se ajustem quando necessário */
     }
-
-    
   
     
 
 /* Estilo geral da seção de objetivos */
 
-.objective-image {
-      width: 100%;
-      height: 150px;
-      object-fit: cover;
-      border-radius: 8px;
-      margin-bottom: 15px;
-    }
 
-    /* Estilo geral da seção de objetivos */
-.objetivos {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Organiza os objetivos em várias colunas responsivas */
-  gap: 20px;
-  padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 10px;
-}
 
 /* Estilo para cada objetivo */
-.objetivo {
-  background-color: white;
+/* Container para os objetivos */
+.container {
+  display: flex;            /* Usando Flexbox para organizar os itens em linha */
+  flex-wrap: wrap;          /* Permite quebrar os itens para a linha seguinte caso necessário */
+  gap: 20px;                /* Espaçamento entre os itens */
+  justify-content: center;  /* Alinha os itens no centro */
   padding: 20px;
-  border: 2px solid #ddd; /* Borda clara para os quadrados */
-  border-radius: 10px; /* Cantos arredondados */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave para destacar */
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Efeito de hover nos objetivos */
-.objetivo:hover {
-  transform: translateY(-5px); /* Leve elevação do quadrado */
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Sombra mais forte ao passar o mouse */
-}
-
-/* Estilo do título dentro de cada objetivo */
-.objetivo h3 {
-  font-size: 1.5rem;
-  color: #333;
-  margin-bottom: 10px;
-  font-weight: bold;
-}
-
-/* Estilo da descrição de cada objetivo */
-.objetivo p {
-  font-size: 1rem;
-  color: #555;
 }
 
 
@@ -121,7 +82,7 @@
 /* General Section Styling */
 .feature {
   padding: 60px 20px; /* Adds more space around the section */
- /* Light gray background for subtle contrast */
+  background-color: #f8f9fa; /* Light gray background for subtle contrast */
   text-align: center; /* Centers content in the section */
 }
 
@@ -169,7 +130,7 @@
 }
 
 section, footer, .media-body, .team-detail {
-  font-family: 'Montserrat', sans-serif;
+  font-family: 'Lato', sans-serif;
 }
 
 a, .w3-bar-item, .w3-button {
@@ -177,7 +138,7 @@ a, .w3-bar-item, .w3-button {
   text-decoration: none; /* Remover sublinhado padrão */
 }
 .fa, .w3-xlarge {
-  font-family: 'Montserrat', sans-serif; /* Mantém o estilo do ícone */
+  font-family: 'FontAwesome', sans-serif; /* Mantém o estilo do ícone */
 }
 
 /* Estilo geral da seção de objetivos */
@@ -205,9 +166,6 @@ a, .w3-bar-item, .w3-button {
     margin-bottom: 15px;       /* Adiciona um espaço entre os objetivos em telas pequenas */
   }
 }
-
-
-
 
 
 
@@ -303,6 +261,7 @@ function toggleNav() {
 
 
 <div class="feature section-padding" data-scroll-index="2" id="M1">
+  
   <div class="container">
     <div class="row">
       <div class="col-md-12">
@@ -350,7 +309,7 @@ function toggleNav() {
 
 
 <!-------Team Start------->
-<section class="team section-padding" data-scroll-index='3' id="Equipa">
+<section class="about section-padding" data-scroll-index='3' id="Equipa">
   <div class="container">
     <div class="row">
       <div class="col-md-12">
@@ -409,7 +368,7 @@ function toggleNav() {
 <!-------Team End-------> 
 
 <!-------Tutors Start-------> 
-<section class="team section-padding" data-scroll-index='3'>
+<section class="about section-padding" data-scroll-index='3'>
   <div class="container">
     <div class="row">
       <div class="col-md-12">
