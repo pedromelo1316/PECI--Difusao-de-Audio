@@ -1,5 +1,5 @@
 
-<!DOCTYPE html>
+<!DOC</style>TYPE html>
 <html lang="en">
 </div><head>
   <title>Difusão Áudio</title>
@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <style>
     body, h1, h2, h3, h4, h5, h6 {
-      font-family: "Lato", sans-serif;
+      font-family: "Montserrat", sans-serif;
     }
   
     .w3-bar, h1, button {
@@ -58,21 +58,59 @@
       margin-bottom: 30px;
       flex: 1 1 100%; /* Garante que as colunas se ajustem quando necessário */
     }
+
+    
   
     
 
 /* Estilo geral da seção de objetivos */
 
+.objective-image {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
 
+    /* Estilo geral da seção de objetivos */
+.objetivos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Organiza os objetivos em várias colunas responsivas */
+  gap: 20px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+}
 
 /* Estilo para cada objetivo */
-/* Container para os objetivos */
-.container {
-  display: flex;            /* Usando Flexbox para organizar os itens em linha */
-  flex-wrap: wrap;          /* Permite quebrar os itens para a linha seguinte caso necessário */
-  gap: 20px;                /* Espaçamento entre os itens */
-  justify-content: center;  /* Alinha os itens no centro */
+.objetivo {
+  background-color: white;
   padding: 20px;
+  border: 2px solid #ddd; /* Borda clara para os quadrados */
+  border-radius: 10px; /* Cantos arredondados */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave para destacar */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Efeito de hover nos objetivos */
+.objetivo:hover {
+  transform: translateY(-5px); /* Leve elevação do quadrado */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Sombra mais forte ao passar o mouse */
+}
+
+/* Estilo do título dentro de cada objetivo */
+.objetivo h3 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+/* Estilo da descrição de cada objetivo */
+.objetivo p {
+  font-size: 1rem;
+  color: #555;
 }
 
 
@@ -83,7 +121,7 @@
 /* General Section Styling */
 .feature {
   padding: 60px 20px; /* Adds more space around the section */
-  background-color: #f8f9fa; /* Light gray background for subtle contrast */
+ /* Light gray background for subtle contrast */
   text-align: center; /* Centers content in the section */
 }
 
@@ -131,7 +169,7 @@
 }
 
 section, footer, .media-body, .team-detail {
-  font-family: 'Lato', sans-serif;
+  font-family: 'Montserrat', sans-serif;
 }
 
 a, .w3-bar-item, .w3-button {
@@ -139,7 +177,7 @@ a, .w3-bar-item, .w3-button {
   text-decoration: none; /* Remover sublinhado padrão */
 }
 .fa, .w3-xlarge {
-  font-family: 'FontAwesome', sans-serif; /* Mantém o estilo do ícone */
+  font-family: 'Montserrat', sans-serif; /* Mantém o estilo do ícone */
 }
 
 /* Estilo geral da seção de objetivos */
@@ -212,95 +250,95 @@ function toggleNav() {
   <div class="w3-display-middle w3-margin-top w3-center">
   </div>
 </header>
+
 <section class="about section-padding prelative" data-scroll-index='1' id="projeto">
   <div class="container">
     <div class="row">
       <div class="col-md-12">
         <div class="sectioner-header text-center">
+          <br>
           <h3>Contexto</h3>
           <span class="line"></span>
-          <p>A gestão eficiente de áudio é essencial em espaços como hotéis, centros comerciais, restaurantes e lojas onde diferentes zonas requerem anúncios personalizados ou uma simples música de ambiente.  Este projeto pretende responder a estas necessidades através de um sistema wireless composto por um nó central de controlo e múltiplos recetores distribuidos. Para isso,temos como objetivo aumentar a flexibilidade na gestão de áudio, permitindo uma experiência adaptada a cada zona e garantindo qualidade, simplicidade e eficiência na operação.</p>          
+          <br>
+          <p>A gestão eficiente de áudio é essencial em espaços como hotéis, centros comerciais, restaurantes e lojas onde diferentes zonas requerem anúncios personalizados ou uma simples música de ambiente.  Este projeto pretende responder a estas necessidades através de um sistema wireless composto por um nó central de controlo e múltiplos recetores distribuidos. Para isso,temos como objetivo aumentar a flexibilidade na gestão de áudio, permitindo uma experiência adaptada a cada zona e garantindo qualidade, simplicidade e eficiência na operação.</p>      
+          <br>    
           <h3>Motivação</h3>
-   
           <span class="line"></span>
-          <p>A gestão de múltiplas zonas com diferentes necessidades sonoras, quando feita através de sistemas tradicionais baseados em cabos, é frequentemente complexa e pouco flexível. O uso de cabos exige infraestrutura física extensa, instalação trabalhosa e custos elevados de manutenção. Este projeto propõe uma solução wireless e flexível, eliminando a necessidade de cabeamento. Assim, é possível assegurar uma distribuição de áudio intuitiva e com maior facilidade para expansões ou reconfigurações.
-          </p>
+          <br>
+          <p>A gestão de múltiplas zonas com diferentes necessidades sonoras, quando feita através de sistemas tradicionais baseados em cabos, é frequentemente complexa e pouco flexível. O uso de cabos exige infraestrutura física extensa, instalação trabalhosa e custos elevados de manutenção. Este projeto propõe uma solução wireless e flexível, eliminando a necessidade de cabeamento. Assim, é possível assegurar uma distribuição de áudio intuitiva e com maior facilidade para expansões ou reconfigurações.</p>
+          <br>
           <h3>Objetivos</h3>
           <span class="line"></span>
-
-  
-          <div class="container">
-            <div class="objetivo">
-              <h4>Desenhar a Unidade de Controlo Central</h4>
+          <br>
+          <div class="row objectives-row">
+            <div class="col-md-3">
+              <div class="icon-box wow fadeInUp" data-wow-delay="0.2s">
+                <img src="/SITE/unidade_de_controlo.png" alt="Imagem para Unidade de Controlo Central" class="objective-image">  
+                <p>Desenhar a Unidade de Controlo Central</p>
+              </div>
             </div>
-            <div class="objetivo">
-              <h4>Adicionar Capacidades Sem Fios</h4>
+            <div class="col-md-3">
+              <div class="icon-box wow fadeInUp" data-wow-delay="0.4s">
+                <img src="/SITE/wireless5.png" alt="Imagem para Unidade de Controlo Central" class="objective-image">  
+                <p>Adicionar Capacidades Sem Fios</p>
+              </div>
             </div>
-            <div class="objetivo">
-              <h4>Reduzir os efeitos da latência e das interrupções</h4>
+            <div class="col-md-3">
+              <div class="icon-box wow fadeInUp" data-wow-delay="0.6s">
+                <img src="/SITE/recetor.png" alt="Imagem para Unidade de Controlo Central" class="objective-image">  
+                <p>Desenhar o Recetor</p>
+              </div>
             </div>
-            <div class="objetivo">
-              <h4>Desenhar o Recetor</h4>
+            <div class="col-md-3">
+              <div class="icon-box wow fadeInUp" data-wow-delay="0.8s">
+                <img src="/SITE/lupa.png" alt="Imagem para Unidade de Controlo Central" class="objective-image">  
+                <p>Reduzir os efeitos da latência e das interrupções.</p>
+              </div>
             </div>
-
-         
-          
+          </div>
         </div>
       </div>
     </div>
   </div>
-</section>
 
-<!-------About End-------> 
 
-<!-------Features Start------->
-<section class="feature section-padding" data-scroll-index="2" id="M1">
+<div class="feature section-padding" data-scroll-index="2" id="M1">
   <div class="container">
     <div class="row">
       <div class="col-md-12">
         <div class="sectioner-header text-center">
           <h3>Resultados Esperados</h3>
           <span class="line"></span>
-          <p></p>
         </div>
         <div class="section-content">
           <div class="d-flex justify-content-between flex-wrap" style="gap: 40px;">
-            
-    
-            
-            <!-- Bloco 2 -->
             <div class="media single-feature wow fadeInUp" data-wow-delay="0.4s" style="min-width: 250px; max-width: 300px; margin-bottom: 40px;">
               <div class="media-left icon-border media-right-margin">
-                <span class="fa fa-random" aria-hidden="true"></span> <!-- ícone de sincronização -->
+                <span class="fa fa-random" aria-hidden="true"></span>
               </div>
               <div class="media-body text-left">
                 <h4>Sincronização dentro das zonas</h4>
                 <p>O sistema garante a perfeita sincronização de áudio em múltiplas zonas, proporcionando uma experiência consistente.</p>
               </div>
             </div>
-            
-            <!-- Bloco 3 -->
             <div class="media single-feature wow fadeInUp" data-wow-delay="0.6s" style="min-width: 250px; max-width: 300px; margin-bottom: 40px;">
               <div class="media-left icon-border media-right-margin">
-                <span class="fa fa-tv" aria-hidden="true"></span> <!-- ícone de controle remoto -->
+                <span class="fa fa-tv" aria-hidden="true"></span>
               </div>
               <div class="media-body text-left">
                 <h4>Interface amigável para controlo remoto</h4>
                 <p>A interface de controlo remoto é intuitiva, permitindo fácil acesso e ajustes a partir de dispositivos móveis ou desktops.</p>
               </div>
             </div>
-            
-            <!-- Bloco 4 -->
             <div class="media single-feature wow fadeInUp" data-wow-delay="0.8s" style="min-width: 250px; max-width: 300px; margin-bottom: 40px;">
               <div class="media-left icon-border media-right-margin">
-                <span class="fa fa-microphone-alt" aria-hidden="true"></span> <!-- ícone de qualidade de áudio -->
+                <span class="fa fa-microphone-alt" aria-hidden="true"></span>
               </div>
               <div class="media-body text-left">
                 <h4>Alta qualidade de áudio</h4>
                 <p>O sistema assegura uma boa experiência de áudio, sem interrupções ou latência percetível.</p>
               </div>
             </div>
-
           </div>
         </div>
       </div>
@@ -308,25 +346,8 @@ function toggleNav() {
   </div>
 </section>
 
-
-<section class="feature section-padding" data-scroll-index="2" id="M2" aria-labelledby="system-architecture-heading">
-  <div class="container">
-    <h2 id="system-architecture-heading">Arquitetura do Sistema</h2>
-    <figure>
-      <img src="/SITE/arquiterura_alterda.png" alt="Diagrama da arquitetura do sistema">
-    </figure>
-  </div>
-</section>
-
 <!-------Features End-------> 
 
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
 
 <!-------Team Start------->
 <section class="team section-padding" data-scroll-index='3' id="Equipa">
