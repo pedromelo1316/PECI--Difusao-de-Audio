@@ -1,3 +1,4 @@
+import socket
 import zona
 import no
 
@@ -6,7 +7,6 @@ class manager:
         self.alocados = []
         self.livres = []
         self.zonas = []
-
 
     def add_zona(self, nome):
         try:
@@ -18,18 +18,28 @@ class manager:
             self.zonas.append(z)
             return True
         return False
-    
+
     def add_no(self, ip):
         try:
             n = no.no(ip)
+
+            # Enviar via socket para o nó
+            PORT = 12345  # Porta assumida; ajuste se necessário
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((ip, PORT))
+                mensagem = "Conexão estabelecida com o manager: " + str(n.getId())
+                s.sendall(mensagem.encode('utf-8'))
+            
         except ValueError:
+            return False
+        except socket.error:
             return False
     
         if n not in self.livres:
             self.livres.append(n)
             return True
         return False
-    
+
     def add_no_zona(self, ip, nome):
         for z in self.zonas:
             if z.getNome() == nome:
@@ -38,6 +48,14 @@ class manager:
                         if z.add_no(n):
                             self.livres.remove(n)
                             self.alocados.append(n)
+
+                            # Enviar via socket para o nó
+                            PORT = 12345
+                            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                                s.connect((ip, PORT))
+                                mensagem = "Zona: " + z.getNome()
+                                s.sendall(mensagem.encode('utf-8'))
+
                             return True
         return False
     
