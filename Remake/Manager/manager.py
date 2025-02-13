@@ -24,8 +24,9 @@ class manager:
             n = no.no(ip)
 
             # Enviar via socket para o nó
-            PORT = 12345  # Porta assumida; ajuste se necessário
+            PORT = 8080
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 s.connect((ip, PORT))
                 mensagem = "Conexão estabelecida com o manager: " + str(n.getId())
                 s.sendall(mensagem.encode('utf-8'))
@@ -50,8 +51,9 @@ class manager:
                             self.alocados.append(n)
 
                             # Enviar via socket para o nó
-                            PORT = 12345
+                            PORT = 8080
                             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                                 s.connect((ip, PORT))
                                 mensagem = "Zona: " + z.getNome()
                                 s.sendall(mensagem.encode('utf-8'))
