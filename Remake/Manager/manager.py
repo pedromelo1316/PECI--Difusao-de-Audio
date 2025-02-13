@@ -88,3 +88,16 @@ class manager:
     
     def get_nos_alocados(self):
         return self.alocados
+    
+    def add_transmissao(self, nome, tipo):
+        for z in self.zonas:
+            if z.getNome() == nome:
+                z.setTransmissao(tipo)
+                return True
+        return False
+    
+    def remove_transmissao(self, nome):
+        for z in self.zonas:
+            if z.getNome() == nome:
+                z.setTransmissao(None)
+                return True

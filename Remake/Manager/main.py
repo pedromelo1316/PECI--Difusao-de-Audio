@@ -13,6 +13,8 @@ def main():
         print("5 - Listar zonas")
         print("6 - Listar nós livres")
         print("7 - Listar nós alocados")
+        print("8 - Adicionar transmissão a zona")
+        print("9 - Remover transmissão de zona")
         print("0 - Sair")
         op = input("Escolha uma opção: ")
 
@@ -58,6 +60,40 @@ def main():
         elif op == "7":
             for n in m.get_nos_alocados():
                 print(n)
+
+        elif op == "8":
+
+            zona = input("Digite o nome da zona: ")
+            print("1 - Local")
+            print("2 - Transmissão")
+            print("3 - Voz")
+            print("0 - Sair")
+            op = input("Escolha uma opção: ")
+
+            if op == "1":
+                escolha = "Local"
+                
+            elif op == "2":
+                escolha = "Transmissão"
+                
+            elif op == "3":
+                escolha = "Voz"
+            
+            if not m.add_transmissao(zona, escolha):
+                print("Zona não encontrada")
+            else:
+                print("Transmissão adicionada com sucesso")
+
+        elif op == "9":
+            
+            zona = input("Digite o nome da zona: ")
+            if not m.remove_transmissao(zona):
+                print("Zona não encontrada")
+            else:
+                print("Transmissão removida com sucesso")
+
+
+
 
         elif op == "0":
             break
