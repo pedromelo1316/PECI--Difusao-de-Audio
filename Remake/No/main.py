@@ -46,7 +46,7 @@ def wait_no_zone(n, port=8080):
         conn, addr = server_socket.accept()
         with conn:
             data = conn.recv(1024).decode('utf-8')
-            if "Removida da zona " in data:
+            if "Removido da zona:" in data:
                 # Remoção da zona
                 n.zona = None
                 print("Zona removida.")
