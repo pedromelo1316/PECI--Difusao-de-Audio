@@ -1,8 +1,11 @@
 import socket
+import threading
+import time
 import no
 
-def wait_for_id(n, port=12345):
+def wait_for_id(n, port=8080):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server_socket.bind(('0.0.0.0', port))
         server_socket.listen(1)
         print(f"Aguardando atribuição de id na porta {port}...")
@@ -17,8 +20,9 @@ def wait_for_id(n, port=12345):
             except Exception as e:
                 print("Falha ao atribuir id:", e)
 
-def wait_for_zona(n, port=12345):
+def wait_for_zona(n, port=8080):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server_socket.bind(('0.0.0.0', port))
         server_socket.listen(1)
         print(f"Aguardando atribuição de zona na porta {port}...")
@@ -28,25 +32,57 @@ def wait_for_zona(n, port=12345):
             # Espera-se mensagem no formato: "Zona: <nome>"
             try:
                 zona_nome = data.split(':')[-1].strip()
-                n.zona = zona_nome  # Atribuição da zona recebida (supondo que o nó possua este atributo)
+                n.zona = zona_nome  # Atribuição da zona recebida
                 print("Zona atribuída:", zona_nome)
             except Exception as e:
                 print("Falha ao atribuir zona:", e)
 
+def wait_no_zone(n, port=8080):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server_socket.bind(('0.0.0.0', port))
+        server_socket.listen(1)
+        print(f"Aguardando comando de remoção da zona na porta {port}...")
+        conn, addr = server_socket.accept()
+        with conn:
+            data = conn.recv(1024).decode('utf-8')
+            if "Zona removida" in data:
+                print("Zona removida!")
+                n.zona = None
+
+def play_audio(n, port=8081):
+    # Enquanto a zona estiver atribuída, continua fazendo "algo"
+    while n.getZona() is not None:
+        print("Playing audio...")
+        # Simulando processamento
+        time.sleep(1)
+    print("Parando play_audio, pois a zona foi removida.")
+
 def main():
-    # Criação do nó. Certifique-se de que o construtor de no.no() permita não passar parâmetros,
-    # ou modifique conforme necessário.
     n = no.no()
     
-    # Checa e aguarda atribuição do id, se ainda não tiver sido definido.
+    # Aguarda atribuição do id (executado apenas uma vez)
     if n.getId() is None:
         print("Id é None")
-        wait_for_id(n, port=12345)
+        wait_for_id(n, port=8080)
+    
+    # Loop principal: aguarda atribuição da zona; assim que houver zona, inicia as threads
+    while True:
+        if n.getZona() is None:
+            print("Zona é None")
+            wait_for_zona(n, port=8080)
+        else:
+            print(f"Iniciando reprodução para a zona {n.getZona()}...")
+            # Cria threads para esperar remoção da zona e para reproduzir áudio
+            t_wait = threading.Thread(target=wait_no_zone, args=(n, 8080))
+            t_audio = threading.Thread(target=play_audio, args=(n, 8081))
+            t_wait.start()
+            t_audio.start()
+            # Aguarda a thread de remoção terminar; a partir dela, n.zona será None.
+            t_wait.join()
+            # A thread play_audio deve verificar a condição e encerrar quando n.zona for None.
+            t_audio.join()
+            print("Voltando a aguardar nova atribuição de zona.")
             
-    # Checa e aguarda atribuição da zona, se ainda não tiver sido definido.
-    if n.getZona() is None:
-        print("Zona é None")
-        wait_for_zona(n, port=12345)
-
 if __name__ == "__main__":
     main()

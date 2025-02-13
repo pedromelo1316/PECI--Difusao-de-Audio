@@ -69,6 +69,14 @@ class manager:
                         if z.remove_no(n):
                             self.alocados.remove(n)
                             self.livres.append(n)
+
+                            PORT = 8080
+                            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                                s.connect((ip, PORT))
+                                mensagem = "Removido da zona: " + z.getNome()
+                                s.sendall(mensagem.encode('utf-8'))
+                                
                             return True
         return False
     
