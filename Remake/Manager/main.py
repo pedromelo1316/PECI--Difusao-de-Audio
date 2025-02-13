@@ -3,29 +3,32 @@ import manager
 
 def main():
 
+    num_canais = 3
+
     m = manager.manager()
 
+    for i in range(num_canais):
+        m.add_canal()    
+
     while True:
-        print("1 - Adicionar zona")
-        print("2 - Adicionar nó")
+        print("1 - Adicionar nó")
+        print("2 - Adicionar zona")
         print("3 - Adicionar nó a zona")
         print("4 - Remover nó de zona")
-        print("5 - Listar zonas")
-        print("6 - Listar nós livres")
-        print("7 - Listar nós alocados")
-        print("8 - Adicionar transmissão a zona")
-        print("9 - Remover transmissão de zona")
+        print("20 - Listar nós")
+        print("21 - Listar zonas")
+        print("22 - Listar canais")
         print("0 - Sair")
         op = input("Escolha uma opção: ")
 
-        if op == "1":
+        if op == "2":
             nome = input("Digite o nome da zona: ")
             if not m.add_zona(nome):
                 print("Zona já existe")
             else:
                 print("Zona adicionada com sucesso")
 
-        elif op == "2":
+        elif op == "1":
             ip = input("Digite o ip do nó: ")
             if not m.add_no(ip):
                 print("Nó já existe")
@@ -49,51 +52,20 @@ def main():
                 print("Nó removido de zona com sucesso")
 
 
-        elif op == "5":
+        elif op == "20":
             for z in m.get_zonas():
                 print(z)
 
-        elif op == "6":
-            for n in m.get_nos_livres():
+        elif op == "21":
+            for n in m.get_nos():
                 print(n)
 
-        elif op == "7":
-            for n in m.get_nos_alocados():
-                print(n)
-
-        elif op == "8":
-
-            zona = input("Digite o nome da zona: ")
-            print("1 - Local")
-            print("2 - Transmissão")
-            print("3 - Voz")
-            print("0 - Sair")
-            op = input("Escolha uma opção: ")
-
-            if op == "1":
-                escolha = "Local"
-                
-            elif op == "2":
-                escolha = "Transmissão"
-                
-            elif op == "3":
-                escolha = "Voz"
-            
-            if not m.add_transmissao(zona, escolha):
-                print("Zona não encontrada")
-            else:
-                print("Transmissão adicionada com sucesso")
-
-        elif op == "9":
-            
-            zona = input("Digite o nome da zona: ")
-            if not m.remove_transmissao(zona):
-                print("Zona não encontrada")
-            else:
-                print("Transmissão removida com sucesso")
+        elif op == "22":
+            for c in m.get_canais():
+                print(c)
 
 
-
+        
 
         elif op == "0":
             break

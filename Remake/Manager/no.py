@@ -7,6 +7,7 @@ class no:
             raise ValueError("IP já existe")
         self.ip = ip
         self.zona = None
+        self.canal = None
         self.id = no._next_id
         no._next_id += 1
         self.alocado = False
@@ -37,6 +38,12 @@ class no:
 
     def getAlocado(self):
         return self.alocado
+    
+    def setCanal(self, canal):
+        self.canal = canal
+
+    def getCanal(self):
+        return self.canal
 
     def __str__(self):
         return f"{self.ip} - {self.id} - {self.zona.getNome() if self.zona else 'Livre'}"

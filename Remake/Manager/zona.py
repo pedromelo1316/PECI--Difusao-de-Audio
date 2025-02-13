@@ -6,7 +6,7 @@ class zona:
             raise ValueError("Nome da zona já existe")
         self.nome = nome
         self.nos = []
-        self.transmissao = None
+        self.canal = None
         zona._nomes.add(nome)
 
     def add_no(self, no):
@@ -27,12 +27,13 @@ class zona:
     def getNos(self):
         return self.nos
     
+    def getCanal(self):
+        return self.canal
+    
+    def setCanal(self, canal):
+        self.canal = canal
+    
 
-    def setTransmissao(self, transmissao):
-        self.transmissao = transmissao
-
-    def getTransmissao(self):
-        return self.transmissao
 
     def __str__(self):
-        return f"{self.nome} - {[n.getId() for n in self.nos]} - {self.transmissao}"
+        return f"{self.nome} - {[n.getId() for n in self.nos]} - {self.canal}"
