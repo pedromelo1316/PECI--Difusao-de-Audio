@@ -3,6 +3,7 @@ class canal:
     def __init__(self):
         self.id = canal._next_id
         self.transmissao = None
+        self.zonas = set()
 
         canal._next_id += 1
 
@@ -15,6 +16,15 @@ class canal:
     
     def get_id(self):
         return self.id
+    
+    def add_zona(self, zona):
+        self.zonas.add(zona)
+
+    def remove_zona(self, zona):
+        self.zonas.remove(zona)
+
+    def get_zonas(self):
+        return self.zonas
     
     def __str__(self):
         return f"Canal {self.id}"

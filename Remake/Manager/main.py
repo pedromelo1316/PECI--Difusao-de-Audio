@@ -13,10 +13,12 @@ def main():
     while True:
         print("1 - Adicionar nó")
         print("2 - Adicionar zona")
-        print("3 - Remover nó")
-        print("4 - Remover zona")
-        print("5 - Adicionar nó à zona")
-        print("6 - Atribuir canal à zona")
+        print("3 - Adicionar transmissão a canal")
+        print("4 - Remover nó")
+        print("5 - Remover zona")
+        print("6 - Adicionar nó à zona")
+        print("7 - Atribuir canal à zona")
+        print("8 - Informações")
         print("0 - Sair")
         op = input("Escolha uma opção: ")
 
@@ -27,16 +29,36 @@ def main():
             m.add_zona(input("Nome da zona: "))
 
         elif op == "3":
-            m.remove_no(input("IP do nó: "))
+            tipos = ["LOCAL", "TRANSMISSAO", "VOZ"]
+            m.assign_transmissao_to_canal(int(input("ID do canal: ")), input(f"{tipos}\nTransmissão: "))
+            
 
         elif op == "4":
-            m.remove_zona(input("Nome da zona: "))
+            m.remove_no(input("IP do nó: "))
 
         elif op == "5":
-            m.add_no_to_zona(input("IP do nó: "), input("Nome da zona: "))
+            m.remove_zona(input("Nome da zona: "))
 
         elif op == "6":
-            pass
+            m.add_no_to_zona(input("IP do nó: "), input("Nome da zona: "))
+
+        elif op == "7":
+            m.assign_canal_to_zona(int(input("ID do canal: ")), input("Nome da zona: "))
+
+        elif op == "8":
+            print("1 - Informações de canal")
+            print("2 - Informações de zona")
+            print("3 - Informações de nó")
+            op2 = input("Escolha uma opção: ")
+
+            if op2 == "1":
+                m.info_canal(int(input("ID do canal: ")))
+
+            elif op2 == "2":
+                m.info_zona(input("Nome da zona: "))
+
+            elif op2 == "3":
+                m.info_no(input("IP do nó: "))
 
         
         elif op == "0":
