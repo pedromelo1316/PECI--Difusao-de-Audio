@@ -75,7 +75,22 @@ class manager:
         if nome not in self.zonas:
             print("Zona não encontrada")
             return False
+        
 
+        #talvez trocar para broadcast
+        port = 8080
+        for n in self.nos:
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                    s.connect((n, port))
+                    mensagem = "Removido da zona: " + nome
+                    s.sendall(mensagem.encode('utf-8'))
+            except socket.error:
+                print("Erro ao conectar com o nó: ", n.get_ip())
+                return False
+        
+        
         
         if self.zonas[nome].get_canal() is not None:
             self.zonas[nome].get_canal().remove_zona(self.zonas[nome])
@@ -87,8 +102,9 @@ class manager:
 
         del self.zonas[nome]
         print("Zona removida com sucesso")
+        return True
 
-        #fazer depois...
+
 
     
 
@@ -115,30 +131,6 @@ class manager:
         self.nos[ip].set_zona(self.zonas[zona_nome])
         self.zonas[zona_nome].add_no(self.nos[ip])
         print("Nó adicionado à zona com sucesso")
-        return True
-    
-
-    def remove_no_from_zona(self, ip, zona_nome):
-        if ip not in self.nos:
-            print("Nó não encontrado")
-            return False
-        if zona_nome not in self.zonas:
-            print("Zona não encontrada")
-            return False
-        
-        try:
-            PORT = 8080
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                s.connect((ip, PORT))
-                mensagem = "Removido da zona: " + zona_nome
-                s.sendall(mensagem.encode('utf-8'))
-        except socket.error:
-            return False
-
-        self.nos[ip].set_zona(None)
-        self.zonas[zona_nome].remove_no(self.nos[ip])
-        print("Nó removido da zona com sucesso")
         return True
     
 

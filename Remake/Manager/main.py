@@ -14,11 +14,11 @@ def main():
         print("1 - Adicionar nó")
         print("2 - Adicionar zona")
         print("3 - Adicionar transmissão a canal")
-        print("4 - Remover nó")
-        print("5 - Remover zona")
-        print("6 - Adicionar nó à zona")
-        print("7 - Atribuir canal à zona")
-        print("8 - Informações")
+        print("4 - Adicionar nó à zona")
+        print("5 - Atribuir canal à zona")
+        print("6 - Informações")
+        print("7 - Remover nó")
+        print("8 - Remover zona")
         print("0 - Sair")
         op = input("Escolha uma opção: ")
 
@@ -34,18 +34,12 @@ def main():
             
 
         elif op == "4":
-            m.remove_no(input("IP do nó: "))
-
-        elif op == "5":
-            m.remove_zona(input("Nome da zona: "))
-
-        elif op == "6":
             m.add_no_to_zona(input("IP do nó: "), input("Nome da zona: "))
 
-        elif op == "7":
+        elif op == "5":
             m.assign_canal_to_zona(int(input("ID do canal: ")), input("Nome da zona: "))
 
-        elif op == "8":
+        elif op == "6":
             print("1 - Informações de canal")
             print("2 - Informações de zona")
             print("3 - Informações de nó")
@@ -59,6 +53,14 @@ def main():
 
             elif op2 == "3":
                 m.info_no(input("IP do nó: "))
+
+
+        elif op == "7":
+            m.remove_no(input("IP do nó: "))
+
+        elif op == "8":
+            m.remove_zona(input("Nome da zona: "))
+
 
         
         elif op == "0":
