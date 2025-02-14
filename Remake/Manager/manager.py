@@ -62,7 +62,7 @@ class manager:
     def add_canal(self):
         c = canal.canal()
         self.canais[c.get_id()] = c
-        print(f"Canal {c.get_id()} inciado com sucesso")
+        print(f"Canal {c.get_id()} iniciado com sucesso")
         return c
     
 
@@ -119,21 +119,33 @@ class manager:
         if canal_id not in self.canais:
             print("Canal não encontrado")
             return False
-        print(f"Canal {canal_id}: \n\t{self.canais[canal_id].get_transmissao()} \n\t{self.canais[canal_id].get_zonas()}")
+        print(f"Canal {canal_id}: \n\tTransmissão: {self.canais[canal_id].get_transmissao()} \n\tZonas: ", end="")
 
+        for z in self.canais[canal_id].get_zonas():
 
-    def info_zona(self, zona_nome):
-        if zona_nome not in self.zonas:
+            print(z.get_nome(), end=", ")
+
+        print()
+
+    def info_zona(self, nome):
+        if nome not in self.zonas:
             print("Zona não encontrada")
             return False
-        print(f"Zona {zona_nome}: \n\t{self.zonas[zona_nome].get_nos()} \n\t{self.zonas[zona_nome].get_canal()}")
+        print(f"Zona {nome}: \n\tCanal: {self.zonas[nome].get_canal()} \n\tNós: ", end="")
 
+        for n in self.zonas[nome].get_nos():
+            print(n.get_ip(), end=", ")
+
+        print()
 
     def info_no(self, ip):
         if ip not in self.nos:
             print("Nó não encontrado")
             return False
-        print(f"Nó {ip}: \n\t{self.nos[ip].get_zona()}")
+        print(f"Nó {ip}: \n\tZona: {self.nos[ip].get_zona()}")
+
+
+
 
     
     
