@@ -25,19 +25,48 @@ def wait_for_zona(n, port=8080):
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server_socket.bind(('0.0.0.0', port))
         server_socket.listen(1)
-        print(f"Aguardando atribuição de zona na porta {port}...")
+        print(f"Aguardando mensagem de atribuição na porta {port}...")
         conn, addr = server_socket.accept()
         with conn:
             data = conn.recv(1024).decode('utf-8')
-            # Espera-se mensagem no formato: "Zona: <nome>"
+            # Espera-se mensagem nos formatos:
+            # "Zona: <nome>"
+            # ou "Zona: <nome>; Canal: <id>"
             try:
-                zona_nome = data.split(':')[-1].strip()
-                n.zona = zona_nome  # Atribuição da zona recebida
+                parts = data.split(';')
+                # Processa a parte da zona
+                zona_part = parts[0]
+                zona_nome = zona_part.split(':')[-1].strip()
+                n.zona = zona_nome
                 print("Zona atribuída:", zona_nome)
+                # Se houver informação de canal, processa-a
+                if len(parts) > 1:
+                    canal_part = parts[1]
+                    canal_id = int(canal_part.split(':')[-1].strip())
+                    n.canal = canal_id
+                    print("Canal atribuído:", canal_id)
             except Exception as e:
-                print("Falha ao atribuir zona:", e)
+                print("Falha ao atribuir zona e canal:", e)
 
-def wait_no_zone(n, port=8080):
+
+def wait_for_canal(n, port=8080):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server_socket.bind(('0.0.0.0', port))
+        server_socket.listen(1)
+        print(f"Aguardando atribuição de canal na porta {port}...")
+        conn, addr = server_socket.accept()
+        with conn:
+            data = conn.recv(1024).decode('utf-8')
+            # Espera-se mensagem no formato: "Canal: <id>"
+            try:
+                canal_id = int(data.split(':')[-1].strip())
+                n.canal = canal_id  # Atribuição do canal recebido
+                print("Canal atribuído:", canal_id)
+            except Exception as e:
+                print("Falha ao atribuir canal:", e)
+
+def wait_no_zone_canal(n, port=8080):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server_socket.bind(('0.0.0.0', port))
@@ -49,7 +78,13 @@ def wait_no_zone(n, port=8080):
             if "Removido da zona:" in data:
                 # Remoção da zona
                 n.zona = None
+                n.canal = None
                 print("Zona removida.")
+
+            if "Removido do canal:" in data:
+                # Remoção do canal
+                n.canal = None
+                print("Canal removido.")
 
 def play_audio(n, port=8081):
     # Enquanto a zona estiver atribuída, continua fazendo "algo"
@@ -72,10 +107,15 @@ def main():
         if n.getZona() is None:
             print("Zona é None")
             wait_for_zona(n, port=8080)
+
+        if n.getCanal() is None:
+            print("Canal é None")
+            # Aguarda atribuição do canal
+
         else:
             print(f"Iniciando reprodução para a zona {n.getZona()}...")
             # Cria threads para esperar remoção da zona e para reproduzir áudio
-            t_wait = threading.Thread(target=wait_no_zone, args=(n, 8080))
+            t_wait = threading.Thread(target=wait_no_zone_canal, args=(n, 8080))
             t_audio = threading.Thread(target=play_audio, args=(n, 8081))
             t_wait.start()
             t_audio.start()

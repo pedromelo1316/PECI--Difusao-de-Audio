@@ -2,7 +2,7 @@ class canal:
     _next_id = 1  # Variável de classe para manter o próximo id disponível
     def __init__(self):
         self.id = canal._next_id
-        self.transmissao = None
+        self.transmissao = "LOCAL"
         self.zonas = set()
 
         canal._next_id += 1
