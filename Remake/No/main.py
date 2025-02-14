@@ -110,7 +110,7 @@ def main():
 
         if n.getCanal() is None:
             print("Canal é None")
-            # Aguarda atribuição do canal
+            wait_for_canal(n, port=8080)
 
         else:
             print(f"Iniciando reprodução para a zona {n.getZona()}...")
