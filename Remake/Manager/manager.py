@@ -5,91 +5,62 @@ import canal
 
 class manager:
     def __init__(self):
-        self.alocados = []
-        self.livres = []
-        self.zonas = []
-        self.zonas_livres = []
-        self.zonas_alocadas = []
-        self.canais = []
-
-
-    def add_canal(self):
-        c = canal.canal()
-        self.canais.append(c)
-        return c
-
-    def add_zona(self, nome):
-        try:
-            z = zona.zona(nome)
-        except ValueError:
-            return False
+        self.nos = dict()
+        self.zonas = dict()
+        self.canais = dict()
         
-        if z not in self.zonas:
-            self.zonas_livres.append(z)
-            self.zonas.append(z)
-            return True
-        return False
-    
 
     def add_no(self, ip):
         try:
             n = no.no(ip)
-        except ValueError:
+            print("Nó adicionado com sucesso")
+        except ValueError as e:
+            print(e)
+            return None
+        self.nos[ip] = n
+        return n
+    
+    def remove_no(self, ip):
+        pass
+        
+    def add_zona(self, nome):
+        try:
+            z = zona.zona(nome)
+            print("Zona adicionada com sucesso")
+        except ValueError as e:
+            print(e)
+            return None
+        self.zonas[nome] = z
+        return z
+    
+    def remove_zona(self, nome):
+        pass
+    
+    def add_canal(self):
+        c = canal.canal()
+        self.canais[c.get_id()] = c
+        print(f"Canal {c.get_id()} inciado com sucesso")
+        return c
+    
+
+    def add_no_to_zona(self, ip, zona_nome):
+        if ip not in self.nos:
+            print("Nó não encontrado")
             return False
-    
-        if n not in self.livres:
-            self.livres.append(n)
-            return True
-        return False
-    
-
-    def add_no_zona(self, ip, nome):
-        for z in self.zonas:
-            if z.getNome() == nome:
-                for n in self.livres:
-                    if n.getIp() == ip:
-                        if z.add_no(n):
-                            self.livres.remove(n)
-                            self.alocados.append(n)
-                            return True
-        return False
-    
-    def remove_no_zona(self, ip, nome):
-        for z in self.zonas:
-            if z.getNome() == nome:
-                for n in self.alocados:
-                    if n.getIp() == ip:
-                        if z.remove_no(n):
-                            self.alocados.remove(n)
-                            self.livres.append(n)
-                            return True
-                        
-
-    def add_zona_canal(self, nome, id):
-        for z in self.zonas:
-            if z.getNome() == nome:
-                for c in self.canais:
-                    if c.getId() == id:
-                        z.setCanal(c)
-                        c.addZona(z)
-                        return True
-        return False
-    
-    def get_zonas(self):
-        return self.zonas
-    
-    def get_zonas_livres(self):
-        return self.zonas_livres
-    
-    def get_nos_livres(self):
-        return self.livres
-    
-    def get_nos_alocados(self):
-        return self.alocados
-    
-    def get_nos(self):
-        return self.livres + self.alocados
+        if zona_nome not in self.zonas:
+            print("Zona não encontrada")
+            return False
+        self.nos[ip].set_zona(self.zonas[zona_nome])
+        self.zonas[zona_nome].add_no(self.nos[ip])
+        print("Nó adicionado à zona com sucesso")
+        return True
     
 
-    def get_canais(self):
-        return self.canais
+    def remove_no_from_zona(self, ip, zona_nome):
+        pass
+
+    def assign_canal_to_zona(self, canal_id, zona_nome):
+        pass
+
+    
+    

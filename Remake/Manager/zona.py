@@ -3,37 +3,31 @@ class zona:
 
     def __init__(self, nome):
         if nome in zona._nomes:
-            raise ValueError("Nome da zona já existe")
+            raise ValueError(f"Zona {nome} já existe")
         self.nome = nome
-        self.nos = []
+        self._nomes.add(nome)
+        self.nos = set()
         self.canal = None
-        zona._nomes.add(nome)
 
     def add_no(self, no):
-        if no not in self.nos and no.alocar(self):
-            self.nos.append(no)
-            return True
-        return False
+        self.nos.add(no)
 
     def remove_no(self, no):
-        if no in self.nos and no.desalocar():
-            self.nos.remove(no)
-            return True
-        return False
+        self.nos.remove(no)
 
-    def getNome(self):
+    def set_canal(self, canal):
+        self.canal = canal
+
+    def get_nome(self):
         return self.nome
-
-    def getNos(self):
+    
+    def get_nos(self):
         return self.nos
     
-    def getCanal(self):
+    def get_canal(self):
         return self.canal
     
-    def setCanal(self, canal):
-        self.canal = canal
-    
-
 
     def __str__(self):
-        return f"{self.nome} - {[n.getId() for n in self.nos]} - {self.canal}"
+        return f"Zona {self.nome}"
+    

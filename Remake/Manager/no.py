@@ -1,49 +1,38 @@
+import socket
+import ipaddress
+
 class no:
     _next_id = 1  # Variável de classe para manter o próximo id disponível
     _ips = set()  # Conjunto para manter os IPs únicos
 
     def __init__(self, ip):
         if ip in no._ips:
-            raise ValueError("IP já existe")
-        self.ip = ip
-        self.zona = None
-        self.canal = None
+            raise ValueError("IP já utilizado")
+        
+        try:
+            ipaddress.ip_address(ip)
+        except ValueError:
+            raise ValueError("IP inválido")
+
         self.id = no._next_id
-        no._next_id += 1
-        self.alocado = False
-        no._ips.add(ip)
-
-    def alocar(self, zona):
-        if self.alocado:
-            return False
-        self.alocado = True
-        self.zona = zona
-        return True
-
-    def desalocar(self):
-        if not self.alocado:
-            return False
-        self.alocado = False
+        self.ip = ip
+        self._ips.add(ip)
         self.zona = None
-        return True
 
-    def getIp(self):
-        return self.ip
+        no._next_id += 1
 
-    def getId(self):
+    def get_id(self):
         return self.id
+    
+    def get_ip(self):
+        return self.ip
+    
+    def set_zona(self, zona):
+        self.zona = zona
 
-    def getZona(self):
+    def get_zona(self):
         return self.zona
 
-    def getAlocado(self):
-        return self.alocado
     
-    def setCanal(self, canal):
-        self.canal = canal
-
-    def getCanal(self):
-        return self.canal
-
     def __str__(self):
-        return f"{self.ip} - {self.id} - {self.zona.getNome() if self.zona else 'Livre'}"
+        return f"Nó {self.id}"
