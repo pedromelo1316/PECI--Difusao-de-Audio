@@ -29,5 +29,5 @@ class zona:
     
 
     def __str__(self):
-        return f"Zona {self.nome}"
+        return f"{self.nome}"
     

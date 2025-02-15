@@ -9,112 +9,83 @@ class manager:
         self.zonas = dict()
         self.canais = dict()
 
-
     def add_canal(self):
         c = canal.canal()
         self.canais[c.get_id()] = c
-        print(f"Canal {c.get_id()} iniciado com sucesso no modo {c.get_transmissao()}")
-        return c
-        
+        msg = f"Canal {c.get_id()} iniciado com sucesso no modo {c.get_transmissao()}"
+        return msg
 
     def add_no(self, ip):
         try:
             n = no.no(ip)
-
             PORT = 8080
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 s.connect((ip, PORT))
                 mensagem = "Conexão estabelecida com o manager: " + str(n.get_id())
                 s.sendall(mensagem.encode('utf-8'))
-
         except ValueError as e:
-            print(e)
-            return None
-        
+            return f"Erro ao adicionar nó: {e}"
         except socket.error:
-            print("Erro ao conectar com o nó")
-            return False
+            return "Erro ao conectar com o nó."
 
         self.nos[ip] = n
+        return f"Nó {ip} adicionado com sucesso."
 
-        print("Nó adicionado com sucesso")
-
-        return n
-    
     def remove_no(self, ip):
         if ip not in self.nos:
-            print("Nó não encontrado")
-            return False
+            return "Nó não encontrado."
         
         if self.nos[ip].get_zona() is not None:
             self.nos[ip].get_zona().remove_no(self.nos[ip])
 
         no.no._ips.remove(ip)
-
         del self.nos[ip]
-        print("Nó removido com sucesso")
+        return "Nó removido com sucesso."
 
-        #fazer depois...
-        
     def add_zona(self, nome):
         try:
             z = zona.zona(nome)
-            print("Zona adicionada com sucesso")
         except ValueError as e:
-            print(e)
-            return None
+            return f"Erro ao adicionar zona: {e}"
         except socket.error:
-            return False
-
+            return "Erro na comunicação para adicionar zona."
 
         self.zonas[nome] = z
-        return z
-    
+        return f"Zona {nome} adicionada com sucesso."
+
     def remove_zona(self, nome):
         if nome not in self.zonas:
-            print("Zona não encontrada")
-            return False
+            return "Zona não encontrada."
         
-
-        #talvez trocar para broadcast
         port = 8080
-        for n in self.nos:
+        for ip in self.nos:
             try:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                    s.connect((n, port))
+                    s.connect((ip, port))
                     mensagem = "Removido da zona: " + nome
                     s.sendall(mensagem.encode('utf-8'))
             except socket.error:
-                print("Erro ao conectar com o nó: ", n.get_ip())
-                return False
-        
-        
+                return f"Erro ao conectar com o nó: {ip}"
         
         if self.zonas[nome].get_canal() is not None:
             self.zonas[nome].get_canal().remove_zona(self.zonas[nome])
 
-        for no in self.zonas[nome].get_nos():
-            no.set_zona(None)
+        for n_obj in self.zonas[nome].get_nos():
+            n_obj.set_zona(None)
 
         zona.zona._nomes.remove(nome)
-
         del self.zonas[nome]
-        print("Zona removida com sucesso")
-        return True
-
-
-
-    
+        return "Zona removida com sucesso."
 
     def add_no_to_zona(self, ip, zona_nome):
         if ip not in self.nos:
-            print("Nó não encontrado")
-            return False
+            return "Nó não encontrado."
         if zona_nome not in self.zonas:
-            print("Zona não encontrada")
-            return False
+            return "Zona não encontrada."
+        if self.nos[ip].get_zona() is not None:
+            return f"Nó já está na zona: {self.nos[ip].get_zona().get_nome()}"
         
         try:
             PORT = 8080
@@ -126,28 +97,56 @@ class manager:
                     mensagem += "; Canal: " + str(self.zonas[zona_nome].get_canal().get_id())
                 s.sendall(mensagem.encode('utf-8'))
         except socket.error:
-            return False
+            return "Erro ao conectar com o nó para adicionar à zona."
 
         self.nos[ip].set_zona(self.zonas[zona_nome])
         self.zonas[zona_nome].add_no(self.nos[ip])
-        print("Nó adicionado à zona com sucesso")
-        return True
-    
+        return f"Nó {ip} adicionado à zona {zona_nome} com sucesso."
+
+    def add_nos_to_zona(self, zona_nome, nos):
+        nos = nos.split()
+        for n in nos:
+            r = self.add_no_to_zona(n, zona_nome)
+            if "sucesso" not in r:
+                return f"Falha ao adicionar alguns nós: {r}"
+        return f"Todos os nós adicionados à zona {zona_nome} com sucesso."
+
+    def remove_no_from_zona(self, ip):
+        if ip not in self.nos:
+            return "Nó não encontrado."
+        if self.nos[ip].get_zona() is None:
+            return "Nó não está em nenhuma zona."
+        
+        try:
+            PORT = 8080
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                s.connect((ip, PORT))
+                mensagem = "Nó " + ip + " removido da zona"
+                s.sendall(mensagem.encode('utf-8'))
+        except socket.error:
+            return "Erro ao conectar com o nó para remoção da zona."
+
+        self.nos[ip].get_zona().remove_no(self.nos[ip])
+        self.nos[ip].set_zona(None)
+        return f"Nó {ip} removido da zona com sucesso."
+
+    def remove_nos_from_zona(self, zona_nome, nos):
+        nos_list = nos.split()
+        for n in nos_list:
+            r = self.remove_no_from_zona(n)
+            if "sucesso" not in r:
+                return f"Falha ao remover alguns nós: {r}"
+        return f"Todos os nós removidos da zona {zona_nome} com sucesso."
 
     def assign_canal_to_zona(self, canal_id, zona_nome):
         if canal_id not in self.canais:
-            print("Canal não encontrado")
-            return False
+            return "Canal não encontrado."
         if zona_nome not in self.zonas:
-            print("Zona não encontrada")
-            return False
+            return "Zona não encontrada."
         self.zonas[zona_nome].set_canal(self.canais[canal_id])
         self.canais[canal_id].add_zona(self.zonas[zona_nome])
-        print("Canal atribuído à zona com sucesso")
-
-
-        #trocar para broadcast talvez
-        try:  
+        try:
             for n in self.zonas[zona_nome].get_nos():
                 PORT = 8080
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -156,53 +155,59 @@ class manager:
                     mensagem = "Canal: " + str(canal_id)
                     s.sendall(mensagem.encode('utf-8'))
         except socket.error:
-            return False
-
-        return True
-    
+            return f"Erro ao conectar com o nó: {n.get_ip()}"
+        return "Canal atribuído à zona com sucesso."
 
     def assign_transmissao_to_canal(self, canal_id, tipo):
         if canal_id not in self.canais:
-            print("Canal não encontrado")
-            return False
+            return "Canal não encontrado."
         if tipo not in ["LOCAL", "TRANSMISSAO", "VOZ"]:
-            print("Tipo inválido")
-            return False
+            return "Tipo inválido."
         self.canais[canal_id].set_transmissao(tipo)
-        print("Transmissão atribuída ao canal com sucesso")
-        return True
-    
+        return "Transmissão atribuída ao canal com sucesso."
+
     def info_canal(self, canal_id):
         if canal_id not in self.canais:
-            print("Canal não encontrado")
-            return False
-        print(f"Canal {canal_id}: \n\tTransmissão: {self.canais[canal_id].get_transmissao()} \n\tZonas: ", end="")
-
+            return "Canal não encontrado."
+        info = f"Canal {canal_id}:\n\tTransmissão: {self.canais[canal_id].get_transmissao()}\n\tZonas: "
+        zonas_list = []
         for z in self.canais[canal_id].get_zonas():
-
-            print(z.get_nome(), end=", ")
-
-        print()
+            zonas_list.append(z.get_nome())
+        info += ", ".join(zonas_list)
+        return info
 
     def info_zona(self, nome):
         if nome not in self.zonas:
-            print("Zona não encontrada")
-            return False
-        print(f"Zona {nome}: \n\tCanal: {self.zonas[nome].get_canal()} \n\tNós: ", end="")
-
-        for n in self.zonas[nome].get_nos():
-            print(n.get_ip(), end=", ")
-
-        print()
+            return "Zona não encontrada."
+        zona_info = f"Zona {nome}:\n\tCanal: {self.zonas[nome].get_canal()}\n\tNós: "
+        zona_info += ", ".join(n.get_ip() for n in self.zonas[nome].get_nos())
+        return zona_info
 
     def info_no(self, ip):
         if ip not in self.nos:
-            print("Nó não encontrado")
-            return False
-        print(f"Nó {ip}: \n\tZona: {self.nos[ip].get_zona()}")
+            return "Nó não encontrado."
+        return f"Nó {ip}:\n\tZona: {self.nos[ip].get_zona()}"
 
+    def get_nos_livres(self):
+        livres = []
+        for n in self.nos:
+            if self.nos[n].get_zona() is None:
+                livres.append(n)
+        return livres
 
-
-
+    def get_nos_em_zonas(self):
+        em_zonas = ""
+        for n in self.nos:
+            if self.nos[n].get_zona() is not None:
+                em_zonas += f"\tNó {n}: {self.nos[n].get_zona()}\n"
+        return em_zonas
     
-    
+
+    def get_zonas(self):
+        return self.zonas
+
+    def get_nos(self):
+        return self.nos
+
+
+
