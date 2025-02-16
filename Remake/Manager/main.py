@@ -1,6 +1,7 @@
 import curses
 import time
 import manager
+import socket
 
 def get_input(win, prompt, pos_y, pos_x):
     """
@@ -73,7 +74,6 @@ def main(stdscr):
 
 
                 if op2 == "1":
-                    import socket
                     detected = set()
                     detection_port = 9090
 
@@ -82,7 +82,7 @@ def main(stdscr):
                     broadcast_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
                     broadcast_sock.sendto(b"Detetar", ('<broadcast>', detection_port))
 
-                    '''# Prepara socket para receber respostas (hello)
+                    # Prepara socket para receber respostas (hello)
                     listen_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                     listen_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                     listen_sock.bind(('', detection_port))
@@ -117,7 +117,7 @@ def main(stdscr):
                     msg_win.clear()
                     msg_win.border()
                     add_msg(msg_win, msg)
-                    msg_win.refresh()'''
+                    msg_win.refresh()
 
                 if op2 == "2":
                     ip = get_input(menu_win, "IP do nó:", 10, 2)
