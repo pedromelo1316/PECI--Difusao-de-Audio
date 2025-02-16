@@ -43,6 +43,7 @@ def main(stdscr):
     # Cria janelas: menu_win para menus e msg_win para exibição de mensagens
     menu_win = curses.newwin(menu_height, width, 0, 0)
     msg_win  = curses.newwin(msg_height, width, menu_height, 0)
+    
 
     while True:
         # Menu principal
@@ -74,6 +75,7 @@ def main(stdscr):
 
 
                 if op2 == "1":
+                    msg = "Nós detetados: "
                     msg_win.clear()
                     msg_win.border()
                     detected = set()
@@ -89,36 +91,31 @@ def main(stdscr):
                     while True:
                         menu_win.clear()
                         menu_win.border()
-                        menu_win.addstr(1, 2, "Detetando nós... (Pressione 0 para parar)")
+                        menu_win.addstr(1, 2, "Detetando novos nós...")
                         menu_win.refresh()
+                        time.sleep(0.5)
 
                         try:
                             data, addr = sock.recvfrom(1024)  # Espera pela resposta
                             if data.decode('utf-8').strip() == "hello":
-                                detected.add(addr[0])
-                                msg = f"Nó {addr[0]} detetado."
-                                add_msg(msg_win, msg)
-                                msg_win.refresh()
-
-                                m.add_no(addr[0])
+                                if m.add_no(addr[0]) == f"Nó {addr[0]} adicionado com sucesso.":
+                                    detected.add(addr[0])
+                                    msg += f"{addr[0]} "
+                                    add_msg(msg_win, msg)
+                                    msg_win.refresh()
 
                         except socket.timeout:
-                            pass
-
-
-                        # Verifica se o usuário pressionou "0" para parar
-                        ch = menu_win.getch()
-                        if ch == ord('0'):
                             break
 
+                    
                     sock.close()
-                    msg = "Deteção encerrada. Nós: " + ", ".join(detected)
+                    msg = "Deteção encerrada. Nós: " + ", ".join(detected) if detected else "Deteção encerrada. Nenhum novo nó detetado."
                     msg_win.clear()
                     msg_win.border()
                     add_msg(msg_win, msg)
                     msg_win.refresh()
 
-                if op2 == "2":
+                elif op2 == "2":
                     ip = get_input(menu_win, "IP do nó:", 10, 2)
                     msg = m.add_no(ip)
                     
@@ -196,7 +193,7 @@ def main(stdscr):
 
                 op2 = get_input(menu_win, "Escolha uma opção:", 10, 2)
                 if op2 == "1":
-                    zona_nome = get_input(menu_win, "Nome da zona:", 10, 2)
+                    zona_nome = get_input(menu_win, "Nome da zona:", 12, 2)
                     msg = m.add_zona(zona_nome)
 
                 elif op2 == "2":
@@ -214,7 +211,7 @@ def main(stdscr):
                     msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
                     msg_win.refresh()
             
-                    zona_nome = get_input(menu_win, "Nome da zona:", 10, 2)
+                    zona_nome = get_input(menu_win, "Nome da zona:", 12, 2)
                     msg = m.remove_zona(zona_nome)
                 elif op2 == "3":
                     zonas = list(m.get_zonas().keys())
@@ -228,7 +225,7 @@ def main(stdscr):
                     msg_win.border()
                     msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
                     msg_win.refresh()
-                    zona_nome = get_input(menu_win, "Nome da zona:", 10, 2)
+                    zona_nome = get_input(menu_win, "Nome da zona:", 12, 2)
                     msg = m.info_zona(zona_nome)
 
                 elif op2 == "4":
@@ -252,8 +249,8 @@ def main(stdscr):
                     msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
                     msg_win.addstr(2, 2, "Nós livres: " + " ".join(nos_livres))
                     msg_win.refresh()
-                    zona_nome = get_input(menu_win, "Nome da zona:", 10, 2)
-                    ip_list = get_input(menu_win, "IP dos nós (separados por espaço):", 11, 2)
+                    zona_nome = get_input(menu_win, "Nome da zona:", 12, 2)
+                    ip_list = get_input(menu_win, "IP dos nós (separados por espaço):", 13, 2)
                     msg = m.add_nos_to_zona(zona_nome, ip_list)
 
                 elif op2 == "5":
@@ -268,13 +265,21 @@ def main(stdscr):
                     msg_win.border()
                     msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
                     msg_win.refresh()
-                    zona_nome = get_input(menu_win, "Nome da zona:", 10, 2)
+                    zona_nome = get_input(menu_win, "Nome da zona:", 12, 2)
                     nos_em_zona = [n.get_ip() for n in m.get_zonas()[zona_nome].get_nos()]
+
+                    if not nos_em_zona:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, f"Não existem nós na zona {zona_nome}.")  
+                        msg_win.refresh()
+                        continue
+
                     msg_win.clear()
                     msg_win.border()
                     msg_win.addstr(1, 2, f"Nós em {zona_nome}: " + ", ".join(nos_em_zona))
                     msg_win.refresh()
-                    ips = get_input(menu_win, "IP dos nós (separados por espaço):", 11, 2)
+                    ips = get_input(menu_win, "IP dos nós (separados por espaço):", 13, 2)
                     msg = m.remove_nos_from_zona(zona_nome, ips)
 
 
@@ -293,8 +298,8 @@ def main(stdscr):
                     msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
                     msg_win.addstr(2, 2, "Canais: " + ", ".join(canais))
                     msg_win.refresh()
-                    zona_nome = get_input(menu_win, "Nome da zona:", 10, 2)
-                    canal = get_input(menu_win, "Canal:", 11, 2)
+                    zona_nome = get_input(menu_win, "Nome da zona:", 12, 2)
+                    canal = get_input(menu_win, "Canal:", 13, 2)
                     msg = m.assign_canal_to_zona(zona_nome, canal)
 
                 elif op2 == "7":
@@ -309,7 +314,7 @@ def main(stdscr):
                     msg_win.border()
                     msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
                     msg_win.refresh()
-                    zona_nome = get_input(menu_win, "Nome da zona:", 10, 2)
+                    zona_nome = get_input(menu_win, "Nome da zona:", 12, 2)
                     msg = m.remove_canal_from_zona(zona_nome)
 
                 elif op2 == "0":
