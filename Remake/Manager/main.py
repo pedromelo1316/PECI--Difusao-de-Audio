@@ -21,6 +21,7 @@ def add_msg(win, msg, start_y=1, start_x=2):
     for i, line in enumerate(lines, start=start_y):
         win.addstr(i, start_x, line)
 
+
 def main(stdscr):
     # Inicializa o manager e canais
     num_canais = 3
@@ -72,7 +73,51 @@ def main(stdscr):
 
 
                 if op2 == "1":
-                    pass
+                    import socket
+                    detected = set()
+                    detection_port = 9090
+
+                    # Prepara socket para broadcast do comando "Detetar"
+                    broadcast_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    broadcast_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+                    broadcast_sock.sendto(b"Detetar", ('<broadcast>', detection_port))
+
+                    '''# Prepara socket para receber respostas (hello)
+                    listen_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    listen_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                    listen_sock.bind(('', detection_port))
+                    listen_sock.setblocking(0)  # torna non-blocking
+
+                    # Loop de deteção com interface reduzida
+                    while True:
+                        menu_win.clear()
+                        menu_win.border()
+                        menu_win.addstr(1, 2, "Detetando nós... (Pressione 0 para parar)")
+                        menu_win.addstr(2, 2, "Nós detectados: " + ", ".join(detected))
+                        menu_win.refresh()
+                        try:
+                            data, addr = listen_sock.recvfrom(1024)
+                            if data.decode('utf-8').strip() == "hello":
+                                ip = addr[0]
+                                if ip not in detected:
+                                    detected.add(ip)
+                                    m.add_no(ip)
+                        except BlockingIOError as e:
+                            pass
+
+                        # Verifica se o usuário pressionou "0" para parar
+                        ch = menu_win.getch()
+                        if ch == ord('0'):
+                            break
+                        time.sleep(0.1)
+
+                    listen_sock.close()
+                    broadcast_sock.close()
+                    msg = "Deteção encerrada. Nós: " + ", ".join(detected)
+                    msg_win.clear()
+                    msg_win.border()
+                    add_msg(msg_win, msg)
+                    msg_win.refresh()'''
 
                 if op2 == "2":
                     ip = get_input(menu_win, "IP do nó:", 10, 2)
@@ -238,7 +283,7 @@ def main(stdscr):
                 menu_win.addstr(5, 2, "0 - Voltar")
                 menu_win.refresh()
 
-                op2 = get_input(menu_win, "Escolha uma opção:", 7, 2)
+                op2 = get_input(menu_win, "Escolha uma opção:", 7 , 2)
                 if op2 == "1":
                     canais = [str(c+1) for c in range(num_canais)]
                     tipos = ["LOCAL", "TRNASMISSAO", "VOZ"]
@@ -345,4 +390,5 @@ def main(stdscr):
             msg_win.refresh()
     
 
-curses.wrapper(main)
+if __name__ == "__main__":
+    curses.wrapper(main)
