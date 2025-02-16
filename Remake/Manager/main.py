@@ -15,6 +15,12 @@ def get_input(win, prompt, pos_y, pos_x):
     curses.noecho()
     return inp
 
+# New helper to print multiline messages with border offset
+def add_msg(win, msg, start_y=1, start_x=2):
+    lines = msg.split("\n")
+    for i, line in enumerate(lines, start=start_y):
+        win.addstr(i, start_x, line)
+
 def main(stdscr):
     # Inicializa o manager e canais
     num_canais = 3
@@ -113,7 +119,7 @@ def main(stdscr):
 
                 msg_win.clear()
                 msg_win.border()
-                msg_win.addstr(1, 2, msg)
+                add_msg(msg_win, msg)
                 msg_win.refresh()
         
 
@@ -211,7 +217,7 @@ def main(stdscr):
 
                 msg_win.clear()
                 msg_win.border()
-                msg_win.addstr(1, 2, msg)
+                add_msg(msg_win, msg)
                 msg_win.refresh()
         
 
@@ -244,7 +250,7 @@ def main(stdscr):
                         msg = "Canal inválido."
                         msg_win.clear()
                         msg_win.border()
-                        msg_win.addstr(1, 2, msg)
+                        add_msg(msg_win, msg)
                         msg_win.refresh()
                         continue
                     msg = m.assign_transmissao_to_canal(canal, tipo)
@@ -262,7 +268,7 @@ def main(stdscr):
                         msg = "Canal inválido."
                         msg_win.clear()
                         msg_win.border()
-                        msg_win.addstr(1, 2, msg)
+                        add_msg(msg_win, msg)
                         msg_win.refresh()
                         continue
                     msg = m.info_canal(canal)
@@ -284,7 +290,7 @@ def main(stdscr):
                         msg = "Canal inválido."
                         msg_win.clear()
                         msg_win.border()
-                        msg_win.addstr(1, 2, msg)
+                        add_msg(msg_win, msg)
                         msg_win.refresh()
                         continue
                     msg = m.assign_zonas_to_canal(canal, zona)
@@ -302,7 +308,7 @@ def main(stdscr):
                         msg = "Canal inválido."
                         msg_win.clear()
                         msg_win.border()
-                        msg_win.addstr(1, 2, msg)
+                        add_msg(msg_win, msg)
                         msg_win.refresh()
                         continue
 
@@ -320,7 +326,7 @@ def main(stdscr):
 
                 msg_win.clear()
                 msg_win.border()
-                msg_win.addstr(1, 2, msg)
+                add_msg(msg_win, msg)
                 msg_win.refresh()
         
         elif op == "0":
@@ -329,7 +335,7 @@ def main(stdscr):
             msg = "Opção inválida."
             msg_win.clear()
             msg_win.border()
-            msg_win.addstr(1, 2, msg)
+            add_msg(msg_win, msg)
             msg_win.refresh()
     
 
