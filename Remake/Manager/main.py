@@ -59,21 +59,26 @@ def main(stdscr):
             while True:
                 menu_win.clear()
                 menu_win.border()
-                menu_win.addstr(1, 2, "1 - Adicionar nó")
-                menu_win.addstr(2, 2, "2 - Remover nó")
-                menu_win.addstr(3, 2, "3 - Informações do nó")
-                menu_win.addstr(4, 2, "4 - Adicionar nó a zona")
-                menu_win.addstr(5, 2, "5 - Remover nó de zona")
-                menu_win.addstr(6, 2, "0 - Voltar")
+                menu_win.addstr(1, 2, "1 - Detetar nós")
+                menu_win.addstr(2, 2, "2 - Adicionar nó")
+                menu_win.addstr(3, 2, "3 - Remover nó")
+                menu_win.addstr(4, 2, "4 - Informações do nó")
+                menu_win.addstr(5, 2, "5 - Adicionar nó a zona")
+                menu_win.addstr(6, 2, "6 - Remover nó de zona")
+                menu_win.addstr(7, 2, "0 - Voltar")
                 menu_win.refresh()
 
                 op2 = get_input(menu_win, "Escolha uma opção:", 8, 2)
 
+
                 if op2 == "1":
+                    pass
+
+                if op2 == "2":
                     ip = get_input(menu_win, "IP do nó:", 10, 2)
                     msg = m.add_no(ip)
                     
-                elif op2 == "2":
+                elif op2 == "3":
                     nos = list(m.get_nos().keys())
                     msg_win.clear()
                     msg_win.border()
@@ -83,7 +88,7 @@ def main(stdscr):
                     ip = get_input(menu_win, "IP do nó:", 10, 2)
                     msg = m.remove_no(ip)
 
-                elif op2 == "3":
+                elif op2 == "4":
                     nos = list(m.get_nos().keys())
                     msg_win.clear()
                     msg_win.border()
@@ -92,7 +97,7 @@ def main(stdscr):
                     ip = get_input(menu_win, "IP do nó:", 10, 2)
                     msg = m.info_no(ip)
 
-                elif op2 == "4":
+                elif op2 == "5":
                     nos_livres = m.get_nos_livres()
                     msg_win.clear()
                     msg_win.border()
@@ -103,7 +108,7 @@ def main(stdscr):
                     zona_nome = get_input(menu_win, "Nome da zona:", 11, 2)
                     msg = m.add_no_to_zona(ip, zona_nome)
 
-                elif op2 == "5":
+                elif op2 == "6":
                     nos_em_zona = m.get_nos_em_zonas()
                     msg_win.clear()
                     msg_win.border()

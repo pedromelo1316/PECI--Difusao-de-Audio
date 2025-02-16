@@ -22,11 +22,13 @@ class manager:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 s.connect((ip, PORT))
-                mensagem = "Conexão estabelecida com o manager: " + str(n.get_id())
+                mensagem = "id=" + str(n.get_id())
                 s.sendall(mensagem.encode('utf-8'))
         except ValueError as e:
+            no.no._ips.remove(ip)
             return f"Erro ao adicionar nó: {e}"
         except socket.error:
+            no.no._ips.remove(ip)
             return "Erro ao conectar com o nó."
 
         self.nos[ip] = n
@@ -35,6 +37,16 @@ class manager:
     def remove_no(self, ip):
         if ip not in self.nos:
             return "Nó não encontrado."
+
+        try:
+            PORT = 8080
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                s.connect((ip, PORT))
+                mensagem = "Nó Removido"
+                s.sendall(mensagem.encode('utf-8'))
+        except socket.error:
+            return "Erro ao conectar com o nó para remoção."
         
         if self.nos[ip].get_zona() is not None:
             self.nos[ip].get_zona().remove_no(self.nos[ip])
@@ -58,22 +70,12 @@ class manager:
         if nome not in self.zonas:
             return "Zona não encontrada."
         
-        port = 8080
+        
         for ip in self.nos:
-            try:
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                    s.connect((ip, port))
-                    mensagem = "Removido da zona: " + nome
-                    s.sendall(mensagem.encode('utf-8'))
-            except socket.error:
-                return f"Erro ao conectar com o nó: {ip}"
+            self.remove_no_from_zona(ip)
         
         if self.zonas[nome].get_canal() is not None:
             self.zonas[nome].get_canal().remove_zona(self.zonas[nome])
-
-        for n_obj in self.zonas[nome].get_nos():
-            n_obj.set_zona(None)
 
         zona.zona._nomes.remove(nome)
         del self.zonas[nome]
@@ -92,9 +94,9 @@ class manager:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 s.connect((ip, PORT))
-                mensagem = "Zona: " + zona_nome
+                mensagem = "zona=" + zona_nome
                 if self.zonas[zona_nome].get_canal() is not None:
-                    mensagem += "; Canal: " + str(self.zonas[zona_nome].get_canal().get_id())
+                    mensagem += ",canal=" + str(self.zonas[zona_nome].get_canal().get_id())
                 s.sendall(mensagem.encode('utf-8'))
         except socket.error:
             return "Erro ao conectar com o nó para adicionar à zona."
@@ -118,18 +120,19 @@ class manager:
             return "Nó não está em nenhuma zona."
         
         try:
-            PORT = 8080
+            port = 8080
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                s.connect((ip, PORT))
-                mensagem = "Nó " + ip + " removido da zona"
+                s.connect((ip, port))
+                mensagem = "Removido da zona"
                 s.sendall(mensagem.encode('utf-8'))
         except socket.error:
-            return "Erro ao conectar com o nó para remoção da zona."
+            return f"Erro ao conectar com o nó: {ip}"
 
         self.nos[ip].get_zona().remove_no(self.nos[ip])
         self.nos[ip].set_zona(None)
         return f"Nó {ip} removido da zona com sucesso."
+        
 
     def remove_nos_from_zona(self, zona_nome, nos):
         nos_list = nos.split()
@@ -153,7 +156,7 @@ class manager:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                     s.connect((n.get_ip(), PORT))
-                    mensagem = "Canal: " + str(canal_id)
+                    mensagem = "canal=" + str(canal_id)
                     s.sendall(mensagem.encode('utf-8'))
         except socket.error:
             return f"Erro ao conectar com o nó: {n.get_ip()}"
