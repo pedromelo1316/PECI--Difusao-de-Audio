@@ -124,6 +124,13 @@ def main(stdscr):
                     
                 elif op2 == "3":
                     nos = list(m.get_nos().keys())
+                    if not nos:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "Não existem nós.")  
+                        msg_win.refresh()
+                        continue
+                    
                     msg_win.clear()
                     msg_win.border()
                     msg_win.addstr(1, 2, "Nós: " + ", ".join(nos))
@@ -194,6 +201,14 @@ def main(stdscr):
 
                 elif op2 == "2":
                     zonas = list(m.get_zonas().keys())
+
+                    if not zonas:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "Não existem zonas.")  
+                        msg_win.refresh()
+                        continue
+
                     msg_win.clear()
                     msg_win.border()
                     msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
@@ -203,6 +218,12 @@ def main(stdscr):
                     msg = m.remove_zona(zona_nome)
                 elif op2 == "3":
                     zonas = list(m.get_zonas().keys())
+                    if not zonas:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "Não existem zonas.")  
+                        msg_win.refresh()
+                        continue
                     msg_win.clear()
                     msg_win.border()
                     msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
@@ -213,6 +234,19 @@ def main(stdscr):
                 elif op2 == "4":
                     zonas = list(m.get_zonas().keys())
                     nos_livres = m.get_nos_livres()
+
+                    if not zonas:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "Não existem zonas.")  
+                        msg_win.refresh()
+                        continue
+                    if not nos_livres:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "Não existem nós livres.")  
+                        msg_win.refresh()
+                        continue
                     msg_win.clear()
                     msg_win.border()
                     msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
@@ -224,6 +258,12 @@ def main(stdscr):
 
                 elif op2 == "5":
                     zonas = list(m.get_zonas().keys())
+                    if not zonas:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "Não existem zonas.")  
+                        msg_win.refresh()
+                        continue
                     msg_win.clear()
                     msg_win.border()
                     msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
@@ -241,6 +281,13 @@ def main(stdscr):
                 elif op2 == "6":
                     zonas = list(m.get_zonas().keys())
                     canais = [str(c+1) for c in range(num_canais)]
+
+                    if not zonas:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "Não existem zonas.")  
+                        msg_win.refresh()
+                        continue
                     msg_win.clear()
                     msg_win.border()
                     msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
@@ -252,6 +299,12 @@ def main(stdscr):
 
                 elif op2 == "7":
                     zonas = list(m.get_zonas().keys())
+                    if not zonas:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "Não existem zonas.")  
+                        msg_win.refresh()
+                        continue
                     msg_win.clear()
                     msg_win.border()
                     msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
