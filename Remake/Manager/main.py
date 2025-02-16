@@ -68,7 +68,7 @@ def main(stdscr):
                 menu_win.addstr(7, 2, "0 - Voltar")
                 menu_win.refresh()
 
-                op2 = get_input(menu_win, "Escolha uma opção:", 8, 2)
+                op2 = get_input(menu_win, "Escolha uma opção:", 9, 2)
 
 
                 if op2 == "1":
@@ -143,7 +143,7 @@ def main(stdscr):
                 menu_win.addstr(8, 2, "0 - Voltar")
                 menu_win.refresh()
 
-                op2 = get_input(menu_win, "Escolha uma opção:", 8, 2)
+                op2 = get_input(menu_win, "Escolha uma opção:", 10, 2)
                 if op2 == "1":
                     zona_nome = get_input(menu_win, "Nome da zona:", 10, 2)
                     msg = m.add_zona(zona_nome)
@@ -238,7 +238,7 @@ def main(stdscr):
                 menu_win.addstr(5, 2, "0 - Voltar")
                 menu_win.refresh()
 
-                op2 = get_input(menu_win, "Escolha uma opção:", 5, 2)
+                op2 = get_input(menu_win, "Escolha uma opção:", 7, 2)
                 if op2 == "1":
                     canais = [str(c+1) for c in range(num_canais)]
                     tipos = ["LOCAL", "TRNASMISSAO", "VOZ"]
@@ -324,6 +324,7 @@ def main(stdscr):
                     msg_win.refresh()
                     zonas = get_input(menu_win, "Zonas (separadas por espaço):", 8, 2)
                     msg = m.remove_zonas_from_canal(canal, zonas)
+
                 elif op2 == "0":
                     break
                 else:
