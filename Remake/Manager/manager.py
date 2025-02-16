@@ -139,7 +139,8 @@ class manager:
                 return f"Falha ao remover alguns nós: {r}"
         return f"Todos os nós removidos da zona {zona_nome} com sucesso."
 
-    def assign_canal_to_zona(self, canal_id, zona_nome):
+    def assign_canal_to_zona(self, zona_nome, canal_id):
+        canal_id = int(canal_id)
         if canal_id not in self.canais:
             return "Canal não encontrado."
         if zona_nome not in self.zonas:
@@ -157,8 +158,54 @@ class manager:
         except socket.error:
             return f"Erro ao conectar com o nó: {n.get_ip()}"
         return "Canal atribuído à zona com sucesso."
+    
+    def assign_zonas_to_canal(self, canal_id, zonas):
+        canal_id = int(canal_id)
+        if canal_id not in self.canais:
+            return "Canal não encontrado."
+        zonas_list = zonas.split()
+        for z in zonas_list:
+            r = self.assign_canal_to_zona(z, canal_id)
+            if "sucesso" not in r:
+                return f"Falha ao atribuir canal a algumas zonas: {r}"
+        return f"Canal atribuído a todas as zonas com sucesso."
+    
+
+    def remove_canal_from_zona(self, zona_nome):
+        if zona_nome not in self.zonas:
+            return "Zona não encontrada."
+        if self.zonas[zona_nome].get_canal() is None:
+            return "Zona não possui canal."
+        
+        canal_id = self.zonas[zona_nome].get_canal().get_id()
+        self.zonas[zona_nome].get_canal().remove_zona(self.zonas[zona_nome])
+        self.zonas[zona_nome].set_canal(None)
+        try:
+            for n in self.zonas[zona_nome].get_nos():
+                PORT = 8080
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                    s.connect((n.get_ip(), PORT))
+                    mensagem = "Canal removido"
+                    s.sendall(mensagem.encode('utf-8'))
+        except socket.error:
+            return f"Erro ao conectar com o nó: {n.get_ip()}"
+        return f"Canal {canal_id} removido da zona com sucesso."
+    
+
+    def remove_zonas_from_canal(self, canal_id, zonas):
+        canal_id = int(canal_id)
+        if canal_id not in self.canais:
+            return "Canal não encontrado."
+        zonas_list = zonas.split()
+        for z in zonas_list:
+            r = self.remove_canal_from_zona(z)
+            if "sucesso" not in r:
+                return f"Falha ao remover canal de algumas zonas: {r}"
+        return f"Canal removido de todas as zonas com sucesso."
 
     def assign_transmissao_to_canal(self, canal_id, tipo):
+        canal_id = int(canal_id)
         if canal_id not in self.canais:
             return "Canal não encontrado."
         if tipo not in ["LOCAL", "TRANSMISSAO", "VOZ"]:
@@ -167,6 +214,7 @@ class manager:
         return "Transmissão atribuída ao canal com sucesso."
 
     def info_canal(self, canal_id):
+        canal_id = int(canal_id)
         if canal_id not in self.canais:
             return "Canal não encontrado."
         info = f"Canal {canal_id}:\n\tTransmissão: {self.canais[canal_id].get_transmissao()}\n\tZonas: "
@@ -203,11 +251,22 @@ class manager:
         return em_zonas
     
 
+    def get_canais(self): 
+        return self.canais
+    
+
     def get_zonas(self):
         return self.zonas
 
     def get_nos(self):
         return self.nos
+    
+    def get_zonas_livres(self):
+        livres = []
+        for z in self.zonas:
+            if self.zonas[z].get_canal() is None:
+                livres.append(z)
+        return livres
 
 
 
