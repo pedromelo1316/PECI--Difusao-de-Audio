@@ -74,45 +74,44 @@ def main(stdscr):
 
 
                 if op2 == "1":
+                    msg_win.clear()
+                    msg_win.border()
                     detected = set()
                     detection_port = 9090
 
-                    # Prepara socket para broadcast do comando "Detetar"
-                    broadcast_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    broadcast_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-                    broadcast_sock.sendto(b"Detetar", ('<broadcast>', detection_port))
-
-                    # Prepara socket para receber respostas (hello)
-                    listen_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    listen_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                    listen_sock.bind(('', detection_port))
-                    listen_sock.setblocking(0)  # torna non-blocking
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+                    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+                    sock.settimeout(3)  # Timeout para não esperar indefinidamente
+                    message = b"Detetar"
+                    sock.sendto(message, ("<broadcast>", detection_port))
 
                     # Loop de deteção com interface reduzida
                     while True:
                         menu_win.clear()
                         menu_win.border()
                         menu_win.addstr(1, 2, "Detetando nós... (Pressione 0 para parar)")
-                        menu_win.addstr(2, 2, "Nós detectados: " + ", ".join(detected))
                         menu_win.refresh()
+
                         try:
-                            data, addr = listen_sock.recvfrom(1024)
+                            data, addr = sock.recvfrom(1024)  # Espera pela resposta
                             if data.decode('utf-8').strip() == "hello":
-                                ip = addr[0]
-                                if ip not in detected:
-                                    detected.add(ip)
-                                    m.add_no(ip)
-                        except BlockingIOError as e:
+                                detected.add(addr[0])
+                                msg = f"Nó {addr[0]} detetado."
+                                add_msg(msg_win, msg)
+                                msg_win.refresh()
+
+                                m.add_no(addr[0])
+
+                        except socket.timeout:
                             pass
+
 
                         # Verifica se o usuário pressionou "0" para parar
                         ch = menu_win.getch()
                         if ch == ord('0'):
                             break
-                        time.sleep(0.1)
 
-                    listen_sock.close()
-                    broadcast_sock.close()
+                    sock.close()
                     msg = "Deteção encerrada. Nós: " + ", ".join(detected)
                     msg_win.clear()
                     msg_win.border()

@@ -42,15 +42,20 @@ def wait_for_info(n, port=8080):
 
 def listen_for_detection(detection_port=9090):
     """Escuta mensagens UDP e responde com 'hello' ao comando 'Detetar'."""
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(('', detection_port))
+    sock.bind(("", detection_port))
+    
     print(f"Escutando detecção na porta {detection_port}...")
     while True:
         data, addr = sock.recvfrom(1024)
         if data.decode('utf-8').strip() == "Detetar":
             print(f"Recebido 'Detetar' de {addr}. Respondendo com 'hello'.")
-            sock.sendto(b"hello", addr)
+            try:
+                sock.sendto(b"hello", addr)
+                print(f"Pacote 'hello' enviado para {addr}.")
+            except Exception as send_exc:
+                print(f"Erro ao enviar 'hello' para {addr}: {send_exc}")
 
 def play_audio(n, port=8081):
     while n.getId() is not None and n.getZona() is not None and n.getCanal() is not None:
