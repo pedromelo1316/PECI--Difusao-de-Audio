@@ -3,6 +3,8 @@ import time
 import manager
 import socket
 import threading
+import queue
+import os
 
 def get_input(win, prompt, pos_y, pos_x):
     """
@@ -442,18 +444,52 @@ def main(stdscr, stop_event):
     
 
 
-
-
-def play_audio(port=8081, stop_event=None):
+def get_local(q, stop_event=None):
     while not stop_event.is_set():
+        # Gera 1024 bytes aleatórios
+        q.put(os.urandom(1024))
+        time.sleep(0.5)
+    print("get_local encerrado.")
+
+def get_transmissao(q, stop_event=None):
+    while not stop_event.is_set():
+        q.put(os.urandom(1024))
+        time.sleep(0.5)
+    print("get_transmissao encerrado.")
+
+def get_voz(q, stop_event=None):
+    while not stop_event.is_set():
+        q.put(os.urandom(1024))
+        time.sleep(0.5)
+    print("get_voz encerrado.")
+
+
+
+def play_audio(port=8081, stop_event=None, q_local=None, q_transmissao=None, q_voz=None):
+    # Aguarda até que cada fila tenha 10 pacotes (10*1024 bytes)
+
+    while q_local.qsize() < 10 or q_transmissao.qsize() < 10 or q_voz.qsize() < 10:
+        if stop_event.is_set():
+            return
+        time.sleep(0.1)
+
+    while not stop_event.is_set():
+        # Lê um pacote de cada fila a cada 0.5s
+        packet_local = q_local.get()
+        packet_trans = q_transmissao.get()
+        packet_voz   = q_voz.get()
+        # Monta a mensagem combinando os dados de cada fila
+        message = packet_local + packet_trans + packet_voz
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        sock.settimeout(3)  # Timeout para não esperar indefinidamente
-        message = b"1:Canal 1;2:Canal 2;3:Canal 3"
         sock.sendto(message, ("<broadcast>", port))
+        sock.close()
         time.sleep(0.5)
-        
     print("play_audio encerrado.")
+
+
+
+
 
 
 
@@ -466,7 +502,12 @@ if __name__ == "__main__":
 
     stop_event = threading.Event()
 
-    # Executa o menu (curses) passando o stop_event
+    # Cria as queues para cada função de "get"
+    q_local = queue.Queue()
+    q_transmissao = queue.Queue()
+    q_voz = queue.Queue()
+
+    # Thread do menu (curses)
     t_menu = threading.Thread(
         target=curses.wrapper, 
         args=(lambda stdscr: main(stdscr, stop_event),),
@@ -474,8 +515,20 @@ if __name__ == "__main__":
     )
     t_menu.start()
 
-    t_play = threading.Thread(target=play_audio, args=(8081, stop_event), daemon=True)
+    # Threads para encher as queues a cada 0.5s
+    t_local = threading.Thread(target=get_local, args=(q_local, stop_event), daemon=True)
+    t_trans = threading.Thread(target=get_transmissao, args=(q_transmissao, stop_event), daemon=True)
+    t_voz   = threading.Thread(target=get_voz, args=(q_voz, stop_event), daemon=True)
+    t_local.start()
+    t_trans.start()
+    t_voz.start()
+
+    # Thread do play_audio que aguarda as queues e envia pacotes a cada 0.5s
+    t_play = threading.Thread(target=play_audio, args=(8081, stop_event, q_local, q_transmissao, q_voz), daemon=True)
     t_play.start()
 
     t_menu.join()
+    t_local.join()
+    t_trans.join()
+    t_voz.join()
     t_play.join()

@@ -63,21 +63,12 @@ def play_audio(n, port=8081):
     sock.bind(("", port))
 
     while n.getId() is not None and n.getZona() is not None and n.getCanal() is not None:
-        data, addr = sock.recvfrom(1024)
-        data = data.decode('utf-8')
+        data, addr = sock.recvfrom(3072)
         try:
-            data = data.split(';')
-            for d in data:
-                if str(n.getCanal()) in d:
-                    data = d
-                    break
-
-            # Confere se data é uma string
-            if isinstance(data, list):
-                data = data[0]  # ou outra forma de tratamento
-
             print(data)
-            canal, audio = data.split(':')
+            canal = int(n.getCanal())
+            audio = data[((canal-1) * 1024):(1024*canal)] if (canal is not None and canal > 0) else b""
+            
             print(f"Data: {audio}")
         except (ValueError, AttributeError) as e:
             print("Erro no processamento:", e)
