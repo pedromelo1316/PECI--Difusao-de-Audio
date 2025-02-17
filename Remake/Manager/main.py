@@ -2,6 +2,7 @@ import curses
 import time
 import manager
 import socket
+import threading
 
 def get_input(win, prompt, pos_y, pos_x):
     """
@@ -23,15 +24,7 @@ def add_msg(win, msg, start_y=1, start_x=2):
         win.addstr(i, start_x, line)
 
 
-def main(stdscr):
-    # Inicializa o manager e canais
-    num_canais = 3
-    m = manager.manager()
-    for i in range(num_canais):
-        # agora add_canal retorna uma mensagem
-        msg = m.add_canal()
-        # opicional: pode logar msg se necessário
-
+def main(stdscr, stop_event):
     curses.curs_set(1)
     stdscr.clear()
     height, width = stdscr.getmaxyx()
@@ -45,7 +38,7 @@ def main(stdscr):
     msg_win  = curses.newwin(msg_height, width, menu_height, 0)
     
 
-    while True:
+    while not stop_event.is_set():
         # Menu principal
         menu_win.clear()
         menu_win.border()
@@ -438,6 +431,7 @@ def main(stdscr):
                 msg_win.refresh()
         
         elif op == "0":
+            stop_event.set()  # Sinaliza para as threads pararem
             break
         else:
             msg = "Opção inválida."
@@ -447,5 +441,41 @@ def main(stdscr):
             msg_win.refresh()
     
 
+
+
+
+def play_audio(port=8081, stop_event=None):
+    while not stop_event.is_set():
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        sock.settimeout(3)  # Timeout para não esperar indefinidamente
+        message = b"1:Canal 1;2:Canal 2;3:Canal 3"
+        sock.sendto(message, ("<broadcast>", port))
+        time.sleep(0.5)
+        
+    print("play_audio encerrado.")
+
+
+
+
 if __name__ == "__main__":
-    curses.wrapper(main)
+    num_canais = 3
+    m = manager.manager()
+    for i in range(num_canais):
+        m.add_canal()
+
+    stop_event = threading.Event()
+
+    # Executa o menu (curses) passando o stop_event
+    t_menu = threading.Thread(
+        target=curses.wrapper, 
+        args=(lambda stdscr: main(stdscr, stop_event),),
+        daemon=True
+    )
+    t_menu.start()
+
+    t_play = threading.Thread(target=play_audio, args=(8081, stop_event), daemon=True)
+    t_play.start()
+
+    t_menu.join()
+    t_play.join()

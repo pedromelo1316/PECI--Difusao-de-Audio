@@ -25,10 +25,12 @@ class manager:
                 mensagem = "id=" + str(n.get_id())
                 s.sendall(mensagem.encode('utf-8'))
         except ValueError as e:
-            no.no._ips.remove(ip)
+            if ip in no.no._ips:
+                no.no._ips.remove(ip)
             return f"Erro ao adicionar nó: {e}"
         except socket.error:
-            no.no._ips.remove(ip)
+            if ip in no.no._ips:
+                no.no._ips.remove(ip)
             return "Erro ao conectar com o nó."
 
         self.nos[ip] = n
@@ -51,8 +53,10 @@ class manager:
         if self.nos[ip].get_zona() is not None:
             self.nos[ip].get_zona().remove_no(self.nos[ip])
 
-        no.no._ips.remove(ip)
-        del self.nos[ip]
+        if ip in no.no._ips:
+            no.no._ips.remove(ip)
+        if ip in self.nos:
+            del self.nos[ip]
         return "Nó removido com sucesso."
 
     def add_zona(self, nome):

@@ -58,9 +58,34 @@ def listen_for_detection(detection_port=9090):
                 print(f"Erro ao enviar 'hello' para {addr}: {send_exc}")
 
 def play_audio(n, port=8081):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(("", port))
+
     while n.getId() is not None and n.getZona() is not None and n.getCanal() is not None:
-        print("Playing audio...")
-        time.sleep(1)
+        data, addr = sock.recvfrom(1024)
+        data = data.decode('utf-8')
+        try:
+            data = data.split(';')
+            for d in data:
+                if str(n.getCanal()) in d:
+                    data = d
+                    break
+
+            # Confere se data é uma string
+            if isinstance(data, list):
+                data = data[0]  # ou outra forma de tratamento
+
+            print(data)
+            canal, audio = data.split(':')
+            print(f"Data: {audio}")
+        except (ValueError, AttributeError) as e:
+            print("Erro no processamento:", e)
+
+        
+
+        
+
     print("Parando Reprodução")
 
 def main():
