@@ -3,6 +3,8 @@ import zona
 import no
 import canal
 
+
+
 class manager:
     def __init__(self):
         self.nos = dict()
@@ -17,38 +19,47 @@ class manager:
 
     def add_no(self, ip):
         try:
+            if ip in no.no._ips:
+                return "IP already exists."
             n = no.no(ip)
+
+            
             PORT = 8080
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 s.connect((ip, PORT))
-                mensagem = "id=" + str(n.get_id())
+                mensagem = "Add Node " + str(n.get_id())
                 s.sendall(mensagem.encode('utf-8'))
+
+                data = s.recv(1024)
+                received_name = data.decode('utf-8').split('=')[1]
+                n.setName(received_name)
+                
         except ValueError as e:
             if ip in no.no._ips:
                 no.no._ips.remove(ip)
-            return f"Erro ao adicionar nó: {e}"
+            return f"Error adding node: {e}"
         except socket.error:
             if ip in no.no._ips:
                 no.no._ips.remove(ip)
-            return "Erro ao conectar com o nó."
+            return "Error connecting to node."
 
         self.nos[ip] = n
-        return f"Nó {ip} adicionado com sucesso."
+        return f"Node {ip} added successfully."
 
-    def remove_no(self, ip):
+    def remove_node(self, ip):
         if ip not in self.nos:
-            return "Nó não encontrado."
+            return "Node not found."
 
         try:
             PORT = 8080
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 s.connect((ip, PORT))
-                mensagem = "Nó Removido"
+                mensagem = "Node removed"
                 s.sendall(mensagem.encode('utf-8'))
         except socket.error:
-            return "Erro ao conectar com o nó para remoção."
+            return "Error connecting to the node for removal."
         
         if self.nos[ip].get_zona() is not None:
             self.nos[ip].get_zona().remove_no(self.nos[ip])
@@ -57,7 +68,16 @@ class manager:
             no.no._ips.remove(ip)
         if ip in self.nos:
             del self.nos[ip]
-        return "Nó removido com sucesso."
+        return "Node removed successfully."
+    
+
+    def rename_node(self, ip, name):
+        if ip not in self.nos:
+            return "Node not found."
+        
+        old_name = self.nos[ip].getName()
+        self.nos[ip].setName(name)
+        return f"Node name {old_name} changed to {name}."
 
     def add_zona(self, nome):
         try:
@@ -70,13 +90,13 @@ class manager:
         self.zonas[nome] = z
         return f"Zona {nome} adicionada com sucesso."
 
-    def remove_zona(self, nome):
+    def remove_area(self, nome):
         if nome not in self.zonas:
             return "Zona não encontrada."
         
         
         for ip in self.nos:
-            self.remove_no_from_zona(ip)
+            self.remove_node_from_area(ip)
         
         if self.zonas[nome].get_canal() is not None:
             self.zonas[nome].get_canal().remove_zona(self.zonas[nome])
@@ -85,13 +105,13 @@ class manager:
         del self.zonas[nome]
         return "Zona removida com sucesso."
 
-    def add_no_to_zona(self, ip, zona_nome):
+    def add_node_to_area(self, ip, zona_nome):
         if ip not in self.nos:
-            return "Nó não encontrado."
+            return "Node not found."
         if zona_nome not in self.zonas:
-            return "Zona não encontrada."
+            return "Area not found."
         if self.nos[ip].get_zona() is not None:
-            return f"Nó já está na zona: {self.nos[ip].get_zona().get_nome()}"
+            return f"Node is in Area: {self.nos[ip].get_zona().get_nome()}"
         
         try:
             PORT = 8080
@@ -103,7 +123,7 @@ class manager:
                     mensagem += ",canal=" + str(self.zonas[zona_nome].get_canal().get_id())
                 s.sendall(mensagem.encode('utf-8'))
         except socket.error:
-            return "Erro ao conectar com o nó para adicionar à zona."
+            return "Error connecting to the node to add to the area."
 
         self.nos[ip].set_zona(self.zonas[zona_nome])
         self.zonas[zona_nome].add_no(self.nos[ip])
@@ -117,25 +137,27 @@ class manager:
                 return f"Falha ao adicionar alguns nós: {r}"
         return f"Todos os nós adicionados à zona {zona_nome} com sucesso."
 
-    def remove_no_from_zona(self, ip):
+    def remove_node_from_area(self, ip):
         if ip not in self.nos:
-            return "Nó não encontrado."
+            return "Node not found."
         if self.nos[ip].get_zona() is None:
-            return "Nó não está em nenhuma zona."
+            return "Node is not in any Area."
         
+        node = self.nos[ip]
         try:
             port = 8080
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 s.connect((ip, port))
-                mensagem = "Removido da zona"
+                mensagem = "Area removed"
                 s.sendall(mensagem.encode('utf-8'))
         except socket.error:
-            return f"Erro ao conectar com o nó: {ip}"
+            return f"Error connecting to Node: {node.getName()}"
 
-        self.nos[ip].get_zona().remove_no(self.nos[ip])
-        self.nos[ip].set_zona(None)
-        return f"Nó {ip} removido da zona com sucesso."
+        
+        node.get_zona().remove_no(self.nos[ip])
+        node.set_zona(None)
+        return f"Node {node.getName()} removed from Area successfully."
         
 
     def remove_nos_from_zona(self, zona_nome, nos):
@@ -231,31 +253,32 @@ class manager:
         info += ", ".join(zonas_list)
         return info
 
-    def info_zona(self, nome):
+    def info_area(self, nome):
         if nome not in self.zonas:
             return "Zona não encontrada."
-        zona_info = f"Zona {nome}:\n\tCanal: {self.zonas[nome].get_canal()}\n\tNós: "
-        zona_info += ", ".join(n.get_ip() for n in self.zonas[nome].get_nos())
-        return zona_info
+        area_info = f"Zona {nome}:\n\tCanal: {self.zonas[nome].get_canal()}\n\tNós: "
+        area_info += ", ".join(n.getName() for n in self.zonas[nome].get_nos())
+        return area_info
 
     def info_no(self, ip):
         if ip not in self.nos:
-            return "Nó não encontrado."
-        return f"Nó {ip}:\n\tZona: {self.nos[ip].get_zona()}"
+            return "Node not found."
+        return self.nos[ip].__str__()
 
-    def get_nos_livres(self):
+    def get_free_nodes(self):
         livres = []
         for n in self.nos:
             if self.nos[n].get_zona() is None:
-                livres.append(n)
+                livres.append(self.nos[n].getName())
         return livres
 
-    def get_nos_em_zonas(self):
-        em_zonas = ""
+    def get_nodes_in_Area(self):
+        in_area = ""
         for n in self.nos:
-            if self.nos[n].get_zona() is not None:
-                em_zonas += f"\tNó {n}: {self.nos[n].get_zona()}\n"
-        return em_zonas
+            node = self.nos[n]
+            if node.get_zona() is not None:
+                in_area += f"\tNode {node.getName()}: {node.get_zona()}\n"
+        return in_area
     
 
     def get_canais(self): 
@@ -268,6 +291,8 @@ class manager:
     def get_nos(self):
         return self.nos
     
+    
+    
     def get_zonas_livres(self):
         livres = []
         for z in self.zonas:
@@ -276,4 +301,9 @@ class manager:
         return livres
 
 
-
+    def get_nodeIP_byName(self, name):
+        for n in self.nos:
+            if self.nos[n].getName() == name:
+                return n
+        return None
+       

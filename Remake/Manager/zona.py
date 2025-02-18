@@ -6,11 +6,11 @@ class zona:
             raise ValueError(f"Zona {nome} já existe")
         self.nome = nome
         self._nomes.add(nome)
-        self.nos = set()
+        self.nos = []
         self.canal = None
 
     def add_no(self, no):
-        self.nos.add(no)
+        self.nos.append(no)
 
     def remove_no(self, no):
         self.nos.remove(no)

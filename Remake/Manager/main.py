@@ -6,6 +6,13 @@ import threading
 import queue
 import os
 
+os.environ["LANG"] = "en_US.UTF-8"
+os.environ["LC_ALL"] = "en_US.UTF-8"
+
+
+
+
+
 def get_input(win, prompt, pos_y, pos_x):
     """
     Exibe o prompt na janela 'win' na posição definida e permite que o usuário
@@ -58,12 +65,13 @@ def main(stdscr, stop_event):
                 menu_win.clear()
                 menu_win.border()
                 menu_win.addstr(1, 2, "1 - Detetar nós")
-                menu_win.addstr(2, 2, "2 - Adicionar nó")
-                menu_win.addstr(3, 2, "3 - Remover nó")
-                menu_win.addstr(4, 2, "4 - Informações do nó")
-                menu_win.addstr(5, 2, "5 - Adicionar nó a zona")
-                menu_win.addstr(6, 2, "6 - Remover nó de zona")
-                menu_win.addstr(7, 2, "0 - Voltar")
+                menu_win.addstr(2, 2, "2 - Add Node")
+                menu_win.addstr(3, 2, "3 - Remove Node")
+                menu_win.addstr(4, 2, "4 - Rename Node")
+                menu_win.addstr(5, 2, "5 - Informações do nó")
+                menu_win.addstr(6, 2, "6 - Add Node to Area")
+                menu_win.addstr(7, 2, "7 - Remove Node from Area")
+                menu_win.addstr(8, 2, "0 - Voltar")
                 menu_win.refresh()
 
                 op2 = get_input(menu_win, "Escolha uma opção:", 9, 2)
@@ -92,8 +100,9 @@ def main(stdscr, stop_event):
 
                         try:
                             data, addr = sock.recvfrom(1024)  # Espera pela resposta
+                            
                             if data.decode('utf-8').strip() == "hello":
-                                if m.add_no(addr[0]) == f"Nó {addr[0]} adicionado com sucesso.":
+                                if m.add_no(addr[0]) == f"Node {addr[0]} added successfully.":
                                     detected.add(addr[0])
                                     msg += f"{addr[0]} "
                                     add_msg(msg_win, msg)
@@ -111,54 +120,75 @@ def main(stdscr, stop_event):
                     msg_win.refresh()
 
                 elif op2 == "2":
-                    ip = get_input(menu_win, "IP do nó:", 10, 2)
+                    ip = get_input(menu_win, "Node IP:", 10, 2)
                     msg = m.add_no(ip)
                     
+
                 elif op2 == "3":
-                    nos = list(m.get_nos().keys())
-                    if not nos:
+                    nodes = [node.getName() for node in m.get_nos().values()]
+                    if not nodes:
                         msg_win.clear()
                         msg_win.border()
-                        msg_win.addstr(1, 2, "Não existem nós.")  
+                        msg_win.addstr(1, 2, "No Nodes")  
                         msg_win.refresh()
                         continue
                     
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Nós: " + ", ".join(nos))
+                    msg_win.addstr(1, 2, "Nodes: " + ", ".join(nodes))
                     msg_win.refresh()
             
-                    ip = get_input(menu_win, "IP do nó:", 10, 2)
-                    msg = m.remove_no(ip)
+                    node_name = get_input(menu_win, "Node Name:", 10, 2)
+                    node_ip = m.get_nodeIP_byName(node_name)
+                    msg = m.remove_node(node_ip)
+
 
                 elif op2 == "4":
-                    nos = list(m.get_nos().keys())
+                    nodes = [node.getName() for node in m.get_nos().values()]
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Nós: " + ", ".join(nos))
+                    msg_win.addstr(1, 2, "Nodes: " + ", ".join(nodes))
                     msg_win.refresh()
-                    ip = get_input(menu_win, "IP do nó:", 10, 2)
-                    msg = m.info_no(ip)
+
+                    node_name = get_input(menu_win, "Node Name:", 10, 2)
+                    node_ip = m.get_nodeIP_byName(node_name)
+                        
+                    new_name = get_input(menu_win, "New Name:", 11, 2)
+                    msg = m.rename_node(node_ip, new_name)
 
                 elif op2 == "5":
-                    nos_livres = m.get_nos_livres()
+                    nos = [node.getName() for node in m.get_nos().values()]
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Nós livres: " + " ".join(nos_livres))
-                    msg_win.addstr(2, 2, "Zonas: " + ", ".join(list(m.get_zonas().keys())))
+                    msg_win.addstr(1, 2, "Nodes: " + ", ".join(nos))
                     msg_win.refresh()
-                    ip = get_input(menu_win, "IP do nó:", 10, 2)
-                    zona_nome = get_input(menu_win, "Nome da zona:", 11, 2)
-                    msg = m.add_no_to_zona(ip, zona_nome)
+
+                    node_name = get_input(menu_win, "Node Name:", 10, 2)
+                    node_ip = m.get_nodeIP_byName(node_name)
+                    msg = m.info_no(node_ip)
 
                 elif op2 == "6":
-                    nos_em_zona = m.get_nos_em_zonas()
+                    free_nodes = m.get_free_nodes()
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Nós em zonas: \n" + nos_em_zona)
+                    msg_win.addstr(1, 2, "Free Nodes: " + " ".join(free_nodes))
+                    msg_win.addstr(2, 2, "Areas: " + ", ".join(list(m.get_zonas().keys())))
                     msg_win.refresh()
-                    ip = get_input(menu_win, "IP do nó:", 10, 2)
-                    msg = m.remove_no_from_zona(ip)
+
+                    node_name = get_input(menu_win, "Node Name:", 10, 2)
+                    area_name = get_input(menu_win, "Area Name:", 11, 2)
+                    node_ip = m.get_nodeIP_byName(node_name)
+                    msg = m.add_node_to_area(node_ip, area_name)
+
+                elif op2 == "7":
+                    nodes_in_area = m.get_nodes_in_Area()
+                    msg_win.clear()
+                    msg_win.border()
+                    msg_win.addstr(1, 2, "Area Nodes: \n" + nodes_in_area)
+                    msg_win.refresh()
+                    node_name = get_input(menu_win, "Node Name:", 10, 2)
+                    node_ip = m.get_nodeIP_byName(node_name)
+                    msg = m.remove_node_from_area(node_ip)
 
                 elif op2 == "0":
                     break
@@ -192,9 +222,9 @@ def main(stdscr, stop_event):
                     msg = m.add_zona(zona_nome)
 
                 elif op2 == "2":
-                    zonas = list(m.get_zonas().keys())
+                    areas = list(m.get_zonas().keys())
 
-                    if not zonas:
+                    if not areas:
                         msg_win.clear()
                         msg_win.border()
                         msg_win.addstr(1, 2, "Não existem zonas.")  
@@ -203,14 +233,14 @@ def main(stdscr, stop_event):
 
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
+                    msg_win.addstr(1, 2, "Zonas: " + ", ".join(areas))
                     msg_win.refresh()
             
-                    zona_nome = get_input(menu_win, "Nome da zona:", 12, 2)
-                    msg = m.remove_zona(zona_nome)
+                    area_name = get_input(menu_win, "Nome da zona:", 12, 2)
+                    msg = m.remove_area(area_name)
                 elif op2 == "3":
-                    zonas = list(m.get_zonas().keys())
-                    if not zonas:
+                    areas = list(m.get_zonas().keys())
+                    if not areas:
                         msg_win.clear()
                         msg_win.border()
                         msg_win.addstr(1, 2, "Não existem zonas.")  
@@ -218,22 +248,22 @@ def main(stdscr, stop_event):
                         continue
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
+                    msg_win.addstr(1, 2, "Zonas: " + ", ".join(areas))
                     msg_win.refresh()
-                    zona_nome = get_input(menu_win, "Nome da zona:", 12, 2)
-                    msg = m.info_zona(zona_nome)
+                    area_nome = get_input(menu_win, "Nome da zona:", 12, 2)
+                    msg = m.info_area(area_nome)
 
                 elif op2 == "4":
-                    zonas = list(m.get_zonas().keys())
-                    nos_livres = m.get_nos_livres()
+                    areas = list(m.get_zonas().keys())
+                    free_nodes = m.get_free_nodes()
 
-                    if not zonas:
+                    if not areas:
                         msg_win.clear()
                         msg_win.border()
                         msg_win.addstr(1, 2, "Não existem zonas.")  
                         msg_win.refresh()
                         continue
-                    if not nos_livres:
+                    if not free_nodes:
                         msg_win.clear()
                         msg_win.border()
                         msg_win.addstr(1, 2, "Não existem nós livres.")  
@@ -241,12 +271,12 @@ def main(stdscr, stop_event):
                         continue
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
-                    msg_win.addstr(2, 2, "Nós livres: " + " ".join(nos_livres))
+                    msg_win.addstr(1, 2, "Zonas: " + ", ".join(areas))
+                    msg_win.addstr(2, 2, "Nós livres: " + " ".join(free_nodes))
                     msg_win.refresh()
-                    zona_nome = get_input(menu_win, "Nome da zona:", 12, 2)
-                    ip_list = get_input(menu_win, "IP dos nós (separados por espaço):", 13, 2)
-                    msg = m.add_nos_to_zona(zona_nome, ip_list)
+                    area_nome = get_input(menu_win, "Nome da zona:", 12, 2)
+                    name_list = get_input(menu_win, "Nodes Names (seperated by spaces):", 13, 2)
+                    msg = m.add_nos_to_zona(area_nome, name_list)
 
                 elif op2 == "5":
                     zonas = list(m.get_zonas().keys())
