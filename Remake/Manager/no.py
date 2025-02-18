@@ -7,13 +7,11 @@ class no:
 
     def __init__(self, ip):
         if ip in no._ips:
-            raise ValueError("IP já utilizado")
-        
+            raise ValueError("IP already in use")       
         try:
             ipaddress.ip_address(ip)
         except ValueError:
-            raise ValueError("IP inválido")
-
+            raise ValueError("Invalid IP")  
         self.id = no._next_id
         self.ip = ip
         self._ips.add(ip)

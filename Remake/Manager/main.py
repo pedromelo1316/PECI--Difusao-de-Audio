@@ -67,7 +67,7 @@ def main(stdscr, stop_event):
                 menu_win.addstr(7, 2, "0 - Back")
                 menu_win.refresh()
 
-                op2 = get_input(menu_win, "Escolha uma opção:", 9, 2)
+                op2 = get_input(menu_win, "Choose an option:", 9, 2)
 
 
                 if op2 == "1":
@@ -112,7 +112,7 @@ def main(stdscr, stop_event):
                     msg_win.refresh()
 
                 elif op2 == "2":
-                    ip = get_input(menu_win, "IP do nó:", 10, 2)
+                    ip = get_input(menu_win, "Node IP:", 10, 2)
                     msg = m.add_no(ip)
                     
                 elif op2 == "3":
@@ -120,25 +120,25 @@ def main(stdscr, stop_event):
                     if not nos:
                         msg_win.clear()
                         msg_win.border()
-                        msg_win.addstr(1, 2, "Não existem nós.")  
+                        msg_win.addstr(1, 2, "No nodes exist.")  
                         msg_win.refresh()
                         continue
                     
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Nós: " + ", ".join(nos))
+                    msg_win.addstr(1, 2, "Nodes: " + ", ".join(nos))
                     msg_win.refresh()
             
-                    ip = get_input(menu_win, "IP do nó:", 10, 2)
+                    ip = get_input(menu_win, "Node IP:", 10, 2)
                     msg = m.remove_no(ip)
 
                 elif op2 == "4":
                     nos = list(m.get_nos().keys())
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Nós: " + ", ".join(nos))
+                    msg_win.addstr(1, 2, "Nodes: " + ", ".join(nos))
                     msg_win.refresh()
-                    ip = get_input(menu_win, "IP do nó:", 10, 2)
+                    ip = get_input(menu_win, "Node IP:", 10, 2)
                     msg = m.info_no(ip)
 
                 elif op2 == "5":
