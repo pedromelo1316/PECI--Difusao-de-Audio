@@ -44,34 +44,34 @@ def main(stdscr, stop_event):
         # Menu principal
         menu_win.clear()
         menu_win.border()
-        menu_win.addstr(1, 2, "1 - Gerir nós")
-        menu_win.addstr(2, 2, "2 - Gerir zonas")
-        menu_win.addstr(3, 2, "3 - Gerir canais")
-        menu_win.addstr(4, 2, "0 - Sair")
-        menu_win.addstr(5,2, "Nós: " + str(len(m.get_nos())))
+        menu_win.addstr(1, 2, "1 - Manage nodes")
+        menu_win.addstr(2, 2, "2 - Manage zones")
+        menu_win.addstr(3, 2, "3 - Manage channels")
+        menu_win.addstr(4, 2, "0 - Exit")
         menu_win.refresh()
 
-        op = get_input(menu_win, "Escolha uma opção:", 6, 2)
+        op = get_input(menu_win, "Choose an option: ",6,2)
+
 
         if op == "1":
             # Submenu de nós
             while True:
                 menu_win.clear()
                 menu_win.border()
-                menu_win.addstr(1, 2, "1 - Detetar nós")
-                menu_win.addstr(2, 2, "2 - Adicionar nó")
-                menu_win.addstr(3, 2, "3 - Remover nó")
-                menu_win.addstr(4, 2, "4 - Informações do nó")
-                menu_win.addstr(5, 2, "5 - Adicionar nó a zona")
-                menu_win.addstr(6, 2, "6 - Remover nó de zona")
-                menu_win.addstr(7, 2, "0 - Voltar")
+                menu_win.addstr(1, 2, "1 - Detect nodes")
+                menu_win.addstr(2, 2, "2 - Add node")
+                menu_win.addstr(3, 2, "3 - Remove node")
+                menu_win.addstr(4, 2, "4 - Node information")
+                menu_win.addstr(5, 2, "5 - Add node to zone")
+                menu_win.addstr(6, 2, "6 - Remove node from zone")
+                menu_win.addstr(7, 2, "0 - Back")
                 menu_win.refresh()
 
                 op2 = get_input(menu_win, "Escolha uma opção:", 9, 2)
 
 
                 if op2 == "1":
-                    msg = "Nós detetados: "
+                    msg = "Nodes detected: "
                     msg_win.clear()
                     msg_win.border()
                     detected = set()
@@ -80,21 +80,21 @@ def main(stdscr, stop_event):
                     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
                     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
                     sock.settimeout(3)  # Timeout para não esperar indefinidamente
-                    message = b"Detetar"
+                    message = b"Detect"
                     sock.sendto(message, ("<broadcast>", detection_port))
 
                     # Loop de deteção com interface reduzida
                     while True:
                         menu_win.clear()
                         menu_win.border()
-                        menu_win.addstr(1, 2, "Detetando novos nós...")
+                        menu_win.addstr(1, 2, "Detecting new nodes...")  # "Detecting new nodes..."
                         menu_win.refresh()
                         time.sleep(0.5)
 
                         try:
-                            data, addr = sock.recvfrom(1024)  # Espera pela resposta
+                            data, addr = sock.recvfrom(1024)  # Wait for response
                             if data.decode('utf-8').strip() == "hello":
-                                if m.add_no(addr[0]) == f"Nó {addr[0]} adicionado com sucesso.":
+                                if m.add_no(addr[0]) == f"Node {addr[0]} added successfully.":  # "Node [IP] added successfully."
                                     detected.add(addr[0])
                                     msg += f"{addr[0]} "
                                     add_msg(msg_win, msg)
@@ -105,7 +105,7 @@ def main(stdscr, stop_event):
 
                     
                     sock.close()
-                    msg = "Deteção encerrada. Nós: " + ", ".join(detected) if detected else "Deteção encerrada. Nenhum novo nó detetado."
+                    msg = "Detection ended. Nodes: " + ", ".join(detected) if detected else "Detection ended. No new nodes detected."
                     msg_win.clear()
                     msg_win.border()
                     add_msg(msg_win, msg)
@@ -145,26 +145,26 @@ def main(stdscr, stop_event):
                     nos_livres = m.get_nos_livres()
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Nós livres: " + " ".join(nos_livres))
-                    msg_win.addstr(2, 2, "Zonas: " + ", ".join(list(m.get_zonas().keys())))
+                    msg_win.addstr(1, 2, "Free nodes: " + " ".join(nos_livres))  # "Free nodes: [list of free nodes]"
+                    msg_win.addstr(2, 2, "Zones: " + ", ".join(list(m.get_zonas().keys())))  # "Zones: [list of zones]"
                     msg_win.refresh()
-                    ip = get_input(menu_win, "IP do nó:", 10, 2)
-                    zona_nome = get_input(menu_win, "Nome da zona:", 11, 2)
+                    ip = get_input(menu_win, "Node IP:", 10, 2)  # Prompt: "Node IP:"
+                    zona_nome = get_input(menu_win, "Zone name:", 11, 2)  # Prompt: "Zone name:"
                     msg = m.add_no_to_zona(ip, zona_nome)
 
                 elif op2 == "6":
                     nos_em_zona = m.get_nos_em_zonas()
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Nós em zonas: \n" + nos_em_zona)
+                    msg_win.addstr(1, 2, "Nodes in zones: \n" + nos_em_zona)  # "Nodes in zones: [list of nodes in zones]"
                     msg_win.refresh()
-                    ip = get_input(menu_win, "IP do nó:", 10, 2)
+                    ip = get_input(menu_win, "Node IP:", 10, 2)  # Prompt: "Node IP:"
                     msg = m.remove_no_from_zona(ip)
 
                 elif op2 == "0":
                     break
                 else:
-                    msg = "Opção inválida."
+                    msg = "Invalid option."  # "Invalid option."
 
                 msg_win.clear()
                 msg_win.border()
@@ -177,19 +177,19 @@ def main(stdscr, stop_event):
             while True:
                 menu_win.clear()
                 menu_win.border()
-                menu_win.addstr(1, 2, "1 - Adicionar zona")
-                menu_win.addstr(2, 2, "2 - Remover zona")
-                menu_win.addstr(3, 2, "3 - Informações de zona")
-                menu_win.addstr(4, 2, "4 - Adicionar nós a zona")
-                menu_win.addstr(5, 2, "5 - Remover nós de zona")
-                menu_win.addstr(6, 2, "6 - Atribuir canal a zona")
-                menu_win.addstr(7, 2, "7 - Remover canal de zona")
-                menu_win.addstr(8, 2, "0 - Voltar")
+                menu_win.addstr(1, 2, "1 - Add zone")
+                menu_win.addstr(2, 2, "2 - Remove zone")
+                menu_win.addstr(3, 2, "3 - Zone information")
+                menu_win.addstr(4, 2, "4 - Add nodes to zone")
+                menu_win.addstr(5, 2, "5 - Remove nodes from zone")
+                menu_win.addstr(6, 2, "6 - Assign channel to zone")
+                menu_win.addstr(7, 2, "7 - Remove channel from zone")
+                menu_win.addstr(8, 2, "0 - Back")
                 menu_win.refresh()
 
-                op2 = get_input(menu_win, "Escolha uma opção:", 10, 2)
+                op2 = get_input(menu_win, "Choose an option:", 10, 2)  # Prompt: "Choose an option:"
                 if op2 == "1":
-                    zona_nome = get_input(menu_win, "Nome da zona:", 12, 2)
+                    zona_nome = get_input(menu_win, "Zone name:", 12, 2)  # Prompt: "Zone name:"
                     msg = m.add_zona(zona_nome)
 
                 elif op2 == "2":
@@ -198,30 +198,31 @@ def main(stdscr, stop_event):
                     if not zonas:
                         msg_win.clear()
                         msg_win.border()
-                        msg_win.addstr(1, 2, "Não existem zonas.")  
+                        msg_win.addstr(1, 2, "No zones exist.")  # "No zones exist."
                         msg_win.refresh()
                         continue
 
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
+                    msg_win.addstr(1, 2, "Zones: " + ", ".join(zonas))  # "Zones: [list of zones]"
                     msg_win.refresh()
-            
-                    zona_nome = get_input(menu_win, "Nome da zona:", 12, 2)
+                
+                    zona_nome = get_input(menu_win, "Zone name:", 12, 2)  # Prompt: "Zone name:"
                     msg = m.remove_zona(zona_nome)
+
                 elif op2 == "3":
                     zonas = list(m.get_zonas().keys())
                     if not zonas:
                         msg_win.clear()
                         msg_win.border()
-                        msg_win.addstr(1, 2, "Não existem zonas.")  
+                        msg_win.addstr(1, 2, "No zones exist.")  # "No zones exist."
                         msg_win.refresh()
                         continue
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
+                    msg_win.addstr(1, 2, "Zones: " + ", ".join(zonas))  # "Zones: [list of zones]"
                     msg_win.refresh()
-                    zona_nome = get_input(menu_win, "Nome da zona:", 12, 2)
+                    zona_nome = get_input(menu_win, "Zone name:", 12, 2)  # Prompt: "Zone name:"
                     msg = m.info_zona(zona_nome)
 
                 elif op2 == "4":
@@ -231,22 +232,22 @@ def main(stdscr, stop_event):
                     if not zonas:
                         msg_win.clear()
                         msg_win.border()
-                        msg_win.addstr(1, 2, "Não existem zonas.")  
+                        msg_win.addstr(1, 2, "No zones exist.")  # "No zones exist."
                         msg_win.refresh()
                         continue
                     if not nos_livres:
                         msg_win.clear()
                         msg_win.border()
-                        msg_win.addstr(1, 2, "Não existem nós livres.")  
+                        msg_win.addstr(1, 2, "No free nodes.")  # "No free nodes."
                         msg_win.refresh()
                         continue
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
-                    msg_win.addstr(2, 2, "Nós livres: " + " ".join(nos_livres))
+                    msg_win.addstr(1, 2, "Zones: " + ", ".join(zonas))  # "Zones: [list of zones]"
+                    msg_win.addstr(2, 2, "Free nodes: " + " ".join(nos_livres))  # "Free nodes: [list of free nodes]"
                     msg_win.refresh()
-                    zona_nome = get_input(menu_win, "Nome da zona:", 12, 2)
-                    ip_list = get_input(menu_win, "IP dos nós (separados por espaço):", 13, 2)
+                    zona_nome = get_input(menu_win, "Zone name:", 12, 2)  # Prompt: "Zone name:"
+                    ip_list = get_input(menu_win, "Node IPs (separated by space):", 13, 2)  # Prompt: "Node IPs (separated by space):"
                     msg = m.add_nos_to_zona(zona_nome, ip_list)
 
                 elif op2 == "5":
@@ -254,30 +255,29 @@ def main(stdscr, stop_event):
                     if not zonas:
                         msg_win.clear()
                         msg_win.border()
-                        msg_win.addstr(1, 2, "Não existem zonas.")  
+                        msg_win.addstr(1, 2, "No zones exist.")  # "No zones exist."
                         msg_win.refresh()
                         continue
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
+                    msg_win.addstr(1, 2, "Zones: " + ", ".join(zonas))  # "Zones: [list of zones]"
                     msg_win.refresh()
-                    zona_nome = get_input(menu_win, "Nome da zona:", 12, 2)
+                    zona_nome = get_input(menu_win, "Zone name:", 12, 2)  # Prompt: "Zone name:"
                     nos_em_zona = [n.get_ip() for n in m.get_zonas()[zona_nome].get_nos()]
 
                     if not nos_em_zona:
                         msg_win.clear()
                         msg_win.border()
-                        msg_win.addstr(1, 2, f"Não existem nós na zona {zona_nome}.")  
+                        msg_win.addstr(1, 2, f"No nodes in zone {zona_nome}.")  # "No nodes in zone [zone name]."
                         msg_win.refresh()
                         continue
 
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, f"Nós em {zona_nome}: " + ", ".join(nos_em_zona))
+                    msg_win.addstr(1, 2, f"Nodes in {zona_nome}: " + ", ".join(nos_em_zona))  # "Nodes in [zone name]: [list of nodes]"
                     msg_win.refresh()
-                    ips = get_input(menu_win, "IP dos nós (separados por espaço):", 13, 2)
+                    ips = get_input(menu_win, "Node IPs (separated by space):", 13, 2)  # Prompt: "Node IPs (separated by space):"
                     msg = m.remove_nos_from_zona(zona_nome, ips)
-
 
                 elif op2 == "6":
                     zonas = list(m.get_zonas().keys())
@@ -286,16 +286,16 @@ def main(stdscr, stop_event):
                     if not zonas:
                         msg_win.clear()
                         msg_win.border()
-                        msg_win.addstr(1, 2, "Não existem zonas.")  
+                        msg_win.addstr(1, 2, "No zones exist.")  # "No zones exist."
                         msg_win.refresh()
                         continue
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
-                    msg_win.addstr(2, 2, "Canais: " + ", ".join(canais))
+                    msg_win.addstr(1, 2, "Zones: " + ", ".join(zonas))  # "Zones: [list of zones]"
+                    msg_win.addstr(2, 2, "Channels: " + ", ".join(canais))  # "Channels: [list of channels]"
                     msg_win.refresh()
-                    zona_nome = get_input(menu_win, "Nome da zona:", 12, 2)
-                    canal = get_input(menu_win, "Canal:", 13, 2)
+                    zona_nome = get_input(menu_win, "Zone name:", 12, 2)  # Prompt: "Zone name:"
+                    canal = get_input(menu_win, "Channel:", 13, 2)  # Prompt: "Channel:"
                     msg = m.assign_canal_to_zona(zona_nome, canal)
 
                 elif op2 == "7":
@@ -303,20 +303,20 @@ def main(stdscr, stop_event):
                     if not zonas:
                         msg_win.clear()
                         msg_win.border()
-                        msg_win.addstr(1, 2, "Não existem zonas.")  
+                        msg_win.addstr(1, 2, "No zones exist.")  # "No zones exist."
                         msg_win.refresh()
                         continue
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Zonas: " + ", ".join(zonas))
+                    msg_win.addstr(1, 2, "Zones: " + ", ".join(zonas))  # "Zones: [list of zones]"
                     msg_win.refresh()
-                    zona_nome = get_input(menu_win, "Nome da zona:", 12, 2)
+                    zona_nome = get_input(menu_win, "Zone name:", 12, 2)  # Prompt: "Zone name:"
                     msg = m.remove_canal_from_zona(zona_nome)
 
                 elif op2 == "0":
                     break
                 else:
-                    msg = "Opção inválida."
+                    msg = "Invalid option."  # "Invalid option."
 
                 msg_win.clear()
                 msg_win.border()
@@ -325,32 +325,32 @@ def main(stdscr, stop_event):
         
 
         elif op == "3":
-            # Submenu de canais
+            # Submenu for channels
             while True:
                 menu_win.clear()
                 menu_win.border()
-                menu_win.addstr(1, 2, "1 - Alterar transmissão do canal")
-                menu_win.addstr(2, 2, "2 - Informações do canal")
-                menu_win.addstr(3, 2, "3 - Atribuir zonas ao canal")
-                menu_win.addstr(4, 2, "4 - Remover zonas do canal")
-                menu_win.addstr(5, 2, "0 - Voltar")
+                menu_win.addstr(1, 2, "1 - Change channel transmission")
+                menu_win.addstr(2, 2, "2 - Channel information")
+                menu_win.addstr(3, 2, "3 - Assign zones to channel")
+                menu_win.addstr(4, 2, "4 - Remove zones from channel")
+                menu_win.addstr(5, 2, "0 - Back")
                 menu_win.refresh()
 
-                op2 = get_input(menu_win, "Escolha uma opção:", 7 , 2)
+                op2 = get_input(menu_win, "Choose an option:", 7, 2)  # Prompt: "Choose an option:"
                 if op2 == "1":
                     canais = [str(c+1) for c in range(num_canais)]
-                    tipos = ["LOCAL", "TRNASMISSAO", "VOZ"]
+                    tipos = ["LOCAL", "TRANSMISSION", "VOICE"]
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Canais: " + ", ".join(canais))
-                    msg_win.addstr(2, 2, "Tipos: " + ", ".join(tipos))
+                    msg_win.addstr(1, 2, "Channels: " + ", ".join(canais))  # "Channels: [list of channels]"
+                    msg_win.addstr(2, 2, "Types: " + ", ".join(tipos))  # "Types: [list of types]"
                     msg_win.refresh()
-                    canal = get_input(menu_win, "Canal:", 9, 2)
-                    tipo = get_input(menu_win, "Tipo de transmissão:", 10, 2)
+                    canal = get_input(menu_win, "Channel:", 9, 2)  # Prompt: "Channel:"
+                    tipo = get_input(menu_win, "Transmission type:", 10, 2)  # Prompt: "Transmission type:"
                     try:
                         canal = int(canal)
                     except ValueError:
-                        msg = "Canal inválido."
+                        msg = "Invalid channel."  # "Invalid channel."
                         msg_win.clear()
                         msg_win.border()
                         add_msg(msg_win, msg)
@@ -362,13 +362,13 @@ def main(stdscr, stop_event):
                     canais = [str(c+1) for c in range(num_canais)]
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Canais: " + ", ".join(canais))
+                    msg_win.addstr(1, 2, "Channels: " + ", ".join(canais))  # "Channels: [list of channels]"
                     msg_win.refresh()
-                    canal = get_input(menu_win, "Canal:", 7, 2)
+                    canal = get_input(menu_win, "Channel:", 7, 2)  # Prompt: "Channel:"
                     try:
                         canal = int(canal)
                     except ValueError:
-                        msg = "Canal inválido."
+                        msg = "Invalid channel."  # "Invalid channel."
                         msg_win.clear()
                         msg_win.border()
                         add_msg(msg_win, msg)
@@ -376,21 +376,20 @@ def main(stdscr, stop_event):
                         continue
                     msg = m.info_canal(canal)
 
-
                 elif op2 == "3":
                     canais = [str(c+1) for c in range(num_canais)]
                     zonas = list(m.get_zonas_livres())
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Canais: " + ", ".join(canais))
-                    msg_win.addstr(2, 2, "Zonas: " + ", ".join(zonas))
+                    msg_win.addstr(1, 2, "Channels: " + ", ".join(canais))  # "Channels: [list of channels]"
+                    msg_win.addstr(2, 2, "Zones: " + ", ".join(zonas))  # "Zones: [list of zones]"
                     msg_win.refresh()
-                    canal = get_input(menu_win, "Canal:", 7, 2)
-                    zona = get_input(menu_win, "Zona:", 8, 2)
+                    canal = get_input(menu_win, "Channel:", 7, 2)  # Prompt: "Channel:"
+                    zona = get_input(menu_win, "Zone:", 8, 2)  # Prompt: "Zone:"
                     try:
                         canal = int(canal)
                     except ValueError:
-                        msg = "Canal inválido."
+                        msg = "Invalid channel."  # "Invalid channel."
                         msg_win.clear()
                         msg_win.border()
                         add_msg(msg_win, msg)
@@ -402,13 +401,13 @@ def main(stdscr, stop_event):
                     canais = [str(c+1) for c in range(num_canais)]
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Canais: " + ", ".join(canais))
+                    msg_win.addstr(1, 2, "Channels: " + ", ".join(canais))  # "Channels: [list of channels]"
                     msg_win.refresh()
-                    canal = get_input(menu_win, "Canal:", 7, 2)
+                    canal = get_input(menu_win, "Channel:", 7, 2)  # Prompt: "Channel:"
                     try:
                         canal = int(canal)
                     except ValueError:
-                        msg = "Canal inválido."
+                        msg = "Invalid channel."  # "Invalid channel."
                         msg_win.clear()
                         msg_win.border()
                         add_msg(msg_win, msg)
@@ -418,31 +417,30 @@ def main(stdscr, stop_event):
                     zonas_em_canal = [zona.get_nome() for zona in list(m.get_canais()[canal].get_zonas())]
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, f"Zonas em {canal}: " + ", ".join(zonas_em_canal))
+                    msg_win.addstr(1, 2, f"Zones in {canal}: " + ", ".join(zonas_em_canal))  # "Zones in [channel]: [list of zones]"
                     msg_win.refresh()
-                    zonas = get_input(menu_win, "Zonas (separadas por espaço):", 8, 2)
+                    zonas = get_input(menu_win, "Zones (separated by space):", 8, 2)  # Prompt: "Zones (separated by space):"
                     msg = m.remove_zonas_from_canal(canal, zonas)
 
                 elif op2 == "0":
                     break
                 else:
-                    msg = "Opção inválida."
+                    msg = "Invalid option."  # "Invalid option."
 
                 msg_win.clear()
                 msg_win.border()
                 add_msg(msg_win, msg)
                 msg_win.refresh()
-        
+
         elif op == "0":
-            stop_event.set()  # Sinaliza para as threads pararem
+            stop_event.set()  # Signal threads to stop
             break
         else:
-            msg = "Opção inválida."
+            msg = "Invalid option."  # "Invalid option."
             msg_win.clear()
             msg_win.border()
             add_msg(msg_win, msg)
             msg_win.refresh()
-    
 
 
 def get_local(q, stop_event=None):
