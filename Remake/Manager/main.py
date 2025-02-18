@@ -226,8 +226,8 @@ def main(stdscr, stop_event):
 
                 op2 = get_input(menu_win, "Choose an option:", 10, 2)  # Prompt: "Choose an option:"
                 if op2 == "1":
-                    area_nome = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
-                    msg = m.add_area(area_nome)
+                    area_name = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
+                    msg = m.add_area(area_name)
 
                 elif op2 == "2":
                     areas = list(m.get_areas().keys())
@@ -261,8 +261,8 @@ def main(stdscr, stop_event):
 
                     msg_win.addstr(1, 2, "Areas: " + ", ".join(areas))
                     msg_win.refresh()
-                    area_nome = get_input(menu_win, "Area Name:", 12, 2)
-                    msg = m.info_area(area_nome)
+                    area_name = get_input(menu_win, "Area Name:", 12, 2)
+                    msg = m.info_area(area_name)
 
 
                 elif op2 == "4":
@@ -287,9 +287,9 @@ def main(stdscr, stop_event):
                     msg_win.addstr(1, 2, "Areas: " + ", ".join(areas))
                     msg_win.addstr(2, 2, "Free Nodes: " + " ".join(free_nodes))
                     msg_win.refresh()
-                    area_nome = get_input(menu_win, "Area Name:", 12, 2)
+                    area_name = get_input(menu_win, "Area Name:", 12, 2)
                     name_list = get_input(menu_win, "Nodes Names (seperated by spaces):", 13, 2)
-                    msg = m.add_nodes_to_area(area_nome, name_list)
+                    msg = m.add_nodes_to_area(area_name, name_list)
 
 
                 elif op2 == "5":
@@ -304,26 +304,26 @@ def main(stdscr, stop_event):
                     msg_win.border()
                     msg_win.addstr(1, 2, "Areas: " + ", ".join(areas))  # "Zones: [list of zones]"
                     msg_win.refresh()
-                    area_nome = get_input(menu_win, "Name Area:", 12, 2)  # Prompt: "Zone name:"
-                    nos_em_area = [n.get_ip() for n in m.get_areas()[area_nome].get_nodes()]
+                    area_name = get_input(menu_win, "Name Area:", 12, 2)  # Prompt: "Zone name:"
+                    nos_em_area = [n.get_ip() for n in m.get_areas()[area_name].get_nodes()]
 
                     if not nos_em_area:
                         msg_win.clear()
                         msg_win.border()
-                        msg_win.addstr(1, 2, f"No nodes in area {area_nome}.")  # "No nodes in zone [zone name]."
+                        msg_win.addstr(1, 2, f"No nodes in area {area_name}.")  # "No nodes in zone [zone name]."
                         msg_win.refresh()
                         continue
 
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, f"Nodes in {area_nome}: " + ", ".join(nos_em_area))  # "Nodes in [zone name]: [list of nodes]"
+                    msg_win.addstr(1, 2, f"Nodes in {area_name}: " + ", ".join(nos_em_area))  # "Nodes in [zone name]: [list of nodes]"
                     msg_win.refresh()
                     ips = get_input(menu_win, "Node IPs (separated by space):", 13, 2)  # Prompt: "Node IPs (separated by space):"
-                    msg = m.remove_nodes_from_area(area_nome, ips)
+                    msg = m.remove_nodes_from_area(area_name, ips)
 
                 elif op2 == "6":
                     areas = list(m.get_areas().keys())
-                    canais = [str(c+1) for c in range(num_canais)]
+                    channels = [str(c+1) for c in range(num_channels)]
 
                     if not areas:
                         msg_win.clear()
@@ -334,11 +334,11 @@ def main(stdscr, stop_event):
                     msg_win.clear()
                     msg_win.border()
                     msg_win.addstr(1, 2, "Areas: " + ", ".join(areas))  # "Zones: [list of zones]"
-                    msg_win.addstr(2, 2, "Channels: " + ", ".join(canais))  # "Channels: [list of channels]"
+                    msg_win.addstr(2, 2, "Channels: " + ", ".join(channels))  # "Channels: [list of channels]"
                     msg_win.refresh()
-                    area_nome = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
-                    canal = get_input(menu_win, "Channel:", 13, 2)  # Prompt: "Channel:"
-                    msg = m.assign_channel_to_area(area_nome, canal)
+                    area_name = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
+                    channel = get_input(menu_win, "Channel:", 13, 2)  # Prompt: "Channel:"
+                    msg = m.assign_channel_to_area(area_name, channel)
 
                 elif op2 == "7":
                     areas = list(m.get_areas().keys())
@@ -352,8 +352,8 @@ def main(stdscr, stop_event):
                     msg_win.border()
                     msg_win.addstr(1, 2, "Areas: " + ", ".join(areas))  # "Zones: [list of zones]"
                     msg_win.refresh()
-                    area_nome = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
-                    msg = m.remove_channel_from_area(area_nome)
+                    area_name = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
+                    msg = m.remove_channel_from_area(area_name)
 
                 elif op2 == "0":
                     break
@@ -380,17 +380,17 @@ def main(stdscr, stop_event):
 
                 op2 = get_input(menu_win, "Choose an option:", 7, 2)  # Prompt: "Choose an option:"
                 if op2 == "1":
-                    canais = [str(c+1) for c in range(num_canais)]
+                    channels = [str(c+1) for c in range(num_channels)]
                     tipos = ["LOCAL", "TRANSMISSION", "VOICE"]
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Channels: " + ", ".join(canais))  # "Channels: [list of channels]"
+                    msg_win.addstr(1, 2, "Channels: " + ", ".join(channels))  # "Channels: [list of channels]"
                     msg_win.addstr(2, 2, "Types: " + ", ".join(tipos))  # "Types: [list of types]"
                     msg_win.refresh()
-                    canal = get_input(menu_win, "Channel:", 9, 2)  # Prompt: "Channel:"
+                    channel = get_input(menu_win, "Channel:", 9, 2)  # Prompt: "Channel:"
                     tipo = get_input(menu_win, "Transmission type:", 10, 2)  # Prompt: "Transmission type:"
                     try:
-                        canal = int(canal)
+                        channel = int(channel)
                     except ValueError:
                         msg = "Invalid channel."  # "Invalid channel."
                         msg_win.clear()
@@ -398,17 +398,17 @@ def main(stdscr, stop_event):
                         add_msg(msg_win, msg)
                         msg_win.refresh()
                         continue
-                    msg = m.assign_transmissao_to_canal(canal, tipo)
+                    msg = m.assign_transmission_to_channel(channel, tipo)
 
                 elif op2 == "2":
-                    canais = [str(c+1) for c in range(num_canais)]
+                    channels = [str(c+1) for c in range(num_channels)]
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Channels: " + ", ".join(canais))  # "Channels: [list of channels]"
+                    msg_win.addstr(1, 2, "Channels: " + ", ".join(channels))  # "Channels: [list of channels]"
                     msg_win.refresh()
-                    canal = get_input(menu_win, "Channel:", 7, 2)  # Prompt: "Channel:"
+                    channel = get_input(menu_win, "Channel:", 7, 2)  # Prompt: "Channel:"
                     try:
-                        canal = int(canal)
+                        channel = int(channel)
                     except ValueError:
                         msg = "Invalid channel."  # "Invalid channel."
                         msg_win.clear()
@@ -416,20 +416,20 @@ def main(stdscr, stop_event):
                         add_msg(msg_win, msg)
                         msg_win.refresh()
                         continue
-                    msg = m.info_canal(canal)
+                    msg = m.info_channel(channel)
 
                 elif op2 == "3":
-                    canais = [str(c+1) for c in range(num_canais)]
+                    channels = [str(c+1) for c in range(num_channels)]
                     areas = list(m.get_free_areas())
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Channels: " + ", ".join(canais))  # "Channels: [list of channels]"
+                    msg_win.addstr(1, 2, "Channels: " + ", ".join(channels))  # "Channels: [list of channels]"
                     msg_win.addstr(2, 2, "Zones: " + ", ".join(areas))  # "Zones: [list of zones]"
                     msg_win.refresh()
-                    canal = get_input(menu_win, "Channel:", 7, 2)  # Prompt: "Channel:"
+                    channel = get_input(menu_win, "Channel:", 7, 2)  # Prompt: "Channel:"
                     area = get_input(menu_win, "Zone:", 8, 2)  # Prompt: "Zone:"
                     try:
-                        canal = int(canal)
+                        channel = int(channel)
                     except ValueError:
                         msg = "Invalid channel."  # "Invalid channel."
                         msg_win.clear()
@@ -437,17 +437,17 @@ def main(stdscr, stop_event):
                         add_msg(msg_win, msg)
                         msg_win.refresh()
                         continue
-                    msg = m.assign_areas_to_canal(canal, area)
+                    msg = m.assign_areas_to_channel(channel, area)
 
                 elif op2 == "4":
-                    canais = [str(c+1) for c in range(num_canais)]
+                    channels = [str(c+1) for c in range(num_channels)]
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Channels: " + ", ".join(canais))  # "Channels: [list of channels]"
+                    msg_win.addstr(1, 2, "Channels: " + ", ".join(channels))  # "Channels: [list of channels]"
                     msg_win.refresh()
-                    canal = get_input(menu_win, "Channel:", 7, 2)  # Prompt: "Channel:"
+                    channel = get_input(menu_win, "Channel:", 7, 2)  # Prompt: "Channel:"
                     try:
-                        canal = int(canal)
+                        channel = int(channel)
                     except ValueError:
                         msg = "Invalid channel."  # "Invalid channel."
                         msg_win.clear()
@@ -456,13 +456,13 @@ def main(stdscr, stop_event):
                         msg_win.refresh()
                         continue
 
-                    areas_em_canal = [area.get_nome() for area in list(m.get_canais()[canal].get_areas())]
+                    areas_em_channel = [area.get_name() for area in list(m.get_channels()[channel].get_areas())]
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, f"Zones in {canal}: " + ", ".join(areas_em_canal))  # "Zones in [channel]: [list of zones]"
+                    msg_win.addstr(1, 2, f"Zones in {channel}: " + ", ".join(areas_em_channel))  # "Zones in [channel]: [list of zones]"
                     msg_win.refresh()
                     areas = get_input(menu_win, "Zones (separated by space):", 8, 2)  # Prompt: "Zones (separated by space):"
-                    msg = m.remove_areas_from_canal(canal, areas)
+                    msg = m.remove_areas_from_channel(channel, areas)
 
                 elif op2 == "0":
                     break
@@ -492,11 +492,11 @@ def get_local(q, stop_event=None):
         time.sleep(0.5)
     print("get_local encerrado.")
 
-def get_transmissao(q, stop_event=None):
+def get_transmission(q, stop_event=None):
     while not stop_event.is_set():
         q.put(os.urandom(1024))
         time.sleep(0.5)
-    print("get_transmissao encerrado.")
+    print("get_transmission encerrado.")
 
 def get_voz(q, stop_event=None):
     while not stop_event.is_set():
@@ -506,10 +506,10 @@ def get_voz(q, stop_event=None):
 
 
 
-def play_audio(port=8081, stop_event=None, q_local=None, q_transmissao=None, q_voz=None):
+def play_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_voz=None):
     # Aguarda até que cada fila tenha 10 pacotes (10*1024 bytes)
 
-    while q_local.qsize() < 10 or q_transmissao.qsize() < 10 or q_voz.qsize() < 10:
+    while q_local.qsize() < 10 or q_transmission.qsize() < 10 or q_voz.qsize() < 10:
         if stop_event.is_set():
             return
         time.sleep(0.1)
@@ -517,7 +517,7 @@ def play_audio(port=8081, stop_event=None, q_local=None, q_transmissao=None, q_v
     while not stop_event.is_set():
         # Lê um pacote de cada fila a cada 0.5s
         packet_local = q_local.get()
-        packet_trans = q_transmissao.get()
+        packet_trans = q_transmission.get()
         packet_voz   = q_voz.get()
         # Monta a mensagem combinando os dados de cada fila
         message = packet_local + packet_trans + packet_voz
@@ -536,16 +536,16 @@ def play_audio(port=8081, stop_event=None, q_local=None, q_transmissao=None, q_v
 
 
 if __name__ == "__main__":
-    num_canais = 3
+    num_channels = 3
     m = manager.manager()
-    for i in range(num_canais):
+    for i in range(num_channels):
         m.add_channel()
 
     stop_event = threading.Event()
 
     # Cria as queues para cada função de "get"
     q_local = queue.Queue()
-    q_transmissao = queue.Queue()
+    q_transmission = queue.Queue()
     q_voz = queue.Queue()
 
     # Thread do menu (curses)
@@ -558,14 +558,14 @@ if __name__ == "__main__":
 
     # Threads para encher as queues a cada 0.5s
     t_local = threading.Thread(target=get_local, args=(q_local, stop_event), daemon=True)
-    t_trans = threading.Thread(target=get_transmissao, args=(q_transmissao, stop_event), daemon=True)
+    t_trans = threading.Thread(target=get_transmission, args=(q_transmission, stop_event), daemon=True)
     t_voz   = threading.Thread(target=get_voz, args=(q_voz, stop_event), daemon=True)
     t_local.start()
     t_trans.start()
     t_voz.start()
 
     # Thread do play_audio que aguarda as queues e envia pacotes a cada 0.5s
-    t_play = threading.Thread(target=play_audio, args=(8081, stop_event, q_local, q_transmissao, q_voz), daemon=True)
+    t_play = threading.Thread(target=play_audio, args=(8081, stop_event, q_local, q_transmission, q_voz), daemon=True)
     t_play.start()
 
     t_menu.join()
