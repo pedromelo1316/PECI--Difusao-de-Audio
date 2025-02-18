@@ -48,6 +48,7 @@ def main(stdscr, stop_event):
         menu_win.addstr(2, 2, "2 - Gerir zonas")
         menu_win.addstr(3, 2, "3 - Gerir canais")
         menu_win.addstr(4, 2, "0 - Sair")
+        menu_win.addstr(5,2, "Nós: " + str(len(m.get_nos())))
         menu_win.refresh()
 
         op = get_input(menu_win, "Escolha uma opção:", 6, 2)
