@@ -27,6 +27,13 @@ def wait_for_info(n, port=8080):
                     elif data == "Canal removido":
                         print("Alteração: Canal removido.")
                         n.setCanal(None)
+                    elif data.__contains__('Add Node'):
+                        n.setId(data.split(' ')[2])
+                        n.setName(socket.gethostname())
+
+                        print(f"Node addded: id={n.getId()}, name={n.getName()}")
+                        conn.sendall(b"Node name=" + n.getName().encode('utf-8'))
+                        
                     else:
                         for item in data.split(','):
                             key, value = item.split('=')
@@ -36,6 +43,8 @@ def wait_for_info(n, port=8080):
                                 n.setZona(value)
                             elif key == 'canal':
                                 n.setCanal(value)
+                            
+                            
                     print(f"Info atualizada: id={n.getId()}, zona={n.getZona()}, canal={n.getCanal()}")
                 except ValueError as e:
                     print("Erro em wait_for_info:", e)

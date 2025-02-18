@@ -3,6 +3,7 @@ class no:
         self.id = None
         self.zona = None
         self.canal = None
+        self.name = None
 
 
     def getId(self):
@@ -22,3 +23,9 @@ class no:
 
     def setCanal(self, canal):
         self.canal = canal
+
+    def setName(self, name):
+        self.name = name
+    
+    def getName(self):
+        return self.name
