@@ -104,7 +104,7 @@ def main(stdscr, stop_event):
                             data, addr = sock.recvfrom(1024)  # Espera pela resposta
                             
                             if data.decode('utf-8').strip() == "hello":
-                                if m.add_no(addr[0]) == f"Node {addr[0]} added successfully.":
+                                if m.add_node(addr[0]) == f"Node {addr[0]} added successfully.":
 
                                     detected.add(addr[0])
                                     msg += f"{addr[0]} "
@@ -124,11 +124,11 @@ def main(stdscr, stop_event):
 
                 elif op2 == "2":
                     ip = get_input(menu_win, "Node IP:", 10, 2)
-                    msg = m.add_no(ip)
+                    msg = m.add_node(ip)
                     
 
                 elif op2 == "3":
-                    nodes = [node.getName() for node in m.get_nos().values()]
+                    nodes = [node.getName() for node in m.get_nodes().values()]
                     if not nodes:
                         msg_win.clear()
                         msg_win.border()
@@ -148,7 +148,7 @@ def main(stdscr, stop_event):
 
 
                 elif op2 == "4":
-                    nodes = [node.getName() for node in m.get_nos().values()]
+                    nodes = [node.getName() for node in m.get_nodes().values()]
                     msg_win.clear()
                     msg_win.border()
 
@@ -162,7 +162,7 @@ def main(stdscr, stop_event):
                     msg = m.rename_node(node_ip, new_name)
 
                 elif op2 == "5":
-                    nos = [node.getName() for node in m.get_nos().values()]
+                    nos = [node.getName() for node in m.get_nodes().values()]
                     msg_win.clear()
                     msg_win.border()
 
@@ -171,7 +171,7 @@ def main(stdscr, stop_event):
 
                     node_name = get_input(menu_win, "Node Name:", 10, 2)
                     node_ip = m.get_nodeIP_byName(node_name)
-                    msg = m.info_no(node_ip)
+                    msg = m.info_node(node_ip)
 
                 elif op2 == "6":
                     free_nodes = m.get_free_nodes()
@@ -179,7 +179,7 @@ def main(stdscr, stop_event):
                     msg_win.border()
 
                     msg_win.addstr(1, 2, "Free Nodes: " + " ".join(free_nodes))
-                    msg_win.addstr(2, 2, "Areas: " + ", ".join(list(m.get_zonas().keys())))
+                    msg_win.addstr(2, 2, "Areas: " + ", ".join(list(m.get_areas().keys())))
                     msg_win.refresh()
 
                     node_name = get_input(menu_win, "Node Name:", 10, 2)
@@ -210,7 +210,7 @@ def main(stdscr, stop_event):
         
 
         elif op == "2":
-            # Submenu de zonas
+            # Submenu de areas
             while True:
                 menu_win.clear()
                 menu_win.border()
@@ -226,11 +226,11 @@ def main(stdscr, stop_event):
 
                 op2 = get_input(menu_win, "Choose an option:", 10, 2)  # Prompt: "Choose an option:"
                 if op2 == "1":
-                    zona_nome = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
-                    msg = m.add_zona(zona_nome)
+                    area_nome = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
+                    msg = m.add_area(area_nome)
 
                 elif op2 == "2":
-                    areas = list(m.get_zonas().keys())
+                    areas = list(m.get_areas().keys())
 
                     if not areas:
                         msg_win.clear()
@@ -249,7 +249,7 @@ def main(stdscr, stop_event):
                     msg = m.remove_area(area_name)
 
                 elif op2 == "3":
-                    areas = list(m.get_zonas().keys())
+                    areas = list(m.get_areas().keys())
                     if not areas:
                         msg_win.clear()
                         msg_win.border()
@@ -266,7 +266,7 @@ def main(stdscr, stop_event):
 
 
                 elif op2 == "4":
-                    areas = list(m.get_zonas().keys())
+                    areas = list(m.get_areas().keys())
                     free_nodes = m.get_free_nodes()
 
                     if not areas:
@@ -289,12 +289,12 @@ def main(stdscr, stop_event):
                     msg_win.refresh()
                     area_nome = get_input(menu_win, "Area Name:", 12, 2)
                     name_list = get_input(menu_win, "Nodes Names (seperated by spaces):", 13, 2)
-                    msg = m.add_nos_to_zona(area_nome, name_list)
+                    msg = m.add_nodes_to_area(area_nome, name_list)
 
 
                 elif op2 == "5":
-                    zonas = list(m.get_zonas().keys())
-                    if not zonas:
+                    areas = list(m.get_areas().keys())
+                    if not areas:
                         msg_win.clear()
                         msg_win.border()
                         msg_win.addstr(1, 2, "No Areas exist.")  # "No zones exist."
@@ -302,30 +302,30 @@ def main(stdscr, stop_event):
                         continue
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Areas: " + ", ".join(zonas))  # "Zones: [list of zones]"
+                    msg_win.addstr(1, 2, "Areas: " + ", ".join(areas))  # "Zones: [list of zones]"
                     msg_win.refresh()
-                    zona_nome = get_input(menu_win, "Name Area:", 12, 2)  # Prompt: "Zone name:"
-                    nos_em_zona = [n.get_ip() for n in m.get_zonas()[zona_nome].get_nos()]
+                    area_nome = get_input(menu_win, "Name Area:", 12, 2)  # Prompt: "Zone name:"
+                    nos_em_area = [n.get_ip() for n in m.get_areas()[area_nome].get_nodes()]
 
-                    if not nos_em_zona:
+                    if not nos_em_area:
                         msg_win.clear()
                         msg_win.border()
-                        msg_win.addstr(1, 2, f"No nodes in area {zona_nome}.")  # "No nodes in zone [zone name]."
+                        msg_win.addstr(1, 2, f"No nodes in area {area_nome}.")  # "No nodes in zone [zone name]."
                         msg_win.refresh()
                         continue
 
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, f"Nodes in {zona_nome}: " + ", ".join(nos_em_zona))  # "Nodes in [zone name]: [list of nodes]"
+                    msg_win.addstr(1, 2, f"Nodes in {area_nome}: " + ", ".join(nos_em_area))  # "Nodes in [zone name]: [list of nodes]"
                     msg_win.refresh()
                     ips = get_input(menu_win, "Node IPs (separated by space):", 13, 2)  # Prompt: "Node IPs (separated by space):"
-                    msg = m.remove_nos_from_zona(zona_nome, ips)
+                    msg = m.remove_nodes_from_area(area_nome, ips)
 
                 elif op2 == "6":
-                    zonas = list(m.get_zonas().keys())
+                    areas = list(m.get_areas().keys())
                     canais = [str(c+1) for c in range(num_canais)]
 
-                    if not zonas:
+                    if not areas:
                         msg_win.clear()
                         msg_win.border()
                         msg_win.addstr(1, 2, "No areas exist.")  # "No zones exist."
@@ -333,16 +333,16 @@ def main(stdscr, stop_event):
                         continue
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Areas: " + ", ".join(zonas))  # "Zones: [list of zones]"
+                    msg_win.addstr(1, 2, "Areas: " + ", ".join(areas))  # "Zones: [list of zones]"
                     msg_win.addstr(2, 2, "Channels: " + ", ".join(canais))  # "Channels: [list of channels]"
                     msg_win.refresh()
-                    zona_nome = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
+                    area_nome = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
                     canal = get_input(menu_win, "Channel:", 13, 2)  # Prompt: "Channel:"
-                    msg = m.assign_canal_to_zona(zona_nome, canal)
+                    msg = m.assign_channel_to_area(area_nome, canal)
 
                 elif op2 == "7":
-                    zonas = list(m.get_zonas().keys())
-                    if not zonas:
+                    areas = list(m.get_areas().keys())
+                    if not areas:
                         msg_win.clear()
                         msg_win.border()
                         msg_win.addstr(1, 2, "No areas exist.")  # "No zones exist."
@@ -350,10 +350,10 @@ def main(stdscr, stop_event):
                         continue
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Areas: " + ", ".join(zonas))  # "Zones: [list of zones]"
+                    msg_win.addstr(1, 2, "Areas: " + ", ".join(areas))  # "Zones: [list of zones]"
                     msg_win.refresh()
-                    zona_nome = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
-                    msg = m.remove_canal_from_zona(zona_nome)
+                    area_nome = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
+                    msg = m.remove_channel_from_area(area_nome)
 
                 elif op2 == "0":
                     break
@@ -420,14 +420,14 @@ def main(stdscr, stop_event):
 
                 elif op2 == "3":
                     canais = [str(c+1) for c in range(num_canais)]
-                    zonas = list(m.get_zonas_livres())
+                    areas = list(m.get_free_areas())
                     msg_win.clear()
                     msg_win.border()
                     msg_win.addstr(1, 2, "Channels: " + ", ".join(canais))  # "Channels: [list of channels]"
-                    msg_win.addstr(2, 2, "Zones: " + ", ".join(zonas))  # "Zones: [list of zones]"
+                    msg_win.addstr(2, 2, "Zones: " + ", ".join(areas))  # "Zones: [list of zones]"
                     msg_win.refresh()
                     canal = get_input(menu_win, "Channel:", 7, 2)  # Prompt: "Channel:"
-                    zona = get_input(menu_win, "Zone:", 8, 2)  # Prompt: "Zone:"
+                    area = get_input(menu_win, "Zone:", 8, 2)  # Prompt: "Zone:"
                     try:
                         canal = int(canal)
                     except ValueError:
@@ -437,7 +437,7 @@ def main(stdscr, stop_event):
                         add_msg(msg_win, msg)
                         msg_win.refresh()
                         continue
-                    msg = m.assign_zonas_to_canal(canal, zona)
+                    msg = m.assign_areas_to_canal(canal, area)
 
                 elif op2 == "4":
                     canais = [str(c+1) for c in range(num_canais)]
@@ -456,13 +456,13 @@ def main(stdscr, stop_event):
                         msg_win.refresh()
                         continue
 
-                    zonas_em_canal = [zona.get_nome() for zona in list(m.get_canais()[canal].get_zonas())]
+                    areas_em_canal = [area.get_nome() for area in list(m.get_canais()[canal].get_areas())]
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, f"Zones in {canal}: " + ", ".join(zonas_em_canal))  # "Zones in [channel]: [list of zones]"
+                    msg_win.addstr(1, 2, f"Zones in {canal}: " + ", ".join(areas_em_canal))  # "Zones in [channel]: [list of zones]"
                     msg_win.refresh()
-                    zonas = get_input(menu_win, "Zones (separated by space):", 8, 2)  # Prompt: "Zones (separated by space):"
-                    msg = m.remove_zonas_from_canal(canal, zonas)
+                    areas = get_input(menu_win, "Zones (separated by space):", 8, 2)  # Prompt: "Zones (separated by space):"
+                    msg = m.remove_areas_from_canal(canal, areas)
 
                 elif op2 == "0":
                     break
@@ -539,7 +539,7 @@ if __name__ == "__main__":
     num_canais = 3
     m = manager.manager()
     for i in range(num_canais):
-        m.add_canal()
+        m.add_channel()
 
     stop_event = threading.Event()
 
