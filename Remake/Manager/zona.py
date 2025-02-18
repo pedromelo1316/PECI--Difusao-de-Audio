@@ -3,7 +3,7 @@ class zona:
 
     def __init__(self, nome):
         if nome in zona._nomes:
-            raise ValueError(f"Zona {nome} já existe")
+            raise ValueError(f"Zone {nome} already exists")
         self.nome = nome
         self._nomes.add(nome)
         self.nos = []
