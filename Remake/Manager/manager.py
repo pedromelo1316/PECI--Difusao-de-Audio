@@ -146,10 +146,12 @@ class manager:
         nodes = nodes.split()
         for n in nodes:
             ip = self.get_nodeIP_byName(n)
+            if ip is None:
+                return f"Failed to add some nodes: Node {n} not found."
             r = self.add_node_to_area(ip, area_name)
             if "successfully" not in r:
                 return f"Failed to add some nodes: {r}"
-            return f"All nodes added to area {area_name} successfully."
+        return f"All nodes added to area {area_name} successfully."
         
 
     def remove_node_from_area(self, ip):
@@ -183,6 +185,8 @@ class manager:
         nodes_list = nodes.split()
         for n in nodes_list:
             ip = self.get_nodeIP_byName(n)
+            if ip is None:
+                return f"Failed to remove some nodes: Node {n} not found."
             r = self.remove_node_from_area(ip)
             if "successfully" not in r:
                 return f"Failed to remove some nodes: {r}"
@@ -277,7 +281,7 @@ class manager:
         if name not in self.areas:
 
             return "Area not found."
-        area_info = f"Area {name}:\n\Channel: {self.areas[name].get_channel()}\n\tNodes: "
+        area_info = f"Area {name}:\n\tChannel: {self.areas[name].get_channel()}\n\tNodes: "
         area_info += ", ".join(n.getName() for n in self.areas[name].get_nodes())
         return area_info
 
@@ -331,5 +335,12 @@ class manager:
         for n in self.nodes:
             if self.nodes[n].getName() == name:
                 return n
+        return None
+    
+
+    def get_nodeName_byIP(self,ip):
+        for n in self.nodes:
+            if n == ip:
+                return self.nodes[n].getName()
         return None
        

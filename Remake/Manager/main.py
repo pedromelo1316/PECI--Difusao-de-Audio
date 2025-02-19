@@ -50,7 +50,7 @@ def main(stdscr, stop_event):
         menu_win.clear()
         menu_win.border()
         menu_win.addstr(1, 2, "1 - Manage nodes")
-        menu_win.addstr(2, 2, "2 - Manage zones")
+        menu_win.addstr(2, 2, "2 - Manage areas")
         menu_win.addstr(3, 2, "3 - Manage channels")
         menu_win.addstr(4, 2, "0 - Exit")
         menu_win.refresh()
