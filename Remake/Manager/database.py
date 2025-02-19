@@ -47,7 +47,7 @@ class NodeDatabase:
 
 
 # TABELA DE NODE 
-    def add_node(self, ip):
+    def add_node_ip(self, ip):
         try:
             self.cursor.execute("INSERT INTO nodes (ip) VALUES (?)", (ip,))
             self.conn.commit()
@@ -63,25 +63,47 @@ class NodeDatabase:
     def add_node_area(self, ip, area):
         self.cursor.execute("UPDATE nodes SET area = ? WHERE ip = ?", (area, ip))
         self.conn.commit()
-        return f"Node {ip} area set to {area}."
+        return f"Node {ip} set to area {area}."
 
-    def remove_node(self, ip):
-        self.cursor.execute("DELETE FROM nodes WHERE ip = ?", (ip,))
+    def remove_node(self, name):
+        self.cursor.execute("DELETE FROM nodes WHERE name = ?", (name,))
         self.conn.commit()
-        return f"Node {ip} removed."
-
-    def get_nodes(self):
-        self.cursor.execute("SELECT * FROM nodes")
-        return self.cursor.fetchall()
-
-    def get_node_by_ip(self, ip):
-        self.cursor.execute("SELECT * FROM nodes WHERE ip = ?", (ip,))
-        return self.cursor.fetchone()
-
+        return f"Node {name} removed."
+    
     def rename_node(self, ip, new_name):
-        self.cursor.execute("UPDATE nodes SET name = ? WHERE ip = ?", (new_name, ip))
+        self.cursor.execute("UPDATE nodes SET name = ? WHERE ip = ?", (new_name, ip))  # Buscar pelo IP
         self.conn.commit()
-        return f"Node {ip} renamed to {new_name}."
+        
+        if self.cursor.rowcount == 0:
+            return f"Error: Node with IP '{ip}' not found or already named '{new_name}'."
+        
+        return f"Node with IP {ip} renamed to {new_name}."
+    
+    def remove_node_area(self, ip):
+        self.cursor.execute("UPDATE nodes SET area = NULL WHERE ip = ?", (ip,))
+        self.conn.commit()
+
+        return f"Node {ip} removed from area."
+    
+    def get_ip(self, name):
+        self.cursor.execute("SELECT ip FROM nodes WHERE name = ?", (name,))
+        result = self.cursor.fetchone()
+        
+        if result:
+            return result[0]  # Retorna apenas o IP como string
+        return None  # Retorna None se o nó não for encontrado
+    
+    def info_node(self, ip):
+        self.cursor.execute("SELECT * FROM nodes WHERE ip = ?", (ip,))
+        result = self.cursor.fetchone()
+        if not result:
+            return None
+        return {
+            "ip": result[1],
+            "name": result[2],
+            "area": result[3]
+        }
+
 
     def close(self):
         self.conn.close()

@@ -109,7 +109,7 @@ def main(stdscr, stop_event):
                                 if m.add_node(addr[0]) == f"Node {addr[0]} added successfully.":
                                     node_ip = addr[0]
                                     node_name = m.get_nodeName_byIP(node_ip)
-                                    db.add_node(addr[0])
+                                    db.add_node_ip(addr[0])
                                     db.add_node_name(addr[0], node_name)
                                     detected.add(addr[0])
                                     msg += f"{addr[0]} "
@@ -130,8 +130,9 @@ def main(stdscr, stop_event):
                 elif op2 == "2":
                     ip = get_input(menu_win, "Node IP:", 12, 2)
                     msg = m.add_node(ip)
-                    
-
+                    node_name = m.get_nodeName_byIP(ip)
+                    db.add_node_ip(ip)
+                    db.add_node_name(ip, node_name)
                 elif op2 == "3":
                     nodes = [node.getName() for node in m.get_nodes().values()]
                     if not nodes:
@@ -149,8 +150,9 @@ def main(stdscr, stop_event):
             
                     node_name = get_input(menu_win, "Node Name:", 12, 2)
                     node_ip = m.get_nodeIP_byName(node_name)
-                    msg = m.remove_node(node_ip)
+                    # msg = m.remove_node(node_ip)
 
+                    msg = db.remove_node(node_ip)
 
                 elif op2 == "4":
                     nodes = [node.getName() for node in m.get_nodes().values()]
@@ -161,10 +163,12 @@ def main(stdscr, stop_event):
                     msg_win.refresh()
 
                     node_name = get_input(menu_win, "Node Name:", 12, 2)
-                    node_ip = m.get_nodeIP_byName(node_name)
-                        
+                    #node_ip = m.get_nodeIP_byName(node_name)
                     new_name = get_input(menu_win, "New Name:", 13, 2)
-                    msg = m.rename_node(node_ip, new_name)
+                    # msg = m.rename_node(node_ip, new_name)
+
+                    ip = db.get_ip(node_name)  # Busca o IP do nó pelo nome
+                    msg = db.rename_node(ip, new_name)
 
                 elif op2 == "5":
                     nos = [node.getName() for node in m.get_nodes().values()]
@@ -175,8 +179,12 @@ def main(stdscr, stop_event):
                     msg_win.refresh()
 
                     node_name = get_input(menu_win, "Node Name:", 12, 2)
-                    node_ip = m.get_nodeIP_byName(node_name)
-                    msg = m.info_node(node_ip)
+                    #node_ip = m.get_nodeIP_byName(node_name)
+                    #msg1 = m.info_node(node_ip)
+
+                    ip = db.get_ip(node_name)  # Busca o IP do nó pelo nome
+                    msg = db.info_node(ip)
+
 
                 elif op2 == "6":
                     free_nodes = m.get_free_nodes()
@@ -189,10 +197,11 @@ def main(stdscr, stop_event):
 
                     node_name = get_input(menu_win, "Node Name:", 12, 2)
                     area_name = get_input(menu_win, "Area Name:", 13, 2)
-                    node_ip = m.get_nodeIP_byName(node_name)
-                    msg = m.add_node_to_area(node_ip, area_name)
+                    #node_ip = m.get_nodeIP_byName(node_name)
+                    #msg = m.add_node_to_area(node_ip, area_name)
 
-                    db.add_node_area(node_ip, area_name)
+                    ip = db.get_ip(node_name)  # procura o ip do no pelo nome
+                    msg = db.add_node_area(ip, area_name)
 
                 elif op2 == "7":
                     nodes_in_area = m.get_nodes_in_Area()
@@ -202,8 +211,13 @@ def main(stdscr, stop_event):
 
                     msg_win.refresh()
                     node_name = get_input(menu_win, "Node Name:", 12, 2)
-                    node_ip = m.get_nodeIP_byName(node_name)
-                    msg = m.remove_node_from_area(node_ip)
+                    #node_ip = m.get_nodeIP_byName(node_name)
+                    #msg = m.remove_node_from_area(node_ip)
+
+                    ip = db.get_ip(node_name)  # procura o ip do no pelo nome
+                    msg = db.remove_node_area(ip)
+
+
 
 
                 elif op2 == "0":
