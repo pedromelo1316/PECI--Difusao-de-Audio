@@ -519,8 +519,7 @@ def get_local(q, stop_event=None):
                     break
                 if not data:
                     break
-                while q.qsize() >= 100 and not stop_event.is_set():
-                    time.sleep(0.1)
+
                 q.put(data)
         except Exception:
             pass
@@ -544,13 +543,15 @@ def get_voz(q, stop_event=None):
 
 
 
-def play_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_voz=None):
+def send_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_voz=None):
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
     while not stop_event.is_set():
         try:
+
+
             packet_local = q_local.get()
             packet_trans = os.urandom(1024)
             packet_voz   = os.urandom(1024)
@@ -603,7 +604,7 @@ if __name__ == "__main__":
     t_voz.start()
 
     # Thread do play_audio que aguarda as queues e envia pacotes a cada 0.5s
-    t_play = threading.Thread(target=play_audio, args=(8081, stop_event, q_local, q_transmission, q_voz), daemon=True)
+    t_play = threading.Thread(target=send_audio, args=(8081, stop_event, q_local, q_transmission, q_voz), daemon=True)
     t_play.start()
 
     t_menu.join()
