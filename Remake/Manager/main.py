@@ -519,7 +519,9 @@ def get_local(q, stop_event=None):
                     break
                 if not data:
                     break
-
+                
+                while q.qsize() > 10:
+                    time.sleep(0.1)
                 q.put(data)
         except Exception:
             pass
