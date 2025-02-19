@@ -5,6 +5,7 @@ import socket
 import threading
 import queue
 import os
+import subprocess
 
 
 
@@ -487,46 +488,82 @@ def main(stdscr, stop_event):
 
 
 def get_local(q, stop_event=None):
+    playlist_dir = "Playlist"  # Pasta com arquivos .mp3
+    files = [os.path.join(playlist_dir, f) for f in os.listdir(playlist_dir) if f.lower().endswith(".mp3")]
+
+    if not files:
+        if stop_event:
+            stop_event.set()
+        return
+
+    file_index = 0
     while not stop_event.is_set():
-        # Gera 1024 bytes aleatórios
-        q.put(os.urandom(1024))
-        time.sleep(0.5)
-    print("get_local encerrado.")
+        current_file = files[file_index]
+        command = [
+            "ffmpeg",
+            "-hide_banner",
+            "-loglevel", "error",
+            "-i", current_file,
+            "-f", "s16le",
+            "-acodec", "pcm_s16le",
+            "-ar", "44100",
+            "-ac", "2",
+            "pipe:1"
+        ]
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        try:
+            while not stop_event.is_set():
+                try:
+                    data = process.stdout.read(1024)
+                except OSError:
+                    break
+                if not data:
+                    break
+                while q.qsize() >= 100 and not stop_event.is_set():
+                    time.sleep(0.1)
+                q.put(data)
+        except Exception:
+            pass
+        finally:
+            if process.stdout:
+                process.stdout.close()
+            process.terminate()
+            process.wait()
+        file_index = (file_index + 1) % len(files)
+
 
 def get_transmission(q, stop_event=None):
     while not stop_event.is_set():
-        q.put(os.urandom(1024))
-        time.sleep(0.5)
+        time.sleep(2)
     print("get_transmission encerrado.")
 
 def get_voz(q, stop_event=None):
     while not stop_event.is_set():
-        q.put(os.urandom(1024))
-        time.sleep(0.5)
+        time.sleep(2)
     print("get_voz encerrado.")
 
 
 
 def play_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_voz=None):
-    # Aguarda até que cada fila tenha 10 pacotes (10*1024 bytes)
 
-    while q_local.qsize() < 10 or q_transmission.qsize() < 10 or q_voz.qsize() < 10:
-        if stop_event.is_set():
-            return
-        time.sleep(0.1)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
     while not stop_event.is_set():
-        # Lê um pacote de cada fila a cada 0.5s
-        packet_local = q_local.get()
-        packet_trans = q_transmission.get()
-        packet_voz   = q_voz.get()
-        # Monta a mensagem combinando os dados de cada fila
-        message = packet_local + packet_trans + packet_voz
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        sock.sendto(message, ("<broadcast>", port))
-        sock.close()
-        time.sleep(0.5)
+        try:
+            packet_local = q_local.get()
+            packet_trans = os.urandom(1024)
+            packet_voz   = os.urandom(1024)
+            #packet_trans = q_transmission.get()
+            #packet_voz   = q_voz.get()
+
+            message = packet_local + packet_trans + packet_voz
+
+            sock.sendto(message, ("<broadcast>", port))
+        except queue.Empty:
+            time.sleep(0.5)
+            
+    sock.close()
     print("play_audio encerrado.")
 
 
