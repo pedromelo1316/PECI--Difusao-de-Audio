@@ -60,14 +60,14 @@ class manager:
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 s.connect((ip, PORT))
 
-                mensagem = "Node removed"
+                mensagem = "Node Removed"
                 s.sendall(mensagem.encode('utf-8'))
         except socket.error:
             return "Error connecting to the node for removal."
         
 
         if self.nodes[ip].get_area() is not None:
-            self.nodes[ip].get_area().remove_no(self.nodes[ip])
+            self.nodes[ip].get_area().remove_node(self.nodes[ip])
 
         if ip in node_server.node_server._ips:
             node_server.node_server._ips.remove(ip)
@@ -138,14 +138,15 @@ class manager:
 
 
         self.nodes[ip].set_area(self.areas[area_name])
-        self.areas[area_name].add_no(self.nodes[ip])
+        self.areas[area_name].add_node(self.nodes[ip])
         return f"Node {ip} added to area {area_name} successfully."
     
 
     def add_nodes_to_area(self, area_name, nodes):
         nodes = nodes.split()
         for n in nodes:
-            r = self.add_no_to_area(n, area_name)
+            ip = self.get_nodeIP_byName(n)
+            r = self.add_node_to_area(ip, area_name)
             if "successfully" not in r:
                 return f"Failed to add some nodes: {r}"
             return f"All nodes added to area {area_name} successfully."
@@ -166,13 +167,13 @@ class manager:
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 s.connect((ip, port))
 
-                mensagem = "Area removed"
+                mensagem = "Area Removed"
                 s.sendall(mensagem.encode('utf-8'))
         except socket.error:
             return f"Error connecting to Node: {node.getName()}"
 
         
-        node.get_area().remove_no(self.nodes[ip])
+        node.get_area().remove_node(self.nodes[ip])
         node.set_area(None)
         return f"Node {node.getName()} removed from Area successfully."
 
@@ -181,7 +182,8 @@ class manager:
     def remove_nodes_from_area(self, area_name, nodes):
         nodes_list = nodes.split()
         for n in nodes_list:
-            r = self.remove_no_from_area(n)
+            ip = self.get_nodeIP_byName(n)
+            r = self.remove_node_from_area(ip)
             if "successfully" not in r:
                 return f"Failed to remove some nodes: {r}"
         return f"All nodes removed from zone {area_name} successfully."
@@ -234,7 +236,7 @@ class manager:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                     s.connect((n.get_ip(), PORT))
-                    mensagem = "Channel removed"
+                    mensagem = "Channel Removed"
                     s.sendall(mensagem.encode('utf-8'))
         except socket.error:
             return f"Error connecting to node: {n.get_ip()}"
@@ -264,7 +266,7 @@ class manager:
         channel_id = int(channel_id)
         if channel_id not in self.channels:
             return "Channel not found."
-        info = f"Channel {channel_id}:\n\tTransmission: {self.channels[channel_id].get_transmission()}\n\Areas: "
+        info = f"Channel {channel_id}:\n\tTransmission: {self.channels[channel_id].get_transmission()}\n\tAreas: "
         areas_list = []
         for z in self.channels[channel_id].get_areas():
             areas_list.append(z.get_name())
@@ -300,7 +302,7 @@ class manager:
 
             node = self.nodes[n]
             if node.get_area() is not None:
-                in_area += f"\tNode {node.getName()}: {node.get_area()}\n"
+                in_area += f"\n\tNode {node.getName()}: {node.get_area()}\n"
         return in_area
 
     

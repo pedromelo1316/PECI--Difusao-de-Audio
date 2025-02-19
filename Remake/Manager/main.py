@@ -75,7 +75,7 @@ def main(stdscr, stop_event):
 
                 menu_win.refresh()
 
-                op2 = get_input(menu_win, "Choose an option:", 9, 2)
+                op2 = get_input(menu_win, "Choose an option:", 10, 2)
 
 
                 if op2 == "1":
@@ -123,7 +123,7 @@ def main(stdscr, stop_event):
                     msg_win.refresh()
 
                 elif op2 == "2":
-                    ip = get_input(menu_win, "Node IP:", 10, 2)
+                    ip = get_input(menu_win, "Node IP:", 12, 2)
                     msg = m.add_node(ip)
                     
 
@@ -142,7 +142,7 @@ def main(stdscr, stop_event):
                     msg_win.addstr(1, 2, "Nodes: " + ", ".join(nodes))
                     msg_win.refresh()
             
-                    node_name = get_input(menu_win, "Node Name:", 10, 2)
+                    node_name = get_input(menu_win, "Node Name:", 12, 2)
                     node_ip = m.get_nodeIP_byName(node_name)
                     msg = m.remove_node(node_ip)
 
@@ -155,10 +155,10 @@ def main(stdscr, stop_event):
                     msg_win.addstr(1, 2, "Nodes: " + ", ".join(nodes))
                     msg_win.refresh()
 
-                    node_name = get_input(menu_win, "Node Name:", 10, 2)
+                    node_name = get_input(menu_win, "Node Name:", 12, 2)
                     node_ip = m.get_nodeIP_byName(node_name)
                         
-                    new_name = get_input(menu_win, "New Name:", 11, 2)
+                    new_name = get_input(menu_win, "New Name:", 13, 2)
                     msg = m.rename_node(node_ip, new_name)
 
                 elif op2 == "5":
@@ -169,7 +169,7 @@ def main(stdscr, stop_event):
                     msg_win.addstr(1, 2, "Nodes: " + ", ".join(nos))
                     msg_win.refresh()
 
-                    node_name = get_input(menu_win, "Node Name:", 10, 2)
+                    node_name = get_input(menu_win, "Node Name:", 12, 2)
                     node_ip = m.get_nodeIP_byName(node_name)
                     msg = m.info_node(node_ip)
 
@@ -182,8 +182,8 @@ def main(stdscr, stop_event):
                     msg_win.addstr(2, 2, "Areas: " + ", ".join(list(m.get_areas().keys())))
                     msg_win.refresh()
 
-                    node_name = get_input(menu_win, "Node Name:", 10, 2)
-                    area_name = get_input(menu_win, "Area Name:", 11, 2)
+                    node_name = get_input(menu_win, "Node Name:", 12, 2)
+                    area_name = get_input(menu_win, "Area Name:", 13, 2)
                     node_ip = m.get_nodeIP_byName(node_name)
                     msg = m.add_node_to_area(node_ip, area_name)
 
@@ -191,9 +191,10 @@ def main(stdscr, stop_event):
                     nodes_in_area = m.get_nodes_in_Area()
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, "Area Nodes: \n" + nodes_in_area)
+                    add_msg(msg_win, "Nodes in areas: "+ nodes_in_area)
+
                     msg_win.refresh()
-                    node_name = get_input(menu_win, "Node Name:", 10, 2)
+                    node_name = get_input(menu_win, "Node Name:", 12, 2)
                     node_ip = m.get_nodeIP_byName(node_name)
                     msg = m.remove_node_from_area(node_ip)
 
@@ -305,7 +306,7 @@ def main(stdscr, stop_event):
                     msg_win.addstr(1, 2, "Areas: " + ", ".join(areas))  # "Zones: [list of zones]"
                     msg_win.refresh()
                     area_name = get_input(menu_win, "Name Area:", 12, 2)  # Prompt: "Zone name:"
-                    nos_em_area = [n.get_ip() for n in m.get_areas()[area_name].get_nodes()]
+                    nos_em_area = [n.getName() for n in m.get_areas()[area_name].get_nodes()]
 
                     if not nos_em_area:
                         msg_win.clear()
@@ -318,8 +319,8 @@ def main(stdscr, stop_event):
                     msg_win.border()
                     msg_win.addstr(1, 2, f"Nodes in {area_name}: " + ", ".join(nos_em_area))  # "Nodes in [zone name]: [list of nodes]"
                     msg_win.refresh()
-                    ips = get_input(menu_win, "Node IPs (separated by space):", 13, 2)  # Prompt: "Node IPs (separated by space):"
-                    msg = m.remove_nodes_from_area(area_name, ips)
+                    names = get_input(menu_win, "Node Names (separated by space):", 13, 2)  # Prompt: "Node IPs (separated by space):"
+                    msg = m.remove_nodes_from_area(area_name, names)
 
                 elif op2 == "6":
                     areas = list(m.get_areas().keys())
@@ -406,7 +407,7 @@ def main(stdscr, stop_event):
                     msg_win.border()
                     msg_win.addstr(1, 2, "Channels: " + ", ".join(channels))  # "Channels: [list of channels]"
                     msg_win.refresh()
-                    channel = get_input(menu_win, "Channel:", 7, 2)  # Prompt: "Channel:"
+                    channel = get_input(menu_win, "Channel:", 9, 2)  # Prompt: "Channel:"
                     try:
                         channel = int(channel)
                     except ValueError:
@@ -424,10 +425,10 @@ def main(stdscr, stop_event):
                     msg_win.clear()
                     msg_win.border()
                     msg_win.addstr(1, 2, "Channels: " + ", ".join(channels))  # "Channels: [list of channels]"
-                    msg_win.addstr(2, 2, "Zones: " + ", ".join(areas))  # "Zones: [list of zones]"
+                    msg_win.addstr(2, 2, "Zones (separated by space):" + ", ".join(areas))  # "Zones: [list of zones]"
                     msg_win.refresh()
-                    channel = get_input(menu_win, "Channel:", 7, 2)  # Prompt: "Channel:"
-                    area = get_input(menu_win, "Zone:", 8, 2)  # Prompt: "Zone:"
+                    channel = get_input(menu_win, "Channel:", 9, 2)  # Prompt: "Channel:"
+                    area = get_input(menu_win, "Zone:", 10, 2)  # Prompt: "Zone:"
                     try:
                         channel = int(channel)
                     except ValueError:
@@ -445,7 +446,7 @@ def main(stdscr, stop_event):
                     msg_win.border()
                     msg_win.addstr(1, 2, "Channels: " + ", ".join(channels))  # "Channels: [list of channels]"
                     msg_win.refresh()
-                    channel = get_input(menu_win, "Channel:", 7, 2)  # Prompt: "Channel:"
+                    channel = get_input(menu_win, "Channel:", 9, 2)  # Prompt: "Channel:"
                     try:
                         channel = int(channel)
                     except ValueError:
@@ -461,7 +462,7 @@ def main(stdscr, stop_event):
                     msg_win.border()
                     msg_win.addstr(1, 2, f"Zones in {channel}: " + ", ".join(areas_em_channel))  # "Zones in [channel]: [list of zones]"
                     msg_win.refresh()
-                    areas = get_input(menu_win, "Zones (separated by space):", 8, 2)  # Prompt: "Zones (separated by space):"
+                    areas = get_input(menu_win, "Zones (separated by space):", 10, 2)  # Prompt: "Zones (separated by space):"
                     msg = m.remove_areas_from_channel(channel, areas)
 
                 elif op2 == "0":
