@@ -153,6 +153,14 @@ def main(stdscr, stop_event):
                     msg_win.clear()
                     msg_win.border()
 
+                    if not nodes:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "No Nodes")  
+
+                        msg_win.refresh()
+                        continue
+
                     msg_win.addstr(1, 2, "Nodes: " + ", ".join(nodes))
                     msg_win.refresh()
 
@@ -167,6 +175,14 @@ def main(stdscr, stop_event):
                     msg_win.clear()
                     msg_win.border()
 
+                    if not nos:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "No Nodes")  
+
+                        msg_win.refresh()
+                        continue
+
                     msg_win.addstr(1, 2, "Nodes: " + ", ".join(nos))
                     msg_win.refresh()
 
@@ -178,6 +194,14 @@ def main(stdscr, stop_event):
                     free_nodes = m.get_free_nodes()
                     msg_win.clear()
                     msg_win.border()
+
+                    if not free_nodes:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "No Nodes")  
+
+                        msg_win.refresh()
+                        continue
 
                     msg_win.addstr(1, 2, "Free Nodes: " + " ".join(free_nodes))
                     msg_win.addstr(2, 2, "Areas: " + ", ".join(list(m.get_areas().keys())))
@@ -192,6 +216,15 @@ def main(stdscr, stop_event):
                     nodes_in_area = m.get_nodes_in_Area()
                     msg_win.clear()
                     msg_win.border()
+
+                    if not nodes_in_area:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "No Nodes")  
+
+                        msg_win.refresh()
+                        continue
+
                     add_msg(msg_win, "Nodes in areas: "+ nodes_in_area)
 
                     msg_win.refresh()

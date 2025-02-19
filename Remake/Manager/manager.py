@@ -37,12 +37,12 @@ class manager:
                 n.setName(received_name)
                 
         except ValueError as e:
-            if ip in node_server.no._ips:
-                node_server.no._ips.remove(ip)
+            if ip in node_server.node_server._ips:
+                node_server.node_server._ips.remove(ip)
             return f"Error adding node: {e}"
         except socket.error:
-            if ip in node_server.no._ips:
-                node_server.no._ips.remove(ip)
+            if ip in node_server.node_server._ips:
+                node_server.node_server._ips.remove(ip)
 
             return "Error connecting to node."
 
