@@ -2,6 +2,8 @@ import socket
 import threading
 import time
 import node_client
+import queue
+import pyaudio
 
 def wait_for_info(n, port=8080):
     while True:
@@ -67,31 +69,77 @@ def listen_for_detection(detection_port=9090):
                 print(f"Error sending 'hello' to {addr}: {send_exc}")
 
 
-def play_audio(n, port=8081):
+
+def play_audio_from_queue(audio_queue, stop_event, min_buffer_size=3000):
+    """Continuously plays audio from the queue, starting only when the buffer has enough data."""
+    p = pyaudio.PyAudio()
+    stream = p.open(format=pyaudio.paInt16,
+                    channels=2,
+                    rate=44100,
+                    output=True)
+
+    # Espera a fila encher até um certo ponto antes de iniciar a reprodução
+    while audio_queue.qsize() < min_buffer_size and not stop_event.is_set():
+        print("Waiting for buffer to fill...")
+        time.sleep(0.1)
+
+    try:
+        while not stop_event.is_set():
+            if not audio_queue.empty():
+                data = audio_queue.get()
+                stream.write(data)
+                print(f"Playing audio... Queue size: {audio_queue.qsize()}")
+            else:
+                print("Buffer underrun, waiting for more data...")
+                time.sleep(0.1)
+    finally:
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+
+
+
+
+def receive_broadcast(audio_queue, n, stop_event, port=8081):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind(("", port))
+    sock.settimeout(1)
 
     canal = n.getChannel()
-    while n.getId() is not None and n.getArea() is not None and canal is not None:
-        data, addr = sock.recvfrom(3072)
-        try:
-            
-            Channel = int(canal)
-            audio = data[((Channel-1) * 1024):(1024*Channel)] if (Channel is not None and Channel > 0) else b""
-            
-            print(f"Data: {audio}")
-        except (ValueError, AttributeError) as e:
-            print("Error in processing:", e)
+    try:
+        while not stop_event.is_set():
+
+            data, addr = sock.recvfrom(3072)
+            try:
+                
+                Channel = int(canal)
+                audio = data[((Channel-1) * 1024):(1024*Channel)] if (Channel is not None and Channel > 0) else b""
+                
+                audio_queue.put(audio) if audio else None
+
+            except (ValueError, AttributeError) as e:
+                print("Error in processing:", e)
+
+            except socket.timeout:
+                continue
 
         canal = n.getChannel()
-        
 
+    finally:
+        sock.close()
         
-
     print("Stopping playback")
+
+
 def main():
     n = node_client.node_client() 
+
+    audio_queue = queue.Queue()
+
+    stop_event = threading.Event()
+
+
     # Thread para aguardar informações e alterações
     t_info = threading.Thread(target=wait_for_info, args=(n, 8080), daemon=True)
     t_info.start()
@@ -103,9 +151,26 @@ def main():
         # Aguarda o nó ficar “completo” (com todas as infos)
         if n.getId() is not None and n.getArea() is not None and n.getChannel() is not None:
             print(f"Starting playback for zone {n.getArea()}...")
-            t_audio = threading.Thread(target=play_audio, args=(n, 8081))
+            t_receive = threading.Thread(target=receive_broadcast, args=(audio_queue,n,stop_event ,8081) ,daemon=True)
+            t_audio = threading.Thread(target=play_audio_from_queue, args=(audio_queue, stop_event), daemon=True)
             t_audio.start()
-            t_audio.join()  # Aguarda encerramento da reprodução quando alguma info for removida.
+            t_receive.start()
+
+
+
+            while n.getId() is not None and n.getArea() is not None and n.getChannel() is not None:
+                time.sleep(0.5)
+        
+
+             # Se a informação do nó for removida, sinaliza para parar os threads de áudio
+            stop_event.set()
+            t_audio.join()
+            t_receive.join()
+            print("Reprodução interrompida. Aguardando novas informações...")
+            # Reinicia o stop_event e limpa o buffer para a próxima reprodução
+            stop_event.clear()
+            while not audio_queue.empty():
+                audio_queue.get()
         time.sleep(0.5)
 
 if __name__ == "__main__":
