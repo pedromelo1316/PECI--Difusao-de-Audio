@@ -400,6 +400,7 @@ def main(stdscr, stop_event):
                         add_msg(msg_win, msg)
                         msg_win.refresh()
                         continue
+
                     msg = m.assign_transmission_to_channel(channel, tipo)
 
                 elif op2 == "2":
@@ -488,47 +489,9 @@ def main(stdscr, stop_event):
 
 
 def get_local(q, stop_event=None):
-    playlist_dir = "Playlist"  # Pasta com arquivos .mp3
-    files = [os.path.join(playlist_dir, f) for f in os.listdir(playlist_dir) if f.lower().endswith(".mp3")]
-
-    if not files:
-        if stop_event:
-            stop_event.set()
-        return
-
-    file_index = 0
     while not stop_event.is_set():
-        current_file = files[file_index]
-        command = [
-            "ffmpeg",
-            "-hide_banner",
-            "-loglevel", "error",
-            "-i", current_file,
-            "-f", "s16le",
-            "-acodec", "pcm_s16le",
-            "-ar", "44100",
-            "-ac", "2",
-            "pipe:1"
-        ]
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-        try:
-            while not stop_event.is_set():
-                try:
-                    data = process.stdout.read(1024)
-                except OSError:
-                    break
-                if not data:
-                    break
-
-                q.put(data)
-        except Exception:
-            pass
-        finally:
-            if process.stdout:
-                process.stdout.close()
-            process.terminate()
-            process.wait()
-        file_index = (file_index + 1) % len(files)
+        time.sleep(2)
+    print("get_transmission encerrado.")
 
 
 def get_transmission(q, stop_event=None):
@@ -539,7 +502,7 @@ def get_transmission(q, stop_event=None):
 def get_voz(q, stop_event=None):
     CHUNK = 1024
     FORMAT = pyaudio.paInt16
-    CHANNELS = 1
+    CHANNELS = 2
     RATE = 44100
     p = pyaudio.PyAudio()
     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
@@ -566,9 +529,12 @@ def send_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_
         try:
 
 
-            packet_local = q_local.get()
-            packet_trans = os.urandom(1024)
+            packet_local = os.urandom(1024)
+            packet_trans = q_voz.get()
             packet_voz   = os.urandom(1024)
+
+            #print("\r tamanho das queues local, transmission, voz: ", q_local.qsize(), q_transmission.qsize(), q_voz.qsize(), end="")
+
             #packet_trans = q_transmission.get()
             #packet_voz   = q_voz.get()
 

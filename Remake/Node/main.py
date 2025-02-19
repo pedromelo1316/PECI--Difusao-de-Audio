@@ -70,7 +70,7 @@ def listen_for_detection(detection_port=9090):
 
 
 
-def play_audio_from_queue(audio_queue, stop_event, min_buffer_size=3000):
+def play_audio_from_queue(audio_queue, stop_event, min_buffer_size=500):
     """Continuously plays audio from the queue, starting only when the buffer has enough data."""
     p = pyaudio.PyAudio()
     stream = p.open(format=pyaudio.paInt16,
