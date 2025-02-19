@@ -6,6 +6,7 @@ import threading
 import queue
 import os
 import subprocess
+from database import NodeDatabase
 
 
 
@@ -106,7 +107,10 @@ def main(stdscr, stop_event):
                             
                             if data.decode('utf-8').strip() == "hello":
                                 if m.add_node(addr[0]) == f"Node {addr[0]} added successfully.":
-
+                                    node_ip = addr[0]
+                                    node_name = m.get_nodeName_byIP(node_ip)
+                                    db.add_node(addr[0])
+                                    db.add_node_name(addr[0], node_name)
                                     detected.add(addr[0])
                                     msg += f"{addr[0]} "
                                     add_msg(msg_win, msg)
@@ -188,6 +192,8 @@ def main(stdscr, stop_event):
                     node_ip = m.get_nodeIP_byName(node_name)
                     msg = m.add_node_to_area(node_ip, area_name)
 
+                    db.add_node_area(node_ip, area_name)
+
                 elif op2 == "7":
                     nodes_in_area = m.get_nodes_in_Area()
                     msg_win.clear()
@@ -229,6 +235,7 @@ def main(stdscr, stop_event):
                 op2 = get_input(menu_win, "Choose an option:", 10, 2)  # Prompt: "Choose an option:"
                 if op2 == "1":
                     area_name = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
+                    db.add_area(area_name)
                     msg = m.add_area(area_name)
 
                 elif op2 == "2":
@@ -340,6 +347,7 @@ def main(stdscr, stop_event):
                     msg_win.refresh()
                     area_name = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
                     channel = get_input(menu_win, "Channel:", 13, 2)  # Prompt: "Channel:"
+                    db.add_channel(area_name, channel)
                     msg = m.assign_channel_to_area(area_name, channel)
 
                 elif op2 == "7":
@@ -582,6 +590,7 @@ if __name__ == "__main__":
     for i in range(num_channels):
         m.add_channel()
 
+    db = NodeDatabase()
     stop_event = threading.Event()
 
     # Cria as queues para cada função de "get"
