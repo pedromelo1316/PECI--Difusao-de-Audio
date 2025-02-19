@@ -22,7 +22,7 @@ class node_client:
         self.area = area
 
     def setChannel(self, channel):
-        self.Channel = channel
+        self.channel = channel
 
     def setName(self, name):
         self.name = name

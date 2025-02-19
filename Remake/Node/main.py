@@ -13,6 +13,7 @@ def wait_for_info(n, port=8080):
             conn, addr = server_socket.accept()
             with conn:
                 data = conn.recv(1024).decode('utf-8')
+                print(data)
                 try:
                     # Exemplo esperado: "id=XXX,zona=YYY[,Channel=ZZZ]"
                     if data == "Node Removed":
@@ -20,11 +21,11 @@ def wait_for_info(n, port=8080):
                         n.setId(None)
                         n.setArea(None)
                         n.setChannel(None)
-                    elif data == "Removed from area":
+                    elif data == "Area Removed":
                         print("Change: Node removed from area.")                        
                         n.setArea(None)
                         n.setChannel(None)
-                    elif data == "Channel removed":
+                    elif data == "Channel Removed":
                         print("Alteração: Channel removido.")
                         n.setChannel(None)
                     elif data.__contains__('Add Node'):
@@ -42,6 +43,7 @@ def wait_for_info(n, port=8080):
                             elif key == 'area':
                                 n.setArea(value)
                             elif key == 'channel':
+                                print("work")
                                 n.setChannel(value)
                     print(f"Updated info: id={n.getId()}, area={n.getArea()}, channel={n.getChannel()}")
                 except ValueError as e:
@@ -70,16 +72,19 @@ def play_audio(n, port=8081):
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind(("", port))
 
-    while n.getId() is not None and n.getArea() is not None and n.getChannel() is not None:
+    canal = n.getChannel()
+    while n.getId() is not None and n.getArea() is not None and canal is not None:
         data, addr = sock.recvfrom(3072)
         try:
-            print(data)
-            Channel = int(n.getChannel())
+            
+            Channel = int(canal)
             audio = data[((Channel-1) * 1024):(1024*Channel)] if (Channel is not None and Channel > 0) else b""
             
             print(f"Data: {audio}")
         except (ValueError, AttributeError) as e:
             print("Error in processing:", e)
+
+        canal = n.getChannel()
         
 
         
