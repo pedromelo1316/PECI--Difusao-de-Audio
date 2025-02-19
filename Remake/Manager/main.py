@@ -6,7 +6,7 @@ import threading
 import queue
 import os
 import subprocess
-
+import pyaudio
 
 
 
@@ -537,9 +537,23 @@ def get_transmission(q, stop_event=None):
     print("get_transmission encerrado.")
 
 def get_voz(q, stop_event=None):
-    while not stop_event.is_set():
-        time.sleep(2)
-    print("get_voz encerrado.")
+    CHUNK = 1024
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 1
+    RATE = 44100
+    p = pyaudio.PyAudio()
+    stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
+    try:
+        while not stop_event.is_set():
+            data = stream.read(CHUNK, exception_on_overflow=False)
+            q.put(data)
+    except Exception as e:
+        print(f"Erro na captura de áudio: {e}")
+    finally:
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+        print("get_voz encerrado.")
 
 
 
