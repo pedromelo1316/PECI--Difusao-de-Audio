@@ -520,8 +520,10 @@ def get_local(q, stop_event=None):
                 if not data:
                     break
                 
-                while q.qsize() > 10:
+                while q.qsize() > 3000:
                     time.sleep(0.1)
+
+                    
                 q.put(data)
         except Exception:
             pass
@@ -557,6 +559,9 @@ def send_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_
             packet_local = q_local.get()
             packet_trans = os.urandom(1024)
             packet_voz   = os.urandom(1024)
+
+            #print(f"\rLocal: {q_local.qsize()} | Transmission: {q_transmission.qsize()} | Voz: {q_voz.qsize()}")
+
             #packet_trans = q_transmission.get()
             #packet_voz   = q_voz.get()
 
