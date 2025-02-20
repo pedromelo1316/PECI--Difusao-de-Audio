@@ -9,7 +9,7 @@ import subprocess
 
 
 
-
+import numpy as np
 
 
 def get_input(win, prompt, pos_y, pos_x):
@@ -30,6 +30,31 @@ def add_msg(win, msg, start_y=1, start_x=2):
     lines = msg.split("\n")
     for i, line in enumerate(lines, start=start_y):
         win.addstr(i, start_x, line)
+
+
+
+volume_levels = {}  # Dicionário para armazenar o nível de volume de cada zona
+
+def adjust_volume(packet, volume_factor):
+    """ Ajusta o volume do áudio num fator entre 0.0 e 2.0 """
+    audio_data = np.frombuffer(packet, dtype=np.int16)  # Converte para numpy array
+    audio_data = np.clip(audio_data * volume_factor, -32768, 32767).astype(np.int16)  # Aplica o fator e evita overflow
+    return audio_data.tobytes()  # Converte de volta para bytes
+
+def increase_volume(zone):
+    if zone not in volume_levels:
+        volume_levels[zone] = 1.0  # Inicializa o volume padrão
+
+    if volume_levels[zone] < 2.0:
+        volume_levels[zone] += 0.1  # Aumenta o volume suavemente
+
+
+def decrease_volume(zone):
+    if zone not in volume_levels:
+        volume_levels[zone] = 1.0  # Inicializa o volume padrão
+
+    if volume_levels[zone] > 0.1:
+        volume_levels[zone] -= 0.1  # Diminui o volume suavemente
 
 
 def main(stdscr, stop_event):
@@ -213,6 +238,7 @@ def main(stdscr, stop_event):
 
         elif op == "2":
             # Submenu de areas
+
             while True:
                 menu_win.clear()
                 menu_win.border()
@@ -223,7 +249,13 @@ def main(stdscr, stop_event):
                 menu_win.addstr(5, 2, "5 - Remove nodes from Area")
                 menu_win.addstr(6, 2, "6 - Assign channel to Area")
                 menu_win.addstr(7, 2, "7 - Remove channel from Area")
-                menu_win.addstr(8, 2, "0 - Back")
+                # ...existing code...
+                menu_win.addstr(8, 2, "8 - Increase Volume")
+                menu_win.addstr(9, 2, "9 - Decrease Volume")
+                # ...existing code...
+
+                menu_win.addstr(10, 2, "0 - Back")
+
                 menu_win.refresh()
 
                 op2 = get_input(menu_win, "Choose an option:", 10, 2)  # Prompt: "Choose an option:"
@@ -356,6 +388,15 @@ def main(stdscr, stop_event):
                     msg_win.refresh()
                     area_name = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
                     msg = m.remove_channel_from_area(area_name)
+
+                elif op2 == "8":
+                    area_name = get_input(menu_win, "Area name:", 12, 2)  # Solicita a zona desejada
+                    increase_volume(area_name)
+                    msg = f"Volume in {area_name} increased to {volume_levels[area_name]}."
+                elif op2 == "9":
+                    area_name = get_input(menu_win, "Area name:", 12, 2)  # Solicita a zona desejada
+                    decrease_volume(area_name)
+                    msg = f"Volume in {area_name} decreased to {volume_levels[area_name]}."
 
                 elif op2 == "0":
                     break
@@ -565,12 +606,23 @@ def send_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_
             #packet_trans = q_transmission.get()
             #packet_voz   = q_voz.get()
 
-            message = packet_local + packet_trans + packet_voz
+            ## Ajusta o volume dos pacotes de áudio com base na zona
 
+
+            #print(f"Volume Atual: {volume_levels}")  # Debug para ver se o volume está sendo atualizado
+
+            for area, volume in volume_levels.items():
+                if area in volume_levels:
+                    packet_local = adjust_volume(packet_local, volume)
+                    packet_trans = adjust_volume(packet_trans, volume)
+                    packet_voz = adjust_volume(packet_voz, volume)
+
+
+            message = packet_local + packet_trans + packet_voz
             sock.sendto(message, ("<broadcast>", port))
         except queue.Empty:
             time.sleep(0.5)
-            
+
     sock.close()
     print("play_audio encerrado.")
 
