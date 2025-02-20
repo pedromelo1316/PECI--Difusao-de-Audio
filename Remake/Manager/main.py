@@ -9,6 +9,7 @@ import subprocess
 import pyaudio
 
 
+volume_levels = {}
 
 
 def get_input(win, prompt, pos_y, pos_x):
@@ -35,7 +36,36 @@ def check_valid_input(msg):
         return False
     return True
 
+
+def send_volume_command(area, volume_level):
+    """ Envia um comando de ajuste de volume para os nós da área """
+    if area not in m.get_areas():
+        print(f"Área {area} não encontrada.")
+        return
     
+    nodes = m.get_areas()[area].get_nodes()
+    if not nodes:
+        print(f"Nenhum nó na área {area} para ajustar o volume.")
+        return
+
+    volume_levels[area] = volume_level  # Atualiza o volume armazenado
+
+    command = f"VOLUME={volume_level}"
+
+    for node in nodes:
+        ip = node.get_ip()
+        try:
+            PORT = 8080
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                s.connect((ip, PORT))
+                s.sendall(command.encode('utf-8'))
+            print(f"Comando de volume '{command}' enviado para {ip}")
+        except socket.error:
+            print(f"Erro ao conectar com o nó {ip} para ajuste de volume.")
+
+
+
 
 def main(stdscr, stop_event, inicio):
 
@@ -272,7 +302,12 @@ def main(stdscr, stop_event, inicio):
                 menu_win.addstr(5, 2, "5 - Remove nodes from Area")
                 menu_win.addstr(6, 2, "6 - Assign channel to Area")
                 menu_win.addstr(7, 2, "7 - Remove channel from Area")
-                menu_win.addstr(8, 2, "0 - Back")
+
+                menu_win.addstr(8, 2, "8 - Increase Volume")
+                menu_win.addstr(9, 2, "9 - Decrease Volume")
+
+
+                menu_win.addstr(10, 2, "0 - Back")
                 menu_win.refresh()
 
                 op2 = get_input(menu_win, "Choose an option:", 10, 2)  # Prompt: "Choose an option:"
@@ -443,8 +478,47 @@ def main(stdscr, stop_event, inicio):
                     area_name = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
                     msg = m.remove_channel_from_area(area_name)
 
+
+
+                if op2 == "8":
+                    areas = list(m.get_areas().keys())
+                    if not areas:
+                        msg = "No areas exist."
+                    else:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "Areas: " + ", ".join(areas))
+                        msg_win.refresh()
+
+                        area_name = get_input(menu_win, "Area name:", 12, 2)
+                        if area_name in areas:
+                            volume_levels[area_name] = min(2.0, volume_levels.get(area_name, 1.0) + 0.1)
+                            send_volume_command(area_name, volume_levels[area_name])
+                            msg = f"Volume in {area_name} increased to {volume_levels[area_name]:.1f}."
+                        else:
+                            msg = "Invalid area name."
+
+                elif op2 == "9":
+                    areas = list(m.get_areas().keys())
+                    if not areas:
+                        msg = "No areas exist."
+                    else:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "Areas: " + ", ".join(areas))
+                        msg_win.refresh()
+
+                        area_name = get_input(menu_win, "Area name:", 12, 2)
+                        if area_name in areas:
+                            volume_levels[area_name] = max(0.1, volume_levels.get(area_name, 1.0) - 0.1)
+                            send_volume_command(area_name, volume_levels[area_name])
+                            msg = f"Volume in {area_name} decreased to {volume_levels[area_name]:.1f}."
+                        else:
+                            msg = "Invalid area name."
+
                 elif op2 == "0":
                     break
+
                 else:
                     msg = "Invalid option."  # "Invalid option."
 

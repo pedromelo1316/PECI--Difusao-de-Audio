@@ -5,6 +5,8 @@ import node_client
 import queue
 import pyaudio
 
+import numpy as np
+
 def wait_for_info(n, port=8080):
     while True:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
@@ -15,28 +17,25 @@ def wait_for_info(n, port=8080):
             conn, addr = server_socket.accept()
             with conn:
                 data = conn.recv(1024).decode('utf-8')
-                print(data)
+                print(f"Received command: {data}")
                 try:
-                    # Exemplo esperado: "id=XXX,zona=YYY[,Channel=ZZZ]"
                     if data == "Node Removed":
-                        print("Change: Node removed.")
                         n.setId(None)
                         n.setArea(None)
                         n.setChannel(None)
                     elif data == "Area Removed":
-                        print("Change: Node removed from area.")                        
                         n.setArea(None)
                         n.setChannel(None)
                     elif data == "Channel Removed":
-                        print("Alteração: Channel removido.")
                         n.setChannel(None)
+                    elif data.startswith("VOLUME="):  
+                        volume_level = float(data.split("=")[1])
+                        n.setVolume(volume_level)  # Define o volume no objeto do nó
+                        print(f"Volume set to {volume_level}")
                     elif data.__contains__('Add Node'):
                         n.setId(data.split(' ')[2])
                         n.setName(socket.gethostname())
-
-                        print(f"Node addded: id={n.getId()}, name={n.getName()}")
                         conn.sendall(b"Node name=" + n.getName().encode('utf-8'))
-                        
                     else:
                         for item in data.split(','):
                             key, value = item.split('=')
@@ -45,11 +44,11 @@ def wait_for_info(n, port=8080):
                             elif key == 'area':
                                 n.setArea(value)
                             elif key == 'channel':
-                                print("work")
                                 n.setChannel(value)
-                    print(f"Updated info: id={n.getId()}, area={n.getArea()}, channel={n.getChannel()}")
+                    print(f"Updated info: id={n.getId()}, area={n.getArea()}, channel={n.getChannel()}, volume={n.getVolume()}")
                 except ValueError as e:
                     print("Error in wait_for_info:", e)
+
 
 def listen_for_detection(detection_port=9090):
     """Escuta mensagens UDP e responde com 'hello' ao comando 'Detetar'."""
@@ -77,7 +76,7 @@ def wait_queue(audio_queue, stop_event, min_buffer_size=10):
 
 
 
-def play_audio_from_queue(audio_queue, stop_event, min_buffer_size=2):
+def play_audio_from_queue(audio_queue, stop_event, n ,min_buffer_size=2):
     """Continuously plays audio from the queue, starting only when the buffer has enough data."""
     p = pyaudio.PyAudio()
     stream = p.open(format=pyaudio.paInt16,
@@ -95,7 +94,17 @@ def play_audio_from_queue(audio_queue, stop_event, min_buffer_size=2):
         while not stop_event.is_set():
             if not audio_queue.empty():
                 data = audio_queue.get()
-                stream.write(data)
+
+                # Aplicar o volume ao áudio
+                volume = n.getVolume()
+                audio_data = np.frombuffer(data, dtype=np.int16)
+                audio_data = np.clip(audio_data * volume, -32768, 32767).astype(np.int16)
+                adjusted_data = audio_data.tobytes()
+
+
+                #stream.write(data)
+                stream.write(adjusted_data)
+                
                 print(f"Playing audio... Queue size: {audio_queue.qsize()}")
             else:
                 print(f"Buffer underrun, waiting for more data... {audio_queue.qsize()}")
@@ -161,7 +170,7 @@ def main():
         if n.getId() is not None and n.getArea() is not None and n.getChannel() is not None:
             print(f"Starting playback for zone {n.getArea()}...")
             t_receive = threading.Thread(target=receive_broadcast, args=(audio_queue,n,stop_event ,8081) ,daemon=True)
-            t_audio = threading.Thread(target=play_audio_from_queue, args=(audio_queue, stop_event), daemon=True)
+            t_audio = threading.Thread(target=play_audio_from_queue, args=(audio_queue, stop_event,n), daemon=True)
             t_audio.start()
             t_receive.start()
 
