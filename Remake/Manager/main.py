@@ -608,7 +608,7 @@ def get_local(q, stop_event=None):
                     break
                 
                 while q.qsize() > 300:
-                    time.sleep(0.1)
+                    time.sleep((512/44100) * 290)
 
                     
                 q.put(data)
@@ -665,6 +665,9 @@ def send_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_
             packet_local = q_local.get()
             packet_trans = b'\x00' * 1024 
             packet_voz   = q_voz.get()
+
+
+            #print(f"Local: {q_local.qsize()}")
 
 
             mensagem = b""

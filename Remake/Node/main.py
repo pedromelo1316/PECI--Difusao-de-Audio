@@ -104,7 +104,6 @@ def receive_broadcast(audio_queue, n, stop_event, port=8081):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind(("", port))
-    sock.settimeout(1)
 
     canal = n.getChannel()
     try:
@@ -122,10 +121,6 @@ def receive_broadcast(audio_queue, n, stop_event, port=8081):
 
             except (ValueError, AttributeError) as e:
                 print("Error in processing:", e)
-
-            except socket.timeout:
-                print("Timeout waiting for data...")
-                continue
 
             canal = n.getChannel()
 
