@@ -522,9 +522,9 @@ def get_voz(q, stop_event=None, inicio=None):
     p = pyaudio.PyAudio()
     print(chr(27) + "[2J")
     inicio.set()
-    CHUNK = 1024
+    CHUNK = 512
     FORMAT = pyaudio.paInt16
-    CHANNELS = 2
+    CHANNELS = 1
     RATE = 44100
     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
 
@@ -547,22 +547,30 @@ def send_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
+    count = 0
     while not stop_event.is_set():
         try:
 
 
-            packet_local = os.urandom(1024)
-            packet_trans = q_voz.get()
-            packet_voz   = os.urandom(1024)
+            packet_local = q_local.get()
+            packet_trans = b'\x00' * 1024 
+            packet_voz   = q_voz.get()
 
-            #print("\r tamanho das queues local, transmission, voz: ", q_local.qsize(), q_transmission.qsize(), q_voz.qsize(), end="")
+            mensagem = b""
 
-            #packet_trans = q_transmission.get()
-            #packet_voz   = q_voz.get()
+            for canal in m.get_channels().values():
 
-            message = packet_local + packet_trans + packet_voz
+                if canal.get_transmission() == "LOCAL":
+                    mensagem += packet_local
+                elif canal.get_transmission() == "TRANSMISSION":
+                    mensagem += packet_trans
+                elif canal.get_transmission() == "VOICE":
+                    mensagem += packet_voz
+                else:
+                    mensagem += b'\x00' * 1024
 
-            sock.sendto(message, ("<broadcast>", port))
+
+            sock.sendto(mensagem, ("<broadcast>", port))
 
         except queue.Empty:
             continue

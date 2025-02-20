@@ -70,13 +70,14 @@ def listen_for_detection(detection_port=9090):
 
 
 
-def play_audio_from_queue(audio_queue, stop_event, min_buffer_size=1000):
+def play_audio_from_queue(audio_queue, stop_event, min_buffer_size=2):
     """Continuously plays audio from the queue, starting only when the buffer has enough data."""
     p = pyaudio.PyAudio()
     stream = p.open(format=pyaudio.paInt16,
-                    channels=2,
+                    channels=1,
                     rate=44100,
-                    output=True)
+                    output=True,
+                    frames_per_buffer=1024)
 
     # Espera a fila encher até um certo ponto antes de iniciar a reprodução
     while audio_queue.qsize() < min_buffer_size and not stop_event.is_set():
@@ -91,7 +92,6 @@ def play_audio_from_queue(audio_queue, stop_event, min_buffer_size=1000):
                 print(f"Playing audio... Queue size: {audio_queue.qsize()}")
             else:
                 print(f"Buffer underrun, waiting for more data... {audio_queue.qsize()}")
-                time.sleep(0.1)
     finally:
         stream.stop_stream()
         stream.close()
@@ -110,7 +110,7 @@ def receive_broadcast(audio_queue, n, stop_event, port=8081):
     try:
         while not stop_event.is_set():
 
-            data, addr = sock.recvfrom(3072)
+            data, addr = sock.recvfrom(1024 * 3)
             try:
                 
                 Channel = int(canal)
@@ -124,7 +124,7 @@ def receive_broadcast(audio_queue, n, stop_event, port=8081):
             except socket.timeout:
                 continue
 
-        canal = n.getChannel()
+            canal = n.getChannel()
 
     finally:
         sock.close()
