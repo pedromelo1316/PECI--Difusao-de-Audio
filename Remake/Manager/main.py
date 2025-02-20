@@ -6,8 +6,7 @@ import threading
 import queue
 import os
 import subprocess
-
-
+import pyaudio
 
 
 
@@ -38,7 +37,11 @@ def check_valid_input(msg):
 
     
 
-def main(stdscr, stop_event):
+def main(stdscr, stop_event, inicio):
+
+    while not inicio.is_set():
+        time.sleep(0.1)
+
     curses.curs_set(1)
     stdscr.clear()
     height, width = stdscr.getmaxyx()
@@ -483,6 +486,7 @@ def main(stdscr, stop_event):
                         add_msg(msg_win, msg)
                         msg_win.refresh()
                         continue
+
                     msg = m.assign_transmission_to_channel(channel, tipo)
 
                 elif op2 == "2":
@@ -618,15 +622,33 @@ def get_local(q, stop_event=None):
         file_index = (file_index + 1) % len(files)
 
 
+
 def get_transmission(q, stop_event=None):
     while not stop_event.is_set():
         time.sleep(2)
     print("get_transmission encerrado.")
 
-def get_voz(q, stop_event=None):
-    while not stop_event.is_set():
-        time.sleep(2)
-    print("get_voz encerrado.")
+def get_voz(q, stop_event=None, inicio=None):
+    p = pyaudio.PyAudio()
+    print(chr(27) + "[2J")
+    inicio.set()
+    CHUNK = 512
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 1
+    RATE = 44100
+    stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
+
+    try:
+        while not stop_event.is_set():
+            data = stream.read(CHUNK, exception_on_overflow=False)
+            q.put(data)
+    except Exception as e:
+        print(f"Erro na captura de áudio: {e}")
+    finally:
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+        print("get_voz encerrado.")
 
 
 
@@ -635,24 +657,34 @@ def send_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
+    count = 0
     while not stop_event.is_set():
         try:
 
 
             packet_local = q_local.get()
-            packet_trans = os.urandom(1024)
-            packet_voz   = os.urandom(1024)
+            packet_trans = b'\x00' * 1024 
+            packet_voz   = q_voz.get()
 
-            #print(f"\rLocal: {q_local.qsize()} | Transmission: {q_transmission.qsize()} | Voz: {q_voz.qsize()}")
 
-            #packet_trans = q_transmission.get()
-            #packet_voz   = q_voz.get()
+            mensagem = b""
 
-            message = packet_local + packet_trans + packet_voz
+            for canal in m.get_channels().values():
 
-            sock.sendto(message, ("<broadcast>", port))
+                if canal.get_transmission() == "LOCAL":
+                    mensagem += packet_local
+                elif canal.get_transmission() == "TRANSMISSION":
+                    mensagem += packet_trans
+                elif canal.get_transmission() == "VOICE":
+                    mensagem += packet_voz
+                else:
+                    mensagem += b'\x00' * 1024
+
+
+            sock.sendto(mensagem, ("<broadcast>", port))
+
         except queue.Empty:
-            time.sleep(0.5)
+            continue
             
     sock.close()
     print("play_audio encerrado.")
@@ -671,6 +703,7 @@ if __name__ == "__main__":
         m.add_channel()
 
     stop_event = threading.Event()
+    inicio = threading.Event()
 
     # Cria as queues para cada função de "get"
     q_local = queue.Queue()
@@ -680,7 +713,7 @@ if __name__ == "__main__":
     # Thread do menu (curses)
     t_menu = threading.Thread(
         target=curses.wrapper, 
-        args=(lambda stdscr: main(stdscr, stop_event),),
+        args=(lambda stdscr: main(stdscr, stop_event, inicio),),
         daemon=True
     )
     t_menu.start()
@@ -688,7 +721,7 @@ if __name__ == "__main__":
     # Threads para encher as queues a cada 0.5s
     t_local = threading.Thread(target=get_local, args=(q_local, stop_event), daemon=True)
     t_trans = threading.Thread(target=get_transmission, args=(q_transmission, stop_event), daemon=True)
-    t_voz   = threading.Thread(target=get_voz, args=(q_voz, stop_event), daemon=True)
+    t_voz   = threading.Thread(target=get_voz, args=(q_voz, stop_event, inicio), daemon=True)
     t_local.start()
     t_trans.start()
     t_voz.start()

@@ -261,7 +261,7 @@ class manager:
         channel_id = int(channel_id)
         if channel_id not in self.channels:
             return "Channel not found."
-        if tipo not in ["LOCAL", "TRANSMISSION", "VOZ"]:
+        if tipo not in ["LOCAL", "TRANSMISSION", "VOICE"]:
             return "Invalid type."
         self.channels[channel_id].set_transmission(tipo)
         return "Transmission assigned to channel successfully."
