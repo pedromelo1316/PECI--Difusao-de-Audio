@@ -1,3 +1,19 @@
+import ctypes
+
+ERROR_HANDLER_FUNC = ctypes.CFUNCTYPE(
+    None, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p
+)
+
+def py_error_handler(filename, line, function, err, fmt):
+    # Ignora os erros do ALSA
+    pass
+
+c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
+asound = ctypes.cdll.LoadLibrary("libasound.so")
+asound.snd_lib_error_set_handler(c_error_handler)
+
+
+
 import curses
 import time
 import manager
@@ -7,7 +23,6 @@ import queue
 import os
 import subprocess
 import pyaudio
-
 
 
 
@@ -32,7 +47,11 @@ def add_msg(win, msg, start_y=1, start_x=2):
         win.addstr(i, start_x, line)
 
 
-def main(stdscr, stop_event):
+def main(stdscr, stop_event, inicio):
+
+    while not inicio.is_set():
+        time.sleep(0.1)
+
     curses.curs_set(1)
     stdscr.clear()
     height, width = stdscr.getmaxyx()
@@ -499,13 +518,16 @@ def get_transmission(q, stop_event=None):
         time.sleep(2)
     print("get_transmission encerrado.")
 
-def get_voz(q, stop_event=None):
+def get_voz(q, stop_event=None, inicio=None):
+    p = pyaudio.PyAudio()
+    print(chr(27) + "[2J")
+    inicio.set()
     CHUNK = 1024
     FORMAT = pyaudio.paInt16
     CHANNELS = 2
     RATE = 44100
-    p = pyaudio.PyAudio()
     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
+
     try:
         while not stop_event.is_set():
             data = stream.read(CHUNK, exception_on_overflow=False)
@@ -541,8 +563,9 @@ def send_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_
             message = packet_local + packet_trans + packet_voz
 
             sock.sendto(message, ("<broadcast>", port))
+
         except queue.Empty:
-            time.sleep(0.5)
+            continue
             
     sock.close()
     print("play_audio encerrado.")
@@ -561,6 +584,7 @@ if __name__ == "__main__":
         m.add_channel()
 
     stop_event = threading.Event()
+    inicio = threading.Event()
 
     # Cria as queues para cada função de "get"
     q_local = queue.Queue()
@@ -570,7 +594,7 @@ if __name__ == "__main__":
     # Thread do menu (curses)
     t_menu = threading.Thread(
         target=curses.wrapper, 
-        args=(lambda stdscr: main(stdscr, stop_event),),
+        args=(lambda stdscr: main(stdscr, stop_event, inicio),),
         daemon=True
     )
     t_menu.start()
@@ -578,7 +602,7 @@ if __name__ == "__main__":
     # Threads para encher as queues a cada 0.5s
     t_local = threading.Thread(target=get_local, args=(q_local, stop_event), daemon=True)
     t_trans = threading.Thread(target=get_transmission, args=(q_transmission, stop_event), daemon=True)
-    t_voz   = threading.Thread(target=get_voz, args=(q_voz, stop_event), daemon=True)
+    t_voz   = threading.Thread(target=get_voz, args=(q_voz, stop_event, inicio), daemon=True)
     t_local.start()
     t_trans.start()
     t_voz.start()
