@@ -37,12 +37,12 @@ class manager:
                 n.setName(received_name)
                 
         except ValueError as e:
-            if ip in node_server.no._ips:
-                node_server.no._ips.remove(ip)
+            if ip in node_server.node_server._ips:
+                node_server.node_server._ips.remove(ip)
             return f"Error adding node: {e}"
         except socket.error:
-            if ip in node_server.no._ips:
-                node_server.no._ips.remove(ip)
+            if ip in node_server.node_server._ips:
+                node_server.node_server._ips.remove(ip)
 
             return "Error connecting to node."
 
@@ -305,8 +305,11 @@ class manager:
         for n in self.nodes:
 
             node = self.nodes[n]
-            if node.get_area() is not None:
-                in_area += f"\n\tNode {node.getName()}: {node.get_area()}\n"
+            if node.get_area() is None:
+                return "No nodes in areas"
+            in_area += f"\n\tNode {node.getName()}: {node.get_area()}\n"
+            
+            
         return in_area
 
     
