@@ -37,12 +37,12 @@ class manager:
                 n.setName(received_name)
                 
         except ValueError as e:
-            if ip in node_server.no._ips:
-                node_server.no._ips.remove(ip)
+            if ip in node_server.node_server._ips:
+                node_server.node_server._ips.remove(ip)
             return f"Error adding node: {e}"
         except socket.error:
-            if ip in node_server.no._ips:
-                node_server.no._ips.remove(ip)
+            if ip in node_server.node_server._ips:
+                node_server.node_server._ips.remove(ip)
 
             return "Error connecting to node."
 
@@ -261,7 +261,7 @@ class manager:
         channel_id = int(channel_id)
         if channel_id not in self.channels:
             return "Channel not found."
-        if tipo not in ["LOCAL", "TRANSMISSION", "VOZ"]:
+        if tipo not in ["LOCAL", "TRANSMISSION", "VOICE"]:
             return "Invalid type."
         self.channels[channel_id].set_transmission(tipo)
         return "Transmission assigned to channel successfully."
@@ -305,8 +305,11 @@ class manager:
         for n in self.nodes:
 
             node = self.nodes[n]
-            if node.get_area() is not None:
-                in_area += f"\n\tNode {node.getName()}: {node.get_area()}\n"
+            if node.get_area() is None:
+                return "No nodes in areas"
+            in_area += f"\n\tNode {node.getName()}: {node.get_area()}\n"
+            
+            
         return in_area
 
     

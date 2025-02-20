@@ -7,7 +7,7 @@ import queue
 import os
 import subprocess
 from database import NodeDatabase
-
+import pyaudio
 
 
 
@@ -32,8 +32,18 @@ def add_msg(win, msg, start_y=1, start_x=2):
     for i, line in enumerate(lines, start=start_y):
         win.addstr(i, start_x, line)
 
+def check_valid_input(msg):
+    if msg == "":
+        return False
+    return True
 
-def main(stdscr, stop_event):
+    
+
+def main(stdscr, stop_event, inicio):
+
+    while not inicio.is_set():
+        time.sleep(0.1)
+
     curses.curs_set(1)
     stdscr.clear()
     height, width = stdscr.getmaxyx()
@@ -159,6 +169,14 @@ def main(stdscr, stop_event):
                     msg_win.clear()
                     msg_win.border()
 
+                    if not nodes:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "No Nodes")  
+
+                        msg_win.refresh()
+                        continue
+
                     msg_win.addstr(1, 2, "Nodes: " + ", ".join(nodes))
                     msg_win.refresh()
 
@@ -174,6 +192,14 @@ def main(stdscr, stop_event):
                     nos = [node.getName() for node in m.get_nodes().values()]
                     msg_win.clear()
                     msg_win.border()
+
+                    if not nos:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "No Nodes")  
+
+                        msg_win.refresh()
+                        continue
 
                     msg_win.addstr(1, 2, "Nodes: " + ", ".join(nos))
                     msg_win.refresh()
@@ -191,6 +217,22 @@ def main(stdscr, stop_event):
                     msg_win.clear()
                     msg_win.border()
 
+                    if not free_nodes:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "No Nodes")  
+
+                        msg_win.refresh()
+                        continue
+                        
+                    if not list(m.get_areas().keys()):
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "No Areas")  
+
+                        msg_win.refresh()
+                        continue
+
                     msg_win.addstr(1, 2, "Free Nodes: " + " ".join(free_nodes))
                     msg_win.addstr(2, 2, "Areas: " + ", ".join(list(m.get_areas().keys())))
                     msg_win.refresh()
@@ -207,6 +249,14 @@ def main(stdscr, stop_event):
                     nodes_in_area = m.get_nodes_in_Area()
                     msg_win.clear()
                     msg_win.border()
+
+                    #if not nodes_in_area:
+
+
+             
+
+                    
+
                     add_msg(msg_win, "Nodes in areas: "+ nodes_in_area)
 
                     msg_win.refresh()
@@ -252,8 +302,20 @@ def main(stdscr, stop_event):
                     db.add_area(area_name)
                     msg = m.add_area(area_name)
 
+                    if check_valid_input(area_name):
+                        msg = m.add_area(area_name)
+                    else:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "Area name not valid") 
+                        msg_win.refresh()
+                        continue
+
+
                 elif op2 == "2":
                     areas = list(m.get_areas().keys())
+
+                        
 
                     if not areas:
                         msg_win.clear()
@@ -269,7 +331,14 @@ def main(stdscr, stop_event):
                     msg_win.refresh()
             
                     area_name = get_input(menu_win, "Area Name:", 12, 2)
-                    msg = m.remove_area(area_name)
+                    if check_valid_input(area_name):
+                        msg = m.remove_area(area_name)
+                    msg_win.clear()
+                    msg_win.border()
+                    msg_win.addstr(1, 2, "Area name not valid") 
+                    msg_win.refresh()
+                    continue
+
 
                 elif op2 == "3":
                     areas = list(m.get_areas().keys())
@@ -311,8 +380,15 @@ def main(stdscr, stop_event):
                     msg_win.addstr(2, 2, "Free Nodes: " + " ".join(free_nodes))
                     msg_win.refresh()
                     area_name = get_input(menu_win, "Area Name:", 12, 2)
-                    name_list = get_input(menu_win, "Nodes Names (seperated by spaces):", 13, 2)
-                    msg = m.add_nodes_to_area(area_name, name_list)
+                    if check_valid_input(area_name):
+                        name_list = get_input(menu_win, "Nodes Names (seperated by spaces):", 13, 2)
+                        msg = m.add_nodes_to_area(area_name, name_list)
+                    else:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "Area name invalid.")  # "No zones exist."
+                        msg_win.refresh()
+                        continue
 
 
                 elif op2 == "5":
@@ -328,7 +404,14 @@ def main(stdscr, stop_event):
                     msg_win.addstr(1, 2, "Areas: " + ", ".join(areas))  # "Zones: [list of zones]"
                     msg_win.refresh()
                     area_name = get_input(menu_win, "Name Area:", 12, 2)  # Prompt: "Zone name:"
-                    nos_em_area = [n.getName() for n in m.get_areas()[area_name].get_nodes()]
+                    if check_valid_input(area_name):
+                        nos_em_area = [n.getName() for n in m.get_areas()[area_name].get_nodes()]
+                    else:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "Area name invalid.")  # "No zones exist."
+                        msg_win.refresh()
+                        continue
 
                     if not nos_em_area:
                         msg_win.clear()
@@ -364,6 +447,14 @@ def main(stdscr, stop_event):
                     db.add_channel(area_name, channel)
                     msg = m.assign_channel_to_area(area_name, channel)
 
+                    if check_valid_input(area_name) and check_valid_input(channel):
+                        msg = m.assign_channel_to_area(area_name, channel)
+                    msg_win.clear()
+                    msg_win.border()
+                    msg_win.addstr(1, 2, "Invalid area name or channel")
+                    msg_win.refresh()
+                    continue
+
                 elif op2 == "7":
                     areas = list(m.get_areas().keys())
                     if not areas:
@@ -397,8 +488,8 @@ def main(stdscr, stop_event):
                 menu_win.border()
                 menu_win.addstr(1, 2, "1 - Change channel transmission")
                 menu_win.addstr(2, 2, "2 - Channel information")
-                menu_win.addstr(3, 2, "3 - Assign zones to channel")
-                menu_win.addstr(4, 2, "4 - Remove zones from channel")
+                menu_win.addstr(3, 2, "3 - Assign areas to channel")
+                menu_win.addstr(4, 2, "4 - Remove areas from channel")
                 menu_win.addstr(5, 2, "0 - Back")
                 menu_win.refresh()
 
@@ -422,6 +513,7 @@ def main(stdscr, stop_event):
                         add_msg(msg_win, msg)
                         msg_win.refresh()
                         continue
+
                     msg = m.assign_transmission_to_channel(channel, tipo)
 
                 elif op2 == "2":
@@ -448,10 +540,10 @@ def main(stdscr, stop_event):
                     msg_win.clear()
                     msg_win.border()
                     msg_win.addstr(1, 2, "Channels: " + ", ".join(channels))  # "Channels: [list of channels]"
-                    msg_win.addstr(2, 2, "Zones (separated by space):" + ", ".join(areas))  # "Zones: [list of zones]"
+                    msg_win.addstr(2, 2, "Areas (separated by space):" + ", ".join(areas))  # "Zones: [list of zones]"
                     msg_win.refresh()
                     channel = get_input(menu_win, "Channel:", 9, 2)  # Prompt: "Channel:"
-                    area = get_input(menu_win, "Zone:", 10, 2)  # Prompt: "Zone:"
+                    area = get_input(menu_win, "Area:", 10, 2)  # Prompt: "Zone:"
                     try:
                         channel = int(channel)
                     except ValueError:
@@ -483,9 +575,9 @@ def main(stdscr, stop_event):
                     areas_em_channel = [area.get_name() for area in list(m.get_channels()[channel].get_areas())]
                     msg_win.clear()
                     msg_win.border()
-                    msg_win.addstr(1, 2, f"Zones in {channel}: " + ", ".join(areas_em_channel))  # "Zones in [channel]: [list of zones]"
+                    msg_win.addstr(1, 2, f"Areas in {channel}: " + ", ".join(areas_em_channel))  # "Zones in [channel]: [list of zones]"
                     msg_win.refresh()
-                    areas = get_input(menu_win, "Zones (separated by space):", 10, 2)  # Prompt: "Zones (separated by space):"
+                    areas = get_input(menu_win, "Areas (separated by space):", 10, 2)  # Prompt: "Zones (separated by space):"
                     msg = m.remove_areas_from_channel(channel, areas)
 
                 elif op2 == "0":
@@ -529,7 +621,7 @@ def get_local(q, stop_event=None):
             "-f", "s16le",
             "-acodec", "pcm_s16le",
             "-ar", "44100",
-            "-ac", "2",
+            "-ac", "1",
             "pipe:1"
         ]
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
@@ -542,8 +634,8 @@ def get_local(q, stop_event=None):
                 if not data:
                     break
                 
-                while q.qsize() > 3000:
-                    time.sleep(0.1)
+                while q.qsize() > 300:
+                    time.sleep((512/44100) * 290)
 
                     
                 q.put(data)
@@ -557,15 +649,33 @@ def get_local(q, stop_event=None):
         file_index = (file_index + 1) % len(files)
 
 
+
 def get_transmission(q, stop_event=None):
     while not stop_event.is_set():
         time.sleep(2)
     print("get_transmission encerrado.")
 
-def get_voz(q, stop_event=None):
-    while not stop_event.is_set():
-        time.sleep(2)
-    print("get_voz encerrado.")
+def get_voz(q, stop_event=None, inicio=None):
+    p = pyaudio.PyAudio()
+    print(chr(27) + "[2J")
+    inicio.set()
+    CHUNK = 512
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 1
+    RATE = 44100
+    stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
+
+    try:
+        while not stop_event.is_set():
+            data = stream.read(CHUNK, exception_on_overflow=False)
+            q.put(data)
+    except Exception as e:
+        print(f"Erro na captura de áudio: {e}")
+    finally:
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+        print("get_voz encerrado.")
 
 
 
@@ -574,24 +684,40 @@ def send_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
+    count = 0
     while not stop_event.is_set():
         try:
 
 
             packet_local = q_local.get()
-            packet_trans = os.urandom(1024)
-            packet_voz   = os.urandom(1024)
+            packet_trans = b'\x00' * 1024 
+            packet_voz   = q_voz.get()
 
-            #print(f"\rLocal: {q_local.qsize()} | Transmission: {q_transmission.qsize()} | Voz: {q_voz.qsize()}")
 
-            #packet_trans = q_transmission.get()
-            #packet_voz   = q_voz.get()
+            #print(f"Local: {q_local.qsize()}")
 
-            message = packet_local + packet_trans + packet_voz
 
-            sock.sendto(message, ("<broadcast>", port))
+            mensagem = b""
+
+            for canal in m.get_channels().values():
+
+                if canal.get_transmission() == "LOCAL":
+                    mensagem += packet_local
+                elif canal.get_transmission() == "TRANSMISSION":
+                    mensagem += packet_trans
+                elif canal.get_transmission() == "VOICE":
+                    mensagem += packet_voz
+                else:
+                    mensagem += b'\x00' * 1024
+
+
+            sock.sendto(mensagem, ("<broadcast>", port))
+
+            #print("\rPacote enviado: ", count, end="")
+            count += 1
+
         except queue.Empty:
-            time.sleep(0.5)
+            continue
             
     sock.close()
     print("play_audio encerrado.")
@@ -611,6 +737,7 @@ if __name__ == "__main__":
 
     db = NodeDatabase()
     stop_event = threading.Event()
+    inicio = threading.Event()
 
     # Cria as queues para cada função de "get"
     q_local = queue.Queue()
@@ -620,7 +747,7 @@ if __name__ == "__main__":
     # Thread do menu (curses)
     t_menu = threading.Thread(
         target=curses.wrapper, 
-        args=(lambda stdscr: main(stdscr, stop_event),),
+        args=(lambda stdscr: main(stdscr, stop_event, inicio),),
         daemon=True
     )
     t_menu.start()
@@ -628,7 +755,7 @@ if __name__ == "__main__":
     # Threads para encher as queues a cada 0.5s
     t_local = threading.Thread(target=get_local, args=(q_local, stop_event), daemon=True)
     t_trans = threading.Thread(target=get_transmission, args=(q_transmission, stop_event), daemon=True)
-    t_voz   = threading.Thread(target=get_voz, args=(q_voz, stop_event), daemon=True)
+    t_voz   = threading.Thread(target=get_voz, args=(q_voz, stop_event, inicio), daemon=True)
     t_local.start()
     t_trans.start()
     t_voz.start()

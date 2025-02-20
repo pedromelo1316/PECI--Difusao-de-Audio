@@ -70,18 +70,26 @@ def listen_for_detection(detection_port=9090):
 
 
 
-def play_audio_from_queue(audio_queue, stop_event, min_buffer_size=3000):
-    """Continuously plays audio from the queue, starting only when the buffer has enough data."""
-    p = pyaudio.PyAudio()
-    stream = p.open(format=pyaudio.paInt16,
-                    channels=2,
-                    rate=44100,
-                    output=True)
-
-    # Espera a fila encher até um certo ponto antes de iniciar a reprodução
+def wait_queue(audio_queue, stop_event, min_buffer_size=10):
     while audio_queue.qsize() < min_buffer_size and not stop_event.is_set():
         print(f"Waiting for buffer to fill... Queue size: {audio_queue.qsize()}")
         time.sleep(0.1)
+
+
+
+def play_audio_from_queue(audio_queue, stop_event, min_buffer_size=2):
+    """Continuously plays audio from the queue, starting only when the buffer has enough data."""
+    p = pyaudio.PyAudio()
+    stream = p.open(format=pyaudio.paInt16,
+                    channels=1,
+                    rate=44100,
+                    output=True,
+                    frames_per_buffer=1024)
+
+    # Espera a fila encher até um certo ponto antes de iniciar a reprodução
+    wait_queue(audio_queue, stop_event, min_buffer_size)
+    print("Starting audio playback...")
+
 
     try:
         while not stop_event.is_set():
@@ -90,8 +98,10 @@ def play_audio_from_queue(audio_queue, stop_event, min_buffer_size=3000):
                 stream.write(data)
                 print(f"Playing audio... Queue size: {audio_queue.qsize()}")
             else:
-                print("Buffer underrun, waiting for more data...")
-                time.sleep(0.1)
+                print(f"Buffer underrun, waiting for more data... {audio_queue.qsize()}")
+                wait_queue(audio_queue, stop_event, min_buffer_size)
+                
+                
     finally:
         stream.stop_stream()
         stream.close()
@@ -104,13 +114,12 @@ def receive_broadcast(audio_queue, n, stop_event, port=8081):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind(("", port))
-    sock.settimeout(1)
 
     canal = n.getChannel()
     try:
         while not stop_event.is_set():
 
-            data, addr = sock.recvfrom(3072)
+            data, addr = sock.recvfrom(1024 * 3)
             try:
                 
                 Channel = int(canal)
@@ -118,16 +127,16 @@ def receive_broadcast(audio_queue, n, stop_event, port=8081):
                 
                 audio_queue.put(audio) if audio else None
 
+                print("working")
+
             except (ValueError, AttributeError) as e:
                 print("Error in processing:", e)
 
-            except socket.timeout:
-                continue
-
-        canal = n.getChannel()
+            canal = n.getChannel()
 
     finally:
         sock.close()
+        print("Broadcast receiver stopped.")
         
     print("Stopping playback")
 
