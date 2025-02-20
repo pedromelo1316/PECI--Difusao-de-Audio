@@ -70,6 +70,13 @@ def listen_for_detection(detection_port=9090):
 
 
 
+def wait_queue(audio_queue, stop_event, min_buffer_size=10):
+    while audio_queue.qsize() < min_buffer_size and not stop_event.is_set():
+        print(f"Waiting for buffer to fill... Queue size: {audio_queue.qsize()}")
+        time.sleep(0.1)
+
+
+
 def play_audio_from_queue(audio_queue, stop_event, min_buffer_size=2):
     """Continuously plays audio from the queue, starting only when the buffer has enough data."""
     p = pyaudio.PyAudio()
@@ -80,9 +87,9 @@ def play_audio_from_queue(audio_queue, stop_event, min_buffer_size=2):
                     frames_per_buffer=1024)
 
     # Espera a fila encher até um certo ponto antes de iniciar a reprodução
-    while audio_queue.qsize() < min_buffer_size and not stop_event.is_set():
-        print(f"Waiting for buffer to fill... Queue size: {audio_queue.qsize()}")
-        time.sleep(0.1)
+    wait_queue(audio_queue, stop_event, min_buffer_size)
+    print("Starting audio playback...")
+
 
     try:
         while not stop_event.is_set():
@@ -92,6 +99,9 @@ def play_audio_from_queue(audio_queue, stop_event, min_buffer_size=2):
                 print(f"Playing audio... Queue size: {audio_queue.qsize()}")
             else:
                 print(f"Buffer underrun, waiting for more data... {audio_queue.qsize()}")
+                wait_queue(audio_queue, stop_event, min_buffer_size)
+                
+                
     finally:
         stream.stop_stream()
         stream.close()
