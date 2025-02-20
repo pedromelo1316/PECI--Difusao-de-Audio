@@ -20,6 +20,7 @@ class NodeDatabase:
             CREATE TABLE IF NOT EXISTS areas (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 area TEXT UNIQUE NOT NULL,
+                nodes TEXT DEFAULT NULL,
                 channel TEXT DEFAULT NULL     
             )
         """)
@@ -30,12 +31,20 @@ class NodeDatabase:
 # TABELA DE AREA
 
     def add_area(self, area):
-        try:
-            self.cursor.execute("INSERT INTO areas (area) VALUES (?)", (area,))
-            self.conn.commit()
-            return f"Area {area} added successfully."
-        except sqlite3.IntegrityError:
-            return "Area already exists."  
+        self.cursor.execute("INSERT INTO areas (area) VALUES (?)", (area,))
+        self.conn.commit()
+        return f"Area {area} added successfully."
+
+    def remove_area(self, area):
+        self.cursor.execute("DELETE FROM areas WHERE area = ?", (area,))
+        self.conn.commit()
+        return f"Area {area} removed."
+
+    def get_areas(self):
+        self.cursor.execute("SELECT area FROM areas")
+        result = self.cursor.fetchall()
+        return [area[0] for area in result]
+     
     
     def add_channel(self, area, channel):
         try:
@@ -60,9 +69,25 @@ class NodeDatabase:
         self.conn.commit()
         return f"Node {ip} renamed to {name}."
     
-    def add_node_area(self, ip, area):
+    def add_node_area(self, ip, area, name):
         self.cursor.execute("UPDATE nodes SET area = ? WHERE ip = ?", (area, ip))
         self.conn.commit()
+
+        self.cursor.execute("SELECT nodes FROM areas WHERE area = ?", (area,))
+        result = self.cursor.fetchone()
+
+        if result:
+            existing_nodes = result[0]
+            if existing_nodes:
+                new_nodes = f"{existing_nodes},{name}"
+            else:
+                new_nodes = name
+
+            # Atualiza a coluna nodes na tabela areas
+            self.cursor.execute("UPDATE areas SET nodes = ? WHERE area = ?", (new_nodes, area))
+            self.conn.commit()
+    
+
         return f"Node {ip} set to area {area}."
 
     def remove_node(self, name):
@@ -85,13 +110,6 @@ class NodeDatabase:
 
         return f"Node {ip} removed from area."
     
-    def get_ip(self, name):
-        self.cursor.execute("SELECT ip FROM nodes WHERE name = ?", (name,))
-        result = self.cursor.fetchone()
-        
-        if result:
-            return result[0]  # Retorna apenas o IP como string
-        return None  # Retorna None se o nó não for encontrado
     
     def info_node(self, ip):
         self.cursor.execute("SELECT * FROM nodes WHERE ip = ?", (ip,))
@@ -103,6 +121,43 @@ class NodeDatabase:
             "name": result[2],
             "area": result[3]
         }
+    
+
+    def get_nodes(self):
+        self.cursor.execute("SELECT name FROM nodes")
+        result = self.cursor.fetchall()
+        return [row[0] for row in result]  # Retorna apenas os nomes como lista de strings
+
+    
+
+    def get_ip_by_name(self, name):
+        self.cursor.execute("SELECT ip FROM nodes WHERE name = ?", (name,))
+        result = self.cursor.fetchone()
+        
+        if result:
+            return result[0]  # Retorna apenas o IP como string
+        return None  # Retorna None se o nó não for encontrado
+    
+    def get_name_by_ip(self, ip):
+        self.cursor.execute("SELECT name FROM nodes WHERE ip = ?", (ip,))
+        result = self.cursor.fetchone()
+        
+        if result:
+            return result[0]
+        return None
+    
+    def get_nodes_in_area(self):
+        self.cursor.execute("SELECT nodes FROM areas")
+        result = self.cursor.fetchone()
+        
+        if result and result[0]:
+            return result[0]
+        return ""
+    
+    def get_free_nodes(self):
+        self.cursor.execute("SELECT name FROM nodes WHERE area IS NULL")
+        result = self.cursor.fetchall()
+        return [node[0] for node in result]
 
 
     def close(self):

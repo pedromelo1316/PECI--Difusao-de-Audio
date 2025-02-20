@@ -185,11 +185,12 @@ def main(stdscr, stop_event, inicio):
                     new_name = get_input(menu_win, "New Name:", 13, 2)
                     # msg = m.rename_node(node_ip, new_name)
 
-                    ip = db.get_ip(node_name)  # Busca o IP do nó pelo nome
+                    ip = db.get_ip_by_name(node_name)  # Busca o IP do nó pelo nome
                     msg = db.rename_node(ip, new_name)
 
                 elif op2 == "5":
-                    nos = [node.getName() for node in m.get_nodes().values()]
+                    #nos = [node.getName() for node in m.get_nodes().values()]
+                    nos = db.get_nodes()
                     msg_win.clear()
                     msg_win.border()
 
@@ -208,12 +209,14 @@ def main(stdscr, stop_event, inicio):
                     #node_ip = m.get_nodeIP_byName(node_name)
                     #msg1 = m.info_node(node_ip)
 
-                    ip = db.get_ip(node_name)  # Busca o IP do nó pelo nome
+                    ip = db.get_ip_by_name(node_name)  # Busca o IP do nó pelo nome
                     msg = db.info_node(ip)
 
 
                 elif op2 == "6":
-                    free_nodes = m.get_free_nodes()
+                    # free_nodes = m.get_free_nodes()
+                    free_nodes = db.get_free_nodes()
+                    free_areas = db.get_areas()
                     msg_win.clear()
                     msg_win.border()
 
@@ -224,8 +227,10 @@ def main(stdscr, stop_event, inicio):
 
                         msg_win.refresh()
                         continue
+
                         
-                    if not list(m.get_areas().keys()):
+                    #if not list(m.get_areas().keys()):
+                    if not free_areas:
                         msg_win.clear()
                         msg_win.border()
                         msg_win.addstr(1, 2, "No Areas")  
@@ -239,24 +244,21 @@ def main(stdscr, stop_event, inicio):
 
                     node_name = get_input(menu_win, "Node Name:", 12, 2)
                     area_name = get_input(menu_win, "Area Name:", 13, 2)
+
                     #node_ip = m.get_nodeIP_byName(node_name)
                     #msg = m.add_node_to_area(node_ip, area_name)
 
-                    ip = db.get_ip(node_name)  # procura o ip do no pelo nome
-                    msg = db.add_node_area(ip, area_name)
+                    ip = db.get_ip_by_name(node_name)  # procura o ip do no pelo nome
+                    msg = db.add_node_area(ip, area_name, node_name)
 
                 elif op2 == "7":
-                    nodes_in_area = m.get_nodes_in_Area()
+                    #nodes_in_area = m.get_nodes_in_Area()
+                    nodes_in_area = db.get_nodes_in_area()
                     msg_win.clear()
                     msg_win.border()
 
                     #if not nodes_in_area:
-
-
-             
-
                     
-
                     add_msg(msg_win, "Nodes in areas: "+ nodes_in_area)
 
                     msg_win.refresh()
@@ -264,10 +266,8 @@ def main(stdscr, stop_event, inicio):
                     #node_ip = m.get_nodeIP_byName(node_name)
                     #msg = m.remove_node_from_area(node_ip)
 
-                    ip = db.get_ip(node_name)  # procura o ip do no pelo nome
+                    ip = db.get_ip_by_name(node_name)  # procura o ip do no pelo nome
                     msg = db.remove_node_area(ip)
-
-
 
 
                 elif op2 == "0":
@@ -299,11 +299,10 @@ def main(stdscr, stop_event, inicio):
                 op2 = get_input(menu_win, "Choose an option:", 10, 2)  # Prompt: "Choose an option:"
                 if op2 == "1":
                     area_name = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
-                    db.add_area(area_name)
-                    msg = m.add_area(area_name)
 
                     if check_valid_input(area_name):
-                        msg = m.add_area(area_name)
+                        # msg = m.add_area(area_name)
+                        msg = db.add_area(area_name)
                     else:
                         msg_win.clear()
                         msg_win.border()
@@ -313,8 +312,8 @@ def main(stdscr, stop_event, inicio):
 
 
                 elif op2 == "2":
-                    areas = list(m.get_areas().keys())
-
+                    # areas = list(m.get_areas().keys())
+                    areas = db.get_areas()
                         
 
                     if not areas:
@@ -332,16 +331,19 @@ def main(stdscr, stop_event, inicio):
             
                     area_name = get_input(menu_win, "Area Name:", 12, 2)
                     if check_valid_input(area_name):
-                        msg = m.remove_area(area_name)
-                    msg_win.clear()
-                    msg_win.border()
-                    msg_win.addstr(1, 2, "Area name not valid") 
-                    msg_win.refresh()
-                    continue
+                        #msg = m.remove_area(area_name)
+                        msg = db.remove_area(area_name)
+                    else:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "Area name not valid") 
+                        msg_win.refresh()
 
 
                 elif op2 == "3":
-                    areas = list(m.get_areas().keys())
+                    # areas = list(m.get_areas().keys())
+                    areas = db.get_areas()
+
                     if not areas:
                         msg_win.clear()
                         msg_win.border()
