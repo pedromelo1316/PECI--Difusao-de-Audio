@@ -118,16 +118,20 @@ def receive_broadcast(audio_queue, n, stop_event, port=8081):
                 
                 audio_queue.put(audio) if audio else None
 
+                print("working")
+
             except (ValueError, AttributeError) as e:
                 print("Error in processing:", e)
 
             except socket.timeout:
+                print("Timeout waiting for data...")
                 continue
 
             canal = n.getChannel()
 
     finally:
         sock.close()
+        print("Broadcast receiver stopped.")
         
     print("Stopping playback")
 

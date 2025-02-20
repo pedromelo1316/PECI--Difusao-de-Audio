@@ -594,7 +594,7 @@ def get_local(q, stop_event=None):
             "-f", "s16le",
             "-acodec", "pcm_s16le",
             "-ar", "44100",
-            "-ac", "2",
+            "-ac", "1",
             "pipe:1"
         ]
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
@@ -607,7 +607,7 @@ def get_local(q, stop_event=None):
                 if not data:
                     break
                 
-                while q.qsize() > 3000:
+                while q.qsize() > 300:
                     time.sleep(0.1)
 
                     
@@ -682,6 +682,9 @@ def send_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_
 
 
             sock.sendto(mensagem, ("<broadcast>", port))
+
+            #print("\rPacote enviado: ", count, end="")
+            count += 1
 
         except queue.Empty:
             continue
