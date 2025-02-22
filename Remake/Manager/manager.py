@@ -129,6 +129,7 @@ class manager:
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 s.connect((ip, PORT))
                 mensagem = "area=" + area_name
+                mensagem += ",volume=" + str(self.areas[area_name].get_volume())
                 if self.areas[area_name].get_channel() is not None:
                     mensagem += ",channel=" + str(self.areas[area_name].get_channel().get_id())
                 s.sendall(mensagem.encode('utf-8'))
@@ -283,6 +284,7 @@ class manager:
             return "Area not found."
         area_info = f"Area {name}:\n\tChannel: {self.areas[name].get_channel()}\n\tNodes: "
         area_info += ", ".join(n.getName() for n in self.areas[name].get_nodes())
+        area_info += f"\n\tVolume: {self.areas[name].get_volume()}"
         return area_info
 
 
@@ -299,6 +301,7 @@ class manager:
             if self.nodes[n].get_area() is None:
                 livres.append(self.nodes[n].getName())
         return livres
+    
 
     def get_nodes_in_Area(self):
         in_area = ""
@@ -317,7 +320,6 @@ class manager:
     def get_channels(self): 
         return self.channels
     
-
     def get_areas(self):
         return self.areas
 
@@ -347,3 +349,25 @@ class manager:
                 return self.nodes[n].getName()
         return None
        
+
+    def set_volume(self, area, volume):
+        if area not in self.areas:
+            return "Area not found."
+        
+        try:
+            self.areas[area].set_volume(volume)
+        except ValueError as e:
+            return f"Error changing volume: {e}"
+
+        try:
+            for n in self.areas[area].get_nodes():
+                PORT = 8080
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                    s.connect((n.get_ip(), PORT))
+                    mensagem = "volume=" + str(volume)
+                    s.sendall(mensagem.encode('utf-8'))
+        except socket.error:
+            return f"Error connecting to node: {n.get_ip()}"
+        return f"Volume changed to {volume} in area {area} successfully."
+

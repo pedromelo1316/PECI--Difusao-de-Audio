@@ -4,6 +4,7 @@ class node_client:
         self.area = None
         self.channel = None
         self.name = None
+        self.volume = None
 
 
     def getId(self):
@@ -29,3 +30,10 @@ class node_client:
     
     def getName(self):
         return self.name
+    
+    def setVolume(self, volume):
+        if volume >= 0.1 and volume <= 2.0:
+            self.volume = volume
+
+    def getVolume(self):
+        return self.volume

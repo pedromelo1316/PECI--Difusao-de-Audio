@@ -272,12 +272,13 @@ def main(stdscr, stop_event, inicio):
                 menu_win.addstr(5, 2, "5 - Remove nodes from Area")
                 menu_win.addstr(6, 2, "6 - Assign channel to Area")
                 menu_win.addstr(7, 2, "7 - Remove channel from Area")
-                menu_win.addstr(8, 2, "0 - Back")
+                menu_win.addstr(8, 2, "8 - Set volume")
+                menu_win.addstr(9, 2, "0 - Back")
                 menu_win.refresh()
 
-                op2 = get_input(menu_win, "Choose an option:", 10, 2)  # Prompt: "Choose an option:"
+                op2 = get_input(menu_win, "Choose an option:", 11, 2)  # Prompt: "Choose an option:"
                 if op2 == "1":
-                    area_name = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
+                    area_name = get_input(menu_win, "Area name:", 13, 2)  # Prompt: "Zone name:"
                     if check_valid_input(area_name):
                         msg = m.add_area(area_name)
                     else:
@@ -290,9 +291,6 @@ def main(stdscr, stop_event, inicio):
 
                 elif op2 == "2":
                     areas = list(m.get_areas().keys())
-
-                        
-
                     if not areas:
                         msg_win.clear()
                         msg_win.border()
@@ -306,7 +304,7 @@ def main(stdscr, stop_event, inicio):
                     msg_win.addstr(1, 2, "Areas: " + ", ".join(areas))
                     msg_win.refresh()
             
-                    area_name = get_input(menu_win, "Area Name:", 12, 2)
+                    area_name = get_input(menu_win, "Area Name:", 13, 2)
                     if check_valid_input(area_name):
                         msg = m.remove_area(area_name)
                     msg_win.clear()
@@ -329,7 +327,7 @@ def main(stdscr, stop_event, inicio):
 
                     msg_win.addstr(1, 2, "Areas: " + ", ".join(areas))
                     msg_win.refresh()
-                    area_name = get_input(menu_win, "Area Name:", 12, 2)
+                    area_name = get_input(menu_win, "Area Name:", 13, 2)
                     msg = m.info_area(area_name)
 
 
@@ -355,9 +353,9 @@ def main(stdscr, stop_event, inicio):
                     msg_win.addstr(1, 2, "Areas: " + ", ".join(areas))
                     msg_win.addstr(2, 2, "Free Nodes: " + " ".join(free_nodes))
                     msg_win.refresh()
-                    area_name = get_input(menu_win, "Area Name:", 12, 2)
+                    area_name = get_input(menu_win, "Area Name:", 13, 2)
                     if check_valid_input(area_name):
-                        name_list = get_input(menu_win, "Nodes Names (seperated by spaces):", 13, 2)
+                        name_list = get_input(menu_win, "Nodes Names (seperated by spaces):", 14, 2)
                         msg = m.add_nodes_to_area(area_name, name_list)
                     else:
                         msg_win.clear()
@@ -379,7 +377,7 @@ def main(stdscr, stop_event, inicio):
                     msg_win.border()
                     msg_win.addstr(1, 2, "Areas: " + ", ".join(areas))  # "Zones: [list of zones]"
                     msg_win.refresh()
-                    area_name = get_input(menu_win, "Name Area:", 12, 2)  # Prompt: "Zone name:"
+                    area_name = get_input(menu_win, "Name Area:", 13, 2)  # Prompt: "Zone name:"
                     if check_valid_input(area_name):
                         nos_em_area = [n.getName() for n in m.get_areas()[area_name].get_nodes()]
                     else:
@@ -400,7 +398,7 @@ def main(stdscr, stop_event, inicio):
                     msg_win.border()
                     msg_win.addstr(1, 2, f"Nodes in {area_name}: " + ", ".join(nos_em_area))  # "Nodes in [zone name]: [list of nodes]"
                     msg_win.refresh()
-                    names = get_input(menu_win, "Node Names (separated by space):", 13, 2)  # Prompt: "Node IPs (separated by space):"
+                    names = get_input(menu_win, "Node Names (separated by space):", 14, 2)  # Prompt: "Node IPs (separated by space):"
                     msg = m.remove_nodes_from_area(area_name, names)
 
                 elif op2 == "6":
@@ -413,13 +411,14 @@ def main(stdscr, stop_event, inicio):
                         msg_win.addstr(1, 2, "No areas exist.")  # "No zones exist."
                         msg_win.refresh()
                         continue
+
                     msg_win.clear()
                     msg_win.border()
                     msg_win.addstr(1, 2, "Areas: " + ", ".join(areas))  # "Zones: [list of zones]"
                     msg_win.addstr(2, 2, "Channels: " + ", ".join(channels))  # "Channels: [list of channels]"
                     msg_win.refresh()
-                    area_name = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
-                    channel = get_input(menu_win, "Channel:", 13, 2)  # Prompt: "Channel:"
+                    area_name = get_input(menu_win, "Area name:", 13, 2)  # Prompt: "Zone name:"
+                    channel = get_input(menu_win, "Channel:", 14, 2)  # Prompt: "Channel:"
                     if check_valid_input(area_name) and check_valid_input(channel):
                         msg = m.assign_channel_to_area(area_name, channel)
                     msg_win.clear()
@@ -440,8 +439,35 @@ def main(stdscr, stop_event, inicio):
                     msg_win.border()
                     msg_win.addstr(1, 2, "Areas: " + ", ".join(areas))  # "Zones: [list of zones]"
                     msg_win.refresh()
-                    area_name = get_input(menu_win, "Area name:", 12, 2)  # Prompt: "Zone name:"
+                    area_name = get_input(menu_win, "Area name:", 13, 2)  # Prompt: "Zone name:"
                     msg = m.remove_channel_from_area(area_name)
+
+
+                elif op2 == "8":
+                    areas = list(m.get_areas().keys())
+                    if not areas:
+                        msg = "No areas exist."
+                    else:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "Areas: " + ", ".join(areas))
+                        msg_win.refresh()
+
+                        area_name = get_input(menu_win, "Area name:", 13, 2)
+                        if area_name not in areas:
+                            msg = "Invalid area name."
+
+                        else:
+                            volume = get_input(menu_win, "Volume(entre 0.1 e 2.0):", 14, 2)
+                            try:
+                                volume = float(volume)
+                                if volume < 0.1 or volume > 2.0:
+                                    msg = "Invalid volume."
+                                else:
+                                    msg = m.set_volume(area_name, volume)
+                            except ValueError:
+                                msg = "Invalid volume value."
+
 
                 elif op2 == "0":
                     break

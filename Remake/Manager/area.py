@@ -8,6 +8,7 @@ class area:
         self._names.add(name)
         self.nodes = []
         self.channel = None
+        self.volume = 1.0
 
     def add_node(self, node):
         self.nodes.append(node)
@@ -27,6 +28,15 @@ class area:
     def get_channel(self):
         return self.channel
     
+
+    def get_volume(self):
+        return self.volume
+    
+    def set_volume(self, volume):
+        if volume >= 0.1 and volume <= 2.0:
+            self.volume = volume
+        else:
+            raise ValueError("Volume out of range")
 
     def __str__(self):
         return f"{self.name}"
