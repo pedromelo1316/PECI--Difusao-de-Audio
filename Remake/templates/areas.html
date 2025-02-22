@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>View Areas</title>
+  </head>
+  <body>
+    <h1>View Areas</h1>
+    <ul>
+      {% for area in areas %}
+        <li>{{ area }}</li>
+      {% endfor %}
+    </ul>
+    <a href="{{ url_for('home') }}">Home</a>
+    <a href="{{ url_for('add_area') }}">Add Area</a>
+    <a href="{{ url_for('remove_area') }}">Remove Area</a>
+  </body>
+</html>

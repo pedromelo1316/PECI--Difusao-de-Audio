@@ -1,8 +1,15 @@
 import socket
-import area
-import node_server
 
-import channel
+# METI ISTO ASSIM PARA PODER IMPORTAR PARA A app.py ver se posso fazer isto dps
+
+
+#import area
+from . import area
+from . import node_server
+#import node_server
+from . import channel
+
+#import channel
 
 
 
@@ -18,36 +25,75 @@ class manager:
         msg = f"Channel {c.get_id()} started successfully in {c.get_transmission()} mode"        
         return msg
 
+
     def add_node(self, ip):
         try:
             if ip in node_server.node_server._ips:
+                print(f"IP {ip} already exists.")
                 return "IP already exists."
+            
+            print(f"Creating node for IP {ip}.")
             n = node_server.node_server(ip)
 
-            
             PORT = 8080
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                print(f"Connecting to {ip}:{PORT}.")
                 s.connect((ip, PORT))
                 mensagem = "Add Node " + str(n.get_id())
+                print(f"Sending message: {mensagem}")
                 s.sendall(mensagem.encode('utf-8'))
 
                 data = s.recv(1024)
+                print(f"Received data: {data}")
                 received_name = data.decode('utf-8').split('=')[1]
                 n.setName(received_name)
+                print(f"Node name set to: {received_name}")
                 
         except ValueError as e:
             if ip in node_server.node_server._ips:
                 node_server.node_server._ips.remove(ip)
+            print(f"Error adding node: {e}")
             return f"Error adding node: {e}"
-        except socket.error:
+        except socket.error as e:
             if ip in node_server.node_server._ips:
                 node_server.node_server._ips.remove(ip)
-
-            return "Error connecting to node."
+            print(f"Error connecting to node: {e}")
+            return f"Error connecting to node: {e}"
 
         self.nodes[ip] = n
+        print(f"Node {ip} added successfully.")
         return f"Node {ip} added successfully."
+    
+
+    def remove_node(self, ip):
+        if ip not in self.nodes:
+            return "Node not found."
+
+        try:
+            PORT = 8080
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                s.connect((ip, PORT))
+                mensagem = "Remove Node " + str(self.nodes[ip].get_id())
+                s.sendall(mensagem.encode('utf-8'))
+
+                data = s.recv(1024)
+                print(f"Received data: {data}")
+                if data.decode('utf-8') == "Node Removed":
+                    del self.nodes[ip]
+                    node_server.node_server._ips.remove(ip)  # Remover o IP do conjunto _ips
+                    print(f"Node {ip} removed successfully.")
+                    return f"Node {ip} removed successfully."
+                else:
+                    print(f"Failed to remove node {ip}.")
+                    return f"Failed to remove node {ip}."
+        except socket.error as e:
+            print(f"Error connecting to node: {e}")
+            return f"Error connecting to node: {e}"
+
+    # CODIGO ANTIGO PARA REMOVER NODES (EM CIMA METI UM PARA RESOLVER UM ERRO)
+    '''
 
     def remove_node(self, ip):
         if ip not in self.nodes:
@@ -74,7 +120,7 @@ class manager:
         if ip in self.nodes:
             del self.nodes[ip]
         return "Node removed successfully."
-    
+    '''
 
 
     def rename_node(self, ip, name):
@@ -322,7 +368,9 @@ class manager:
         return self.areas
 
     def get_nodes(self):
-        return self.nodes
+        #return self.nodes
+        return {ip: node.to_dict() for ip, node in self.nodes.items()}
+
     
     
     

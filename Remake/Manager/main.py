@@ -422,12 +422,12 @@ def main(stdscr, stop_event, inicio):
                     channel = get_input(menu_win, "Channel:", 13, 2)  # Prompt: "Channel:"
                     if check_valid_input(area_name) and check_valid_input(channel):
                         msg = m.assign_channel_to_area(area_name, channel)
-                    msg_win.clear()
-                    msg_win.border()
-                    msg_win.addstr(1, 2, "Invalid area name or channel")
-                    msg_win.refresh()
-                    continue
-
+                    else:
+                        msg_win.clear()
+                        msg_win.border()
+                        msg_win.addstr(1, 2, "Invalid area name or channel")
+                        msg_win.refresh()
+                        continue
                 elif op2 == "7":
                     areas = list(m.get_areas().keys())
                     if not areas:

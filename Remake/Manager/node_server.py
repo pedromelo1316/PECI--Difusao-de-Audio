@@ -40,6 +40,17 @@ class node_server:
     
     def getName(self):
         return self.name
+    
+
+    def to_dict(self):
+        return {
+            "id": self.get_id(),
+            "ip": self.get_ip(),
+            "name": self.getName(),
+            "area": self.get_area()
+        }
+
+   
 
     
     def __str__(self):

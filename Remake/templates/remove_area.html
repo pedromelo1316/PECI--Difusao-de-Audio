@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Remove Area</title>
+  </head>
+  <body>
+    <h1>Remove Area</h1>
+    <form method="POST" action="{{ url_for('remove_area') }}">
+      {{ form.hidden_tag() }}
+      <p>
+        {{ form.name.label }}<br>
+        {{ form.name(size=32) }}<br>
+        {% for error in form.name.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+      </p>
+      <p>{{ form.submit() }}</p>
+    </form>
+    <a href="{{ url_for('home') }}">Home</a>
+    <a href="{{ url_for('add_area') }}">Add Area</a>
+    <a href="{{ url_for('get_areas') }}">View Areas</a>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul>
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+  </body>
+</html>
