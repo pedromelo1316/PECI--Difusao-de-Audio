@@ -654,6 +654,12 @@ def get_voz(q, stop_event=None, inicio=None):
 
 def send_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_voz=None):
 
+    '''
+    
+    while not stop_event.is_set():
+        time.sleep(1)
+    '''
+
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
@@ -686,6 +692,8 @@ def send_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_
 
             sock.sendto(mensagem, ("<broadcast>", port))
 
+            time.sleep(512/44100)
+
             #print("\rPacote enviado: ", count, end="")
             count += 1
 
@@ -695,6 +703,8 @@ def send_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_
     sock.close()
     print("play_audio encerrado.")
 
+    
+    
 
 
 

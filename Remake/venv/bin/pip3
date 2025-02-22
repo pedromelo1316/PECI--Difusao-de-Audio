@@ -1,4 +1,4 @@
-#!/home/davidpelicano/Desktop/PECI--Difusao-de-Audio/Remake/venv/bin/python3
+#!/home/pedromelo/Documentos/UA/3ano/1semestre/PECI/PECI--Difusao-de-Audio/Remake/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
