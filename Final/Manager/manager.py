@@ -113,10 +113,116 @@ class manager:
 
         return f"\n\tMac: {mac}\n\tArea: {area}"
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    #AREA
+
+    def add_area(self, name):
+        
+        if manage_db.check_area(name):
+            raise Exception(f"Area {name} already exists")
+        manage_db.add_area(name)
+
+        return True
+
+
+    def remove_area(self, name):
+        
+        if not manage_db.check_area(name):
+            raise Exception(f"Area {name} not found")
+        manage_db.remove_area(name)
+
+        return True
+    
+
+    def get_area_info(self, name):
+
+        if not manage_db.check_area(name):
+            raise Exception(f"Area {name} not found")
+
+        nodes = manage_db.get_nodes_by_area(name)
+
+
+        volume = manage_db.get_area_volume(name)
+
+        channel = manage_db.get_area_channel(name)
+
+        return f"\n\tNodes: " + ", ".join(nodes) + f"\n\tVolume: {volume}\n\tChannel: {channel}"
+    
+
+
+    def add_node_to_area(self, node_name, area_name):
+        
+        if not manage_db.check_name(node_name):
+            raise Exception(f"Node {node_name} not found")
+        if not manage_db.check_area(area_name):
+            raise Exception(f"Area {area_name} not found")
+        manage_db.add_node_to_area(area_name,node_name)
+
+        return True
+    
+
+    def remove_node_from_area(self, node_name, area_name):
+        
+        if not manage_db.check_name(node_name):
+            raise Exception(f"Node {node_name} not found")
+        if not manage_db.check_area(area_name):
+            raise Exception(f"Area {area_name} not found")
+        manage_db.remove_node_from_area(area_name,node_name)
+
+        return True
+    
             
         
+    def add_channel_to_area(self, area_name, channel_name):
+        
+        if not manage_db.check_area(area_name):
+            raise Exception(f"Area {area_name} not found")
+        if not manage_db.check_channel(channel_name):
+            raise Exception(f"Channel {channel_name} not found")
+        manage_db.add_channel_to_area(area_name,channel_name)
+
+        return True
 
 
+
+    def remove_area_channel(self, area_name):
+
+        if not manage_db.check_area(area_name):
+            raise Exception(f"Area {area_name} not found")
+
+        manage_db.remove_area_channel(area_name)
+
+        return True
+    
+
+    def set_area_volume(self, area_name, volume):
+        
+        if not manage_db.check_area(area_name):
+            raise Exception(f"Area {area_name} not found")
+        
+        volume = float(volume)
+
+        if volume < 0.0 or volume > 2.0:
+            raise Exception("Volume must be between 0 and 2.0")
+
+        manage_db.change_area_volume(area_name,volume)
+
+        return True
     
     
 
@@ -131,7 +237,20 @@ class manager:
 
 
 
-    # CHANNEL    
-    
-    def add_channel(self):
-        manage_db.add_channel("LOCAL")
+    # CHANNEL 
+
+    def change_channel_transmission(self, channel_id, transmission):
+        
+        if not manage_db.check_channel(channel_id):
+            raise Exception(f"Channel {channel_id} not found")
+        manage_db.change_channel_type(channel_id,transmission)
+
+
+
+    def get_channel_info(self, channel_id):
+        
+        if not manage_db.check_channel(channel_id):
+            raise Exception(f"Channel {channel_id} not found")
+        channel = manage_db.get_channel_by_id(channel_id)
+
+        return f"\n\tTransmission: {channel[1]}"

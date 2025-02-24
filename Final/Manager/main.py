@@ -24,6 +24,7 @@ def detect_new_nodes(stop_event, msg_buffer):
             if data:
                 name, mac = data.split(',')
                 try:
+                    name = name.upper()
                     m.add_node(name, mac)
                     msg_buffer.put(f"Node {name} connected")
                     server_socket.sendto(b"OK", addr)
@@ -57,7 +58,7 @@ def get_input(win, prompt, pos_y, pos_x):
     curses.echo()
     inp = win.getstr(pos_y, pos_x + len(prompt) + 1).decode('utf-8')
     curses.noecho()
-    return inp
+    return inp.upper()
 
 
 
@@ -162,11 +163,11 @@ def main(stdscr, stop_event, msg_buffer):
                     menu_win.addstr(1, 2, "1 - Remove Node")
                     menu_win.addstr(2, 2, "2 - Rename Node")
                     menu_win.addstr(3, 2, "3 - Node Information")
-                    menu_win.addstr(6, 2, "0 - Back")
+                    menu_win.addstr(4, 2, "0 - Back")
 
                     menu_win.refresh()
 
-                    op2 = get_input(menu_win, "Choose an option:", 8, 2)
+                    op2 = get_input(menu_win, "Choose an option:", 6, 2)
 
                     if op2 == "0":
                         break
@@ -176,7 +177,7 @@ def main(stdscr, stop_event, msg_buffer):
                         msg = "Nodes: " + ", ".join(nodes)
                         add_msg(msg_win, menu_win, msg)
 
-                        node = get_input(menu_win, "Node: ", 10, 2)
+                        node = get_input(menu_win, "Node: ", 8, 2)
                         try:
                             m.remove_node(node)
                             msg = f"Node {node} removed"
@@ -190,8 +191,8 @@ def main(stdscr, stop_event, msg_buffer):
                         msg = "Nodes: " + ", ".join(nodes)
                         add_msg(msg_win, menu_win, msg)
 
-                        node = get_input(menu_win, "Node: ", 10, 2)
-                        new_name = get_input(menu_win, "New name: ", 11, 2)
+                        node = get_input(menu_win, "Node: ", 8, 2)
+                        new_name = get_input(menu_win, "New name: ", 9, 2)
 
                         try:
                             m.rename_node(node, new_name)
@@ -208,7 +209,7 @@ def main(stdscr, stop_event, msg_buffer):
                         msg = "Nodes: " + ", ".join(nodes)
                         add_msg(msg_win, menu_win, msg)
 
-                        node = get_input(menu_win, "Node: ", 10, 2)
+                        node = get_input(menu_win, "Node: ", 8, 2)
 
                         try:
                             info = m.get_node_info(node)
@@ -220,7 +221,240 @@ def main(stdscr, stop_event, msg_buffer):
                             add_msg(msg_win, menu_win, msg)
 
 
+            elif op == "2":
+                while True:
+
+                    areas = manage_db.get_areas()
+                    areas = [i[1] for i in areas] if areas else []
+
+                    nodes = manage_db.get_node_names()
+                    nodes = [i[0] for i in nodes] if nodes else []
+
+                    channels = manage_db.get_channel_names()
+                    channels = [i[0] for i in channels] if channels else []
+
+                    menu_win.clear()
+                    menu_win.border()
+                    menu_win.addstr(1, 2, "1 - Add Area")
+                    menu_win.addstr(2, 2, "2 - Remove Area")
+                    menu_win.addstr(3, 2, "3 - Area information")
+                    menu_win.addstr(4, 2, "4 - Add nodes to Area")
+                    menu_win.addstr(5, 2, "5 - Remove nodes from Area")
+                    menu_win.addstr(6, 2, "6 - Assign channel to Area")
+                    menu_win.addstr(7, 2, "7 - Remove channel from Area")
+                    menu_win.addstr(8, 2, "8 - Set volume")
+                    menu_win.addstr(9, 2, "0 - Back")
+                    menu_win.refresh()
+
+                    op2 = get_input(menu_win, "Choose an option:", 11, 2)  # Prompt: "Choose an option:"
+
+
+                    if op2 == "0":
+                        break
+
+                    elif op2 == "1":
+                        area = get_input(menu_win, "Area name: ", 13, 2)
+                        try:
+                            m.add_area(area)
+                            msg = f"Area {area} added"
+                            add_msg(msg_win, menu_win, msg)
+                        except Exception as e:
+                            msg = f"Error: {e}"
+                            add_msg(msg_win, menu_win, msg)
+
+
+                    elif op2 == "2":
+
+                        msg = "Areas: " + ", ".join(areas)
+                        add_msg(msg_win, menu_win, msg)
+
+                        area = get_input(menu_win, "Area: ", 13, 2)
+                        try:
+                            m.remove_area(area)
+                            msg = f"Area {area} removed"
+                            add_msg(msg_win, menu_win, msg)
+                        except Exception as e:
+                            msg = f"Error: {e}"
+                            add_msg(msg_win, menu_win, msg)
+
+
+                    elif op2 == "3":
+
+                        msg = "Areas: " + ", ".join(areas)
+                        add_msg(msg_win, menu_win, msg)
+
+                        area = get_input(menu_win, "Area: ", 13, 2)
+                        try:
+                            info = m.get_area_info(area)
+                            msg = f"Area {area} information: {info}"
+                            add_msg(msg_win, menu_win, msg)
+                        except Exception as e:
+                            msg = f"Error: {e}"
+                            add_msg(msg_win, menu_win, msg)
+
+
+                    elif op2 == "4":
+
+                        msg = "Areas: " + ", ".join(areas)
+                        add_msg(msg_win, menu_win, msg)
+
+                        area = get_input(menu_win, "Area: ", 13, 2)
+
+
+                        msg = "Nodes: " + ", ".join(nodes)
+                        add_msg(msg_win, menu_win, msg)
+
+                        node = get_input(menu_win, "Node: ", 14, 2)
+
+                        try:
+                            m.add_node_to_area(node, area)
+                            msg = f"Node {node} added to area {area}"
+                            add_msg(msg_win, menu_win, msg)
+                        except Exception as e:
+                            msg = f"Error: {e}"
+                            add_msg(msg_win, menu_win, msg)
+
+
+                    elif op2 == "5":
+
+                        msg = "Areas: " + ", ".join(areas)
+                        add_msg(msg_win, menu_win, msg)
+
+                        area = get_input(menu_win, "Area: ", 13, 2)
+
+
+                        inside_nodes = manage_db.get_nodes_by_area(area)
+                        msg = "Nodes: " + ", ".join(inside_nodes)
+                        add_msg(msg_win, menu_win, msg)
+
+                        node = get_input(menu_win, "Node: ", 14, 2)
+
+                        try:
+                            m.remove_node_from_area(node, area)
+                            msg = f"Node {node} removed from area {area}"
+                            add_msg(msg_win, menu_win, msg)
+                        except Exception as e:
+                            msg = f"Error: {e}"
+                            add_msg(msg_win, menu_win, msg)
+
+                    elif op2 == "6":
+                        msg = "Areas: " + ", ".join(areas)
+                        add_msg(msg_win, menu_win, msg)
+
+                        area = get_input(menu_win, "Area: ", 13, 2)
+
+                        msg = "Channels: " + ", ".join(map(str, channels))
+                        add_msg(msg_win, menu_win, msg)
+
+                        channel = get_input(menu_win, "Channel: ", 14, 2)
+
+                        try:
+                            m.add_channel_to_area(area, channel)
+                            msg = f"Channel {channel} added to area {area}"
+                            add_msg(msg_win, menu_win, msg)
+
+                        except Exception as e:
+                            msg = f"Error: {e}"
+                            add_msg(msg_win, menu_win, msg)
+
+
+                    elif op2 == "7":
+                        msg = "Areas: " + ", ".join(areas)
+                        add_msg(msg_win, menu_win, msg)
+
+                        area = get_input(menu_win, "Area: ", 13, 2)
+
+                        try:
+                            m.remove_area_channel(area)
+                            msg = f"Channel removed from area {area}"
+                            add_msg(msg_win, menu_win, msg)
+
+                        except Exception as e:
+                            msg = f"Error: {e}"
+                            add_msg(msg_win, menu_win, msg)
+
+
+                    elif op2 == "8":
+                        msg = "Areas: " + ", ".join(areas)
+                        add_msg(msg_win, menu_win, msg)
+
+                        area = get_input(menu_win, "Area: ", 13, 2)
+
+                        volume = get_input(menu_win, "Volume(0.1 a 2.0): ", 14, 2)
+
+                        try:
+                            m.set_area_volume(area, volume)
+                            msg = f"Volume set to {volume} in area {area}"
+                            add_msg(msg_win, menu_win, msg)
+
+                        except Exception as e:
+                            msg = f"Error: {e}"
+                            add_msg(msg_win, menu_win, msg)
+
+
+            elif op == "3":
+                # Submenu for channels
+                while True:
+
+                    channels = manage_db.get_channel_names()
+                    channels = [i[0] for i in channels] if channels else []
+
+                    opc = ["LOCAL", "TRANSMISSION", "VOICE"]
+
+                    menu_win.clear()
+                    menu_win.border()
+                    menu_win.addstr(1, 2, "1 - Change channel transmission")
+                    menu_win.addstr(2, 2, "2 - Channel information")
+                    menu_win.addstr(3, 2, "0 - Back")
+                    menu_win.refresh()
+
+                    op2 = get_input(menu_win, "Choose an option:", 5, 2)  # Prompt: "Choose an option:"
+
+
+                    if op2 == "0":
+                        break
+
+                    elif op2 == "1":
+
+                        msg = "Channels: " + ", ".join(map(str, channels))
+                        add_msg(msg_win, menu_win, msg)
+
+                        channel = get_input(menu_win, "Channel: ", 7, 2)
+
+                        msg = "Options: " + ", ".join(opc)
+                        add_msg(msg_win, menu_win, msg)
+
+                        transmission = get_input(menu_win, "Transmission: ", 8, 2)
+
+                        try:
+                            m.change_channel_transmission(channel, transmission)
+                            msg = f"Transmission set to {transmission} in channel {channel}"
+                            add_msg(msg_win, menu_win, msg)
+
+                        except Exception as e:
+                            msg = f"Error: {e}"
+                            add_msg(msg_win, menu_win, msg)
+
+
+
+                    elif op2 == "2":
+
+                        msg = "Channels: " + ", ".join(map(str, channels))
+                        add_msg(msg_win, menu_win, msg)
+
+                        channel = get_input(menu_win, "Channel: ", 7, 2)
+
+                        try:
+                            info = m.get_channel_info(channel)
+                            msg = f"Channel {channel} information: {info}"
+                            add_msg(msg_win, menu_win, msg)
+                        except Exception as e:
+                            msg = f"Error: {e}"
+                            add_msg(msg_win, menu_win, msg)
                         
+
+
+
 
                         
 
@@ -262,9 +496,11 @@ if __name__ == "__main__":
     msg_buffer = queue.Queue()
 
     num_channels = 3
+
+    manage_db.init_channels(num_channels)
+
     m = manager.manager()
-    for i in range(num_channels):
-        m.add_channel()
+    
 
     stop_event = threading.Event()
 

@@ -7,8 +7,8 @@ def init_db():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute("CREATE TABLE IF NOT EXISTS nodes (id INTEGER PRIMARY KEY, name TEXT, mac TEXT, area_id INTEGER)")
-    c.execute("CREATE TABLE IF NOT EXISTS areas (id INTEGER PRIMARY KEY, name TEXT, channel_id INTEGER, nodes TEXT, volume INTEGER)")
-    c.execute("CREATE TABLE IF NOT EXISTS channels (id INTEGER PRIMARY KEY, type TEXT, areas TEXT)")
+    c.execute("CREATE TABLE IF NOT EXISTS areas (id INTEGER PRIMARY KEY, name TEXT, channel_id INTEGER, nodes TEXT, volume FLOAT)")
+    c.execute("CREATE TABLE IF NOT EXISTS channels (id INTEGER PRIMARY KEY, type TEXT)")
     conn.commit()
 
     
@@ -131,7 +131,7 @@ def check_name(name):
 #AREA
 
 
-def add_area(name, channel_id, nodes="", volume=1.0):
+def add_area(name, channel_id=None, nodes="", volume=1.0):
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute("INSERT INTO areas (name, channel_id, nodes, volume) VALUES (?, ?, ?, ?)", (name, channel_id, nodes, volume))
@@ -197,9 +197,19 @@ def add_node_to_area(name, node_name):
     c.execute("SELECT * FROM areas WHERE name=?", (name,))
     area = c.fetchone()
     nodes = area[3].split(",")
-    nodes.append(node_name)
+    nodes[-1] = f"{node_name},"
     c.execute("UPDATE areas SET nodes=? WHERE name=?", (",".join(nodes), name))
     conn.commit()
+
+
+
+def get_nodes_by_area(name):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM areas WHERE name=?", (name,))
+    area = c.fetchone()
+    nodes = area[3].split(",")
+    return nodes[:-1]
 
 
 def remove_area_channel(name):
@@ -209,6 +219,15 @@ def remove_area_channel(name):
     conn.commit()
 
 
+
+def add_channel_to_area(name, channel_id):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("UPDATE areas SET channel_id=? WHERE name=?", (channel_id, name))
+    conn.commit()
+
+
+
 def get_area_names():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
@@ -216,20 +235,43 @@ def get_area_names():
     return c.fetchall()
 
 
-def get_area_channel():
+def get_area_channel(name):
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT channel_id FROM areas")
-    return c.fetchall()
+    c.execute("SELECT * FROM areas WHERE name=?", (name,))
+    area = c.fetchone()
+    if area[2] is None:
+        return None
+    c.execute("SELECT * FROM channels WHERE id=?", (area[2],))
+    return c.fetchone()
+
+
+def check_area(name):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM areas WHERE name=?", (name,))
+    
+    if c.fetchone():
+        return True
+    return False
 
 
 #CHANNEL
 
 
-def add_channel(type, areas=""):
+def init_channels(num):
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("INSERT INTO channels (type, areas) VALUES (?, ?)", (type, areas))
+    c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='channels'")
+    if not c.fetchone():
+        return
+    c.execute("SELECT * FROM channels")
+    channels = c.fetchall()
+    if len(channels) == num:
+        return
+    c.execute("DELETE FROM channels")
+    for i in range(num):
+        c.execute("INSERT INTO channels (type) VALUES ('LOCAL')")
     conn.commit()
 
 
@@ -260,32 +302,19 @@ def remove_channel(id):
     conn.commit()
 
 
-def add_area_to_channel(channel_id, area_name):
+def get_channel_names():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT * FROM channels WHERE id=?", (channel_id,))
-    channel = c.fetchone()
-    areas = channel[2].split(",")
-    areas.append(area_name)
-    c.execute("UPDATE channels SET areas=? WHERE id=?", (",".join(areas), channel_id))
-    conn.commit()
+    c.execute("SELECT id FROM channels")
+    return c.fetchall()
 
 
-def remove_area_from_channel(channel_id, area_name):
+
+def check_channel(id):
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT * FROM channels WHERE id=?", (channel_id,))
-    channel = c.fetchone()
-    areas = channel[2].split(",")
-    areas.remove(area_name)
-    c.execute("UPDATE channels SET areas=? WHERE id=?", (",".join(areas), channel_id))
-    conn.commit()
-
-
-def get_channel_areas(channel_id):
-    conn = sqlite3.connect('database.db')
-    c = conn.cursor()
-    c.execute("SELECT * FROM channels WHERE id=?", (channel_id,))
-    channel = c.fetchone()
-    return channel[2].split(",")
-
+    c.execute("SELECT * FROM channels WHERE id=?", (id,))
+    
+    if c.fetchone():
+        return True
+    return False
