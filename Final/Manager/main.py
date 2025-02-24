@@ -5,8 +5,43 @@ import queue
 import manager
 import socket
 from database import manage_db
+import json
 
 
+
+def send_info(nodes, removed=False):
+
+    if not removed:
+        dic = {}
+        for node in nodes:
+            node = manage_db.get_node_by_name(node)
+            mac = node[2]
+            area_id = node[3]
+            area = None
+            volume = None
+            channel = None
+            area = manage_db.get_area_by_id(area_id) if area_id else None
+            
+            volume = area[4] if area != None else None
+            channel = area[2] if area != None else None
+
+            dic[mac] = {"volume": volume, "channel": channel}
+    
+    else:
+        dic = {}
+        for node in nodes:
+            node = manage_db.get_node_by_name(node)
+            mac = node[2]
+            dic[mac] = {"removed": True}
+
+    msg = json.dumps(dic)
+
+    print(msg)
+    
+    #mandar broadcast do dic
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
+        client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        client_socket.sendto(msg.encode('utf-8'), ('<broadcast>', 8081))
 
 
 
@@ -42,7 +77,8 @@ def detect_new_nodes(stop_event, msg_buffer):
                         msg_buffer.put(f"Error: {e}")
                         server_socket.sendto(b"Error", addr)
 
-                m.send_info([name])
+                send_info([name])
+
 
         
 
@@ -185,6 +221,7 @@ def main(stdscr, stop_event, msg_buffer):
                             m.remove_node(node)
                             msg = f"Node {node} removed"
                             add_msg(msg_win, menu_win, msg)
+                            send_info([node], removed=True)
                         except Exception as e:
                             msg = f"Error: {e}"
                             add_msg(msg_win, menu_win, msg)
@@ -222,6 +259,9 @@ def main(stdscr, stop_event, msg_buffer):
                         except Exception as e:
                             msg = f"Error: {e}"
                             add_msg(msg_win, menu_win, msg)
+
+
+                    
 
 
             elif op == "2":
@@ -273,9 +313,11 @@ def main(stdscr, stop_event, msg_buffer):
 
                         area = get_input(menu_win, "Area: ", 13, 2)
                         try:
+                            nodes_in_area = manage_db.get_nodes_by_area(area)
                             m.remove_area(area)
                             msg = f"Area {area} removed"
                             add_msg(msg_win, menu_win, msg)
+                            send_info(nodes_in_area)
                         except Exception as e:
                             msg = f"Error: {e}"
                             add_msg(msg_win, menu_win, msg)
@@ -323,8 +365,9 @@ def main(stdscr, stop_event, msg_buffer):
                                 if n not in out_nodes:
                                     raise Exception(f"Node {n} not available")
                             m.add_node_to_area(nodes, area)
-                            msg = f"Node {nodes} added to area {area}"
+                            msg = f"Nodes " + ",".join(nodes) +  f" added to area {area}"
                             add_msg(msg_win, menu_win, msg)
+                            send_info(nodes)
                         except Exception as e:
                             msg = f"Error: {e}"
                             add_msg(msg_win, menu_win, msg)
@@ -351,11 +394,14 @@ def main(stdscr, stop_event, msg_buffer):
                         nodes = get_input(menu_win, "Node(separado por espaço): ", 14, 2)
 
                         try:
-                            if nodes not in inside_nodes:
-                                raise Exception(f"Node {nodes} not in area {area}")
+                            nodes = nodes.split()
+                            for n in nodes:
+                                if n not in inside_nodes:
+                                    raise Exception(f"Node {n} not available")
                             m.remove_node_from_area(nodes, area)
                             msg = f"Node {nodes} removed from area {area}"
                             add_msg(msg_win, menu_win, msg)
+                            send_info(nodes)
                         except Exception as e:
                             msg = f"Error: {e}"
                             add_msg(msg_win, menu_win, msg)
@@ -382,7 +428,7 @@ def main(stdscr, stop_event, msg_buffer):
                             m.add_channel_to_area(area, channel)
                             msg = f"Channel {channel} added to area {area}"
                             add_msg(msg_win, menu_win, msg)
-
+                            send_info(manage_db.get_nodes_by_area(area))
                         except Exception as e:
                             msg = f"Error: {e}"
                             add_msg(msg_win, menu_win, msg)
@@ -398,7 +444,7 @@ def main(stdscr, stop_event, msg_buffer):
                             m.remove_area_channel(area)
                             msg = f"Channel removed from area {area}"
                             add_msg(msg_win, menu_win, msg)
-
+                            send_info(manage_db.get_nodes_by_area(area))
                         except Exception as e:
                             msg = f"Error: {e}"
                             add_msg(msg_win, menu_win, msg)
@@ -416,10 +462,13 @@ def main(stdscr, stop_event, msg_buffer):
                             m.set_area_volume(area, volume)
                             msg = f"Volume set to {volume} in area {area}"
                             add_msg(msg_win, menu_win, msg)
-
+                            send_info(manage_db.get_nodes_by_area(area))
                         except Exception as e:
                             msg = f"Error: {e}"
                             add_msg(msg_win, menu_win, msg)
+
+
+                    
 
 
             elif op == "3":
@@ -488,12 +537,18 @@ def main(stdscr, stop_event, msg_buffer):
                             msg = f"Error: {e}"
                             add_msg(msg_win, menu_win, msg)
 
+                    
+
 
 
             elif op == "CLEAR":
                 msg_win.clear()
                 msg_win.border()
                 msg_win.refresh()
+
+
+
+            
                         
 
 
@@ -569,6 +624,8 @@ if __name__ == "__main__":
     detect = threading.Thread(target=detect_new_nodes, args=(stop_event,msg_buffer), daemon=True)
     detect.start()
 
+
+
     # Threads para encher as queues a cada 0.5s
     t_local = threading.Thread(target=get_local, args=(q_local, stop_event), daemon=True)
     t_trans = threading.Thread(target=get_transmission, args=(q_transmission, stop_event), daemon=True)
@@ -580,6 +637,7 @@ if __name__ == "__main__":
     # Thread do play_audio que aguarda as queues e envia pacotes a cada 0.5s
     t_play = threading.Thread(target=send_audio, args=(8081, stop_event, q_local, q_transmission, q_voz), daemon=True)
     t_play.start()
+
 
     t_menu.join()
     t_local.join()

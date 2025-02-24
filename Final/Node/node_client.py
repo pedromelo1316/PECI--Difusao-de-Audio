@@ -5,6 +5,7 @@ class node_client:
         self.name = name
         self.volume = None
         self.mac = mac
+        self.hostIp = None
 
 
 
@@ -33,11 +34,20 @@ class node_client:
         return self.name
     
     def setVolume(self, volume):
-        if volume >= 0.1 and volume <= 2.0:
+        if volume == None:
+            self.volume = None
+        elif volume >= 0 and volume <= 2.0:
             self.volume = volume
 
     def getVolume(self):
         return self.volume
+    
+    def setHostIp(self, ip):
+        self.hostIp = ip
+
+    def getHostIp(self):
+        return self.hostIp
+    
     
 
     def __str__(self):

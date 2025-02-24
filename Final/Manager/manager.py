@@ -1,6 +1,4 @@
 from database import manage_db
-import socket
-import json
 
 class manager:
 
@@ -11,35 +9,6 @@ class manager:
 
 
 
-
-    def send_info(self, list):
-
-        dic = {}
-
-        for name in list:
-            node = manage_db.get_node_by_name(name)
-
-            volume, channel = None, None
-
-            if node[3] != None:
-                volume = manage_db.get_area_volume(node[3])
-
-                channel = manage_db.get_area_channel(node[3])
-
-            dic[node[2]] = {"channel": channel, "volume": volume}
-
-
-
-        dic = json.dumps(dic)
-
-
-
-        #mandar broadcast do dic
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
-            client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            client_socket.sendto(dic.encode('utf-8'), ('<broadcast>', 8081))
-
-        return True
 
 
     # NODE
@@ -80,8 +49,6 @@ class manager:
     
 
     def remove_node(self, name):
-        
-        
         if not manage_db.check_name(name):
             raise Exception(f"Node {name} not found")
         manage_db.remove_node(name)
@@ -167,7 +134,6 @@ class manager:
 
     def add_node_to_area(self, nodes, area_name):
         
-        nodes = nodes.split(" ")
         if not manage_db.check_area(area_name):
             raise Exception(f"Area {area_name} not found")
         for node_name in nodes:
@@ -181,7 +147,6 @@ class manager:
 
     def remove_node_from_area(self, nodes, area_name):
         
-        nodes = nodes.split(" ")
         if not manage_db.check_area(area_name):
             raise Exception(f"Area {area_name} not found")
         
