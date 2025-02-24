@@ -41,6 +41,10 @@ def detect_new_nodes(stop_event, msg_buffer):
                         msg_buffer.put(f"Error: {e}")
                         server_socket.sendto(b"Error", addr)
 
+                m.send_info([name])
+
+        
+
 
 def get_input(win, prompt, pos_y, pos_x):
     """
@@ -57,7 +61,7 @@ def get_input(win, prompt, pos_y, pos_x):
 
 
 
-def add_msg(msg_win, menu_win,  msg):
+def add_msg(msg_win, menu_win, msg):
     """
     Adds a message to the window 'win' with scrolling.
     The window is assumed to have a border. If the number of messages 
@@ -69,9 +73,12 @@ def add_msg(msg_win, menu_win,  msg):
     height, width = msg_win.getmaxyx()
     max_lines = height - 2  # leaving room for the border
 
-    add_msg.lines.append(msg)
-    if len(add_msg.lines) > max_lines:
-        add_msg.lines = add_msg.lines[-max_lines:]
+    # Split the message into multiple lines if necessary
+    msg_lines = msg.split('\n')
+    for line in msg_lines:
+        add_msg.lines.append(line)
+        if len(add_msg.lines) > max_lines:
+            add_msg.lines = add_msg.lines[-max_lines:]
         
     msg_win.clear()
     msg_win.border()
@@ -97,61 +104,133 @@ def message_listener(stop_event, msg_buffer, msg_win, menu_win):
 
 def main(stdscr, stop_event, msg_buffer):
 
-    curses.curs_set(1)
-    stdscr.clear()
-    height, width = stdscr.getmaxyx()
+    try:
+        curses.curs_set(1)
+        stdscr.clear()
+        height, width = stdscr.getmaxyx()
 
-    # Define área de mensagens (3 linhas) e área para menu (restante)
-    msg_height = height // 4
-    menu_height = height - msg_height
+        # Define área de mensagens (3 linhas) e área para menu (restante)
+        msg_height = height // 4
+        menu_height = height - msg_height
 
-    # Cria janelas: menu_win para menus e msg_win para exibição de mensagens
-    menu_win = curses.newwin(menu_height, width, 0, 0)
-    msg_win  = curses.newwin(msg_height, width, menu_height, 0)
+        # Cria janelas: menu_win para menus e msg_win para exibição de mensagens
+        menu_win = curses.newwin(menu_height, width, 0, 0)
+        msg_win  = curses.newwin(msg_height, width, menu_height, 0)
 
 
-    # Start thread to listen to message buffer and update msg_win
-    msg_thread = threading.Thread(target=message_listener, args=(stop_event, msg_buffer, msg_win, menu_win), daemon=True)
-    msg_thread.start()
+        # Start thread to listen to message buffer and update msg_win
+        msg_thread = threading.Thread(target=message_listener, args=(stop_event, msg_buffer, msg_win, menu_win), daemon=True)
+        msg_thread.start()
 
-    
+        
 
-    while not stop_event.is_set():
-        # Menu principal
-        menu_win.clear()
-        menu_win.border()
-        menu_win.addstr(1, 2, "1 - Manage nodes")
-        menu_win.addstr(2, 2, "2 - Manage areas")
-        menu_win.addstr(3, 2, "3 - Manage channels")
-        menu_win.addstr(4, 2, "0 - Exit")
-        menu_win.refresh()
+        while not stop_event.is_set():
+            # Menu principal
+            menu_win.clear()
+            menu_win.border()
+            menu_win.addstr(1, 2, "1 - Manage nodes")
+            menu_win.addstr(2, 2, "2 - Manage areas")
+            menu_win.addstr(3, 2, "3 - Manage channels")
+            menu_win.addstr(4, 2, "0 - Exit")
+            menu_win.refresh()
 
-        op = get_input(menu_win, "Choose an option: ",6,2)
+            op = get_input(menu_win, "Choose an option: ",6,2)
 
-        if op == "0":
-            stop_event.set()
-            break
+            if op == "0":
+                stop_event.set()
+                break
 
-        elif op == "1":
+            elif op == "1":
 
-            while not stop_event.is_set():
+                while not stop_event.is_set():
 
-                menu_win.clear()
-                menu_win.border()
+                    nodes = manage_db.get_node_names()
+                    nodes = [i[0] for i in nodes] if nodes else []
 
-                menu_win.addstr(1, 2, "1 - Remove Node")
-                menu_win.addstr(2, 2, "2 - Rename Node")
-                menu_win.addstr(3, 2, "3 - Node Information")
-                menu_win.addstr(4, 2, "4 - Add Node to Area")
-                menu_win.addstr(5, 2, "5 - Remove Node from Area")
-                menu_win.addstr(6, 2, "0 - Back")
+                    areas = manage_db.get_areas()
+                    areas = [i[1] for i in areas] if areas else []
 
-                menu_win.refresh()
 
-                op2 = get_input(menu_win, "Choose an option:", 10, 2)
+                    if not nodes:
+                        msg = "No nodes to manage"
+                        add_msg(msg_win, menu_win, msg)
+                        break
 
-                if op2 == "0":
-                    break
+                    menu_win.clear()
+                    menu_win.border()
+
+                    menu_win.addstr(1, 2, "1 - Remove Node")
+                    menu_win.addstr(2, 2, "2 - Rename Node")
+                    menu_win.addstr(3, 2, "3 - Node Information")
+                    menu_win.addstr(6, 2, "0 - Back")
+
+                    menu_win.refresh()
+
+                    op2 = get_input(menu_win, "Choose an option:", 8, 2)
+
+                    if op2 == "0":
+                        break
+
+                    elif op2 == "1":
+
+                        msg = "Nodes: " + ", ".join(nodes)
+                        add_msg(msg_win, menu_win, msg)
+
+                        node = get_input(menu_win, "Node: ", 10, 2)
+                        try:
+                            m.remove_node(node)
+                            msg = f"Node {node} removed"
+                            add_msg(msg_win, menu_win, msg)
+                        except Exception as e:
+                            msg = f"Error: {e}"
+                            add_msg(msg_win, menu_win, msg)
+
+                    elif op2 == "2":
+
+                        msg = "Nodes: " + ", ".join(nodes)
+                        add_msg(msg_win, menu_win, msg)
+
+                        node = get_input(menu_win, "Node: ", 10, 2)
+                        new_name = get_input(menu_win, "New name: ", 11, 2)
+
+                        try:
+                            m.rename_node(node, new_name)
+                            msg = f"Node {node} renamed to {new_name}"
+                            add_msg(msg_win, menu_win, msg)
+
+                        except Exception as e:
+                            msg = f"Error: {e}"
+                            add_msg(msg_win, menu_win, msg)
+
+
+                    elif op2 == "3":
+
+                        msg = "Nodes: " + ", ".join(nodes)
+                        add_msg(msg_win, menu_win, msg)
+
+                        node = get_input(menu_win, "Node: ", 10, 2)
+
+                        try:
+                            info = m.get_node_info(node)
+                            msg = f"Node {node} information: {info}"
+                            add_msg(msg_win, menu_win, msg)
+
+                        except Exception as e:
+                            msg = f"Error: {e}"
+                            add_msg(msg_win, menu_win, msg)
+
+
+                        
+
+                        
+
+
+                    
+
+    except Exception as e:
+        curses.endwin()  # Restaura o terminal
+        raise e
+                        
                 
 
 

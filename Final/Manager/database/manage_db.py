@@ -109,6 +109,18 @@ def get_node_macs():
 
 
 
+def check_name(name):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM nodes WHERE name=?", (name,))
+    
+    if c.fetchone():
+        return True
+    return False
+
+
+
+
 
 
 

@@ -12,7 +12,7 @@ class manager:
 
 
 
-    def send_info(self, list, status="ON"):
+    def send_info(self, list):
 
         dic = {}
 
@@ -26,7 +26,7 @@ class manager:
 
                 channel = manage_db.get_area_channel(node[3])
 
-            dic[node[2]] = {"status": status, "channel": channel, "volume": volume}
+            dic[node[2]] = {"channel": channel, "volume": volume}
 
 
 
@@ -39,8 +39,6 @@ class manager:
             client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
             client_socket.sendto(dic.encode('utf-8'), ('<broadcast>', 8081))
 
-        print("work")
-        exit()
         return True
 
 
@@ -60,7 +58,6 @@ class manager:
 
   
         if mac in macs:
-            self.send_info([name])
             raise Exception("MAC already in use")
         
         
@@ -78,17 +75,44 @@ class manager:
 
         manage_db.add_node(name, mac)
 
-        self.send_info([name])
 
         return True
     
 
     def remove_node(self, name):
+        
+        
+        if not manage_db.check_name(name):
+            raise Exception(f"Node {name} not found")
         manage_db.remove_node(name)
 
+        return True
+    
 
+    def rename_node(self, old_name, new_name):
+        
+        if not manage_db.check_name(old_name):
+            raise Exception(f"Node {old_name} not found")
+        manage_db.change_node_name(old_name, new_name)
+        
 
         return True
+    
+
+
+    def get_node_info(self, name):
+        
+        if not manage_db.check_name(name):
+            raise Exception(f"Node {name} not found")
+        node = manage_db.get_node_by_name(name)
+
+
+        mac = node[2]
+        aread_id = node[3]
+        area = manage_db.get_area_by_id(aread_id) if aread_id != None else None
+
+        return f"\n\tMac: {mac}\n\tArea: {area}"
+    
             
         
 
