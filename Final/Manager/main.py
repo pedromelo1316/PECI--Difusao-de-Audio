@@ -103,6 +103,9 @@ def message_listener(stop_event, msg_buffer, msg_win, menu_win):
         except queue.Empty:
             continue
 
+
+
+
 def main(stdscr, stop_event, msg_buffer):
 
     try:
@@ -298,17 +301,29 @@ def main(stdscr, stop_event, msg_buffer):
                         msg = "Areas: " + ", ".join(areas)
                         add_msg(msg_win, menu_win, msg)
 
+                        out_nodes = manage_db.get_nodes_not_in_areas()
+                        out_nodes = [i[0] for i in out_nodes] if out_nodes else []
+
+                        if not out_nodes:
+                            msg = "All nodes are already in areas"
+                            add_msg(msg_win, menu_win, msg)
+                            continue
+
                         area = get_input(menu_win, "Area: ", 13, 2)
 
 
-                        msg = "Nodes: " + ", ".join(nodes)
+                        msg = "Nodes: " + ", ".join(out_nodes)
                         add_msg(msg_win, menu_win, msg)
 
-                        node = get_input(menu_win, "Node: ", 14, 2)
+                        nodes = get_input(menu_win, "Node(separado por espaço): ", 14, 2)
 
                         try:
-                            m.add_node_to_area(node, area)
-                            msg = f"Node {node} added to area {area}"
+                            nodes = nodes.split()
+                            for n in nodes:
+                                if n not in out_nodes:
+                                    raise Exception(f"Node {n} not available")
+                            m.add_node_to_area(nodes, area)
+                            msg = f"Node {nodes} added to area {area}"
                             add_msg(msg_win, menu_win, msg)
                         except Exception as e:
                             msg = f"Error: {e}"
@@ -324,14 +339,22 @@ def main(stdscr, stop_event, msg_buffer):
 
 
                         inside_nodes = manage_db.get_nodes_by_area(area)
+
+                        if not inside_nodes:
+                            msg = "No nodes in area"
+                            add_msg(msg_win, menu_win, msg)
+                            continue
+
                         msg = "Nodes: " + ", ".join(inside_nodes)
                         add_msg(msg_win, menu_win, msg)
 
-                        node = get_input(menu_win, "Node: ", 14, 2)
+                        nodes = get_input(menu_win, "Node(separado por espaço): ", 14, 2)
 
                         try:
-                            m.remove_node_from_area(node, area)
-                            msg = f"Node {node} removed from area {area}"
+                            if nodes not in inside_nodes:
+                                raise Exception(f"Node {nodes} not in area {area}")
+                            m.remove_node_from_area(nodes, area)
+                            msg = f"Node {nodes} removed from area {area}"
                             add_msg(msg_win, menu_win, msg)
                         except Exception as e:
                             msg = f"Error: {e}"
@@ -343,12 +366,19 @@ def main(stdscr, stop_event, msg_buffer):
 
                         area = get_input(menu_win, "Area: ", 13, 2)
 
-                        msg = "Channels: " + ", ".join(map(str, channels))
+                        channel = manage_db.get_area_channel(area)[0] if manage_db.get_area_channel(area) else None
+
+                        other_channels = [i for i in channels if i != channel]
+
+                        msg = "Channels: " + ", ".join(map(str, other_channels))
                         add_msg(msg_win, menu_win, msg)
 
                         channel = get_input(menu_win, "Channel: ", 14, 2)
 
                         try:
+                            if int(channel) not in other_channels:
+                                raise Exception(f"Channel {channel} not available")
+
                             m.add_channel_to_area(area, channel)
                             msg = f"Channel {channel} added to area {area}"
                             add_msg(msg_win, menu_win, msg)
@@ -421,12 +451,18 @@ def main(stdscr, stop_event, msg_buffer):
 
                         channel = get_input(menu_win, "Channel: ", 7, 2)
 
-                        msg = "Options: " + ", ".join(opc)
+                        transmission = manage_db.get_channel_type(channel)
+
+                        _options = [i for i in opc if i != transmission]
+
+                        msg = "Options: " + ", ".join(_options)
                         add_msg(msg_win, menu_win, msg)
 
                         transmission = get_input(menu_win, "Transmission: ", 8, 2)
 
                         try:
+                            if transmission not in opc:
+                                raise Exception(f"Transmission {transmission} not available")
                             m.change_channel_transmission(channel, transmission)
                             msg = f"Transmission set to {transmission} in channel {channel}"
                             add_msg(msg_win, menu_win, msg)
@@ -451,6 +487,13 @@ def main(stdscr, stop_event, msg_buffer):
                         except Exception as e:
                             msg = f"Error: {e}"
                             add_msg(msg_win, menu_win, msg)
+
+
+
+            elif op == "CLEAR":
+                msg_win.clear()
+                msg_win.border()
+                msg_win.refresh()
                         
 
 
@@ -497,9 +540,11 @@ if __name__ == "__main__":
 
     num_channels = 3
 
-    manage_db.init_channels(num_channels)
+    
 
     m = manager.manager()
+
+    manage_db.init_channels(num_channels)
     
 
     stop_event = threading.Event()

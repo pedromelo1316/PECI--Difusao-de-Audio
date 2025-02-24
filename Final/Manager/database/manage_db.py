@@ -51,10 +51,18 @@ def get_node_by_mac(mac):
 
 
 def remove_node(name):
+
+    area_name = get_node_area(name)[1]
+    if area_name is not None:
+        remove_node_from_area(area_name, name)
+    
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute("DELETE FROM nodes WHERE name=?", (name,))
     conn.commit()
+
+
+    
 
 
 def remove_area_from_node(name):
@@ -156,6 +164,11 @@ def get_area_by_id(id):
     return c.fetchone()
 
 def remove_area(name):
+
+    nodes = get_nodes_by_area(name)
+    for node in nodes:
+        remove_area_from_node(node)
+
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute("DELETE FROM areas WHERE name=?", (name,))
@@ -189,6 +202,10 @@ def remove_node_from_area(name, node_name):
     nodes.remove(node_name)
     c.execute("UPDATE areas SET nodes=? WHERE name=?", (",".join(nodes), name))
     conn.commit()
+    c.execute("SELECT * FROM nodes WHERE name=?", (node_name,))
+    node = c.fetchone()
+    c.execute("UPDATE nodes SET area_id=NULL WHERE name=?", (node_name,))
+    conn.commit()
 
 
 def add_node_to_area(name, node_name):
@@ -199,6 +216,10 @@ def add_node_to_area(name, node_name):
     nodes = area[3].split(",")
     nodes[-1] = f"{node_name},"
     c.execute("UPDATE areas SET nodes=? WHERE name=?", (",".join(nodes), name))
+    conn.commit()
+    c.execute("SELECT * FROM nodes WHERE name=?", (node_name,))
+    node = c.fetchone()
+    c.execute("UPDATE nodes SET area_id=? WHERE name=?", (area[0], node[1]))
     conn.commit()
 
 
@@ -256,23 +277,30 @@ def check_area(name):
     return False
 
 
+
+def get_nodes_not_in_areas():
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT name FROM nodes WHERE area_id IS NULL")
+    return c.fetchall()
+
 #CHANNEL
 
 
 def init_channels(num):
+    #se o numero de canais for diferente de num apagar todos e criar num novos
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='channels'")
-    if not c.fetchone():
-        return
     c.execute("SELECT * FROM channels")
     channels = c.fetchall()
-    if len(channels) == num:
-        return
-    c.execute("DELETE FROM channels")
-    for i in range(num):
-        c.execute("INSERT INTO channels (type) VALUES ('LOCAL')")
-    conn.commit()
+    if len(channels) != num:
+        c.execute("DELETE FROM channels")
+        for i in range(num):
+            c.execute("INSERT INTO channels (type) VALUES (?)", ("LOCAL",))
+        conn.commit()
+
+
+    
 
 
 def get_channels():
@@ -318,3 +346,10 @@ def check_channel(id):
     if c.fetchone():
         return True
     return False
+
+
+def get_channel_type(id):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM channels WHERE id=?", (id,))
+    return c.fetchone()[1]

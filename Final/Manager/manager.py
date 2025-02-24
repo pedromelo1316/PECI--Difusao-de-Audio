@@ -109,7 +109,7 @@ class manager:
 
         mac = node[2]
         aread_id = node[3]
-        area = manage_db.get_area_by_id(aread_id) if aread_id != None else None
+        area = manage_db.get_area_by_id(aread_id)[1] if aread_id != None else None
 
         return f"\n\tMac: {mac}\n\tArea: {area}"
     
@@ -165,24 +165,32 @@ class manager:
     
 
 
-    def add_node_to_area(self, node_name, area_name):
+    def add_node_to_area(self, nodes, area_name):
         
-        if not manage_db.check_name(node_name):
-            raise Exception(f"Node {node_name} not found")
+        nodes = nodes.split(" ")
         if not manage_db.check_area(area_name):
             raise Exception(f"Area {area_name} not found")
-        manage_db.add_node_to_area(area_name,node_name)
+        for node_name in nodes:
+            if not manage_db.check_name(node_name):
+                raise Exception(f"Node {node_name} not found")
+            manage_db.add_node_to_area(area_name,node_name)
+        
 
         return True
     
 
-    def remove_node_from_area(self, node_name, area_name):
+    def remove_node_from_area(self, nodes, area_name):
         
-        if not manage_db.check_name(node_name):
-            raise Exception(f"Node {node_name} not found")
+        nodes = nodes.split(" ")
         if not manage_db.check_area(area_name):
             raise Exception(f"Area {area_name} not found")
-        manage_db.remove_node_from_area(area_name,node_name)
+        
+        for node_name in nodes:
+            if not manage_db.check_name(node_name):
+                raise Exception(f"Node {node_name} not found")
+            manage_db.remove_node_from_area(area_name,node_name)
+            
+        
 
         return True
     
