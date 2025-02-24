@@ -27,6 +27,7 @@ def detect_new_nodes(stop_event, msg_buffer):
                     m.add_node(name, mac)
                     msg_buffer.put(f"Node {name} connected")
                     server_socket.sendto(b"OK", addr)
+
                 except Exception as e:
                     if str(e) == "Limit of nodes with the same name reached":
                         msg_buffer.put("Limit of nodes with the same name reached")

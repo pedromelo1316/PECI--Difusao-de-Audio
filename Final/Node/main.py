@@ -4,8 +4,29 @@ import threading
 import time
 import node_client
 import queue
+import json
 
 
+def wait_for_info(n, port=8081):
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as server_socket:
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server_socket.bind(('0.0.0.0', port))
+        while True:
+            data, addr = server_socket.recvfrom(1024)
+            data = data.decode('utf-8')
+            print("Recebido de", addr, ":", data)
+            try:
+                dic = json.loads(data)
+                if n.mac in dic.keys():
+                    info = dic[n.mac]
+                    if info["status"] == "ON":
+                        n.setChannel(info["channel"])
+                        n.setVolume(info["volume"])
+                    else:
+                        n.setChannel(None)
+                        n.setVolume(None)
+            except ValueError as e:
+                print("Error in wait_for_info:", e)
 
 
 def wait_for_connection(n, port=8080):
@@ -41,6 +62,7 @@ def main():
     stop_event = threading.Event()
 
     wait_for_connection(n)
+    wait_for_info(n)
 
 
 if __name__ == "__main__":

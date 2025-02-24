@@ -162,6 +162,12 @@ def change_area_volume(name, volume):
     c.execute("UPDATE areas SET volume=? WHERE name=?", (volume, name))
     conn.commit()
 
+def get_area_volume(name):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM areas WHERE name=?", (name,))
+    return c.fetchone()[4]
+
 def remove_node_from_area(name, node_name):
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
@@ -195,6 +201,13 @@ def get_area_names():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute("SELECT name FROM areas")
+    return c.fetchall()
+
+
+def get_area_channel():
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT channel_id FROM areas")
     return c.fetchall()
 
 
