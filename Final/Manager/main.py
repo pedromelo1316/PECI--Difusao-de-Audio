@@ -6,6 +6,9 @@ import manager
 import socket
 from database import manage_db
 import json
+import sounddevice as sd
+import numpy as np
+import zlib
 
 
 
@@ -548,17 +551,6 @@ def main(stdscr, stop_event, msg_buffer):
 
 
 
-            
-                        
-
-
-
-
-                        
-
-
-                    
-
     except Exception as e:
         curses.endwin()  # Restaura o terminal
         raise e
@@ -577,15 +569,22 @@ def get_transmission(q, stop_event=None):
         time.sleep(1)
 
 def get_voz(q, stop_event=None):
+
     while not stop_event.is_set():
         time.sleep(1)
 
 
 
-def send_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_voz=None):
+def play_audio(stop_event=None, other_q=None):
+
     while not stop_event.is_set():
         time.sleep(1)
 
+
+
+def send_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_voz=None, other_q = None):
+    while not stop_event.is_set():
+        time.sleep(1)
 
 
 if __name__ == "__main__":
@@ -634,8 +633,12 @@ if __name__ == "__main__":
     t_trans.start()
     t_voz.start()
 
+    play_audio_q = queue.Queue()
+    t_play_audio = threading.Thread(target=play_audio, args=(stop_event, play_audio_q), daemon=True)
+    t_play_audio.start()
+
     # Thread do play_audio que aguarda as queues e envia pacotes a cada 0.5s
-    t_play = threading.Thread(target=send_audio, args=(8081, stop_event, q_local, q_transmission, q_voz), daemon=True)
+    t_play = threading.Thread(target=send_audio, args=(8081, stop_event, q_local, q_transmission, q_voz, play_audio_q), daemon=True)
     t_play.start()
 
 
@@ -644,3 +647,4 @@ if __name__ == "__main__":
     t_trans.join()
     t_voz.join()
     t_play.join()
+    t_play_audio.join()
