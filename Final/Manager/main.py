@@ -39,7 +39,7 @@ def send_info(nodes, removed=False):
 
     msg = json.dumps(dic)
 
-    print(msg)
+    #print(msg)
     
     #mandar broadcast do dic
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
