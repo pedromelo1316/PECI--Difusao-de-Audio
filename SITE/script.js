@@ -1,11 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-    const toggleColumns = document.getElementById("toggleColumns");
     const columnBox = document.getElementById("columnBox");
-
-    // Mostra ou esconde a caixa de colunas ao ativar/desativar o switch
-    toggleColumns.addEventListener("change", function () {
-        columnBox.style.display = this.checked ? "block" : "none";
-    });
 
     // Função para alternar seleção de colunas
     function toggleColumnSelection(column) {
@@ -36,33 +30,79 @@ document.addEventListener("DOMContentLoaded", function () {
                                    <p>IP: 192.168.1.${columnCount + 1}</p>
                                    <p>MAC: 00:1A:2B:3C:4D:${(columnCount + 1).toString(16).padStart(2, '0')}</p>
                                    <p>Zona: Nenhuma</p>
-                               </div>`;
+                               </div>`;+
     
         // Adicionar a nova coluna antes do botão "+ Coluna"
         columnList.insertBefore(newColumn, document.querySelector(".add-column"));
     }
     
+    // Global state to track used columns in zonas
+    let usedZoneColumns = [];
+
     // Função para adicionar uma nova coluna dentro de uma zona
-    function addZoneColumn(columnList) {
-        const columnCount = columnList.querySelectorAll(".column-item").length;
+    function addZoneColumn(selectElement) {
+        const selectedColumn = selectElement.value;
+        if (!selectedColumn) return;
+
+        const columnList = selectElement.closest(".column-list");
         const newColumn = document.createElement("div");
         newColumn.classList.add("column-item");
         newColumn.innerHTML = `
             <div class="column-header">
-                <span>Coluna ${columnCount + 1}</span>
+                <span>${selectedColumn}</span>
                 <div class="column-actions">
                     <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
-                    <i class="fa-solid fa-trash" onclick="removeColumn(this)"></i>
+                    <i class="fa-solid fa-trash" onclick="removeColumn(this, '${selectedColumn}')"></i>
                 </div>
             </div>
             <div class="column-details" style="display: none;">
-                <p>IP: 192.168.1.${columnCount + 1}</p>
-                <p>MAC: 00:1A:2B:3C:4D:${(columnCount + 1).toString(16).padStart(2, '0')}</p>
-                <p>Zona: Nenhuma</p>
+                <!-- Details can be filled dynamically if needed -->
             </div>
-            
         `;
-        columnList.insertBefore(newColumn, columnList.querySelector(".add-column"));
+        columnList.insertBefore(newColumn, selectElement.parentElement);
+        // Replace select container back to the "Adicionar Coluna" button
+        const addBtn = document.createElement("div");
+        addBtn.classList.add("add-column");
+        addBtn.innerHTML = `<span>+ Coluna</span>`;
+        addBtn.addEventListener("click", function() {
+            showSelectForZone(addBtn);
+        });
+        selectElement.parentElement.replaceWith(addBtn);
+
+        // Mark column as used
+        usedZoneColumns.push(selectedColumn);
+    }
+
+    // Helper: show select element to pick a column from Wi-Fi columns
+    function showSelectForZone(buttonElement) {
+        const container = document.createElement("div");
+        container.classList.add("select-container");
+        const select = document.createElement("select");
+        select.classList.add("select-column");
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.disabled = true;
+        defaultOption.selected = true;
+        defaultOption.textContent = "Selecione uma coluna";
+        select.appendChild(defaultOption);
+        // Populate with available columns from Conexões Wi-Fi, filtering usedZoneColumns
+        const wifiColumns = document.querySelectorAll("#columnBox .column-item");
+        wifiColumns.forEach(column => {
+            const colName = column.querySelector("span").textContent.replace("✔ ", "").trim();
+            if (!usedZoneColumns.includes(colName)) {  // Only add if not used
+                const option = document.createElement("option");
+                option.value = colName;
+                option.textContent = colName;
+                select.appendChild(option);
+            }
+        });
+        container.appendChild(select);
+        // Replace the add button with the select container
+        buttonElement.parentElement.replaceChild(container, buttonElement);
+        // On selection change, add the zone column
+        select.addEventListener("change", function () {
+            addZoneColumn(select);
+        });
     }
 
     // Aplicar funcionalidade ao botão "+ Coluna"
@@ -111,8 +151,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div class="column-section">
                     <h4>Colunas</h4>
                     <div class="column-list">
-                        <!-- ...columns can be added dynamically... -->
-                        <div class="add-column" onclick="addZoneColumn(this.parentElement)">
+                        <div class="add-column">
                             <span>+ Coluna</span>
                         </div>
                     </div>
@@ -158,10 +197,8 @@ document.addEventListener("DOMContentLoaded", function () {
         const columnList = newZone.querySelector(".column-list");
         const channelSection = newZone.querySelector(".channel-section");
         const volumeSection = newZone.querySelector(".volume-section");
-        addColBtn.addEventListener("click", () => {
-            addZoneColumn(columnList); 
-            channelSection.style.display = "block";
-            volumeSection.style.display = "block";
+        addColBtn.addEventListener("click", function() {
+            showSelectForZone(addColBtn);
         });
 
         populateZoneOptions();
@@ -226,7 +263,19 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("zonesChannel3").textContent = zonesChannel3;
     }
 
+    // Add zone to channel
+    window.addZoneToChannel = function(channelNumber) {
+        const select = document.getElementById(`addZoneSelect${channelNumber}`);
+        const zoneName = select.value;
+        if (!zoneName) return;
 
+        const zonesCell = document.getElementById(`zonesChannel${channelNumber}`);
+        const currentZones = zonesCell.textContent ? zonesCell.textContent.split(", ") : [];
+        if (!currentZones.includes(zoneName)) {
+            currentZones.push(zoneName);
+            zonesCell.textContent = currentZones.join(", ");
+        }
+    };
 
     // Remove zone from channel
     window.removeZoneFromChannel = function(channelNumber) {
@@ -240,9 +289,13 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     // Remove column
-    window.removeColumn = function(icon) {
+    window.removeColumn = function(icon, columnName) {
         const columnItem = icon.closest(".column-item");
         columnItem.remove();
+        // If it was a zone column (columnName provided), free it up for reuse
+        if (columnName) {
+            usedZoneColumns = usedZoneColumns.filter(col => col !== columnName);
+        }
     };
 
     // Toggle column details
@@ -265,3 +318,4 @@ document.addEventListener("DOMContentLoaded", function () {
     // Initial update of zones table
     updateZonesTable();
 });
+
