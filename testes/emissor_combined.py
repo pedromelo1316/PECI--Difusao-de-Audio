@@ -13,7 +13,7 @@ RATE = 44100
 CHANNELS = 1
 FORMAT = pyaudio.paInt16
 # Cada frame = 2 bytes (s16le); usar 128 frames para 256 bytes por fonte
-CHUNK_FRAMES = 128  
+CHUNK_FRAMES = 8192  
 CHUNK_BYTES = CHUNK_FRAMES * 2      # 256 bytes
 
 # Inicializar PyAudio para microfone

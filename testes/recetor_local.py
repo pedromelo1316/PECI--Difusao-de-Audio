@@ -6,7 +6,7 @@ import threading
 
 UDP_IP = "0.0.0.0"
 UDP_PORT = 5005
-CHUNK_SIZE = 256  # Tamanho do chunk ajustado para corresponder ao emissor
+CHUNK_SIZE = 8192  # Tamanho do chunk ajustado para corresponder ao emissor
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
