@@ -112,7 +112,7 @@ try:
 except KeyboardInterrupt:
     stop_event.set()
 finally:
-    mic_thread.join()
+    #mic_thread.join()
     file_thread.join()
     mic_stream.stop_stream()
     mic_stream.close()
