@@ -54,7 +54,7 @@ def receive_udp(q, stop_event):
 def wait_queue(q, stop_event, min_buffer_size=40):
     while q.qsize() < min_buffer_size and not stop_event.is_set():
         #print(f"Waiting for buffer... Queue size: {q.qsize()}")
-        time.sleep(0.1)
+        time.sleep(0.01)
 
 class VolumeControl:
     def __init__(self, volume=1.0):

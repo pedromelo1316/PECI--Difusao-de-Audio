@@ -1,78 +1,67 @@
-import os, subprocess, time, socket, threading, queue
-import pyaudio
+import subprocess
+import socket
+import threading
+import queue
+import time
 
-# Configurações UDP
-UDP_IP = "192.168.1.3"  # ajuste conforme necessário
+UDP_IP = "255.255.255.255"
 UDP_PORT = 5005
+CHUNK_SIZE = 1024  # Tamanho do chunk ajustado para corresponder ao receptor
+
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
-# Parâmetros de áudio
-RATE = 44100
-CHANNELS = 1
-FORMAT = pyaudio.paInt16
-CHUNK_FRAMES = 256  
-CHUNK_BYTES = CHUNK_FRAMES * 2      # 256 bytes
+ffmpeg_cmd = [
+    "ffmpeg",
+    "-hide_banner", "-loglevel", "error",
+    "-re",
+    "-vn",
+    "-i", "Playlist/audio.mp3",
+    "-acodec", "libmp3lame",
+    "-b:a", "64k",
+    "-ar", "44100",
+    "-ac", "1",
+    "-write_xing", "0",  # Desabilita o cabeçalho Xing
+    "-f", "mp3",
+    "pipe:1"
+]
+process = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
 
-# Queue para áudio local e controle de sincronização
-file_queue = queue.Queue()
-stop_event = threading.Event()
-file_condition = threading.Condition()
+packet_queue = queue.Queue()
 
-def get_local_audio(q, stop_event):
-    playlist_dir = "Playlist"  # Pasta com arquivos .mp3
-    files = [os.path.join(playlist_dir, f) for f in os.listdir(playlist_dir) if f.lower().endswith(".mp3")]
-    if not files:
-        stop_event.set()
-        return
-    file_index = 0
-    while not stop_event.is_set():
-        current_file = files[file_index]
-        command = [
-            "ffmpeg",
-            "-hide_banner",
-            "-loglevel", "error",
-            "-i", current_file,
-            "-f", "s16le",
-            "-acodec", "pcm_s16le",
-            "-ar", str(RATE),
-            "-ac", str(CHANNELS),
-            "pipe:1"
-        ]
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-        try:
-            while not stop_event.is_set():
-                data = process.stdout.read(CHUNK_BYTES)
-                if not data:
-                    break
-                else:
-                    q.put(data)
-                    time_to_sleep = len(data) / (RATE * 1.9)
-                    time.sleep(time_to_sleep)
-        finally:
-            if process.stdout:
-                process.stdout.close()
-            process.terminate()
-            process.wait()
-        file_index = (file_index + 1) % len(files)
+def read_packets():
+    while True:
+        data = process.stdout.read(CHUNK_SIZE)
+        if not data:
+            packet_queue.put(None)  # Sinaliza o fim do stream
+            break
+        packet_queue.put(data)
 
-# Iniciar thread para áudio local
-file_thread = threading.Thread(target=get_local_audio, args=(file_queue, stop_event))
-file_thread.start()
+def send_packets():
+    count = 0
+    seq = 0  # Variável para número de sequência (8 bits)
+    while True:
+        data = packet_queue.get()
+        if data is None:
+            break
+        # Prefixar o pacote com o número de sequência e enviar
+        packet = bytes([seq]) + data
+        sock.sendto(packet, (UDP_IP, UDP_PORT))
+        count += len(data)
+        print(f"\rEnviado {count} bytes", end="")
+        seq = (seq + 1) % 256  # Incrementa e faz wrap a 8 bits
+        time_to_sleep = len(data) / (44100 * 2)  # Ajuste fino para sincronização
+        time.sleep(time_to_sleep)
 
-sent_count = 0
-print("Transmitindo áudio local...")
+reader_thread = threading.Thread(target=read_packets)
+sender_thread = threading.Thread(target=send_packets)
+reader_thread.start()
+sender_thread.start()
+reader_thread.join()
+sender_thread.join()
 
-try:
-    while not stop_event.is_set():
-        file_data = file_queue.get()
-        if len(file_data) < CHUNK_BYTES:
-            file_data += b'\x00' * (CHUNK_BYTES - len(file_data))
-        sock.sendto(file_data, (UDP_IP, UDP_PORT))
-        sent_count += 1
-        print(f"Pacotes enviados: {sent_count} [Fila: {file_queue.qsize()}]", end="\r", flush=True)
-except KeyboardInterrupt:
-    stop_event.set()
-finally:
-    file_thread.join()
-    sock.close()
+process.stdout.close()
+process.terminate()
+process.wait()
+sock.close()
+print("\nTransmissão concluída.")
