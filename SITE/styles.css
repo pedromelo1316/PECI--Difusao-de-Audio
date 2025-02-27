@@ -467,17 +467,6 @@ footer {
     background-color: #f0f0f0;
 }
 
-/* Align icons with the column name in Conexões Wi-Fi */
-#columnBox .column-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-#columnBox .column-actions i {
-    display: inline-block;
-    vertical-align: middle;
-    /* Optionally adjust margins if needed */
-    margin: 0 5px;
-}
+
 
 
