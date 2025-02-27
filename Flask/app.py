@@ -1,15 +1,15 @@
-
-from flask import Flask, render_template, url_for,request,redirect
+from flask import Flask, render_template, request, redirect
 from flask_sqlalchemy import SQLAlchemy
+from flask_socketio import SocketIO, emit
 import threading
 import queue
 import time
 import socket
 
-
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 db = SQLAlchemy(app)
+socketio = SocketIO(app)
 
 class Nodes(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -27,49 +27,44 @@ class Areas(db.Model):
     volume = db.Column(db.Integer, nullable=False)
     def __repr__(self):
         return '<Task %r>' % self.id
-    
+
 class Channels(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.String(200), nullable=False)
-    
     def __repr__(self):
         return '<Task %r>' % self.id
 
-@app.route('/', methods=['GET']) # metodos para enviar e receber dados
+@app.route('/', methods=['GET'])
 def index():
-    
-    nodes = Nodes.query.order_by(Nodes.id).all() # podemos metrer tbm .first()
-    return render_template("index.html",nodes=nodes)
-
-
+    nodes = Nodes.query.order_by(Nodes.id).all()
+    return render_template("index.html", nodes=nodes)
 
 @app.route('/delete/<int:id>')
 def delete(id):
-    task_to_delete = Nodes.query.get_or_404(id) 
+    task_to_delete = Nodes.query.get_or_404(id)
     try:
         db.session.delete(task_to_delete)
         db.session.commit()
+        socketio.emit('update', {'action': 'delete', 'id': id})
         return redirect('/')
     except:
         return 'Houve um problema ao deletar a tarefa'
 
-@app.route('/update/<int:id>', methods=['GET','POST'])
+@app.route('/update/<int:id>', methods=['GET', 'POST'])
 def update(id):
     node = Nodes.query.get_or_404(id)
     if request.method == 'POST':
         node.name = request.form['name']
         try:
             db.session.commit()
+            socketio.emit('update', {'action': 'update', 'id': id, 'name': node.name})
             return redirect('/')
         except:
             return 'Houve um problema ao atualizar a tarefa'
     else:
-        return render_template('update.html',node=node)    
-
-
+        return render_template('update.html', node=node)
 
 def detect_new_nodes(stop_event, msg_buffer):
-
     time.sleep(0.1)
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as server_socket:
@@ -84,50 +79,45 @@ def detect_new_nodes(stop_event, msg_buffer):
 
                 try:
                     with app.app_context():
+                        if db.session.query(Nodes).filter(Nodes.mac == mac).first():
+                            raise Exception("MAC already in use")
+                    
                         name = name.upper()
                         new_node = Nodes(name=name, mac=mac)
                         db.session.add(new_node)
-                        db.session.commit()      
+                        db.session.commit()
+                        socketio.emit('update', {'action': 'add', 'id': new_node.id, 'name': new_node.name})
 
                     msg_buffer.put(f"Node {name} connected")
                     server_socket.sendto(b"OK", addr)
-
                 except Exception as e:
                     if str(e) == "Limit of nodes with the same name reached":
                         msg_buffer.put("Limit of nodes with the same name reached")
                         server_socket.sendto(b"Limit of nodes with the same name reached", addr)
                     elif str(e) == "MAC already in use":
-                        node = db.session.query(Nodes).filter(Nodes.mac == mac).first()
+                        with app.app_context():
+                            node = db.session.query(Nodes).filter(Nodes.mac == mac).first()
+                        
                         name = node.name
-                        msg_buffer.put(f"Node {name} reconected")
+                        msg_buffer.put(f"Node {name} reconnected")
                         server_socket.sendto(b"OK", addr)
                     else:
                         msg_buffer.put(f"Error: {e}")
                         server_socket.sendto(b"Error " + str(e).encode('utf-8'), addr)
 
-                #send_info([name])
-
-
-
-
-
 if __name__ == '__main__':
-    
-    
     stop_event = threading.Event()
     msg_buffer = queue.Queue()
 
     thread = threading.Thread(target=detect_new_nodes, args=(stop_event, msg_buffer), daemon=True)
     thread.start()
 
-    
     with app.app_context():
         db.create_all()
-    app.run(debug=False)
-
+    socketio.run(app, debug=False)
 
     thread.join()
 
-    
+
 
 

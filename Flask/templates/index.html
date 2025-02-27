@@ -1,15 +1,23 @@
 {% extends 'base.html' %}
 
 {% block head %}
-
-<title>titulo para la pagina</title>  
-
+<title>Nodes</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+        var socket = io();
+        socket.on('update', function(data) {
+            if (data.action === 'add' || data.action === 'delete' || data.action === 'update') {
+                location.reload();
+            }
+        });
+    });
+</script>
 {% endblock %}
 
 {% block body %}
-
 <div class="content">
-    <h1>Task master</h1>
+    <h1>Nodes</h1>
     {%if nodes|length < 1%}
     <h1>NAO HÁ TASKS CRIA UMA</h1>
     {% else %}
@@ -28,7 +36,6 @@
                 <br>
                 <a href="/update/{{node.id}}">Update</a>
             </td>
-            
         </tr>
         {% endfor %}
     </table>
