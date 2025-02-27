@@ -8,7 +8,7 @@ import struct  # novo import
 MULTICAST_GROUP = "224.1.1.1"  # define grupo multicast
 UDP_IP = MULTICAST_GROUP
 UDP_PORT = 5005
-CHUNK_SIZE = 256  # Tamanho do chunk ajustado para corresponder ao receptor
+CHUNK_SIZE = 8192  # Tamanho do chunk ajustado para corresponder ao receptor
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 # Removido: sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
