@@ -3,10 +3,10 @@ import pyaudio
 import numpy as np
 
 # Configurações UDP
-UDP_IP = "255.255.255.255"  # ajuste conforme necessário
-UDP_PORT = 5005
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+MCAST_GRP = '224.1.1.1'
+MCAST_PORT = 5007
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
 
 # Parâmetros de áudio
 RATE = 44100
@@ -25,27 +25,20 @@ mic_stream = p.open(format=FORMAT,
                     frames_per_buffer=CHUNK_FRAMES)
 
 # Queues para cada fonte
-mic_queue = queue.Queue()
-file_queue = queue.Queue()
+mic_queue = queue.Queue(maxsize=10)
+file_queue = queue.Queue(maxsize=10)
 stop_event = threading.Event()
 
-# Adicionar condições para sincronização de filas
-mic_condition = threading.Condition()
-file_condition = threading.Condition()
+def get_mic_audio(stop_event):
+    data = b''
+    while not stop_event.is_set() and data == b'':
+        data = mic_stream.read(CHUNK_FRAMES)
 
-def get_mic_audio(q, stop_event):
-    while not stop_event.is_set():
-        try:
-            data = mic_stream.read(CHUNK_FRAMES)
-            with mic_condition:
-                while not q.empty():
-                    mic_condition.wait(timeout=0.01)
-                q.put(data)
-                mic_condition.notify_all()
-        except Exception:
-            break
+    return data
 
-def get_local_audio(q, stop_event):
+
+
+def get_local_audio(q_local, q_mic, stop_event):
     playlist_dir = "Playlist"  # Pasta com arquivos .mp3
     files = [os.path.join(playlist_dir, f) for f in os.listdir(playlist_dir) if f.lower().endswith(".mp3")]
     if not files:
@@ -71,11 +64,13 @@ def get_local_audio(q, stop_event):
                 data = process.stdout.read(CHUNK_BYTES)
                 if not data:
                     break
-                with file_condition:
-                    while not q.empty():
-                        file_condition.wait(timeout=0.01)
-                    q.put(data)
-                    file_condition.notify_all()
+                q_local.put(data)
+                data = get_mic_audio(stop_event)
+                # Block until space is available
+                q_mic.put(data)
+
+        except Exception:
+            break
         finally:
             if process.stdout:
                 process.stdout.close()
@@ -84,26 +79,26 @@ def get_local_audio(q, stop_event):
         file_index = (file_index + 1) % len(files)
 
 # Iniciar threads das fontes
-mic_thread = threading.Thread(target=get_mic_audio, args=(mic_queue, stop_event))
-file_thread = threading.Thread(target=get_local_audio, args=(file_queue, stop_event))
-mic_thread.start()
+#mic_thread = threading.Thread(target=get_mic_audio, args=(mic_queue, stop_event))
+file_thread = threading.Thread(target=get_local_audio, args=(file_queue,mic_queue, stop_event))
+#mic_thread.start()
 file_thread.start()
 
 sent_count = 0   # Contador de pacotes enviados
 
 print("Transmitindo áudio combinado (primeiros 256 local + segundos 256 voz)...")
 
+def send_data(data):
+    sock.sendto(data, (MCAST_GRP, MCAST_PORT))
+
 try:
     while not stop_event.is_set():
         try:
+            # Blocking get calls will wait for items as soon as available
             mic_data = mic_queue.get()
-            with mic_condition:
-                mic_condition.notify_all()
             file_data = file_queue.get()
-            with file_condition:
-                file_condition.notify_all()
         except queue.Empty:
-            continue
+            time.sleep(0.01)
         # Se os dados forem menores que CHUNK_BYTES, preencha com zeros
         if len(file_data) < CHUNK_BYTES:
             file_data += b'\x00' * (CHUNK_BYTES - len(file_data))
@@ -111,7 +106,7 @@ try:
             mic_data += b'\x00' * (CHUNK_BYTES - len(mic_data))
         # Concatenar: primeiros 256 bytes do áudio local e depois 256 bytes do microfone
         packet = file_data[:CHUNK_BYTES] + mic_data[:CHUNK_BYTES]
-        sock.sendto(packet, (UDP_IP, UDP_PORT))
+        send_data(packet)
         sent_count += 1
         print(f"Pacotes enviados: {sent_count} mic: {mic_queue.qsize()} local: {file_queue.qsize()}", end="\r", flush=True)
 except KeyboardInterrupt:

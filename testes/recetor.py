@@ -4,19 +4,25 @@ import threading
 import time
 import numpy as np
 import pyaudio
+import struct
 
 UDP_IP = "0.0.0.0"
 UDP_PORT = 5005
 CHUNK_SIZE = 512             # Tamanho total do pacote
 HALF_SIZE = CHUNK_SIZE // 2  # 256 bytes por canal
 
+MCAST_GRP = '224.1.1.1'
+MCAST_PORT = 5007
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+sock.bind(('', MCAST_PORT))
+
+mreq = struct.pack("4sl", socket.inet_aton(MCAST_GRP), socket.INADDR_ANY)
+sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+
 # Pergunta ao usuário a opção de extração
 option = input("Escolha o canal a reproduzir:\n1) Áudio local (primeiros 256 bytes)\n2) Áudio da voz (segundos 256 bytes)\nOpção: ")
-
-# Configurar socket UDP
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-sock.bind((UDP_IP, UDP_PORT))
 
 # Inicializar queue para armazenar os dados recebidos
 audio_queue = queue.Queue()
@@ -42,9 +48,6 @@ def receive_udp(q, stop_event):
                 q.put(extracted)
                 received_count += 1
                 print(f"Pacotes recebidos: {received_count}", end="\r", flush=True)
-                if received_count == 5000:
-                    elapsed = time.time() - recv_start_time
-                    print(f"\nTempo para receber 5000 pacotes: {elapsed:.2f} segundos")
         except Exception:
             break
 
@@ -81,8 +84,9 @@ def play_audio_from_queue(q, stop_event, volume_control, min_buffer_size=100):
                 stream.write(audio_data.tobytes())
                 played_count += 1
             else:
-                print(f"Buffer underrun... {q.qsize()}")
+                #print(f"Buffer underrun... {q.qsize()}")
                 wait_queue(q, stop_event, min_buffer_size)
+                #time.sleep(0.005)
     finally:
         stream.stop_stream()
         stream.close()
