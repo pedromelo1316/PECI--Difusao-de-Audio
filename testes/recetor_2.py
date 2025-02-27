@@ -7,12 +7,17 @@ import threading
 UDP_IP = "0.0.0.0"
 UDP_PORT = 5005
 CHUNK_SIZE = 8192  # Tamanho do chunk ajustado para corresponder ao emissor
+PACKET_SIZE = 2 * CHUNK_SIZE # 2 canais de transmissão
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sock.bind((UDP_IP, UDP_PORT))
 MULTICAST_GROUP = "224.1.1.1"
 sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, socket.inet_aton(MULTICAST_GROUP) + socket.inet_aton("0.0.0.0"))
+
+op = 0
+while op != "1" and op != "2":
+    op = input("Local(1) ou Voz(2)? ")
 
 p_instance = pyaudio.PyAudio()
 stream = p_instance.open(format=pyaudio.paInt16,
@@ -40,7 +45,7 @@ def udp_receiver():
     global count, last_seq
     while True:
         try:
-            data, _ = sock.recvfrom(CHUNK_SIZE * 2 + 1)  # buffer maior para o byte extra
+            data, _ = sock.recvfrom(PACKET_SIZE * 2 + 1)  # buffer maior para o byte extra
             if data:
                 # Extrair o número de sequência (primeiro byte) e o dado real
                 packet_seq = data[0]
@@ -56,7 +61,13 @@ def udp_receiver():
                 last_seq = packet_seq
                 count += len(audio_data)
                 print(f"\rRecebido {count} bytes", end="")
-                process.stdin.write(audio_data)
+
+                if op == "1":
+                    channel_data = audio_data[:CHUNK_SIZE]
+                else:
+                    channel_data = audio_data[CHUNK_SIZE:]                
+    
+                process.stdin.write(channel_data)
                 process.stdin.flush()
         except Exception as e:
             print(f"\nErro na recepção: {e}")
