@@ -1,0 +1,267 @@
+document.addEventListener("DOMContentLoaded", function () {
+    const toggleColumns = document.getElementById("toggleColumns");
+    const columnBox = document.getElementById("columnBox");
+
+    // Mostra ou esconde a caixa de colunas ao ativar/desativar o switch
+    toggleColumns.addEventListener("change", function () {
+        columnBox.style.display = this.checked ? "block" : "none";
+    });
+
+    // Função para alternar seleção de colunas
+    function toggleColumnSelection(column) {
+        if (column.classList.contains("checked")) {
+            column.classList.remove("checked");
+            column.querySelector("span").innerHTML = column.querySelector("span").innerHTML.replace("✔ ", "");
+        } else {
+            column.classList.add("checked");
+            column.querySelector("span").innerHTML = "✔ " + column.querySelector("span").innerHTML;
+        }
+    }
+
+    // Função para adicionar uma nova coluna
+    window.addColumn = function() {
+        const columnList = document.querySelector(".column-list");
+        const columnCount = columnList.querySelectorAll(".column-item").length; // Conta apenas colunas reais
+        const newColumn = document.createElement("div");
+    
+        newColumn.classList.add("column-item");
+        newColumn.innerHTML = `<div class="column-header">
+                                   <span>Coluna ${columnCount + 1}</span>
+                                   <div class="column-actions">
+                                       <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
+                                       <i class="fa-solid fa-trash" onclick="removeColumn(this)"></i>
+                                   </div>
+                               </div>
+                               <div class="column-details" style="display: none;">
+                                   <p>IP: 192.168.1.${columnCount + 1}</p>
+                                   <p>MAC: 00:1A:2B:3C:4D:${(columnCount + 1).toString(16).padStart(2, '0')}</p>
+                                   <p>Zona: Nenhuma</p>
+                               </div>`;
+    
+        // Adicionar a nova coluna antes do botão "+ Coluna"
+        columnList.insertBefore(newColumn, document.querySelector(".add-column"));
+    }
+    
+    // Função para adicionar uma nova coluna dentro de uma zona
+    function addZoneColumn(columnList) {
+        const columnCount = columnList.querySelectorAll(".column-item").length;
+        const newColumn = document.createElement("div");
+        newColumn.classList.add("column-item");
+        newColumn.innerHTML = `
+            <div class="column-header">
+                <span>Coluna ${columnCount + 1}</span>
+                <div class="column-actions">
+                    <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
+                    <i class="fa-solid fa-trash" onclick="removeColumn(this)"></i>
+                </div>
+            </div>
+            <div class="column-details" style="display: none;">
+                <p>IP: 192.168.1.${columnCount + 1}</p>
+                <p>MAC: 00:1A:2B:3C:4D:${(columnCount + 1).toString(16).padStart(2, '0')}</p>
+                <p>Zona: Nenhuma</p>
+            </div>
+            
+        `;
+        columnList.insertBefore(newColumn, columnList.querySelector(".add-column"));
+    }
+
+    // Aplicar funcionalidade ao botão "+ Coluna"
+    document.querySelector(".add-column").addEventListener("click", addColumn);
+
+    // Adicionar funcionalidade de seleção às colunas existentes
+    document.querySelectorAll(".column-item").forEach(item => {
+        item.addEventListener("click", function () {
+            toggleColumnSelection(this);
+        });
+    });
+
+    // Adicionar funcionalidade de remoção às colunas existentes
+    document.querySelectorAll(".delete-column").forEach(btn => {
+        btn.addEventListener("click", function (event) {
+            event.stopPropagation(); // Impede a ativação da seleção ao clicar no ícone de lixo
+            this.closest(".column-item").remove();
+        });
+    });
+
+    // Controle de volume
+    document.querySelectorAll("input[type='range']").forEach(slider => {
+        slider.addEventListener("input", function () {
+            const volumeLabel = this.nextElementSibling;
+            volumeLabel.textContent = `Volume: ${this.value}%`;
+        });
+    });
+
+    // Adicionar nova zona
+    document.querySelector(".add-zone").addEventListener("click", function addZoneHandler() {
+        const zoneName = prompt("Nome da zona:");
+        if (!zoneName) return;
+
+        const zoneContainer = document.querySelector(".zone-container");
+        const clickedPlus = this;
+
+        // Cria nova zona com a mesma estrutura de “Piscina”
+        const newZone = document.createElement("div");
+        newZone.classList.add("zone-box");
+        newZone.innerHTML = `
+            <div class="zone-header">
+                <h3>${zoneName}</h3>
+                <i class="fa-solid fa-trash delete-zone"></i>
+            </div>
+            <div class="zone-content">
+                <div class="column-section">
+                    <h4>Colunas</h4>
+                    <div class="column-list">
+                        <!-- ...columns can be added dynamically... -->
+                        <div class="add-column" onclick="addZoneColumn(this.parentElement)">
+                            <span>+ Coluna</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="channel-volume">
+                    <div class="channel-section">
+                        <h4>Canal</h4>
+                        <div class="channel-options">
+                            <label><input type="checkbox" name="channel-${zoneName}" value="1" onclick="selectSingleChannel(this)"> Canal 1</label>
+                            <label><input type="checkbox" name="channel-${zoneName}" value="2" onclick="selectSingleChannel(this)"> Canal 2</label>
+                            <label><input type="checkbox" name="channel-${zoneName}" value="3" onclick="selectSingleChannel(this)"> Canal 3</label>
+                        </div>
+                    </div>
+                    <div class="volume-section">
+                        <h4>Volume</h4>
+                        <input type="range" min="0" max="100" value="50">
+                        <p>${zoneName}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Substitui o bloco "+" pela nova zona
+        zoneContainer.replaceChild(newZone, clickedPlus);
+
+        // Cria um novo bloco "+" e adiciona ao final
+        const newAddZone = document.createElement("div");
+        newAddZone.classList.add("zone-box", "add-zone");
+        newAddZone.innerHTML = `<span>+</span>`;
+        zoneContainer.appendChild(newAddZone);
+
+        // Reanexa o evento ao novo "+"
+        newAddZone.addEventListener("click", addZoneHandler);
+
+        // Remover zona
+        newZone.querySelector(".delete-zone").addEventListener("click", function() {
+            newZone.remove();
+            populateAddZoneSelects(); // Update the zone options when a zone is removed
+        });
+
+        // Ao clicar em “+ Coluna”, mostrar canal e volume
+        const addColBtn = newZone.querySelector(".add-column");
+        const columnList = newZone.querySelector(".column-list");
+        const channelSection = newZone.querySelector(".channel-section");
+        const volumeSection = newZone.querySelector(".volume-section");
+        addColBtn.addEventListener("click", () => {
+            addZoneColumn(columnList); 
+            channelSection.style.display = "block";
+            volumeSection.style.display = "block";
+        });
+
+        populateZoneOptions();
+        populateAddZoneSelects(); // Update the zone options when a new zone is added
+    });
+
+    // Ensure only one channel can be selected per zone
+    window.selectSingleChannel = function(checkbox) {
+        const checkboxes = document.querySelectorAll(`input[name="${checkbox.name}"]`);
+        checkboxes.forEach((cb) => {
+            if (cb !== checkbox) cb.checked = false;
+        });
+    };
+
+    // Ensure only one transmission type can be selected at a time
+    document.querySelectorAll(".channel-options input[type='checkbox']").forEach(checkbox => {
+        checkbox.addEventListener("click", function() {
+            const checkboxes = this.closest(".channel-options").querySelectorAll("input[type='checkbox']");
+            checkboxes.forEach(cb => {
+                if (cb !== this) cb.checked = false;
+            });
+        });
+    });
+
+    // Populate zone options in channel selects
+    function populateZoneOptions() {
+        const zoneNames = Array.from(document.querySelectorAll(".zone-header h3")).map(zone => zone.textContent);
+        const channelSelects = document.querySelectorAll(".channels-container select");
+        channelSelects.forEach(select => {
+            select.innerHTML = '<option value="" disabled>Selecione as zonas</option>';
+            zoneNames.forEach(zoneName => {
+                const option = document.createElement("option");
+                option.value = zoneName;
+                option.textContent = zoneName;
+                select.appendChild(option);
+            });
+        });
+    }
+
+    // Populate zone options in the add zone selects
+    function populateAddZoneSelects() {
+        const zoneNames = Array.from(document.querySelectorAll(".zone-header h3")).map(zone => zone.textContent);
+        const addZoneSelects = document.querySelectorAll("[id^='addZoneSelect']");
+        addZoneSelects.forEach(select => {
+            select.innerHTML = '<option value="" disabled selected>Adicionar Zona</option>';
+            zoneNames.forEach(zoneName => {
+                const option = document.createElement("option");
+                option.value = zoneName;
+                option.textContent = zoneName;
+                select.appendChild(option);
+            });
+        });
+    }
+
+    // Update zones table based on selected zones
+    function updateZonesTable() {
+        const zonesChannel1 = Array.from(document.getElementById("channel1").selectedOptions).map(option => option.value).join(", ");
+        const zonesChannel2 = Array.from(document.getElementById("channel2").selectedOptions).map(option => option.value).join(", ");
+        const zonesChannel3 = Array.from(document.getElementById("channel3").selectedOptions).map(option => option.value).join(", ");
+        document.getElementById("zonesChannel1").textContent = zonesChannel1;
+        document.getElementById("zonesChannel2").textContent = zonesChannel2;
+        document.getElementById("zonesChannel3").textContent = zonesChannel3;
+    }
+
+
+
+    // Remove zone from channel
+    window.removeZoneFromChannel = function(channelNumber) {
+        const zoneName = prompt("Nome da zona a remover:");
+        if (!zoneName) return;
+
+        const zonesCell = document.getElementById(`zonesChannel${channelNumber}`);
+        let currentZones = zonesCell.textContent ? zonesCell.textContent.split(", ") : [];
+        currentZones = currentZones.filter(zone => zone !== zoneName);
+        zonesCell.textContent = currentZones.join(", ");
+    };
+
+    // Remove column
+    window.removeColumn = function(icon) {
+        const columnItem = icon.closest(".column-item");
+        columnItem.remove();
+    };
+
+    // Toggle column details
+    window.toggleColumnDetails = function(icon) {
+        const columnItem = icon.closest(".column-item");
+        const details = columnItem.querySelector(".column-details");
+        const isHidden = (details.style.display === 'none' || !details.style.display);
+        details.style.display = isHidden ? 'block' : 'none';
+    };
+
+    // Initial population of zone options
+    populateAddZoneSelects();
+    populateZoneOptions();
+
+    // Add event listeners to update zones table when selections change
+    document.getElementById("channel1").addEventListener("change", updateZonesTable);
+    document.getElementById("channel2").addEventListener("change", updateZonesTable);
+    document.getElementById("channel3").addEventListener("change", updateZonesTable);
+
+    // Initial update of zones table
+    updateZonesTable();
+});

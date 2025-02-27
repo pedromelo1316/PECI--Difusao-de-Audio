@@ -1,0 +1,383 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 100;
+    background-color: #ffff;
+}
+
+/* Header */
+header {
+    background: white;
+    padding: 20px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2px;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.title {
+    flex-grow: 1;
+    text-align: center;
+}
+
+h1 {
+    margin: 0;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+p {
+    margin: 0;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.logout-icon {
+    font-size: 28px;
+    cursor: pointer;
+}
+
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: none;
+    box-shadow: none;
+    border: none;
+    padding: 10px;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.content {
+    max-width: 500px;
+    width: 100%;
+}
+
+h2 {
+    font-size: 22px;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+.toggle-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 51px;
+    height: 29px;
+}
+
+.switch input {
+    display: none;
+}
+
+.slider {
+    background-color: #cccccc;
+    border-radius: 100px;
+    padding: 1px;
+    cursor: pointer;
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    box-shadow: inset 0px 0px 5px rgba(0, 0, 0, 0.1);
+}
+
+.slider::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 26px;
+    height: 26px;
+    background-color: white;
+    border-radius: 50px;
+    transition: left 300ms ease-in-out;
+}
+
+.switch input:checked + .slider {
+    background-color: #22cc3f;
+}
+
+.switch input:checked + .slider::after {
+    left: 24px;
+}
+
+/* Estilos para a caixa de colunas */
+.column-box {
+    display: block; /* Was display: none; now always visible */
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.column-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.column-item {
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.3s;
+}
+
+.column-item:hover {
+    background: #f0f0f0;
+}
+
+.column-item.checked span {
+    font-weight: bold;
+    color: #22cc3f;
+}
+
+.add-column {
+    padding: 8px;
+    text-align: center;
+    color: #22cc3f;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* Caixa das Zonas de Áudio */
+.zone-container {
+    background: white;
+    padding: 35px;
+    border-radius: 12px;
+    width: 200%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10px; /* Abaixar o título para não estar em cima da caixa */
+    max-height: 625px; /* Adiciona uma altura máxima */
+    overflow-y: auto; 
+}
+
+/* Zona de Áudio */
+.zone-box {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 5px;
+    width: 100%; /* Ajusta ao tamanho da caixa */
+    min-height: 350px; /* Ajusta ao tamanho da caixa */
+}
+
+
+
+
+/* Cabeçalho da Zona */
+.zone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 18px;
+    font-weight: bold;
+    width: 100%;
+}
+
+.zone-header i {
+    cursor: pointer;
+    color: black; /* Mudando a cor do ícone para preto */
+}
+
+/* Seção das Colunas */
+.column-section {
+    width: 100%;
+}
+
+.column-list {
+    background: white;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+/* Cada Item de Coluna */
+.column-item {
+    display: flex;
+    flex-direction: column;
+   
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.3s;
+}
+
+.column-item:hover {
+    background: #f0f0f0;
+}
+
+.column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.column-actions {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+}
+
+.column-actions i {
+    cursor: pointer;
+    color: #888;
+    transition: color 0.3s;
+}
+
+.column-actions i:hover {
+    color: #000;
+}
+
+.column-details {
+    margin-top: 10px;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.add-column {
+    padding: 8px;
+    text-align: center;
+    color: #22cc3f;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+
+/* Seção do Canal */
+.channel-section {
+    width: 100%;
+    margin-top: 15px;
+}
+
+.channel-options label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+/* Volume */
+input[type="range"] {
+    width: 100%;
+    margin-top: 5px;
+    background-color: #22cc3f; /* Barras de volume agora verdes */
+    accent-color: #22cc3f; /* Barra de seleção do volume também verde */
+}
+
+/* Cores para checkboxes e seleção */
+input[type="checkbox"]:checked {
+    background-color: #22cc3f; /* Checkboxes verdes */
+}
+
+input[type="checkbox"] {
+    accent-color: #22cc3f; /* Cor do checkbox */
+}
+
+#addZoneBtn {
+    margin: 10px;
+    padding: 8px 16px;
+    border: none;
+    background-color: #22cc3f;
+    color: white;
+    cursor: pointer;
+    border-radius: 10px;
+}
+
+.add-zone {
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+   
+    cursor: pointer;
+    font-size: 40px;
+    font-weight: bold;
+}
+
+.zone-content {
+    display: flex;
+    gap: 20px;
+}
+
+.column-section {
+    flex: 1;
+}
+
+.channel-volume {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.centered-container {
+    justify-content: center;
+}
+
+.channels-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    margin-top: 25px;
+    display: flex;
+   /* Force channels to remain in one row */
+    gap: 20px;
+}
+
+.channel-group {
+    
+    margin-bottom: 20px;
+}
+
+.channel-group label {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.channel-group select {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    width: 100%;
+    max-width: 300px;
+    margin-top: 10px;
+}
+
+.channel-options {
+    margin-top: 10px;
+}
+
+.channel-options label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.channels-content {
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
