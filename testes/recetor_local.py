@@ -6,11 +6,13 @@ import threading
 
 UDP_IP = "0.0.0.0"
 UDP_PORT = 5005
-CHUNK_SIZE = 1024  # Tamanho do chunk ajustado para corresponder ao emissor
+CHUNK_SIZE = 256  # Tamanho do chunk ajustado para corresponder ao emissor
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sock.bind((UDP_IP, UDP_PORT))
+MULTICAST_GROUP = "224.1.1.1"
+sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, socket.inet_aton(MULTICAST_GROUP) + socket.inet_aton("0.0.0.0"))
 
 p_instance = pyaudio.PyAudio()
 stream = p_instance.open(format=pyaudio.paInt16,

@@ -3,13 +3,17 @@ import socket
 import threading
 import queue
 import time
+import struct  # novo import
 
-UDP_IP = "255.255.255.255"
+MULTICAST_GROUP = "224.1.1.1"  # define grupo multicast
+UDP_IP = MULTICAST_GROUP
 UDP_PORT = 5005
-CHUNK_SIZE = 1024  # Tamanho do chunk ajustado para corresponder ao receptor
+CHUNK_SIZE = 256  # Tamanho do chunk ajustado para corresponder ao receptor
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+# Removido: sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+ttl = 1  # TTL para rede local
+sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, struct.pack('b', ttl))
 
 ffmpeg_cmd = [
     "ffmpeg",
@@ -50,7 +54,7 @@ def send_packets():
         count += len(data)
         print(f"\rEnviado {count} bytes", end="")
         seq = (seq + 1) % 256  # Incrementa e faz wrap a 8 bits
-        time_to_sleep = len(data) / (44100 * 2)  # Ajuste fino para sincronização
+        time_to_sleep = len(data) / (44100)  # Ajuste fino para sincronização
         time.sleep(time_to_sleep)
 
 reader_thread = threading.Thread(target=read_packets)
