@@ -6,6 +6,7 @@ import threading
 
 UDP_IP = "0.0.0.0"
 UDP_PORT = 5005
+HELP_PORT = 5006
 CHUNK_SIZE = 1024  # Tamanho do chunk ajustado para corresponder ao emissor
 PACKET_SIZE = 2 * CHUNK_SIZE # 2 canais de transmissão
 
@@ -41,6 +42,12 @@ process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE, stdout=subprocess.
 count = 0
 last_seq = None  # Variável global para o último número de sequência
 
+# Buffer circular para armazenar pacotes
+buffer_size = 256
+audio_buffer = [None] * buffer_size
+buffer_lock = threading.Lock()
+buffer_condition = threading.Condition(buffer_lock)
+
 def udp_receiver():
     global count, last_seq
     while True:
@@ -58,6 +65,7 @@ def udp_receiver():
                         missing = expected_seq
                         while missing != packet_seq:
                             print(f"\n----------------->Pacote {missing} foi perdido")
+                            request_help(missing, "local" if op == "1" else "mic")
                             missing = (missing + 1) % 256
                 last_seq = packet_seq
                 count += len(audio_data)
@@ -67,30 +75,76 @@ def udp_receiver():
                 local_data = audio_data[:CHUNK_SIZE]
                 voice_data = audio_data[CHUNK_SIZE:]
 
-                if op == "1":
-                    process.stdin.write(local_data)
-                else:
-                    process.stdin.write(voice_data)
-                process.stdin.flush()
+                with buffer_lock:
+                    if op == "1":
+                        audio_buffer[packet_seq] = local_data
+                    else:
+                        audio_buffer[packet_seq] = voice_data
+                    buffer_condition.notify()  # Notifica o player_audio que um novo pacote está disponível
+
         except Exception as e:
             print(f"\nErro na recepção: {e}")
             break
 
-def audio_player():
+def request_help(seq, source):
+    help_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    help_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    help_message = f"HELP: {seq} {source}".encode()
+    help_sock.sendto(help_message, ('<broadcast>', HELP_PORT))
+    help_sock.close()
+
+def handle_help_responses():
+    help_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    help_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    help_sock.bind(('', HELP_PORT))
+    while True:
+        data, addr = help_sock.recvfrom(PACKET_SIZE)
+        if data:
+            seq = data[0]
+            with buffer_lock:
+                audio_buffer[seq] = data[1:]
+                buffer_condition.notify()  # Notifica o player_audio que um novo pacote está disponível
+
+def converter():
+    silence = b'\x00' * CHUNK_SIZE
+    index = 0
     while True:
         try:
-            pcm_chunk = process.stdout.read(CHUNK_SIZE)
-            if not pcm_chunk:
+            with buffer_condition:
+                while audio_buffer[index] is None:
+                    buffer_condition.wait()  # Espera até que um novo pacote esteja disponível
+                data = audio_buffer[index]
+                audio_buffer[index] = None  # Limpa o buffer após a leitura
+                buffer_condition.notify()  # Notifica o player_audio que o buffer foi atualizado
+            if data is None:
+                data = silence
+            index = (index + 1) % buffer_size
+            process.stdin.write(data)
+        except Exception as e:
+            print(f"\nErro na reprodução: {e}")
+            break
+
+def player_audio():
+    while True:
+        try:
+            data = process.stdout.read(CHUNK_SIZE)
+            if not data:
                 break
-            stream.write(pcm_chunk)
+            stream.write(data)
+            with buffer_condition:
+                buffer_condition.notify()  # Notifica o converter que o player_audio leu um pacote
         except Exception as e:
             print(f"\nErro na reprodução: {e}")
             break
 
 recv_thread = threading.Thread(target=udp_receiver, daemon=True)
-play_thread = threading.Thread(target=audio_player, daemon=True)
+converter_thread = threading.Thread(target=converter, daemon=True)
+player_audio_thread = threading.Thread(target=player_audio, daemon=True)
+help_thread = threading.Thread(target=handle_help_responses, daemon=True)
 recv_thread.start()
-play_thread.start()
+converter_thread.start()
+player_audio_thread.start()
+help_thread.start()
 
 print("Reproduzindo áudio local...")
 
@@ -103,7 +157,9 @@ finally:
     process.stdin.close()
     process.terminate()
     recv_thread.join(1)
-    play_thread.join(1)
+    converter_thread.join(1)
+    player_audio_thread.join(1)
+    help_thread.join(1)
     stream.stop_stream()
     stream.close()
     p_instance.terminate()
