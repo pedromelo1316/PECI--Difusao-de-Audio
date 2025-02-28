@@ -50,8 +50,11 @@ def wait_for_connection(n, port=8080, stop_event=None):
 
             try:
                 data, addr = client_socket.recvfrom(1024)
+<<<<<<< HEAD
                 
                 print("Received from manager:", data)
+=======
+>>>>>>> main
                 if data == b"OK":
                     n.setHostIp(addr[0])
                     print("Connection established")

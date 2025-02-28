@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Áudio</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="title">
+                <h1>Gestor de Áudio</h1>
+                <p>Hotel Montebelo</p>
+            </div>
+            <i class="fa-solid fa-right-from-bracket logout-icon"></i>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="content">
+            <h2>Conexões Wi-Fi</h2>
+        </div>
+    </div>
+    
+    <div class="container centered-container">
+        <div class="content">
+            <h2>Conexões Wi-Fi</h2>
+            <div class="column-box" id="columnBox" style="display: block;">
+                <div class="column-list">
+                    <div class="column-item checked" data-ip="192.168.1.1" data-mac="00:1A:2B:3C:4D:5E" data-zone="Zona 1">
+                        <span>✔ Coluna 1</span>
+                        <div class="column-actions">
+                            <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
+                            <i class="fa-solid fa-trash" onclick="removeColumn(this)"></i>
+                        </div>
+                        <div class="column-details" style="display: none;">
+                            <p>IP: 192.168.1.1</p>
+                            <p>MAC: 00:1A:2B:3C:4D:5E</p>
+                            <p>Zona: Zona 1</p>
+                        </div>
+                    </div>
+                    <div class="column-item checked" data-ip="192.168.1.2" data-mac="00:1A:2B:3C:4D:5F" data-zone="Zona 2">
+                        <span>✔ Coluna 2</span>
+                        <div class="column-actions">
+                            <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
+                            <i class="fa-solid fa-trash" onclick="removeColumn(this)"></i>
+                        </div>
+                        <div class="column-details" style="display: none;">
+                            <p>IP: 192.168.1.2</p>
+                            <p>MAC: 00:1A:2B:3C:4D:5F</p>
+                            <p>Zona: Zona 2</p>
+                        </div>
+                    </div>
+                    <div class="column-item" data-ip="192.168.1.3" data-mac="00:1A:2B:3C:4D:60" data-zone="">
+                        <span>Coluna 3</span>
+                        <div class="column-actions">
+                            <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
+                            <i class="fa-solid fa-trash" onclick="removeColumn(this)"></i>
+                        </div>
+                        <div class="column-details" style="display: none;">
+                            <p>IP: 192.168.1.3</p>
+                            <p>MAC: 00:1A:2B:3C:4D:60</p>
+                            <p>Zona: Nenhuma</p>
+                        </div>
+                    </div>
+                    <div class="column-item" data-ip="192.168.1.4" data-mac="00:1A:2B:3C:4D:61" data-zone="">
+                        <span>Coluna 4</span>
+                        <div class="column-actions">
+                            <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
+                            <i class="fa-solid fa-trash" onclick="removeColumn(this)"></i>
+                        </div>
+                        <div class="column-details" style="display: none;">
+                            <p>IP: 192.168.1.4</p>
+                            <p>MAC: 00:1A:2B:3C:4D:61</p>
+                            <p>Zona: Nenhuma</p>
+                        </div>
+                    </div>
+                    <div class="add-column">
+                        <span>+ Coluna</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- "As minhas zonas" deve estar abaixo das "Conexões Wi-Fi", à esquerda -->
+    <div class="container">
+        <div class="content">
+            <h2>As minhas zonas</h2>
+            <div class="zone-container">
+              
+                <div class="zone-box add-zone">
+                    <span>+</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="content">
+            <h2>Os meus Canais</h2>
+        </div>
+    </div>
+    
+    <div class="container centered-container">
+        <div class="content">
+            <div class="channels-content">
+                <div class="channels-container">
+                    <div class="channel-group">
+                        <label for="channel1">Canal 1:</label>
+                        <div class="channel-options">
+                            <label><input type="checkbox" id="local1"> Local</label>
+                            <label><input type="checkbox" id="transmissao1"> Transmissão</label>
+                            <label><input type="checkbox" id="voz1"> Voz</label>
+                        </div>
+                    </div>
+                    <div class="channel-group">
+                        <label for="channel2">Canal 2:</label>
+                        <div class="channel-options">
+                            <label><input type="checkbox" id="local2"> Local</label>
+                            <label><input type="checkbox" id="transmissao2"> Transmissão</label>
+                            <label><input type="checkbox" id="voz2"> Voz</label>
+                        </div>
+                    </div>
+                    <div class="channel-group">
+                        <label for="channel3">Canal 3:</label>
+                        <div class="channel-options">
+                            <label><input type="checkbox" id="local3"> Local</label>
+                            <label><input type="checkbox" id="transmissao3"> Transmissão</label>
+                            <label><input type="checkbox" id="voz3"> Voz</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="zones-container">
+                    <div class="zones-table-container">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+    <br>
+
+    <script src="script.js"></script>
+</body>
+</html>
