@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, redirect, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
-from getmac import get_mac_address
 import subprocess
 import threading
 import queue
@@ -9,18 +8,6 @@ import time
 import socket
 
 
-
-
-def get_mac_address_from_ip(ip):
-    try:
-        result = subprocess.run(['arp', '-n', ip], capture_output=True, text=True)
-        if result.returncode == 0:
-            for line in result.stdout.split('\n'):
-                if ip in line:
-                    return line.split()[2]
-    except Exception as e:
-        print(f"Error retrieving MAC address using arp: {e}")
-    return None
 
 
 app = Flask(__name__)
@@ -128,31 +115,6 @@ def detect_new_nodes(stop_event, msg_buffer):
 
 
 
-#mac do no nao ta a aparecer ns pq E quando adiciono um no igual nao da erro tbm
-
-
-@app.route('/add_node', methods=['POST'])
-def add_node():
-    ip = request.form['ip']
-    try:
-        if db.session.query(Nodes).filter(Nodes.mac == ip).first():
-            return "IP already in use", 400
-
-        mac_address = get_mac_address_from_ip(ip)
-        if not mac_address:
-            return "Could not retrieve MAC address", 400
-            return redirect('/')
-
-
-        new_node = Nodes(name=ip, mac=mac_address) 
-        db.session.add(new_node)
-        db.session.commit()
-        socketio.emit('update', {'action': 'add', 'id': new_node.id, 'name': new_node.name})
-        return redirect('/')
-    except Exception as e:
-        flash(str(e), "error")
-        return str(e), 500
-    
 
 
 @app.route('/rename_node/<int:id>', methods=['POST'])
