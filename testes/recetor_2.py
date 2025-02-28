@@ -89,7 +89,7 @@ def udp_receiver():
 def request_help(seq, source):
     help_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     help_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    help_message = f"HELP: {seq} {source}".encode()
+    help_message = f"HELP: {seq}".encode()
     help_sock.sendto(help_message, ('<broadcast>', HELP_PORT))
     help_sock.close()
 
