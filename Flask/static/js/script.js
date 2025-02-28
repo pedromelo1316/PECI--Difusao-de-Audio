@@ -1,6 +1,24 @@
 document.addEventListener("DOMContentLoaded", function () {
     const columnBox = document.getElementById("columnBox");
 
+    window.toggleColumnDetails = function(icon) {
+        
+        const columnItem = icon.closest(".column-item");
+        const details = columnItem.querySelector(".column-details");
+        const isHidden = (details.style.display === 'none' || !details.style.display);
+        details.style.display = isHidden ? 'block' : 'none';
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.column-item').forEach(item => {
+          item.addEventListener('click', e => {
+            if (!e.target.closest('.column-actions')) {
+              toggleColumnDetails(item.querySelector('.fa-chevron-down'));
+            }
+          });
+        });
+    });
+
     // Função para alternar seleção de colunas
     function toggleColumnSelection(column) {
         if (column.classList.contains("checked")) {
@@ -299,13 +317,7 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     // Toggle column details
-    window.toggleColumnDetails = function(icon) {
-        
-        const columnItem = icon.closest(".column-item");
-        const details = columnItem.querySelector(".column-details");
-        const isHidden = (details.style.display === 'none' || !details.style.display);
-        details.style.display = isHidden ? 'block' : 'none';
-    };
+    
 
     // Initial population of zone options
     populateAddZoneSelects();

@@ -31,8 +31,8 @@ class Areas(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     nodes = db.relationship('Nodes', backref='area', lazy=True)
-    channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
-    volume = db.Column(db.Integer, nullable=False)
+    channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=True)
+    volume = db.Column(db.Integer, nullable=True)
     def __repr__(self):
         return '<Task %r>' % self.id
 
@@ -152,8 +152,6 @@ def add_channel():
 @app.route('/add_area', methods=['POST'])
 def add_area():
     area_name = request.form.get('name')
-    channel_id = request.form.get('channel_id')
-    volume = request.form.get('volume')
     
     if not area_name:
         flash("Area name is required", "error")
@@ -161,7 +159,7 @@ def add_area():
     
     try:
         print(f"Adding area: {area_name}")
-        new_area = Areas(name=area_name, channel_id=channel_id, volume=volume)
+        new_area = Areas(name=area_name)
         db.session.add(new_area)
         db.session.commit()
         print(f"Area {area_name} added with ID: {new_area.id}")
