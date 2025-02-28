@@ -1,15 +1,34 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
+from getmac import get_mac_address
+import subprocess
 import threading
 import queue
 import time
 import socket
 
+
+
+
+def get_mac_address_from_ip(ip):
+    try:
+        result = subprocess.run(['arp', '-n', ip], capture_output=True, text=True)
+        if result.returncode == 0:
+            for line in result.stdout.split('\n'):
+                if ip in line:
+                    return line.split()[2]
+    except Exception as e:
+        print(f"Error retrieving MAC address using arp: {e}")
+    return None
+
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 db = SQLAlchemy(app)
 socketio = SocketIO(app)
+
+
 
 class Nodes(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -37,7 +56,9 @@ class Channels(db.Model):
 @app.route('/', methods=['GET'])
 def index():
     nodes = Nodes.query.order_by(Nodes.id).all()
-    return render_template("index.html", nodes=nodes)
+    areas = Areas.query.order_by(Areas.id).all()
+    channels = Channels.query.order_by(Channels.id).all()
+    return render_template("index.html", nodes=nodes,areas=areas,channels=channels)
 
 @app.route('/delete/<int:id>')
 def delete(id):
@@ -104,6 +125,122 @@ def detect_new_nodes(stop_event, msg_buffer):
                     else:
                         msg_buffer.put(f"Error: {e}")
                         server_socket.sendto(b"Error " + str(e).encode('utf-8'), addr)
+
+
+
+#mac do no nao ta a aparecer ns pq E quando adiciono um no igual nao da erro tbm
+
+
+@app.route('/add_node', methods=['POST'])
+def add_node():
+    ip = request.form['ip']
+    try:
+        if db.session.query(Nodes).filter(Nodes.mac == ip).first():
+            return "IP already in use", 400
+
+        mac_address = get_mac_address_from_ip(ip)
+        if not mac_address:
+            return "Could not retrieve MAC address", 400
+            return redirect('/')
+
+
+        new_node = Nodes(name=ip, mac=mac_address) 
+        db.session.add(new_node)
+        db.session.commit()
+        socketio.emit('update', {'action': 'add', 'id': new_node.id, 'name': new_node.name})
+        return redirect('/')
+    except Exception as e:
+        flash(str(e), "error")
+        return str(e), 500
+    
+
+
+@app.route('/rename_node/<int:id>', methods=['POST'])
+def rename_node(id):
+    new_name = request.form['name']
+    try:
+        node = Nodes.query.get_or_404(id)
+        node.name = new_name
+        db.session.commit()
+        socketio.emit('update', {'action': 'update', 'id': node.id, 'name': node.name})
+        return redirect('/')
+    except Exception as e:
+        return str(e), 500
+
+
+@app.route('/add_channel', methods=['POST'])
+def add_channel():
+    channel_type = request.form['type']
+    try:
+        new_channel = Channels(type=channel_type)
+        db.session.add(new_channel)
+        db.session.commit()
+        socketio.emit('update', {'action': 'add', 'id': new_channel.id, 'type': new_channel.type})
+        return redirect('/')
+    except Exception as e:
+        return str(e), 500
+
+@app.route('/add_area', methods=['POST'])
+def add_area():
+    area_name = request.form.get('name')
+    channel_id = request.form.get('channel_id')
+    volume = request.form.get('volume')
+    
+    if not area_name:
+        flash("Area name is required", "error")
+        return redirect('/')
+    
+    try:
+        print(f"Adding area: {area_name}")
+        new_area = Areas(name=area_name, channel_id=channel_id, volume=volume)
+        db.session.add(new_area)
+        db.session.commit()
+        print(f"Area {area_name} added with ID: {new_area.id}")
+        socketio.emit('update', {'action': 'add', 'id': new_area.id, 'name': new_area.name})
+        return redirect('/')
+    except Exception as e:
+        print(f"Error adding area: {e}")
+        flash(str(e), "error")
+        return redirect('/')
+
+
+
+@app.route('/remove_area', methods=['POST'])
+def remove_area():
+    area_name = request.form.get('name')
+    
+    if not area_name:
+        flash("Area name is required", "error")
+        return redirect('/')
+    
+    try:
+        area = Areas.query.filter_by(name=area_name).first()
+        if not area:
+            flash("Area not found", "error")
+            return redirect('/')
+        
+        print(f"Removing area: {area_name} with ID: {area.id}")
+
+        nodes_in_area = Nodes.query.filter_by(area_id=area.id).all()
+        for node in nodes_in_area:
+            node.area_id = None  
+            db.session.add(node)
+
+        db.session.delete(area)
+        db.session.commit()
+        socketio.emit('update', {'action': 'delete', 'id': area.id})
+        return redirect('/')
+    except Exception as e:
+        flash(str(e), "error")
+        return redirect('/')
+    
+
+    
+
+
+
+
+        
 
 if __name__ == '__main__':
     stop_event = threading.Event()

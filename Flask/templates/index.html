@@ -18,35 +18,60 @@
 {% block body %}
 <div class="content">
     <h1>Nodes</h1>
-    {%if nodes|length < 1%}
-    <h1>NAO HÁ TASKS CRIA UMA</h1>
+    {% if nodes|length < 1 %}
+    <h1>Não existem nós</h1>
     {% else %}
     <table style="border-collapse: collapse;">
         <tr>
-            <th>TASK</th>
-            <th>aadded</th>
-            <th>actions</th>
+            <th>Node Name</th>
+            <th>MAC Address</th>
+            <th>Actions</th>
         </tr>
         {% for node in nodes %}
         <tr>
-            <td>{{node.name}}</td>
-            <td>{{node.id}}</td>
+            <td>{{ node.name }}</td>
+            <td>{{ node.mac }}</td>
             <td>
-                <a href="/delete/{{node.id}}">Delete</a>
+                <a href="/delete/{{ node.id }}">Delete</a>
                 <br>
-                <a href="/update/{{node.id}}">Update</a>
+                <a href="/update/{{ node.id }}">Update</a>
+                <br>
+                <form action="/rename_node/{{ node.id }}" method="POST" style="display:inline;">
+                    <input type="text" name="name" placeholder="New Name" required>
+                    <input type="submit" value="Rename">
+                </form>
             </td>
         </tr>
         {% endfor %}
     </table>
     {% endif %}
 
-    <form action="/addNode" method="POST">
-        <input type="text" name="name" id="name">
-        <input type="submit" value="Add task">
+    <h2>Add Node</h2>
+    <form action="/add_node" method="POST">
+        <input type="text" name="ip" id="ip" placeholder="Enter Node IP" required>
+        <input type="submit" value="Add Node">
     </form>
+
+    <h2>Add Channel</h2>
+    <form action="/add_channel" method="POST">
+        <input type="text" name="type" id="type" placeholder="Enter Channel Type" required>
+        <input type="submit" value="Add Channel">
+    </form>
+
+    <h2>Add Area</h2>
+    <form action="/add_area" method="POST">
+        <input type="text" name="name" id="name" placeholder="Enter Area Name" required>
+        <input type="text" name="channel_id" id="channel_id" placeholder="Enter Channel ID" required>
+        <input type="text" name="volume" id="volume" placeholder="Enter Volume" required>
+        <input type="submit" value="Add Area">
+    </form>
+
+    <h2>Remove Area</h2>
+    <form action="/remove_area" method="POST">
+        <input type="text" name="id" id="id" placeholder="Enter Area ID" required>
+        <input type="submit" value="Remove Area">
+    </form>
+
+
 </div>
-<h1>Template</h1>
 {% endblock %}
-
-
