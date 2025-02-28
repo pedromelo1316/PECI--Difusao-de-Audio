@@ -2,58 +2,6 @@
 
 {% block head %}
 <title>Nodes</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-<script type="text/javascript">
-    document.addEventListener("DOMContentLoaded", function() {
-        var socket = io();
-        socket.on('update', function(data) {
-            if (data.action === 'add' || data.action === 'delete' || data.action === 'update') {
-                location.reload();
-            }
-        });
-    });
-
-    document.addEventListener("DOMContentLoaded", function() {
-        var socket = io();
-        var add_area_form = document.querySelector('form[action="/add_area"]');
-        var area_added_message = document.getElementById('area_added_message');
-        var area_exists_message = document.getElementById('area_exists_message');
-        add_area_form.addEventListener('submit', function(event) {
-            event.preventDefault();
-            var name = add_area_form.querySelector('input[name="name"]').value;
-            var channel_id = add_area_form.querySelector('input[name="channel_id"]').value;
-            var volume = add_area_form.querySelector('input[name="volume"]').value;
-            socket.emit('add_area', {name: name, channel_id: channel_id, volume: volume});
-            socket.on('area_added', function(data) {
-                if (data.status === 'success') {
-                    area_added_message.textContent = 'Area added successfully';
-                    area_exists_message.textContent = '';
-                } else {
-                    area_added_message.textContent = '';
-                    area_exists_message.textContent = 'Area already exists';
-                }
-            });
-        });
-
-        var remove_area_form = document.querySelector('form[action="/remove_area"]');
-        var remove_area_error_message = document.getElementById('remove_area_error_message');
-        var remove_area_success_message = document.getElementById('remove_area_success_message');
-        remove_area_form.addEventListener('submit', function(event) {
-            event.preventDefault();
-            var name = remove_area_form.querySelector('input[name="name"]').value;
-            socket.emit('remove_area', {name: name});
-            socket.on('area_removed', function(data) {
-                if (data.status === 'success') {
-                    remove_area_success_message.textContent = 'Area removed successfully';
-                    remove_area_error_message.textContent = '';
-                } else {
-                    remove_area_success_message.textContent = '';
-                    remove_area_error_message.textContent = 'Area not found';
-                }
-            });
-        });
-    });
-</script>
 {% endblock %}
 
 {% block body %}
@@ -84,25 +32,58 @@
             </td>
         </tr>
         {% endfor %}
+
+        <tr>
+            <th>Area Name</th>
+            <th>Area Channel</th>
+            <th>Area volume</th>
+        </tr>
+        {% for area in areas %}
+        <tr>
+            <td>{{ area.name }}</td>
+            <td>{{ area.channel }}</td>
+            <td>{{ area.volume }}</td>
+            
+        </tr>
+        {% endfor %}
+
+
+        
     </table>
     {% endif %}
 
     <h2>Add Area</h2>
     <form action="/add_area" method="POST">
         <input type="text" name="name" id="name" placeholder="Enter Area Name" required>
-        <span id="area_added_message" class="success-message"></span>
-        <span id="area_exists_message" class="error-message"></span>
         <input type="text" name="channel_id" id="channel_id" placeholder="Enter Channel ID" required>
         <input type="text" name="volume" id="volume" placeholder="Enter Volume" required>
         <input type="submit" value="Add Area">
+        <span id="area_added_message" class="success-message"></span>
+        <span id="area_exists_message" class="error-message"></span>
     </form>
 
     <h2>Remove Area</h2>
     <form action="/remove_area" method="POST">
         <input type="text" name="name" id="remove_area_name" placeholder="Enter Area Name" required>
-        <span id="remove_area_error_message" class="error-message"></span>
-        <span id="remove_area_success_message" class="success-message"></span>
         <input type="submit" value="Remove Area">
+        <span id="remove_area_success_message" class="success-message"></span>
+        <span id="remove_area_error_message" class="error-message"></span>
     </form>
+
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function() {
+            var successMessage = "{{ get_flashed_messages(with_categories=true) | selectattr('0', 'equalto', 'success') | map(attribute='1') | join(', ') }}";
+            var errorMessage = "{{ get_flashed_messages(with_categories=true) | selectattr('0', 'equalto', 'error') | map(attribute='1') | join(', ') }}";
+            if (successMessage) {
+                document.getElementById("remove_area_success_message").textContent = successMessage;
+            }
+            if (errorMessage) {
+                document.getElementById("remove_area_error_message").textContent = errorMessage;
+            }
+        });
+    </script>
 </div>
 {% endblock %}
+
+
+

@@ -95,7 +95,7 @@ def detect_new_nodes(stop_event, msg_buffer):
                         new_node = Nodes(name=name, mac=mac)
                         db.session.add(new_node)
                         db.session.commit()
-                        socketio.emit('update', {'action': 'add', 'id': new_node.id, 'name': new_node.name})
+                        
 
                     msg_buffer.put(f"Node {name} connected")
                     server_socket.sendto(b"OK", addr)
@@ -125,8 +125,8 @@ def rename_node(id):
         node = Nodes.query.get_or_404(id)
         node.name = new_name
         db.session.commit()
-        socketio.emit('update', {'action': 'update', 'id': node.id, 'name': node.name})
         return redirect('/')
+    
     except Exception as e:
         return str(e), 500
 
@@ -138,7 +138,6 @@ def add_channel():
         new_channel = Channels(type=channel_type)
         db.session.add(new_channel)
         db.session.commit()
-        socketio.emit('update', {'action': 'add', 'id': new_channel.id, 'type': new_channel.type})
         return redirect('/')
     except Exception as e:
         return str(e), 500
@@ -149,22 +148,17 @@ def add_area():
     channel_id = request.form.get('channel_id')
     volume = request.form.get('volume')
     
-    if not area_name or not channel_id or not volume:
-        flash("All fields are required", "error")
+    if not area_name:
+        flash("Area name is required", "error")
         return redirect('/')
     
     try:
-        # se o nome da area ja existir na bd
-        if Areas.query.filter_by(name=area_name).first():
-            flash("Area name already exists", "error")
-            return redirect('/')
         print(f"Adding area: {area_name}")
         new_area = Areas(name=area_name, channel_id=channel_id, volume=volume)
         db.session.add(new_area)
         db.session.commit()
         print(f"Area {area_name} added with ID: {new_area.id}")
         socketio.emit('update', {'action': 'add', 'id': new_area.id, 'name': new_area.name})
-        flash(f"Area {area_name} added", "success")
         return redirect('/')
     except Exception as e:
         print(f"Error adding area: {e}")
@@ -179,8 +173,6 @@ def remove_area():
     if not area_name:
         flash("Area name is required", "error")
         return redirect('/')
-    
-   
     
     try:
         area = Areas.query.filter_by(name=area_name).first()
@@ -197,8 +189,6 @@ def remove_area():
 
         db.session.delete(area)
         db.session.commit()
-        socketio.emit('update', {'action': 'delete', 'id': area.id})
-
         flash(f"Area {area_name} removed", "success")
         return redirect('/')
     except Exception as e:
@@ -221,7 +211,7 @@ if __name__ == '__main__':
 
     with app.app_context():
         db.create_all()
-    socketio.run(app, debug=False)
+    socketio.run(app, debug=True)
 
     thread.join()
 
