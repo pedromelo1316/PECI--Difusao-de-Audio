@@ -14,7 +14,6 @@
                 <h1>Gestor de Áudio</h1>
                 <p>Hotel Montebelo</p>
             </div>
-            <i class="fa-solid fa-right-from-bracket logout-icon"></i>
         </div>
     </header>
 
@@ -29,8 +28,8 @@
             <h2>Conexões Wi-Fi</h2>
             <div class="column-box" id="columnBox" style="display: block;">
                 <div class="column-list">
-                    <div class="column-item checked" data-ip="192.168.1.1" data-mac="00:1A:2B:3C:4D:5E" data-zone="Zona 1">
-                        <span>✔ Coluna 1</span>
+                    <div class="column-item" data-ip="192.168.1.1" data-mac="00:1A:2B:3C:4D:5E" data-zone="Zona 1">
+                        <span style="color: #22cc3f;font-weight: bold;">✔Coluna 1</span>
                         <div class="column-actions">
                             <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
                             <i class="fa-solid fa-trash" onclick="removeColumn(this)"></i>
@@ -41,8 +40,8 @@
                             <p>Zona: Zona 1</p>
                         </div>
                     </div>
-                    <div class="column-item checked" data-ip="192.168.1.2" data-mac="00:1A:2B:3C:4D:5F" data-zone="Zona 2">
-                        <span>✔ Coluna 2</span>
+                    <div class="column-item" data-ip="192.168.1.2" data-mac="00:1A:2B:3C:4D:5F" data-zone="Zona 2">
+                        <span style="color: #22cc3f;font-weight: bold;">✔Coluna 2</span>
                         <div class="column-actions">
                             <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
                             <i class="fa-solid fa-trash" onclick="removeColumn(this)"></i>
@@ -54,7 +53,7 @@
                         </div>
                     </div>
                     <div class="column-item" data-ip="192.168.1.3" data-mac="00:1A:2B:3C:4D:60" data-zone="">
-                        <span>Coluna 3</span>
+                        <span >Coluna 3</span>
                         <div class="column-actions">
                             <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
                             <i class="fa-solid fa-trash" onclick="removeColumn(this)"></i>
@@ -76,9 +75,6 @@
                             <p>MAC: 00:1A:2B:3C:4D:61</p>
                             <p>Zona: Nenhuma</p>
                         </div>
-                    </div>
-                    <div class="add-column">
-                        <span>+ Coluna</span>
                     </div>
                 </div>
             </div>
