@@ -2,10 +2,22 @@ document.addEventListener("DOMContentLoaded", function () {
     const columnBox = document.getElementById("columnBox");
 
     columnBox.addEventListener("click",function(){
-        
+
 
     });
     
+   
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.column-item').forEach(item => {
+        item.addEventListener('click', e => {
+          if (!e.target.closest('.column-actions')) {
+            toggleColumnDetails(item.querySelector('.fa-chevron-down'));
+          }
+        });
+      });
+    });
+    
+
     // Global state to track used columns in zonas
     let usedZoneColumns = [];
 

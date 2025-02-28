@@ -30,10 +30,21 @@
                 <div class="column-list">
                     <div class="column-item" data-ip="192.168.1.1" data-mac="00:1A:2B:3C:4D:5E" data-zone="Zona 1">
                         <span style="color: #22cc3f;font-weight: bold;">✔Coluna 1</span>
-                        <div class="column-actions">
+                        <div class="column-actions" onclick="event.stopPropagation()">
                             <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
                             <i class="fa-solid fa-trash" onclick="removeColumn(this)"></i>
                         </div>
+                        <script>
+                        document.addEventListener('DOMContentLoaded', () => {
+                          document.querySelectorAll('.column-item').forEach(item => {
+                            item.addEventListener('click', e => {
+                              if (!e.target.closest('.column-actions')) {
+                                toggleColumnDetails(item.querySelector('.fa-chevron-down'));
+                              }
+                            });
+                          });
+                        });
+                        </script>
                         <div class="column-details" style="display: none;">
                             <p>IP: 192.168.1.1</p>
                             <p>MAC: 00:1A:2B:3C:4D:5E</p>
