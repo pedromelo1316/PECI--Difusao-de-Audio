@@ -12,6 +12,7 @@ import socket
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SECRET_KEY'] = 'your_secret_key'  # acho que tenho de meter esta linha para poder usar o flash
 db = SQLAlchemy(app)
 socketio = SocketIO(app)
 
@@ -148,23 +149,27 @@ def add_area():
     channel_id = request.form.get('channel_id')
     volume = request.form.get('volume')
     
-    if not area_name:
-        flash("Area name is required", "error")
+    if not area_name or not channel_id or not volume:
+        flash("All fields are required", "error")
         return redirect('/')
     
     try:
+        # se o nome da area ja existir na bd
+        if Areas.query.filter_by(name=area_name).first():
+            flash("Area name already exists", "error")
+            return redirect('/')
         print(f"Adding area: {area_name}")
         new_area = Areas(name=area_name, channel_id=channel_id, volume=volume)
         db.session.add(new_area)
         db.session.commit()
         print(f"Area {area_name} added with ID: {new_area.id}")
         socketio.emit('update', {'action': 'add', 'id': new_area.id, 'name': new_area.name})
+        flash(f"Area {area_name} added", "success")
         return redirect('/')
     except Exception as e:
         print(f"Error adding area: {e}")
         flash(str(e), "error")
         return redirect('/')
-
 
 
 @app.route('/remove_area', methods=['POST'])
@@ -174,6 +179,8 @@ def remove_area():
     if not area_name:
         flash("Area name is required", "error")
         return redirect('/')
+    
+   
     
     try:
         area = Areas.query.filter_by(name=area_name).first()
@@ -191,11 +198,12 @@ def remove_area():
         db.session.delete(area)
         db.session.commit()
         socketio.emit('update', {'action': 'delete', 'id': area.id})
+
+        flash(f"Area {area_name} removed", "success")
         return redirect('/')
     except Exception as e:
         flash(str(e), "error")
         return redirect('/')
-    
 
     
 
