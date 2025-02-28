@@ -6,7 +6,7 @@ import threading
 
 UDP_IP = "0.0.0.0"
 UDP_PORT = 5005
-CHUNK_SIZE = 8192  # Tamanho do chunk ajustado para corresponder ao emissor
+CHUNK_SIZE = 1024  # Tamanho do chunk ajustado para corresponder ao emissor
 PACKET_SIZE = 2 * CHUNK_SIZE # 2 canais de transmissão
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -37,7 +37,7 @@ ffmpeg_cmd = [
     "-ac", "1",
     "pipe:1"
 ]
-process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 count = 0
 last_seq = None  # Variável global para o último número de sequência
 
@@ -45,10 +45,11 @@ def udp_receiver():
     global count, last_seq
     while True:
         try:
-            data, _ = sock.recvfrom(PACKET_SIZE * 2 + 1)  # buffer maior para o byte extra
+            data, _ = sock.recvfrom(PACKET_SIZE + 1)  # buffer maior para o byte extra
             if data:
                 # Extrair o número de sequência (primeiro byte) e o dado real
                 packet_seq = data[0]
+                print(f"\nRecebido pacote {packet_seq}")
                 audio_data = data[1:]
                 # Verificar pacotes perdidos
                 if last_seq is not None:
@@ -56,18 +57,20 @@ def udp_receiver():
                     if packet_seq != expected_seq:
                         missing = expected_seq
                         while missing != packet_seq:
-                            print(f"\nPacote {missing} foi perdido")
+                            print(f"\n----------------->Pacote {missing} foi perdido")
                             missing = (missing + 1) % 256
                 last_seq = packet_seq
                 count += len(audio_data)
-                print(f"\rRecebido {count} bytes", end="")
+                #print(f"\rRecebido {count} bytes", end="")
+
+                # Dividir os dados de áudio em local e voz
+                local_data = audio_data[:CHUNK_SIZE]
+                voice_data = audio_data[CHUNK_SIZE:]
 
                 if op == "1":
-                    channel_data = audio_data[:CHUNK_SIZE]
+                    process.stdin.write(local_data)
                 else:
-                    channel_data = audio_data[CHUNK_SIZE:]                
-    
-                process.stdin.write(channel_data)
+                    process.stdin.write(voice_data)
                 process.stdin.flush()
         except Exception as e:
             print(f"\nErro na recepção: {e}")

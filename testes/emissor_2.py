@@ -8,7 +8,7 @@ import struct
 MULTICAST_GROUP = "224.1.1.1"
 UDP_IP = MULTICAST_GROUP
 UDP_PORT = 5005
-CHUNK_SIZE = 8192
+CHUNK_SIZE = 1024
 PACKET_SIZE = 2 * CHUNK_SIZE
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -46,43 +46,47 @@ ffmpeg_mic_cmd = [
 ]
 process_mic = subprocess.Popen(ffmpeg_mic_cmd, stdout=subprocess.PIPE)
 
-packet_queue = queue.Queue()
+local_queue = queue.Queue()
+mic_queue = queue.Queue()
 
 def get_local():
     while True:
         data = process_local.stdout.read(CHUNK_SIZE)
         if not data:
-            packet_queue.put((None, 'local'))
+            local_queue.put((None, 'local'))
             break
-        packet_queue.put((data, 'local'))
+        local_queue.put((data, 'local'))
 
 def get_mic():
     while True:
         data = process_mic.stdout.read(CHUNK_SIZE)
         if not data:
-            packet_queue.put((None, 'mic'))
+            mic_queue.put((None, 'mic'))
             break
-        packet_queue.put((data, 'mic'))
+        mic_queue.put((data, 'mic'))
 
 def send_packets():
     count = 0
     seq = 0
     local_data = None
     mic_data = None
+    start_time = time.time()
     while True:
         if local_data is None:
-            local_data, source = packet_queue.get()
+            local_data, source = local_queue.get()
             if local_data is None:
                 break
         if mic_data is None:
-            mic_data, source = packet_queue.get()
+            mic_data, source = mic_queue.get()
             if mic_data is None:
                 break
         if local_data and mic_data:
             packet = bytes([seq]) + local_data + mic_data
             sock.sendto(packet, (UDP_IP, UDP_PORT))
             count += len(local_data) + len(mic_data)
-            print(f"\rEnviado {count} bytes", end="")
+            t = time.time() - start_time
+            start_time = time.time()
+            print(f"\rEnviado {count} bytes com {(len(local_data) + len(mic_data))/t} bytes/s", end="")
             seq = (seq + 1) % 256
             time_to_sleep = (len(local_data) + len(mic_data)) / (44100 * 2)
             time.sleep(time_to_sleep)
