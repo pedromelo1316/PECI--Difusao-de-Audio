@@ -1,4 +1,5 @@
 import curses
+import os
 import threading
 import time
 import queue
@@ -8,8 +9,8 @@ from database import manage_db
 import json
 import sounddevice as sd
 import numpy as np
-import zlib
-
+import struct
+import subprocess
 
 
 def send_info(nodes, removed=False):
@@ -560,9 +561,35 @@ def main(stdscr, stop_event, msg_buffer):
 
 
 def get_local(q, stop_event=None):
-    while not stop_event.is_set():
-        time.sleep(1)
 
+    current_index = 0
+    playlist = []
+
+    for root, dirs, files in os.walk("Playlist"):
+        for file in files:
+            if file.endswith(".mp3"):
+                playlist.append(os.path.join(root, file))
+
+    while not stop_event.is_set():
+        loc = playlist[current_index]
+        ffmpeg_local_cmd = [
+            "ffmpeg",
+            "-hide_banner", "-loglevel", "error",
+            "-re",
+            "-vn",
+            "-i", loc,
+            "-acodec", "libmp3lame",
+            "-b:a", "64k",
+            "-ar", "44100",
+            "-ac", "1",
+            "-write_xing", "0",
+            "-f", "mp3",
+            "pipe:1"
+        ]
+        process_local = subprocess.Popen(ffmpeg_local_cmd, stdout=subprocess.PIPE)
+        process_local.wait()  # Wait for the current file to finish
+
+        current_index = (current_index + 1) % len(playlist)  # Move to the next file in the playlist
 
 def get_transmission(q, stop_event=None):
     while not stop_event.is_set():
@@ -576,6 +603,15 @@ def get_voz(q, stop_event=None):
 
 
 def send_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_voz=None):
+    MULTICAST_GROUP = "224.1.1.1"
+    UDP_IP = MULTICAST_GROUP
+    UDP_PORT = port
+    CHUNK_SIZE = 8192
+    PACKET_SIZE = 3 * CHUNK_SIZE
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    ttl = 1
+    sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, struct.pack('b', ttl))
     while not stop_event.is_set():
         time.sleep(1)
 
