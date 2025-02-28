@@ -130,11 +130,20 @@ h2 {
     margin-top: 10px;
 }
 
-.column-list {
+/* Wi‑Fi Columns */
+#columnBox .column-list {
     display: flex;
     flex-direction: column;
     max-height: 250px; /* Adjust as needed */
     overflow-y: auto;
+}
+
+/* Zone Columns */
+.zone-container .column-list {
+    flex-direction: column;
+    
+    max-height: none;
+    overflow-y: visible;
 }
 
 .column-item {
@@ -143,7 +152,7 @@ h2 {
     padding: 8px;
     border-bottom: 1px solid #ddd;
     cursor: pointer;
-    border-radius: 8px;
+    border-radius: px;
     transition: background 0.3s;
 }
 
@@ -156,20 +165,17 @@ h2 {
     color: #22cc3f;
 }
 
-.add-column {
-    padding: 8px;
-    text-align: center;
-    color: #22cc3f;
-    font-weight: bold;
-    cursor: pointer;
+.column-item span {
+    font-size: 18px;
 }
+
 
 /* Caixa das Zonas de Áudio */
 .zone-container {
     background: white;
     padding: 35px;
     border-radius: 12px;
-    box-shadow: 0px 4px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 5px 8px rgba(0, 0, 0, 0.1);
     width: 200%;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -185,7 +191,7 @@ h2 {
 .zone-box {
     background: white;
     border-radius: 12px;
-    box-shadow: 0px 4px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 8px 14px rgba(0, 0, 0, 0.1);
     padding: 5px;
     width: 100%; /* Ajusta ao tamanho da caixa */
     min-height: 350px; /* Ajusta ao tamanho da caixa */
@@ -220,20 +226,7 @@ h2 {
     padding: 10px;
 }
 
-/* Cada Item de Coluna */
-.column-item {
-    display: flex;
-    flex-direction: column;
-   
-    border-bottom: 1px solid #ddd;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: background 0.3s;
-}
 
-.column-item:hover {
-    background: #f0f0f0;
-}
 
 .column-header {
     display: flex;
@@ -249,6 +242,7 @@ h2 {
 
 .column-actions i {
     cursor: pointer;
+
     color: #888;
     transition: color 0.3s;
 }
@@ -283,7 +277,8 @@ h2 {
 
 .channel-options label {
     display: block;
-    font-size: 14px;
+    font-size: 16px;
+    margin-top: 7px;
     margin-bottom: 5px;
 }
 
@@ -429,7 +424,7 @@ footer {
     margin-top: 2px;
 }
 
-/* Custom Dropdown */
+
 .dropdown-button {
     background: #fff;
     border: 1px solid #ddd;
@@ -465,6 +460,10 @@ footer {
 
 .dropdown-menu li:hover {
     background-color: #f0f0f0;
+}
+
+.column-item:hover .column-details {
+    display: block;
 }
 
 
