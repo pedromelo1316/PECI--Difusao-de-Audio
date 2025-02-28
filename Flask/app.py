@@ -20,8 +20,9 @@ socketio = SocketIO(app)
 
 class Nodes(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    ip = db.Column(db.String(200), nullable=False)
     name = db.Column(db.String(200), nullable=False)
-    mac = db.Column(db.String(200), nullable=True)
+    mac = db.Column(db.String(200), nullable=False)
     area_id = db.Column(db.Integer, db.ForeignKey('areas.id'), nullable=True)
     def __repr__(self):
         return '<Task %r>' % self.id
@@ -58,6 +59,10 @@ def delete(id):
         return redirect('/')
     except:
         return 'Houve um problema ao deletar a tarefa'
+    
+@app.route('/refresh_nodes', methods=['POST'])
+def refresh_nodes():
+    return redirect('/')
 
 @app.route('/update/<int:id>', methods=['GET', 'POST'])
 def update(id):
@@ -84,20 +89,22 @@ def detect_new_nodes(stop_event, msg_buffer):
             data, addr = server_socket.recvfrom(1024)
             data = data.decode('utf-8')
             if data:
-                name, mac = data.split(',')
+                node_name, node_mac = data.split(',')
+                node_ip = addr[0]
 
                 try:
                     with app.app_context():
-                        if db.session.query(Nodes).filter(Nodes.mac == mac).first():
+                        if db.session.query(Nodes).filter(Nodes.mac == node_mac).first():
                             raise Exception("MAC already in use")
                     
-                        name = name.upper()
-                        new_node = Nodes(name=name, mac=mac)
+                        node_name = node_name.upper()
+
+                        new_node = Nodes(name=node_name, mac=node_mac, ip=node_ip)
                         db.session.add(new_node)
                         db.session.commit()
                         
 
-                    msg_buffer.put(f"Node {name} connected")
+                    msg_buffer.put(f"Node {node_name} connected")
                     server_socket.sendto(b"OK", addr)
                 except Exception as e:
                     if str(e) == "Limit of nodes with the same name reached":
@@ -105,10 +112,10 @@ def detect_new_nodes(stop_event, msg_buffer):
                         server_socket.sendto(b"Limit of nodes with the same name reached", addr)
                     elif str(e) == "MAC already in use":
                         with app.app_context():
-                            node = db.session.query(Nodes).filter(Nodes.mac == mac).first()
+                            node = db.session.query(Nodes).filter(Nodes.mac == node_mac).first()
                         
-                        name = node.name
-                        msg_buffer.put(f"Node {name} reconnected")
+                        node_name = node.name
+                        msg_buffer.put(f"Node {node_name} reconnected")
                         server_socket.sendto(b"OK", addr)
                     else:
                         msg_buffer.put(f"Error: {e}")
@@ -211,7 +218,7 @@ if __name__ == '__main__':
 
     with app.app_context():
         db.create_all()
-    socketio.run(app, debug=True)
+    socketio.run(app, debug=False)
 
     thread.join()
 
