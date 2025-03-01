@@ -151,10 +151,7 @@ h2 {
     background: #f0f0f0;
 }
 
-.column-item.checked span {
-    font-weight: bold;
-    color: #22cc3f;
-}
+
 
 .add-column {
     padding: 8px;

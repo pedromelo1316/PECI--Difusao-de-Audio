@@ -1,3 +1,4 @@
+from enum import Enum
 from flask import Flask, render_template, request, redirect, flash,jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
@@ -31,16 +32,33 @@ class Areas(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     nodes = db.relationship('Nodes', backref='area', lazy=True)
-    channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False, default=1)
+    channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=True, default=1)
     volume = db.Column(db.Integer, nullable=False, default=50)
     def __repr__(self):
         return '<Task %r>' % self.id
 
+
+class ChannelType(str, Enum):  # Enum to restrict allowed values
+    LOCAL = "LOCAL"
+    STREAMING = "STREAMING"
+    VOICE = "VOICE"
+
 class Channels(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String(200), nullable=False)
+    type = db.Column(db.Enum(ChannelType), nullable=False)  # Enforce restriction
+
     def __repr__(self):
-        return '<Task %r>' % self.id
+        return 
+    
+def create_default_channels():
+    ##add channels if less than 3
+    if db.session.query(Channels).count() < 3:
+        for channel in ChannelType:
+            new_channel = Channels(type=channel)
+            db.session.add(new_channel)
+            db.session.commit()
+
+
 
 @app.route('/', methods=['GET'])
 def index():
@@ -138,17 +156,6 @@ def rename_node(id):
         return str(e), 500
 
 
-@app.route('/add_channel', methods=['POST'])
-def add_channel():
-    channel_type = request.form['type']
-    try:
-        new_channel = Channels(type=channel_type)
-        db.session.add(new_channel)
-        db.session.commit()
-        return redirect('/')
-    except Exception as e:
-        return str(e), 500
-
 @app.route('/add_area', methods=['POST'])
 def add_area():
     data = request.json  
@@ -162,16 +169,13 @@ def add_area():
         return jsonify({"error": "Área já existe"}), 400
 
     try:
-        new_area = Areas(name=area_name, volume=50, channel_id=1)  # Volume = 50%, Canal 1 como padrão
+        new_area = Areas(name=area_name, volume=50)  # Volume = 50%, Canal 1 como padrão
         db.session.add(new_area)
         db.session.commit()
 
         return jsonify({"success": True, "id": new_area.id, "name": new_area.name}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-
-
 
 
 
@@ -205,6 +209,25 @@ def remove_area():
         return redirect('/')
 
     
+
+@app.route('/update_volume', methods=['POST'])
+def update_volume():
+    area_name = request.form.get('name')
+    new_volume = request.form.get('volume')
+
+    area = Areas.query.filter_by(name=area_name).first()
+    if not area:
+        flash("Area not found", "error")
+        return redirect('/')
+    
+    try:
+        area.volume = new_volume
+        print(f"Volume updated to {new_volume} for area {area_name}")
+        db.session.commit()
+        return redirect('/')
+    except Exception as e:
+        
+        return redirect('/')
 
 
 @app.route('/get_nodes')
@@ -265,6 +288,31 @@ def add_column_to_zone():
     return jsonify({"success": "Coluna associada com sucesso!"}), 200
 
 
+@app.route('/update_channel/<int:channel_id>', methods=['POST'])
+def update_channel(channel_id):
+    # Get the selected type from the form submission
+    new_type = request.form.get('channel_type')
+    # Ensure the type is valid (check against the enum)
+    if new_type not in [channel.value for channel in ChannelType]:
+        return redirect('/')
+
+    # Find the channel by ID and update its type
+    channel = db.session.get(Channels, channel_id)
+
+    if not channel:
+        return redirect('/')
+    
+    try:
+        channel.type = ChannelType[new_type]  # Update the channel's type
+        print(f"Channel {channel_id} updated to {new_type}")
+        db.session.commit()  # Save the changes to the database
+        return redirect('/')
+    except Exception as e:
+        return redirect('/')
+
+
+
+
 '''
 corrigir isto dps
 
@@ -307,6 +355,7 @@ if __name__ == '__main__':
 
     with app.app_context():
         db.create_all()
+        create_default_channels()
     socketio.run(app, debug=False)
 
     thread.join()

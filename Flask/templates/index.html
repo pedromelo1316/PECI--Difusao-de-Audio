@@ -29,13 +29,19 @@
             {% else %}
             <div class="column-list">
                 {% for node in nodes %}
-                <div class="column-item">
+                <div class="column-item" onclick="toggleColumnDetails(this)">
                     <span>{{ node.name }}</span>
                     <div class="column-actions" onclick="event.stopPropagation()">
                         <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
                         <a href="/delete/{{ node.id }}"><i class="fa-solid fa-trash" style="color: black;"></i></a>
                     </div>
                     <script>
+                    function toggleColumnDetails(icon) {
+                        const columnItem = icon.closest('.column-item');
+                        const details = columnItem.querySelector('.column-details');
+                        const isHidden = (details.style.display === 'none' || !details.style.display);
+                        details.style.display = isHidden ? 'block' : 'none';
+                    }
                     document.addEventListener('DOMContentLoaded', () => {
                       document.querySelectorAll('.column-item').forEach(item => {
                         item.addEventListener('click', e => {
@@ -95,8 +101,11 @@
                         </div>
                         <div class="volume-section">
                             <h4>Volume</h4>
-                            <input type="range" min="0" max="100" value="{{ area.volume }}">
-                            <p>Volume: {{ area.volume }}%</p>
+                            <form action="/update_volume" method="POST" class="volume-form">
+                                <input type="hidden" name="name" value="{{ area.name }}">
+                                <input type="range" name="volume" min="0" max="100" value="{{ area.volume }}" id="volume-slider">
+                                <p id="volume-label">Volume: {{ area.volume }}%</p>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -112,7 +121,92 @@
 </div>
 
 
+<div class="container">
+    <div class="content">
+        <h2>Os meus Canais</h2>
+    </div>
+</div>
+
+<div class="container centered-container">
+    <div class="content">
+        <div class="channels-content">
+            {% if channels|length < 1 %}
+            <h1>No Channels</h1>
+            {% else %}
+            
+            <div class="channels-container">
+                {% for channel in channels %}
+                <div class="channel-group">
+                    <label for="channel{{ channel.id }}">Canal {{ channel.id }}:</label>
+                    <div class="channel-options">
+                        <form id="form_{{ channel.id }}" action="/update_channel/{{ channel.id }}" method="POST">
+                            <label>
+                                <input type="radio" name="channel_type" value="LOCAL"
+                                    {% if channel.type.value == 'LOCAL' %} checked {% endif %}
+                                    style="accent-color: #22cc3f;"> Local
+                            </label>
+                            <label>
+                                <input type="radio" name="channel_type" value="STREAMING"
+                                    {% if channel.type.value == 'STREAMING' %} checked {% endif %}
+                                    style="accent-color: #22cc3f;"> Transmissão
+                            </label>
+                            <label>
+                                <input type="radio" name="channel_type" value="VOICE"
+                                    {% if channel.type.value == 'VOICE' %} checked {% endif %}
+                                    style="accent-color: #22cc3f;"> Voz
+                            </label>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
 <script>
+    //to change the volume of the area
+    document.getElementById('volume-slider').addEventListener('change', function() {
+    let volume = this.value;
+    let areaName = document.querySelector('input[name="name"]').value;
+
+    // Update label dynamically
+    document.getElementById('volume-label').textContent = `Volume: ${volume}%`;
+
+    // Send the updated volume to the server
+    fetch('/update_volume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `name=${encodeURIComponent(areaName)}&volume=${encodeURIComponent(volume)}`
+    }).then(response => console.log(`Volume updated to ${volume}`));
+    });
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    //to change the channel type
+    document.querySelectorAll('input[type="radio"]').forEach((radio) => {
+        radio.addEventListener('change', function() {
+            const channelId = this.closest('form').id.split('_')[1]; // Extract channel ID from form ID
+            const form = document.getElementById(`form_${channelId}`);
+            
+            // Auto-submit the form
+            form.submit();
+        });
+    });
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function addArea() {
     const areaName = prompt("Nome da nova área:");

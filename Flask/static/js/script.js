@@ -9,26 +9,10 @@ document.addEventListener("DOMContentLoaded", function () {
         details.style.display = isHidden ? 'block' : 'none';
     };
 
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('.column-item').forEach(item => {
-          item.addEventListener('click', e => {
-            if (!e.target.closest('.column-actions')) {
-              toggleColumnDetails(item.querySelector('.fa-chevron-down'));
-            }
-          });
-        });
-    });
+    
 
     // Função para alternar seleção de colunas
-    function toggleColumnSelection(column) {
-        if (column.classList.contains("checked")) {
-            column.classList.remove("checked");
-            column.querySelector("span").innerHTML = column.querySelector("span").innerHTML.replace("✔ ", "");
-        } else {
-            column.classList.add("checked");
-            column.querySelector("span").innerHTML = "✔ " + column.querySelector("span").innerHTML;
-        }
-    }
+    
 
     // Função para adicionar uma nova coluna
     window.addColumn = function() {
