@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, flash
+from flask import Flask, render_template, request, redirect, flash,jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
 import subprocess
@@ -31,8 +31,8 @@ class Areas(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     nodes = db.relationship('Nodes', backref='area', lazy=True)
-    channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
-    volume = db.Column(db.Integer, nullable=False)
+    channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False, default=1)
+    volume = db.Column(db.Integer, nullable=False, default=50)
     def __repr__(self):
         return '<Task %r>' % self.id
 
@@ -151,29 +151,28 @@ def add_channel():
 
 @app.route('/add_area', methods=['POST'])
 def add_area():
-    area_name = request.form.get('name')
-    channel_id = request.form.get('channel_id')
-    volume = request.form.get('volume')
-    
+    data = request.json  
+    area_name = data.get('name')
+
     if not area_name:
-        flash("Area name is required", "error")
-        return redirect('/')
-    
+        return jsonify({"error": "Nome da área é obrigatório"}), 400
+
+    # 🛑 Verifica se a área já existe e impede a adição
+    if Areas.query.filter_by(name=area_name).first():
+        return jsonify({"error": "Área já existe"}), 400
+
     try:
-        print(f"Adding area: {area_name}")
-        if db.session.query(Areas).filter(Areas.name == area_name).first():
-            raise Exception("Name already in use")
-        new_area = Areas(name=area_name, channel_id=channel_id, volume=volume)
+        new_area = Areas(name=area_name, volume=50, channel_id=1)  # Volume = 50%, Canal 1 como padrão
         db.session.add(new_area)
         db.session.commit()
-        print(f"Area {area_name} added with ID: {new_area.id}")
-        socketio.emit('update', {'action': 'add', 'id': new_area.id, 'name': new_area.name})
-        return redirect('/')
-    except Exception as e:
 
-        print(f"Error adding area: {e}")
-        flash(str(e), "error")
-        return redirect('/')
+        return jsonify({"success": True, "id": new_area.id, "name": new_area.name}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+
 
 
 @app.route('/remove_area', methods=['POST'])
@@ -208,9 +207,96 @@ def remove_area():
     
 
 
+@app.route('/get_nodes')
+def get_nodes():
+    nodes = Nodes.query.filter_by(area_id=None).all()  # Apenas os não associados
+    return jsonify([{"id": node.id, "name": node.name} for node in nodes])
 
 
-        
+@app.route('/associate_node', methods=['POST'])
+def associate_node():
+    data = request.get_json()
+    zone_name = data.get("zone_name")
+    node_id = data.get("node_id")
+
+    # Buscar a zona e o nó no banco de dados
+    area = Areas.query.filter_by(name=zone_name).first()
+    node = Nodes.query.get(node_id)
+
+    if not area or not node:
+        return jsonify({"success": False, "error": "Zona ou nó inválido"}), 400
+
+    if node.area_id:
+        return jsonify({"success": False, "error": "Este nó já está associado a uma zona!"}), 400
+
+    # Associar o nó à zona
+    node.area_id = area.id
+    db.session.commit()
+
+    return jsonify({"success": True})
+
+
+@app.route("/add_column_to_zone", methods=["POST"])
+def add_column_to_zone():
+    data = request.get_json()
+    zone_name = data.get("zone_name")
+    column_name = data.get("column_name")
+
+    if not zone_name or not column_name:
+        return jsonify({"error": "Zona e coluna são obrigatórias"}), 400
+
+    # Buscar zona e coluna no banco de dados
+    area = Areas.query.filter_by(name=zone_name).first()
+    column = Nodes.query.filter_by(name=column_name).first()
+
+    if not area:
+        return jsonify({"error": "Zona não encontrada"}), 404
+    if not column:
+        return jsonify({"error": "Coluna não encontrada"}), 404
+
+    # Verificar se a coluna já está associada a alguma zona
+    if column.zone_id:
+        return jsonify({"error": "Essa coluna já está associada a outra zona"}), 400
+
+    # Associar a coluna à zona
+    column.zone_id = area.id
+    db.session.commit()
+
+    return jsonify({"success": "Coluna associada com sucesso!"}), 200
+
+
+'''
+corrigir isto dps
+
+@app.route("/get_columns", methods=["GET"])
+def get_columns():
+    columns = Nodes.query.all()
+    return jsonify([
+        {"id": column.id, "name": column.name, "zone_id": column.zone_id}
+        for column in columns
+    ])
+
+@app.route("/get_column", methods=["GET"])
+def get_column():
+    column_name = request.args.get("name")
+    column = Nodes.query.filter_by(name=column_name).first()
+    
+    if not column:
+        return jsonify({"error": "Coluna não encontrada"}), 404
+    
+    return jsonify({"id": column.id, "name": column.name, "zone_id": column.zone_id})
+
+@app.route("/get_zones", methods=["GET"])
+def get_zones():
+    zones = Areas.query.all()
+    return jsonify([
+        {"id": zone.id, "name": zone.name, "columns": [
+            {"id": col.id, "name": col.name} for col in Nodes.query.filter_by(zone_id=zone.id)
+        ]}
+        for zone in zones
+    ])
+
+'''     
 
 if __name__ == '__main__':
     stop_event = threading.Event()

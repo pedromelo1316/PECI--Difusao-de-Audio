@@ -30,7 +30,7 @@
             <div class="column-list">
                 {% for node in nodes %}
                 <div class="column-item">
-                    <span >{{ node.name }} </span>
+                    <span>{{ node.name }}</span>
                     <div class="column-actions" onclick="event.stopPropagation()">
                         <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
                         <a href="/delete/{{ node.id }}"><i class="fa-solid fa-trash" style="color: black;"></i></a>
@@ -50,11 +50,9 @@
                     <div class="column-details" style="display: none;">
                         <p>IP: {{ node.ip }}</p>
                         <p>MAC: {{ node.mac }}</p>
-                        
                     </div>
                 </div>
                 {% endfor %}
-                
             </div>
             {% endif %}
         </div>
@@ -65,96 +63,302 @@
     <div class="content">
         <h2>As minhas zonas</h2>
         <div class="zone-container">
-          
-            <div class="zone-box add-zone">
-                <span>+</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="container centered-container">
-    <div class="content">
-        <div class="column-box" id="columnBox" style="display: block;">
-            
             {% if areas|length < 1 %}
             <h1>No Areas</h1>
             {% else %}
-            <div class="column-list">
-                {% for area in areas %}
-                <div class="column-item" >
-                    <span >{{ area.name }}</span>
-                    <div class="column-actions" onclick="event.stopPropagation()">
-                        <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
-                        
+            {% for area in areas %}
+            <div class="zone-box">
+                <div class="zone-header">
+                    <h3>{{ area.name }}</h3>
+                    <button onclick="removeArea('{{ area.name }}')"><i class="fa-solid fa-trash delete-zone"></i></button>
+                    <form id="remove-area-form-{{ area.name }}" action="/remove_area" method="POST" style="display: none;">
+                        <input type="hidden" name="name" value="{{ area.name }}">
+                    </form>                    
+                </div>
+                <div class="zone-content">
+                    <div class="column-section">
+                        <h4>Colunas</h4>
+                        <div class="column-list">
+                            <div class="add-column" onclick="showSelectForZone(this)">
+                                <span>+ Coluna</span>
+                            </div>
+                        </div>
                     </div>
-                    <script>
-                    document.addEventListener('DOMContentLoaded', () => {
-                      document.querySelectorAll('.column-item').forEach(item => {
-                        item.addEventListener('click', e => {
-                          if (!e.target.closest('.column-actions')) {
-                            toggleColumnDetails(item.querySelector('.fa-chevron-down'));
-                          }
-                        });
-                      });
-                    });
-                    </script>
-
-                    <div class="column-details" style="display: none;">
-                        <p>Nothing</p>
-                        
-                        
+                    <div class="channel-volume">
+                        <div class="channel-section">
+                            <h4>Canal</h4>
+                            <div class="channel-options">
+                                <label><input type="checkbox" name="channel-{{ area.name }}" value="1" onclick="selectSingleChannel(this)"> Canal 1</label>
+                                <label><input type="checkbox" name="channel-{{ area.name }}" value="2" onclick="selectSingleChannel(this)"> Canal 2</label>
+                                <label><input type="checkbox" name="channel-{{ area.name }}" value="3" onclick="selectSingleChannel(this)"> Canal 3</label>
+                            </div>
+                        </div>
+                        <div class="volume-section">
+                            <h4>Volume</h4>
+                            <input type="range" min="0" max="100" value="{{ area.volume }}">
+                            <p>Volume: {{ area.volume }}%</p>
+                        </div>
                     </div>
                 </div>
-                {% endfor %}
-                
             </div>
+            {% endfor %}
             {% endif %}
+            <div class="zone-box add-zone" id="addAreaButton" onclick="addArea() ">
+                <span>+</span>
+            </div>
+            
         </div>
     </div>
 </div>
 
 
+<script>
 
-<div class="content">
-    
-    <h2>Add Area</h2>
-    <form action="/add_area" method="POST">
-        <input type="text" name="name" id="name" placeholder="Enter Area Name" required>
-        <input type="text" name="channel_id" id="channel_id" placeholder="Enter Channel ID" required>
-        <input type="text" name="volume" id="volume" placeholder="Enter Volume" required>
-        <input type="submit" value="Add Area">
-        <span id="area_added_message" class="success-message"></span>
-        <span id="area_exists_message" class="error-message"></span>
-    </form>
+function addArea() {
+    const areaName = prompt("Nome da nova área:");
 
-    <h2>Remove Area</h2>
-    <form action="/remove_area" method="POST">
-        <input type="text" name="name" id="remove_area_name" placeholder="Enter Area Name" required>
-        <input type="submit" value="Remove Area">
-        <span id="remove_area_success_message" class="success-message"></span>
-        <span id="remove_area_error_message" class="error-message"></span>
-    </form>
+    if (!areaName) {
+        alert("O nome da área é obrigatório!");
+        return;
+    }
 
-    <script type="text/javascript">
-        document.addEventListener("DOMContentLoaded", function() {
-            var successMessage = "{{ get_flashed_messages(with_categories=true) | selectattr('0', 'equalto', 'success') | map(attribute='1') | join(', ') }}";
-            var errorMessage = "{{ get_flashed_messages(with_categories=true) | selectattr('0', 'equalto', 'error') | map(attribute='1') | join(', ') }}";
-            if (successMessage) {
-                document.getElementById("remove_area_success_message").textContent = successMessage;
-            }
-            if (errorMessage) {
-                document.getElementById("remove_area_error_message").textContent = errorMessage;
+    fetch('/add_area', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name: areaName }) 
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => { throw new Error(data.error); });
+        }
+        return response.json();
+    })
+    .then(data => {
+        alert("Área adicionada com sucesso!");
+        location.reload();
+    })
+    .catch(error => {
+        alert("Erro: " + error.message);
+    });
+}
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    // Lista de colunas já associadas a zonas
+    let usedZoneColumns = [];
+
+    // Adicionar funcionalidade ao botão "+ Coluna"
+    document.querySelectorAll(".add-column").forEach(button => {
+        button.addEventListener("click", function () {
+            showSelectForZone(this);
+        });
+    });
+
+    // Adicionar funcionalidade de remoção às colunas existentes
+    document.querySelectorAll(".delete-column").forEach(btn => {
+        btn.addEventListener("click", function (event) {
+            event.stopPropagation(); // Evita ativação da seleção ao clicar no ícone de remoção
+            const columnItem = this.closest(".column-item");
+            removeZoneColumn(columnItem);
+        });
+    });
+
+    // Controle de volume
+    document.querySelectorAll("input[type='range']").forEach(slider => {
+        slider.addEventListener("input", function () {
+            this.nextElementSibling.textContent = `Volume: ${this.value}%`;
+        });
+    });
+
+    // Função para exibir o seletor de colunas Wi-Fi ao clicar em "+ Coluna"
+    function showSelectForZone(buttonElement) {
+        // Criar container para seleção
+        const container = document.createElement("div");
+        container.classList.add("select-container");
+
+        // Criar dropdown de seleção
+        const select = document.createElement("select");
+        select.classList.add("select-column");
+
+        // Adicionar opção padrão
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.disabled = true;
+        defaultOption.selected = true;
+        defaultOption.textContent = "Selecione uma coluna";
+        select.appendChild(defaultOption);
+
+        // Obter colunas Wi-Fi disponíveis (excluindo as já usadas)
+        const wifiColumns = document.querySelectorAll("#columnBox .column-item");
+        wifiColumns.forEach(column => {
+            const colName = column.querySelector("span").textContent.replace("✔ ", "").trim();
+            if (!usedZoneColumns.includes(colName)) {
+                const option = document.createElement("option");
+                option.value = colName;
+                option.textContent = colName;
+                select.appendChild(option);
             }
         });
-    </script>
 
+        // Criar botão de cancelamento
+        const cancelButton = document.createElement("button");
+        cancelButton.classList.add("cancel-button");
+        cancelButton.textContent = "X";
+        cancelButton.addEventListener("click", function () {
+            container.replaceWith(buttonElement); // Reverte ao botão original
+        });
+
+        // Adicionar elementos ao container
+        container.appendChild(select);
+        container.appendChild(cancelButton);
+
+        // Substituir o botão "+" pelo dropdown
+        buttonElement.replaceWith(container);
+
+        // Ao selecionar uma coluna, adicioná-la à zona
+        select.addEventListener("change", function () {
+            addZoneColumn(select, buttonElement);
+        });
+    }
+
+    // Função para adicionar coluna à zona
+    function addZoneColumn(selectElement, buttonElement) {
+        const selectedColumn = selectElement.value;
+        if (!selectedColumn) return;
+
+        const zoneName = selectElement.closest(".zone-box").querySelector("h3").textContent.trim();
+
+        // Criar elemento visual da coluna na zona
+        const columnItem = document.createElement("div");
+        columnItem.classList.add("column-item");
+        columnItem.innerHTML = `
+            <span>${selectedColumn}</span>
+            <button class="delete-column">🗑️</button>
+        `;
+
+        // Adicionar evento para remover coluna
+        columnItem.querySelector(".delete-column").addEventListener("click", function () {
+            removeZoneColumn(columnItem, selectedColumn, zoneName);
+        });
+
+        // Adicionar a nova coluna ao container e restaurar botão "+"
+        const zoneContainer = selectElement.closest(".column-list");
+        zoneContainer.insertBefore(columnItem, selectElement.parentElement);
+        selectElement.parentElement.replaceWith(buttonElement);
+
+        // Marcar coluna como usada
+        usedZoneColumns.push(selectedColumn);
+
+        // Enviar para o backend
+        fetch("/add_column_to_zone", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ zone_name: zoneName, column_name: selectedColumn })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert("Erro: " + data.error);
+                columnItem.remove(); // Se falhar, remove do frontend também
+                usedZoneColumns = usedZoneColumns.filter(name => name !== selectedColumn);
+            }
+        })
+        .catch(error => console.error("Erro ao adicionar coluna:", error));
+    }
+
+
+    // Função para remover uma coluna da zona
+    function removeZoneColumn(columnElement) {
+        const colName = columnElement.querySelector("span").textContent.trim();
+        usedZoneColumns = usedZoneColumns.filter(name => name !== colName);
+        columnElement.remove();
+    }
+});
+
+
+
+
+document.getElementById("addAreaButton").addEventListener("click", addArea);
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const columnBox = document.getElementById("columnBox");
     
-</div>
-
-
-
+        window.toggleColumnDetails = function(icon) {
+            const columnItem = icon.closest(".column-item");
+            const details = columnItem.querySelector(".column-details");
+            const isHidden = (details.style.display === 'none' || !details.style.display);
+            details.style.display = isHidden ? 'block' : 'none';
+        };
+    
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.column-item').forEach(item => {
+              item.addEventListener('click', e => {
+                if (!e.target.closest('.column-actions')) {
+                  toggleColumnDetails(item.querySelector('.fa-chevron-down'));
+                }
+              });
+            });
+        });
+    
+        // Ensure only one channel can be selected per zone
+        window.selectSingleChannel = function(checkbox) {
+            const checkboxes = document.querySelectorAll(`input[name="${checkbox.name}"]`);
+            checkboxes.forEach((cb) => {
+                if (cb !== checkbox) cb.checked = false;
+            });
+        };
+    
+        // Função para remover uma área
+        window.removeArea = function(areaName) {
+            const form = document.getElementById(`remove-area-form-${areaName}`);
+            form.submit();
+        };
+    
+        // Função para mostrar o modal de adição de área
+        window.showAddAreaModal = function() {
+            document.getElementById("addAreaModal").style.display = "block";
+        };
+    
+        // Função para fechar o modal de adição de área
+        window.closeAddAreaModal = function() {
+            document.getElementById("addAreaModal").style.display = "none";
+        };
+    
+        // Função para adicionar uma nova área
+        window.addArea = function() {
+            const areaName = document.getElementById("area_name").value;
+            const channelId = document.getElementById("channel_id").value;
+            const volume = document.getElementById("volume").value;
+            const nodeIds = Array.from(document.getElementById("node_ids").selectedOptions).map(option => option.value);
+    
+            if (!areaName || !channelId || !volume) {
+                alert("All fields are required!");
+                return;
+            }
+    
+            fetch('/add_area', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name: areaName, channel_id: channelId, volume: volume, node_ids: nodeIds })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Área adicionada com sucesso!");
+                    location.reload(); // Atualiza a página para mostrar a nova área
+                } else {
+                    alert("Erro: " + data.error);
+                }
+            })
+            .catch(error => console.error("Erro ao adicionar área:", error));
+        };
+    });
+    </script>
 {% endblock %}
-
-
-
