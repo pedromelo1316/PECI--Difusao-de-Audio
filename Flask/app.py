@@ -32,7 +32,7 @@ class Areas(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     nodes = db.relationship('Nodes', backref='area', lazy=True)
-    channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=True, default=1)
+    channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=True)
     volume = db.Column(db.Integer, nullable=False, default=50)
     def __repr__(self):
         return '<Task %r>' % self.id
@@ -311,6 +311,26 @@ def update_channel(channel_id):
         return redirect('/')
 
 
+
+@app.route('/update_area_channel', methods=['POST'])
+def update_area_channel():
+    area_name = request.form.get('name')
+    new_channel_id = request.form.get('channel_id')
+    print(f"Updating channel for area {area_name} to {new_channel_id}")
+
+    area = Areas.query.filter_by(name=area_name).first()
+    if not area:
+        flash("Area not found", "error")
+        return redirect('/')
+    
+    try:
+        area.channel_id = new_channel_id
+        print(f"Channel updated to {new_channel_id} for area {area_name}")
+        db.session.commit()
+        return redirect('/')
+    except Exception as e:
+        flash(str(e), "error")
+        return redirect('/')
 
 
 '''

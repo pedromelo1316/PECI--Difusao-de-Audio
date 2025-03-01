@@ -94,9 +94,24 @@
                         <div class="channel-section">
                             <h4>Canal</h4>
                             <div class="channel-options">
-                                <label><input type="checkbox" name="channel-{{ area.name }}" value="1" onclick="selectSingleChannel(this)"> Canal 1</label>
-                                <label><input type="checkbox" name="channel-{{ area.name }}" value="2" onclick="selectSingleChannel(this)"> Canal 2</label>
-                                <label><input type="checkbox" name="channel-{{ area.name }}" value="3" onclick="selectSingleChannel(this)"> Canal 3</label>
+                                <form action="/update_area_channel" method="POST" id="channelForm">
+                                    <input type="hidden" name="name" value="{{ area.name }}">
+                                    
+                                    <label>
+                                        <input type="radio" name="channel_id" value="1"
+                                            {% if area.channel_id == 1 %} checked {% endif %} style="accent-color: #22cc3f;"> Canal 1
+                                    </label>
+                                    
+                                    <label>
+                                        <input type="radio" name="channel_id" value="2"
+                                            {% if area.channel_id == 2 %} checked {% endif %} style="accent-color: #22cc3f;"> Canal 2
+                                    </label>
+                                    
+                                    <label>
+                                        <input type="radio" name="channel_id" value="3"
+                                            {% if area.channel_id == 3 %} checked {% endif %} style="accent-color: #22cc3f;"> Canal 3
+                                    </label>
+                                </form>
                             </div>
                         </div>
                         <div class="volume-section">
@@ -207,6 +222,14 @@
     });
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //to change the channel of the area
+    document.querySelectorAll('input[type="radio"]').forEach((radio) => {
+        radio.addEventListener('change', function() {
+            // Get the closest form and submit it
+            const form = this.closest('form');
+            form.submit();
+        });
+    });
 
 function addArea() {
     const areaName = prompt("Nome da nova área:");
