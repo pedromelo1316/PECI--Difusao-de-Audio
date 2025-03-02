@@ -19,23 +19,25 @@ socketio = SocketIO(app)
 
 
 
-class Nodes(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    ip = db.Column(db.String(200), nullable=False)
-    name = db.Column(db.String(200), nullable=False)
-    mac = db.Column(db.String(200), nullable=False)
-    area_id = db.Column(db.Integer, db.ForeignKey('areas.id'), nullable=True)
-    def __repr__(self):
-        return '<Task %r>' % self.id
-
 class Areas(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     nodes = db.relationship('Nodes', backref='area', lazy=True)
     channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=True)
     volume = db.Column(db.Integer, nullable=False, default=50)
+
     def __repr__(self):
-        return '<Task %r>' % self.id
+        return f'<Area {self.id}: {self.name}>'
+
+class Nodes(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ip = db.Column(db.String(200), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    mac = db.Column(db.String(200), nullable=False)
+    area_id = db.Column(db.Integer, db.ForeignKey('areas.id'), nullable=True)
+
+    def __repr__(self):
+        return f'<Node {self.id}: {self.name}>'
 
 
 class ChannelType(str, Enum):  # Enum to restrict allowed values
@@ -278,11 +280,13 @@ def add_column_to_zone():
         return jsonify({"error": "Coluna não encontrada"}), 404
 
     # Verificar se a coluna já está associada a alguma zona
-    if column.zone_id:
+    if column.area_id:
         return jsonify({"error": "Essa coluna já está associada a outra zona"}), 400
 
     # Associar a coluna à zona
-    column.zone_id = area.id
+    column.area_id = area.id
+    print(f"Coluna {column_name} associada à zona {zone_name}")
+
     db.session.commit()
 
     return jsonify({"success": "Coluna associada com sucesso!"}), 200

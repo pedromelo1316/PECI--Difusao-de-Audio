@@ -86,6 +86,12 @@
                         <h4>Colunas</h4>
                         <div class="column-list">
                             <div class="add-column" onclick="showSelectForZone(this)">
+                                {% for node in nodes if node.area_id == area.id %}
+                                <div class="column-item">
+                                    <span>{{ node.name }}</span>
+                                    <button class="delete-column">🗑️</button>
+                                </div>
+                                {% endfor %}
                                 <span>+ Coluna</span>
                             </div>
                         </div>
