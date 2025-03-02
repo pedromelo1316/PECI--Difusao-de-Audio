@@ -85,14 +85,17 @@
                     <div class="column-section">
                         <h4>Colunas</h4>
                         <div class="column-list">
-                            <div class="add-column" onclick="showSelectForZone(this)">
+                         
+                            <div class="column-list">
                                 {% for node in nodes if node.area_id == area.id %}
                                 <div class="column-item" data-column="{{ node.name }}" data-zone="{{ area.name }}">
                                     <span>{{ node.name }}</span>
-                                    <button class="delete-column" onclick="removeZoneColumn(this.closest('.column-item'))">🗑️</button>
+                                    <button class="delete-column-button" onclick="removeZoneColumn(this.closest('.column-item'))">🗑️</button>
                                 </div>
                                 {% endfor %}
-                                <span>+ Coluna</span>
+                                <div class="add-column-button" onclick="showSelectForZone(this)">
+                                    <span>+ Coluna</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -237,6 +240,8 @@
         });
     });
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 function addArea() {
     const areaName = prompt("Nome da nova área:");
 
@@ -273,14 +278,14 @@ document.addEventListener("DOMContentLoaded", function () {
     let usedZoneColumns = [];
 
     // Adicionar funcionalidade ao botão "+ Coluna"
-    document.querySelectorAll(".add-column").forEach(button => {
+    document.querySelectorAll(".add-column-button").forEach(button => {
         button.addEventListener("click", function () {
             showSelectForZone(this);
         });
     });
 
     // Adicionar funcionalidade de remoção às colunas existentes
-    document.querySelectorAll(".delete-column").forEach(btn => {
+    document.querySelectorAll(".delete-column-button").forEach(btn => {
         btn.addEventListener("click", function (event) {
             event.stopPropagation(); // Evita ativação da seleção ao clicar no ícone de remoção
             const columnItem = this.closest(".column-item");
@@ -295,6 +300,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+    
     // Função para exibir o seletor de colunas Wi-Fi ao clicar em "+ Coluna"
     function showSelectForZone(buttonElement) {
         // Criar container para seleção
@@ -353,30 +359,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const zoneName = selectElement.closest(".zone-box").querySelector("h3").textContent.trim();
 
-        // print do zoneName e selectedCOlumn
-        console.log(zoneName);
-        console.log(selectedColumn);
-
-        // Criar elemento visual da coluna na zona
         // Criar elemento visual da coluna na zona
         const columnItem = document.createElement("div");
         columnItem.classList.add("column-item");
         columnItem.innerHTML = `
             <span>${selectedColumn}</span>
-            <button class="delete-column">🗑️</button>
+            <button class="delete-column-button">🗑️</button>
         `;
 
         columnItem.dataset.column = selectedColumn;
         columnItem.dataset.zone = zoneName;
 
-        console.log("Dataset atribuído:", columnItem.dataset);
-
         // Adicionar evento para remover coluna
-        columnItem.querySelector(".delete-column").addEventListener("click", function () {
+        columnItem.querySelector(".delete-column-button").addEventListener("click", function () {
             removeZoneColumn(columnItem);
         });
-
-
 
         // Adicionar a nova coluna ao container e restaurar botão "+"
         const zoneContainer = selectElement.closest(".column-list");
@@ -406,8 +403,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-    // Função para remover uma coluna da zona
-    function removeZoneColumn(columnElement) {
+     // Função para remover uma coluna da zona
+     function removeZoneColumn(columnElement) {
         const columnName = columnElement.dataset.column;
         const zoneName = columnElement.dataset.zone;
 

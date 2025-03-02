@@ -192,6 +192,8 @@ h2 {
 
 
 
+
+
 /* Cabeçalho da Zona */
 .zone-header {
     display: flex;
@@ -467,4 +469,17 @@ footer {
 
 
 
+.add-column-button {
+    padding: 8px;
+    text-align: center;
+    color: #22cc3f;
+    font-weight: bold;
+    cursor: pointer;
+}
 
+.delete-column-button {
+    background: none;
+    border: none;
+    color: red;
+    cursor: pointer;
+}

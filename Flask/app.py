@@ -303,7 +303,6 @@ def remove_column_from_zone():
     zone_name = data["zone_name"]
     column_name = data["column_name"]
 
-    # Buscar a coluna na BD
     area = Areas.query.filter_by(name=zone_name).first()
     if not area:
         return jsonify({"error": "Zone not found"}), 404
