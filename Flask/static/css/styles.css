@@ -145,6 +145,7 @@ h2 {
     cursor: pointer;
     border-radius: 8px;
     transition: background 0.3s;
+    background-color: white !important;
 }
 
 .column-item:hover {

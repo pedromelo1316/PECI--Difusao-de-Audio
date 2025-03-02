@@ -166,7 +166,6 @@ def add_area():
     if not area_name:
         return jsonify({"error": "Nome da área é obrigatório"}), 400
 
-    # 🛑 Verifica se a área já existe e impede a adição
     if Areas.query.filter_by(name=area_name).first():
         return jsonify({"error": "Área já existe"}), 400
 
@@ -290,6 +289,43 @@ def add_column_to_zone():
     db.session.commit()
 
     return jsonify({"success": "Coluna associada com sucesso!"}), 200
+
+@app.before_request
+def log_request_info():
+    print(f"Recebido {request.method} para {request.path}")
+    print(f"Com dados: {request.data}")
+
+# remove column FROM zone
+@app.route("/remove_column_from_zone", methods=["POST"])
+def remove_column_from_zone():
+    data = request.get_json()
+
+
+    if not data or "zone_name" not in data or "column_name" not in data:
+        return jsonify({"error": "Zone and column are required"}), 400
+
+
+    zone_name = data["zone_name"]
+    column_name = data["column_name"]
+
+
+
+    # Buscar a coluna na BD
+    area = Areas.query.filter_by(name=zone_name).first()
+    if not area:
+        return jsonify({"error": "Zone not found"}), 404
+    column = Nodes.query.filter_by(name=column_name, area_id=area.id).first()
+
+    if not column:
+        return jsonify({"error": "Column not found"}), 404
+            
+    column.area_id = None  
+    db.session.commit()
+
+    return jsonify({"success": True})
+
+
+
 
 
 @app.route('/update_channel/<int:channel_id>', methods=['POST'])
