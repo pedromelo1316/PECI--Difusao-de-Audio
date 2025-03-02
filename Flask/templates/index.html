@@ -34,7 +34,7 @@
                     <div class="column-actions" onclick="event.stopPropagation()">
                         <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
                         <a href="/delete/{{ node.id }}"><i class="fa-solid fa-trash" style="color: black;"></i></a>
-                    </div>
+                    </div>  
                     <script>
                     function toggleColumnDetails(icon) {
                         const columnItem = icon.closest('.column-item');
@@ -89,7 +89,7 @@
                                 {% for node in nodes if node.area_id == area.id %}
                                 <div class="column-item" data-column="{{ node.name }}" data-zone="{{ area.name }}">
                                     <span>{{ node.name }}</span>
-                                    <button class="delete-column">🗑️</button>
+                                    <button class="delete-column" onclick="removeZoneColumn(this.closest('.column-item'))">🗑️</button>
                                 </div>
                                 {% endfor %}
                                 <span>+ Coluna</span>
@@ -366,7 +366,6 @@ document.addEventListener("DOMContentLoaded", function () {
             <button class="delete-column">🗑️</button>
         `;
 
-        // 🛠️ Adicionar dataset para usar depois no removeZoneColumn
         columnItem.dataset.column = selectedColumn;
         columnItem.dataset.zone = zoneName;
 
@@ -409,40 +408,27 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Função para remover uma coluna da zona
     function removeZoneColumn(columnElement) {
-        console.log("AQUI REMOVE-SE")
-        console.log("Elemento recebido:", columnElement);
-        console.log("Dataset:", columnElement.dataset);
-
         const columnName = columnElement.dataset.column;
         const zoneName = columnElement.dataset.zone;
 
-        console.log("Coluna:", columnName, "Zona:", zoneName);
+        console.log("Removendo coluna:", columnName, "da zona:", zoneName);  // Log para verificar os dados
 
-        if (!columnName || !zoneName) {
-            console.error("Erro: columnName ou zoneName estão indefinidos!");
-            return;
-        }
-
-
-        fetch("/remove_column_from_zone", {  // Certifica-te que o endpoint está correto
+        fetch("/remove_column_from_zone", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                zone_name: zoneName, 
-                column_name: columnName 
-            })
+            body: JSON.stringify({ zone_name: zoneName, column_name: columnName })
         })
         .then(response => response.json())
         .then(data => {
-            if (data.error) {
-                console.error("Erro do servidor:", data.error);
-                alert("Erro: " + data.error);
-            } else {
+            if (data.success) {
                 console.log("Coluna removida com sucesso!");
+                columnElement.remove();  // Remover do frontend
+            } else {
+                console.error("Erro ao remover coluna:", data.error);
+                alert("Erro: " + data.error);
             }
         })
         .catch(error => console.error("Erro ao remover coluna:", error));
-
     }
 
 

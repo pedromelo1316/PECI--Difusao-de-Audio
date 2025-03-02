@@ -290,25 +290,18 @@ def add_column_to_zone():
 
     return jsonify({"success": "Coluna associada com sucesso!"}), 200
 
-@app.before_request
-def log_request_info():
-    print(f"Recebido {request.method} para {request.path}")
-    print(f"Com dados: {request.data}")
+
 
 # remove column FROM zone
 @app.route("/remove_column_from_zone", methods=["POST"])
 def remove_column_from_zone():
     data = request.get_json()
 
-
     if not data or "zone_name" not in data or "column_name" not in data:
         return jsonify({"error": "Zone and column are required"}), 400
 
-
     zone_name = data["zone_name"]
     column_name = data["column_name"]
-
-
 
     # Buscar a coluna na BD
     area = Areas.query.filter_by(name=zone_name).first()
@@ -318,11 +311,16 @@ def remove_column_from_zone():
 
     if not column:
         return jsonify({"error": "Column not found"}), 404
-            
-    column.area_id = None  
-    db.session.commit()
-
-    return jsonify({"success": True})
+    
+    try:       
+        column.area_id = None  
+        db.session.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+      
+ 
 
 
 
