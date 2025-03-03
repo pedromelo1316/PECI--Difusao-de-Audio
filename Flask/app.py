@@ -160,7 +160,7 @@ def detect_new_nodes(stop_event, msg_buffer):
                             'ip': node.ip
                         }
                     )
-                        
+                    socketio.emit('reload')
 
                     msg_buffer.put(f"Node {node_name} connected")
                     server_socket.sendto(b"OK", addr)

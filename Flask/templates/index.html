@@ -61,6 +61,8 @@
                 {% endfor %}
             </div>
             {% endif %}
+            <button onclick="location.reload()">Recarregar Página</button>
+
         </div>
     </div>
 </div>
@@ -201,6 +203,12 @@
 
 
 <script>
+
+    const socket = io();
+
+    socket.on('reload', () => {
+        location.reload();
+    });
     //to change the volume of the area
     document.getElementById('volume-slider').addEventListener('change', function() {
     let volume = this.value;
