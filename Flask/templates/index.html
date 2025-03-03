@@ -27,7 +27,7 @@
             {% if nodes|length < 1 %}
             <h1>Nenhum nó encontrado</h1>
             {% else %}
-            <div class="column-list">
+            <div class="column-list" >
                 {% for node in nodes %}
                 <div class="column-item" onclick="toggleColumnDetails(this)">
                     <span>{{ node.name }}</span>
@@ -303,15 +303,12 @@ document.addEventListener("DOMContentLoaded", function () {
     
     // Função para exibir o seletor de colunas Wi-Fi ao clicar em "+ Coluna"
     function showSelectForZone(buttonElement) {
-        // Criar container para seleção
         const container = document.createElement("div");
         container.classList.add("select-container");
 
-        // Criar dropdown de seleção
         const select = document.createElement("select");
         select.classList.add("select-column");
 
-        // Adicionar opção padrão
         const defaultOption = document.createElement("option");
         defaultOption.value = "";
         defaultOption.disabled = true;
@@ -319,17 +316,18 @@ document.addEventListener("DOMContentLoaded", function () {
         defaultOption.textContent = "Selecione uma coluna";
         select.appendChild(defaultOption);
 
-        // Obter colunas Wi-Fi disponíveis (excluindo as já usadas)
-        const wifiColumns = document.querySelectorAll("#columnBox .column-item");
-        wifiColumns.forEach(column => {
-            const colName = column.querySelector("span").textContent.replace("✔ ", "").trim();
-            if (!usedZoneColumns.includes(colName)) {
-                const option = document.createElement("option");
-                option.value = colName;
-                option.textContent = colName;
-                select.appendChild(option);
-            }
-        });
+        // Fetch available nodes from Flask API
+        fetch("/get_free_nodes")
+            .then(response => response.json())
+            .then(nodes => {
+                nodes.forEach(node => {
+                    const option = document.createElement("option");
+                    option.value = node.name;
+                    option.textContent = node.name;
+                    select.appendChild(option);
+                });
+            })
+            .catch(error => console.error("Error fetching nodes:", error));
 
         // Criar botão de cancelamento
         const cancelButton = document.createElement("button");

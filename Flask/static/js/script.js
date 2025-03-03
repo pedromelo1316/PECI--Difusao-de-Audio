@@ -42,38 +42,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let usedZoneColumns = [];
 
     // Função para adicionar uma nova coluna dentro de uma zona
-    function addZoneColumn(selectElement) {
-        const selectedColumn = selectElement.value;
-        if (!selectedColumn) return;
-
-        const columnList = selectElement.closest(".column-list");
-        const newColumn = document.createElement("div");
-        newColumn.classList.add("column-item");
-        newColumn.innerHTML = `
-            <div class="column-header">
-                <span>${selectedColumn}</span>
-                <div class="column-actions">
-                    <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
-                    <i class="fa-solid fa-trash" onclick="removeColumn(this, '${selectedColumn}')"></i>
-                </div>
-            </div>
-            <div class="column-details" style="display: none;">
-                <!-- Details can be filled dynamically if needed -->
-            </div>
-        `;
-        columnList.insertBefore(newColumn, selectElement.parentElement);
-        // Replace select container back to the "Adicionar Coluna" button
-        const addBtn = document.createElement("div");
-        addBtn.classList.add("add-column");
-        addBtn.innerHTML = `<span>+ Coluna</span>`;
-        addBtn.addEventListener("click", function() {
-            showSelectForZone(addBtn);
-        });
-        selectElement.parentElement.replaceWith(addBtn);
-
-        // Mark column as used
-        usedZoneColumns.push(selectedColumn);
-    }
+    
 
     // Helper: show select element to pick a column from Wi-Fi columns
     function showSelectForZone(buttonElement) {
