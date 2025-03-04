@@ -6,14 +6,19 @@ import threading
 
 UDP_IP = "0.0.0.0"
 UDP_PORT = 5005
-CHUNK_SIZE = 1024  # Tamanho do chunk ajustado para corresponder ao emissor
-PACKET_SIZE = 2 * CHUNK_SIZE # 2 canais de transmissão
+CHUNK_SIZE = 960  # Tamanho de chunk recomendado para Opus (20 ms de áudio)
+PACKET_SIZE = 2 * CHUNK_SIZE  # 2 canais de transmissão
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sock.bind((UDP_IP, UDP_PORT))
 MULTICAST_GROUP = "224.1.1.1"
 sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, socket.inet_aton(MULTICAST_GROUP) + socket.inet_aton("0.0.0.0"))
+
+# Adicione isso no início do receptor
+control_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+control_sock.sendto(b"connect", (MULTICAST_GROUP, 5006))  # Envia mensagem de conexão
+control_sock.close()
 
 op = 0
 while op != "1" and op != "2":
@@ -22,19 +27,20 @@ while op != "1" and op != "2":
 p_instance = pyaudio.PyAudio()
 stream = p_instance.open(format=pyaudio.paInt16,
                          channels=1,
-                         rate=44100,
+                         rate=48000,  # Taxa de amostragem do Opus
                          output=True,
                          frames_per_buffer=CHUNK_SIZE)
 
+# Comando ffmpeg para decodificar Opus
 ffmpeg_cmd = [
     "ffmpeg",
     "-hide_banner", "-loglevel", "error",
-    "-f", "mp3",
+    "-f", "ogg",  # Formato de entrada Opus (usar 'ogg' para Opus)
     "-i", "pipe:0",
-    "-f", "s16le",
+    "-f", "s16le",  # Formato de saída PCM 16-bit
     "-acodec", "pcm_s16le",
-    "-ar", "44100",
-    "-ac", "1",
+    "-ar", "48000",  # Taxa de amostragem de 48 kHz
+    "-ac", "1",      # Mono
     "pipe:1"
 ]
 process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -65,8 +71,8 @@ def udp_receiver():
                 if op == "1":
                     channel_data = audio_data[:CHUNK_SIZE]
                 else:
-                    channel_data = audio_data[CHUNK_SIZE:]                
-    
+                    channel_data = audio_data[CHUNK_SIZE:]
+
                 process.stdin.write(channel_data)
                 process.stdin.flush()
         except Exception as e:
@@ -89,7 +95,7 @@ play_thread = threading.Thread(target=audio_player, daemon=True)
 recv_thread.start()
 play_thread.start()
 
-print("Reproduzindo áudio local...")
+print("Reproduzindo áudio...")
 
 try:
     while True:
