@@ -70,6 +70,7 @@ def send_packets():
     seq = 0
     local_data = None
     mic_data = None
+    start_time = time.time()
     while True:
         if local_data is None:
             local_data, source = local_queue.get()
@@ -83,7 +84,7 @@ def send_packets():
             packet = bytes([seq]) + local_data + mic_data
             sock.sendto(packet, (UDP_IP, UDP_PORT))
             count += len(local_data) + len(mic_data)
-            print(f"\rEnviado {count} bytes", end="")
+            print(f"\rEnviado {count} bytes, velocidade média: {count / (time.time() - start_time):.2f} B/s", end="")
             seq = (seq + 1) % 256
             time_to_sleep = (len(local_data) + len(mic_data)) / (44100 * 2)
             time.sleep(time_to_sleep)
