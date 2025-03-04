@@ -38,7 +38,7 @@ ffmpeg_mic_cmd = [
     "-f", "alsa", "-i", "default",
     "-acodec", "libopus",  # Usando Opus
     "-b:a", "16k",         # Taxa de bits de 64 kbps
-    "-ar", "16000",        # Taxa de amostragem de 48 kHz
+    "-ar", "48000",        # Taxa de amostragem de 48 kHz
     "-ac", "1",            # Mono
     "-f", "opus",          # Formato de saída Opus
     "pipe:1"
