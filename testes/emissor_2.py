@@ -4,73 +4,87 @@ import threading
 import queue
 import time
 import struct
+import os
 
 MULTICAST_GROUP = "224.1.1.1"
 UDP_IP = MULTICAST_GROUP
 UDP_PORT = 5005
-CHUNK_SIZE = 960*2  # Tamanho de chunk recomendado para Opus (20 ms de áudio)
+CHUNK_SIZE = 960 * 2  # Tamanho de chunk recomendado para Opus (20 ms de áudio)
 PACKET_SIZE = 2 * CHUNK_SIZE
 FREQ = "48000"
-QUAL =  "16k"
+QUAL = "16k"
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 ttl = 1
 sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, struct.pack('b', ttl))
 
-# Comando ffmpeg para capturar áudio local (codificado em Opus)
-ffmpeg_local_cmd = [
-    "ffmpeg",
-    "-hide_banner", "-loglevel", "error",
-    "-re",
-    "-vn",
-    "-i", "Playlist/audio.mp3",
-    "-acodec", "libopus",  # Usando Opus
-    "-b:a", QUAL,         # Taxa de bits de 64 kbps
-    "-ar", FREQ,        # Taxa de amostragem de 48 kHz
-    "-ac", "1",            # Mono
-    "-f", "opus",          # Formato de saída Opus
-    "pipe:1"
-]
-process_local = subprocess.Popen(ffmpeg_local_cmd, stdout=subprocess.PIPE)
+# Configura o stdout dos processos FFmpeg para ser não bufferizado
+def start_ffmpeg_process(input_file, is_mic=False):
+    if is_mic:
+        cmd = [
+            "ffmpeg",
+            "-hide_banner", "-loglevel", "error",
+            "-f", "alsa", "-i", "default",
+            "-acodec", "libopus",
+            "-b:a", QUAL,
+            "-ar", FREQ,
+            "-ac", "1",
+            "-f", "opus",
+            "pipe:1"
+        ]
+    else:
+        cmd = [
+            "ffmpeg",
+            "-hide_banner", "-loglevel", "error",
+            "-re",
+            "-vn",
+            "-i", input_file,
+            "-acodec", "libopus",
+            "-b:a", QUAL,
+            "-ar", FREQ,
+            "-ac", "1",
+            "-f", "opus",
+            "pipe:1"
+        ]
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=CHUNK_SIZE)  # Desativa bufferização
+    return process
 
-# Comando ffmpeg para capturar áudio do microfone (codificado em Opus)
-ffmpeg_mic_cmd = [
-    "ffmpeg",
-    "-hide_banner", "-loglevel", "error",
-    "-f", "alsa", "-i", "default",
-    "-acodec", "libopus",  # Usando Opus
-    "-b:a", QUAL,         # Taxa de bits de 64 kbps
-    "-ar", FREQ,        # Taxa de amostragem de 48 kHz
-    "-ac", "1",            # Mono
-    "-f", "opus",          # Formato de saída Opus
-    "pipe:1"
-]
-process_mic = subprocess.Popen(ffmpeg_mic_cmd, stdout=subprocess.PIPE)
+# Inicializa os processos
+process_local = start_ffmpeg_process("Playlist/audio.mp3")
+process_mic = start_ffmpeg_process(None, is_mic=True)
 
 local_queue = queue.Queue()
 mic_queue = queue.Queue()
 
 def get_local():
     while True:
-        start_time = time.time()
-        data = process_local.stdout.read(CHUNK_SIZE)
-        read_time = time.time() - start_time
-        print(f"Tempo de leitura local: {read_time:.6f} segundos")
-        if not data:
-            local_queue.put((None, 'local'))
+        try:
+            start_time = time.time()
+            data = process_local.stdout.read(CHUNK_SIZE)
+            read_time = time.time() - start_time
+            print(f"Tempo de leitura local: {read_time:.6f} segundos")
+            if not data:
+                local_queue.put((None, 'local'))
+                break
+            local_queue.put((data, 'local'))
+        except Exception as e:
+            print(f"Erro na leitura local: {e}")
             break
-        local_queue.put((data, 'local'))
 
 def get_mic():
     while True:
-        start_time = time.time()
-        data = process_mic.stdout.read(CHUNK_SIZE)
-        read_time = time.time() - start_time
-        print(f"Tempo de leitura mic: {read_time:.6f} segundos")
-        if not data:
-            mic_queue.put((None, 'mic'))
+        try:
+            start_time = time.time()
+            data = process_mic.stdout.read(CHUNK_SIZE)
+            read_time = time.time() - start_time
+            print(f"Tempo de leitura mic: {read_time:.6f} segundos")
+            if not data:
+                mic_queue.put((None, 'mic'))
+                break
+            mic_queue.put((data, 'mic'))
+        except Exception as e:
+            print(f"Erro na leitura mic: {e}")
             break
-        mic_queue.put((data, 'mic'))
 
 def send_packets():
     count = 0
@@ -80,11 +94,17 @@ def send_packets():
     tempo = time.time()
     while True:
         if local_data is None:
-            local_data, source = local_queue.get()
+            try:
+                local_data, source = local_queue.get(timeout=1)  # Timeout de 1 segundo
+            except queue.Empty:
+                continue
             if local_data is None:
                 break
         if mic_data is None:
-            mic_data, source = mic_queue.get()
+            try:
+                mic_data, source = mic_queue.get(timeout=1)  # Timeout de 1 segundo
+            except queue.Empty:
+                continue
             if mic_data is None:
                 break
         if local_data and mic_data:
@@ -96,7 +116,8 @@ def send_packets():
             seq = (seq + 1) % 256
             time_to_sleep = (CHUNK_SIZE / int(FREQ)) - (time.time() - tempo)
             print(f"Tempo de espera calculado: {time_to_sleep:.6f} segundos")
-            time.sleep(time_to_sleep)
+            if time_to_sleep > 0:
+                time.sleep(time_to_sleep)
             local_data = None
             mic_data = None
 
