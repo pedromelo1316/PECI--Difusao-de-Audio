@@ -6,7 +6,7 @@ import threading
 
 UDP_IP = "0.0.0.0"
 UDP_PORT = 5005
-CHUNK_SIZE = 960*2  # Tamanho de chunk recomendado para Opus (20 ms de áudio)
+CHUNK_SIZE = 960  # Tamanho de chunk recomendado para Opus (20 ms de áudio)
 PACKET_SIZE = 2 * CHUNK_SIZE  # 2 canais de transmissão
 FREQ = "48000"
 
@@ -24,6 +24,7 @@ control_sock.close()
 op = 0
 while op != "1" and op != "2":
     op = input("Local(1) ou Voz(2)? ")
+op = int(op)
 
 p_instance = pyaudio.PyAudio()
 stream = p_instance.open(format=pyaudio.paInt16,
@@ -53,30 +54,27 @@ def udp_receiver():
     while True:
         try:
             start_time = time.time()
-            data, _ = sock.recvfrom(PACKET_SIZE + 1)  # buffer maior para o byte extra
+            data, _ = sock.recvfrom(PACKET_SIZE + 2)  # buffer maior para o byte extra
             recv_time = time.time() - start_time
             print(f"Tempo de recepção UDP: {recv_time:.6f} segundos")
             if data:
                 # Extrair o número de sequência (primeiro byte) e o dado real
                 packet_seq = data[0]
+                _type = data[1]
                 print(f"Recebido pacote {packet_seq}")
-                audio_data = data[1:]
-                # Verificar pacotes perdidos
-                if last_seq is not None:
-                    expected_seq = (last_seq + 1) % 256
-                    if packet_seq != expected_seq:
-                        missing = expected_seq
-                        while missing != packet_seq:
-                            print(f"\nPacote {missing} foi perdido")
-                            missing = (missing + 1) % 256
-                last_seq = packet_seq
-                count += len(audio_data)
-                #print(f"\rRecebido {count} bytes", end="")
+                audio_data = data[2:]
+                
+                if _type != op-1:
+                    print("Tipo de pacote inválido")
+                    continue
 
-                if op == "1":
-                    channel_data = audio_data[:CHUNK_SIZE]
-                else:
-                    channel_data = audio_data[CHUNK_SIZE:]
+                if last_seq is None:
+                    last_seq = packet_seq
+                elif packet_seq != (last_seq + 1) % 256:
+                    print(f"Pacote perdido: {last_seq} -> {packet_seq}")
+                last_seq = packet_seq
+
+                channel_data = audio_data
 
                 process.stdin.write(channel_data)
                 process.stdin.flush()
@@ -88,9 +86,9 @@ def audio_player():
     count = 0
     while True:
         try:
-            tempo = time.time()
             pcm_chunk = process.stdout.read(CHUNK_SIZE)
-            print(len(pcm_chunk))
+            if count == 0:
+                tempo = time.time()
             print(f"{count}-------->tempo: ", time.time() - tempo)
             count += 1
             if not pcm_chunk:

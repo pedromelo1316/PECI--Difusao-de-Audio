@@ -9,7 +9,7 @@ import os
 MULTICAST_GROUP = "224.1.1.1"
 UDP_IP = MULTICAST_GROUP
 UDP_PORT = 5005
-CHUNK_SIZE = 960 * 2  # Tamanho de chunk recomendado para Opus (20 ms de áudio)
+CHUNK_SIZE = 960  # Tamanho de chunk recomendado para Opus (20 ms de áudio)
 PACKET_SIZE = 2 * CHUNK_SIZE
 FREQ = "48000"
 QUAL = "16k"
@@ -46,7 +46,7 @@ def start_ffmpeg_process(input_file, is_mic=False):
             "-f", "opus",
             "pipe:1"
         ]
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=CHUNK_SIZE)  # Desativa bufferização
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=int(CHUNK_SIZE/2))  # Desativa bufferização
     return process
 
 # Inicializa os processos
@@ -62,7 +62,7 @@ def get_local():
             start_time = time.time()
             data = process_local.stdout.read(CHUNK_SIZE)
             read_time = time.time() - start_time
-            print(f"Tempo de leitura local: {read_time:.6f} segundos")
+            #print(f"Tempo de leitura local: {read_time:.6f} segundos")
             if not data:
                 local_queue.put((None, 'local'))
                 break
@@ -77,7 +77,7 @@ def get_mic():
             start_time = time.time()
             data = process_mic.stdout.read(CHUNK_SIZE)
             read_time = time.time() - start_time
-            print(f"Tempo de leitura mic: {read_time:.6f} segundos")
+            #print(f"Tempo de leitura mic: {read_time:.6f} segundos")
             if not data:
                 mic_queue.put((None, 'mic'))
                 break
@@ -86,40 +86,41 @@ def get_mic():
             print(f"Erro na leitura mic: {e}")
             break
 
+
 def send_packets():
-    count = 0
-    seq = 0
+
     local_data = None
     mic_data = None
-    tempo = time.time()
+    seq_local = 0
+    seq_mic = 0
+
     while True:
+
         if local_data is None:
             try:
-                local_data, source = local_queue.get(timeout=1)  # Timeout de 1 segundo
-            except queue.Empty:
-                continue
-            if local_data is None:
-                break
+                local_data, _ = local_queue.get(timeout=0.1)
+            except Exception as e:
+                pass
+
         if mic_data is None:
             try:
-                mic_data, source = mic_queue.get(timeout=1)  # Timeout de 1 segundo
-            except queue.Empty:
-                continue
-            if mic_data is None:
-                break
-        if local_data and mic_data:
-            packet = bytes([seq]) + local_data + mic_data
-            sock.sendto(packet, (UDP_IP, UDP_PORT))
-            count += len(local_data) + len(mic_data)
-            print(f"{seq} ->>>> {time.time() - tempo}")
-            tempo = time.time()
-            seq = (seq + 1) % 256
-            time_to_sleep = (CHUNK_SIZE / int(FREQ)) - (time.time() - tempo)
-            print(f"Tempo de espera calculado: {time_to_sleep:.6f} segundos")
-            if time_to_sleep > 0:
-                time.sleep(time_to_sleep)
+                mic_data, _ = mic_queue.get(timeout=0.1)
+            except Exception as e:
+                pass
+
+
+        if local_data is not None:
+            sock.sendto(bytes([seq_local])+bytes([0])+local_data, (UDP_IP, UDP_PORT))
+            seq_local = (seq_local + 1) % 256
+            print(f"Enviado pacote local {seq_local}")
             local_data = None
+
+        if mic_data is not None:
+            sock.sendto(bytes([seq_mic])+bytes([1])+mic_data, (UDP_IP, UDP_PORT))
+            seq_mic = (seq_mic + 1) % 256
+            print(f"Enviado pacote mic {seq_mic}")
             mic_data = None
+
 
 local_thread = threading.Thread(target=get_local, daemon=True)
 mic_thread = threading.Thread(target=get_mic, daemon=True)
