@@ -19,7 +19,25 @@ sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, socket.inet_aton(MU
 # Adicione isso no início do receptor
 control_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 control_sock.sendto(b"connect", (MULTICAST_GROUP, 5006))  # Envia mensagem de conexão
+
+
+
+
+
+#esperar por resposta
+HEADER = b""
+while len(HEADER) < 960 * 2:
+    data, addr = control_sock.recvfrom(960 * 2)
+    print(f"Recebendo cabeçalho...{len(HEADER)}")
+    HEADER += data
+
+
 control_sock.close()
+
+
+print("Cabeçalho recebido.")
+print(len(HEADER))
+
 
 op = 0
 while op != "1" and op != "2":
@@ -46,11 +64,16 @@ ffmpeg_cmd = [
     "pipe:1"
 ]
 process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+process.stdin.write(HEADER)
+process.stdin.flush()
 count = 0
 last_seq = None  # Variável global para o último número de sequência
 
+
 def udp_receiver():
     global count, last_seq
+    extra = b""
+
     while True:
         try:
             start_time = time.time()
@@ -59,14 +82,24 @@ def udp_receiver():
             print(f"Tempo de recepção UDP: {recv_time:.6f} segundos")
             if data:
                 # Extrair o número de sequência (primeiro byte) e o dado real
-                packet_seq = data[0]
-                _type = data[1]
-                print(f"Recebido pacote {packet_seq}")
-                audio_data = data[2:]
                 
-                if _type != op-1:
-                    print("Tipo de pacote inválido")
+                _type = data[1]
+                packet_seq = data[0]
+
+                if _type != op - 1:
                     continue
+
+
+                if packet_seq < 10:
+                    continue
+
+                
+                print(f"Seq: {packet_seq}")
+
+                print(f"Tipo: {_type}")
+
+            
+                audio_data = data[2:]
 
                 if last_seq is None:
                     last_seq = packet_seq
@@ -78,6 +111,7 @@ def udp_receiver():
 
                 process.stdin.write(channel_data)
                 process.stdin.flush()
+
         except Exception as e:
             print(f"\nErro na recepção: {e}")
             break
@@ -86,6 +120,8 @@ def audio_player():
     count = 0
     while True:
         try:
+            if process is None:
+                continue
             pcm_chunk = process.stdout.read(CHUNK_SIZE)
             if count == 0:
                 tempo = time.time()

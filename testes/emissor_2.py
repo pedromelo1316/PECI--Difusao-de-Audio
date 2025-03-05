@@ -9,14 +9,45 @@ import os
 MULTICAST_GROUP = "224.1.1.1"
 UDP_IP = MULTICAST_GROUP
 UDP_PORT = 5005
+CONTROL_PORT = 5006
 CHUNK_SIZE = 960  # Tamanho de chunk recomendado para Opus (20 ms de áudio)
 PACKET_SIZE = 2 * CHUNK_SIZE
 FREQ = "48000"
 QUAL = "16k"
 
+
+
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 ttl = 1
 sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, struct.pack('b', ttl))
+
+
+# Canal de controle para novos recetores
+control_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+control_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+control_sock.bind(("0.0.0.0", CONTROL_PORT))
+
+
+LOCAL_HEADER = b""
+MIC_HEADER = b""
+
+# Thread para detetar novos recetores e enviar cabeçalho + metadados
+def handle_new_receivers():
+    while True:
+        data, addr = control_sock.recvfrom(1024)
+        if data == b"connect":
+            print(f"Novo recetor detectado: {addr}. Enviando cabeçalho e metadados...")
+            
+            # Espera até ter 960 * 2 pacotes
+            while len(LOCAL_HEADER) < 960 * 2:
+                time.sleep(0.01)
+
+            print("\n--------------------------------------->",len(LOCAL_HEADER))
+            # Envia cabeçalho Opus
+            sock.sendto(LOCAL_HEADER, addr)
+
+# Inicia a thread de controle
+threading.Thread(target=handle_new_receivers, daemon=True).start()
 
 # Configura o stdout dos processos FFmpeg para ser não bufferizado
 def start_ffmpeg_process(input_file, is_mic=False):
@@ -29,7 +60,7 @@ def start_ffmpeg_process(input_file, is_mic=False):
             "-b:a", QUAL,
             "-ar", FREQ,
             "-ac", "1",
-            "-f", "opus",
+            "-f", "ogg",
             "pipe:1"
         ]
     else:
@@ -43,7 +74,7 @@ def start_ffmpeg_process(input_file, is_mic=False):
             "-b:a", QUAL,
             "-ar", FREQ,
             "-ac", "1",
-            "-f", "opus",
+            "-f", "ogg",
             "pipe:1"
         ]
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=int(CHUNK_SIZE/2))  # Desativa bufferização
@@ -89,37 +120,57 @@ def get_mic():
 
 def send_packets():
 
+    global LOCAL_HEADER, MIC_HEADER
+
     local_data = None
     mic_data = None
     seq_local = 0
     seq_mic = 0
+    count = 0
+    start_time = time.time()
+    header_local = False
+    header_mic = False
 
     while True:
 
         if local_data is None:
             try:
-                local_data, _ = local_queue.get(timeout=0.1)
+                local_data, _ = local_queue.get(timeout=0.05)
             except Exception as e:
                 pass
 
         if mic_data is None:
             try:
-                mic_data, _ = mic_queue.get(timeout=0.1)
+                mic_data, _ = mic_queue.get(timeout=0.05)
             except Exception as e:
                 pass
 
 
         if local_data is not None:
             sock.sendto(bytes([seq_local])+bytes([0])+local_data, (UDP_IP, UDP_PORT))
-            seq_local = (seq_local + 1) % 256
             print(f"Enviado pacote local {seq_local}")
+            if seq_local < 2 and not header_local:
+                print(f"{seq_local}---->{len(local_data)}")
+                LOCAL_HEADER += local_data
+            else:
+                header_local = True
+            seq_local = (seq_local + 1) % 256
+            count += len(local_data)
             local_data = None
 
         if mic_data is not None:
             sock.sendto(bytes([seq_mic])+bytes([1])+mic_data, (UDP_IP, UDP_PORT))
-            seq_mic = (seq_mic + 1) % 256
             print(f"Enviado pacote mic {seq_mic}")
+            if seq_mic < 2 and not header_mic:
+                MIC_HEADER += mic_data
+            else:
+                header_mic = True
+            seq_mic = (seq_mic + 1) % 256
+            count += len(mic_data)
             mic_data = None
+
+        #print(f"\rEnviados {count} bytes com velocidade: {count/(time.time()-start_time):.2f} B/s", end='')
+        
 
 
 local_thread = threading.Thread(target=get_local, daemon=True)
