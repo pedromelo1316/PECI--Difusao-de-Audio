@@ -6,8 +6,9 @@ import threading
 
 UDP_IP = "0.0.0.0"
 UDP_PORT = 5005
-CHUNK_SIZE = 960  # Tamanho de chunk recomendado para Opus (20 ms de áudio)
+CHUNK_SIZE = 960*2  # Tamanho de chunk recomendado para Opus (20 ms de áudio)
 PACKET_SIZE = 2 * CHUNK_SIZE  # 2 canais de transmissão
+FREQ = "48000"
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -27,7 +28,7 @@ while op != "1" and op != "2":
 p_instance = pyaudio.PyAudio()
 stream = p_instance.open(format=pyaudio.paInt16,
                          channels=1,
-                         rate=48000,  # Taxa de amostragem do Opus
+                         rate=int(FREQ),  # Taxa de amostragem do Opus
                          output=True,
                          frames_per_buffer=CHUNK_SIZE)
 
@@ -39,7 +40,7 @@ ffmpeg_cmd = [
     "-i", "pipe:0",
     "-f", "s16le",  # Formato de saída PCM 16-bit
     "-acodec", "pcm_s16le",
-    "-ar", "48000",  # Taxa de amostragem de 48 kHz
+    "-ar", FREQ,  # Taxa de amostragem de 48 kHz
     "-ac", "1",      # Mono
     "pipe:1"
 ]
@@ -51,10 +52,14 @@ def udp_receiver():
     global count, last_seq
     while True:
         try:
+            start_time = time.time()
             data, _ = sock.recvfrom(PACKET_SIZE + 1)  # buffer maior para o byte extra
+            recv_time = time.time() - start_time
+            print(f"Tempo de recepção UDP: {recv_time:.6f} segundos")
             if data:
                 # Extrair o número de sequência (primeiro byte) e o dado real
                 packet_seq = data[0]
+                print(f"Recebido pacote {packet_seq}")
                 audio_data = data[1:]
                 # Verificar pacotes perdidos
                 if last_seq is not None:
@@ -66,7 +71,7 @@ def udp_receiver():
                             missing = (missing + 1) % 256
                 last_seq = packet_seq
                 count += len(audio_data)
-                print(f"\rRecebido {count} bytes", end="")
+                #print(f"\rRecebido {count} bytes", end="")
 
                 if op == "1":
                     channel_data = audio_data[:CHUNK_SIZE]
@@ -80,9 +85,14 @@ def udp_receiver():
             break
 
 def audio_player():
+    count = 0
     while True:
         try:
+            tempo = time.time()
             pcm_chunk = process.stdout.read(CHUNK_SIZE)
+            print(len(pcm_chunk))
+            print(f"{count}-------->tempo: ", time.time() - tempo)
+            count += 1
             if not pcm_chunk:
                 break
             stream.write(pcm_chunk)

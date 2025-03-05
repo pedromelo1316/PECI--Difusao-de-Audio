@@ -8,8 +8,10 @@ import struct
 MULTICAST_GROUP = "224.1.1.1"
 UDP_IP = MULTICAST_GROUP
 UDP_PORT = 5005
-CHUNK_SIZE = 960  # Tamanho de chunk recomendado para Opus (20 ms de áudio)
+CHUNK_SIZE = 960*2  # Tamanho de chunk recomendado para Opus (20 ms de áudio)
 PACKET_SIZE = 2 * CHUNK_SIZE
+FREQ = "48000"
+QUAL =  "16k"
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 ttl = 1
@@ -23,8 +25,8 @@ ffmpeg_local_cmd = [
     "-vn",
     "-i", "Playlist/audio.mp3",
     "-acodec", "libopus",  # Usando Opus
-    "-b:a", "16k",         # Taxa de bits de 64 kbps
-    "-ar", "48000",        # Taxa de amostragem de 48 kHz
+    "-b:a", QUAL,         # Taxa de bits de 64 kbps
+    "-ar", FREQ,        # Taxa de amostragem de 48 kHz
     "-ac", "1",            # Mono
     "-f", "opus",          # Formato de saída Opus
     "pipe:1"
@@ -37,8 +39,8 @@ ffmpeg_mic_cmd = [
     "-hide_banner", "-loglevel", "error",
     "-f", "alsa", "-i", "default",
     "-acodec", "libopus",  # Usando Opus
-    "-b:a", "16k",         # Taxa de bits de 64 kbps
-    "-ar", "48000",        # Taxa de amostragem de 48 kHz
+    "-b:a", QUAL,         # Taxa de bits de 64 kbps
+    "-ar", FREQ,        # Taxa de amostragem de 48 kHz
     "-ac", "1",            # Mono
     "-f", "opus",          # Formato de saída Opus
     "pipe:1"
@@ -50,7 +52,10 @@ mic_queue = queue.Queue()
 
 def get_local():
     while True:
+        start_time = time.time()
         data = process_local.stdout.read(CHUNK_SIZE)
+        read_time = time.time() - start_time
+        print(f"Tempo de leitura local: {read_time:.6f} segundos")
         if not data:
             local_queue.put((None, 'local'))
             break
@@ -58,7 +63,10 @@ def get_local():
 
 def get_mic():
     while True:
+        start_time = time.time()
         data = process_mic.stdout.read(CHUNK_SIZE)
+        read_time = time.time() - start_time
+        print(f"Tempo de leitura mic: {read_time:.6f} segundos")
         if not data:
             mic_queue.put((None, 'mic'))
             break
@@ -69,7 +77,7 @@ def send_packets():
     seq = 0
     local_data = None
     mic_data = None
-    start_time = time.time()
+    tempo = time.time()
     while True:
         if local_data is None:
             local_data, source = local_queue.get()
@@ -83,15 +91,17 @@ def send_packets():
             packet = bytes([seq]) + local_data + mic_data
             sock.sendto(packet, (UDP_IP, UDP_PORT))
             count += len(local_data) + len(mic_data)
-            print(f"\rEnviado {count} bytes, velocidade média: {count / (time.time() - start_time):.2f} B/s", end="")
+            print(f"{seq} ->>>> {time.time() - tempo}")
+            tempo = time.time()
             seq = (seq + 1) % 256
-            time_to_sleep = (len(local_data) + len(mic_data)) / (48000 * 2)
+            time_to_sleep = (CHUNK_SIZE / int(FREQ)) - (time.time() - tempo)
+            print(f"Tempo de espera calculado: {time_to_sleep:.6f} segundos")
             time.sleep(time_to_sleep)
             local_data = None
             mic_data = None
 
-local_thread = threading.Thread(target=get_local)
-mic_thread = threading.Thread(target=get_mic)
+local_thread = threading.Thread(target=get_local, daemon=True)
+mic_thread = threading.Thread(target=get_mic, daemon=True)
 sender_thread = threading.Thread(target=send_packets)
 local_thread.start()
 mic_thread.start()
