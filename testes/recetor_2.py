@@ -9,6 +9,7 @@ UDP_PORT = 5005
 CHUNK_SIZE = 960  # Tamanho de chunk recomendado para Opus (20 ms de áudio)
 PACKET_SIZE = 2 * CHUNK_SIZE  # 2 canais de transmissão
 FREQ = "48000"
+HEADER_SIZE = 256
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -26,10 +27,10 @@ control_sock.sendto(b"connect", (MULTICAST_GROUP, 5006))  # Envia mensagem de co
 
 #esperar por resposta
 HEADER = b""
-while len(HEADER) < 960 * 2:
-    data, addr = control_sock.recvfrom(960 * 2)
-    print(f"Recebendo cabeçalho...{len(HEADER)}")
-    HEADER += data
+
+data, addr = control_sock.recvfrom(HEADER_SIZE)
+print(f"Recebendo cabeçalho...{len(HEADER)}")
+HEADER += data
 
 
 control_sock.close()
@@ -72,39 +73,28 @@ last_seq = None  # Variável global para o último número de sequência
 
 def udp_receiver():
     global count, last_seq
-    extra = b""
 
     while True:
         try:
             start_time = time.time()
             data, _ = sock.recvfrom(PACKET_SIZE + 2)  # buffer maior para o byte extra
             recv_time = time.time() - start_time
-            print(f"Tempo de recepção UDP: {recv_time:.6f} segundos")
             if data:
                 # Extrair o número de sequência (primeiro byte) e o dado real
                 
                 _type = data[1]
-                packet_seq = data[0]
+                packet_seq = data[0]        
 
                 if _type != op - 1:
                     continue
 
-
-                if packet_seq < 10:
-                    continue
-
-                
-                print(f"Seq: {packet_seq}")
-
-                print(f"Tipo: {_type}")
-
-            
                 audio_data = data[2:]
 
                 if last_seq is None:
                     last_seq = packet_seq
                 elif packet_seq != (last_seq + 1) % 256:
                     print(f"Pacote perdido: {last_seq} -> {packet_seq}")
+
                 last_seq = packet_seq
 
                 channel_data = audio_data
@@ -113,7 +103,7 @@ def udp_receiver():
                 process.stdin.flush()
 
         except Exception as e:
-            print(f"\nErro na recepção: {e}")
+            #print(f"\nErro na recepção: {e}")
             break
 
 def audio_player():
@@ -123,10 +113,7 @@ def audio_player():
             if process is None:
                 continue
             pcm_chunk = process.stdout.read(CHUNK_SIZE)
-            if count == 0:
-                tempo = time.time()
-            print(f"{count}-------->tempo: ", time.time() - tempo)
-            count += 1
+            count += len(pcm_chunk)
             if not pcm_chunk:
                 break
             stream.write(pcm_chunk)

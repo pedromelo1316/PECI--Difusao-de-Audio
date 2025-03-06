@@ -15,6 +15,8 @@ PACKET_SIZE = 2 * CHUNK_SIZE
 FREQ = "48000"
 QUAL = "16k"
 
+HEADER_SIZE = 256
+
 
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -39,7 +41,7 @@ def handle_new_receivers():
             print(f"Novo recetor detectado: {addr}. Enviando cabeçalho e metadados...")
             
             # Espera até ter 960 * 2 pacotes
-            while len(LOCAL_HEADER) < 960 * 2:
+            while len(LOCAL_HEADER) < HEADER_SIZE:
                 time.sleep(0.01)
 
             print("\n--------------------------------------->",len(LOCAL_HEADER))
@@ -88,6 +90,8 @@ local_queue = queue.Queue()
 mic_queue = queue.Queue()
 
 def get_local():
+    global LOCAL_HEADER
+    LOCAL_HEADER = process_local.stdout.read(HEADER_SIZE)
     while True:
         try:
             start_time = time.time()
@@ -103,6 +107,8 @@ def get_local():
             break
 
 def get_mic():
+    global MIC_HEADER
+    MIC_HEADER = process_mic.stdout.read(HEADER_SIZE)
     while True:
         try:
             start_time = time.time()
@@ -127,9 +133,6 @@ def send_packets():
     seq_local = 0
     seq_mic = 0
     count = 0
-    start_time = time.time()
-    header_local = False
-    header_mic = False
 
     while True:
 
@@ -148,23 +151,12 @@ def send_packets():
 
         if local_data is not None:
             sock.sendto(bytes([seq_local])+bytes([0])+local_data, (UDP_IP, UDP_PORT))
-            print(f"Enviado pacote local {seq_local}")
-            if seq_local < 2 and not header_local:
-                print(f"{seq_local}---->{len(local_data)}")
-                LOCAL_HEADER += local_data
-            else:
-                header_local = True
             seq_local = (seq_local + 1) % 256
             count += len(local_data)
             local_data = None
 
         if mic_data is not None:
             sock.sendto(bytes([seq_mic])+bytes([1])+mic_data, (UDP_IP, UDP_PORT))
-            print(f"Enviado pacote mic {seq_mic}")
-            if seq_mic < 2 and not header_mic:
-                MIC_HEADER += mic_data
-            else:
-                header_mic = True
             seq_mic = (seq_mic + 1) % 256
             count += len(mic_data)
             mic_data = None
