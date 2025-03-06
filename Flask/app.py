@@ -182,6 +182,7 @@ def detect_new_nodes(stop_event, msg_buffer):
                 with app.app_context():
                     node = db.session.query(Nodes).filter(Nodes.mac == node_mac).first()
                     send_info([node])
+                    socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
 
 
 

@@ -61,7 +61,6 @@
                 {% endfor %}
             </div>
             {% endif %}
-            <button onclick="location.reload()">Recarregar Página</button>
 
         </div>
     </div>
@@ -204,10 +203,12 @@
 
 <script>
 
-    const socket = io();
-
-    socket.on('reload', () => {
-        location.reload();
+    const socket = io.connect('http://' + document.domain + ':' + location.port);
+        
+    // Escuta o sinal para recarregar
+    socket.on('reload_page', function() {
+        console.log('Recarregando página...');
+        location.reload();  // Recarrega a página
     });
     //to change the volume of the area
     document.getElementById('volume-slider').addEventListener('change', function() {
