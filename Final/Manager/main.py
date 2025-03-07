@@ -642,9 +642,8 @@ def send_audio(port=8082, stop_event=None):
                 data = bytes([channel]) + bytes([count_packets]) + data
                 #if count_packets % 10 != 0:
                 sock.sendto(data, (UDP_IP, UDP_PORT))
-                count += len(data)
-                if channel == 1:
-                    count_packets = (count_packets + 1) % 256
+            
+        count_packets = (count_packets + 1) % 256
             
 
                 #print(f"\rSent {count_packets}, velocity: {count/(time.time()-start_time):.2f} B/s", end="")

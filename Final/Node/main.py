@@ -139,7 +139,7 @@ def wait_for_connection(n, port=8080):
 
 
 def udp_receiver(stop_event = None):
-    global count, last_seq, process
+    global last_seq, process
 
     while not stop_event.is_set():
         try:
@@ -156,16 +156,16 @@ def udp_receiver(stop_event = None):
                 if _channel != channel or not HEADER:
                     continue
 
-                print(f"Recebido pacote {packet_seq} de {_channel}")
+                p#rint(f"Recebido pacote {packet_seq} de {_channel}")
 
                 audio_data = data[2:]
 
-                '''if last_seq is None:
+                if last_seq is None:
                     last_seq = packet_seq
                 elif packet_seq != (last_seq + 1) % 256:
                     print(f"Pacote perdido: {last_seq} -> {packet_seq}")
 
-                last_seq = packet_seq'''
+                last_seq = packet_seq
 
                 channel_data = audio_data
 
