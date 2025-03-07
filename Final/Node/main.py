@@ -156,7 +156,7 @@ def udp_receiver(stop_event = None):
                 if _channel != channel or not HEADER:
                     continue
 
-                p#rint(f"Recebido pacote {packet_seq} de {_channel}")
+                #print(f"Recebido pacote {packet_seq} de {_channel}")
 
                 audio_data = data[2:]
 
