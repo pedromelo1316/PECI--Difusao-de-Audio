@@ -2,14 +2,37 @@ document.addEventListener("DOMContentLoaded", function () {
     const columnBox = document.getElementById("columnBox");
 
     window.toggleColumnDetails = function(icon) {
-        
         const columnItem = icon.closest(".column-item");
         const details = columnItem.querySelector(".column-details");
         const isHidden = (details.style.display === 'none' || !details.style.display);
         details.style.display = isHidden ? 'block' : 'none';
     };
 
-    
+    // Função para editar o nome da coluna
+    window.editColumnName = function(icon) {
+        const columnItem = icon.closest(".column-item");
+        const columnNameSpan = columnItem.querySelector("span");
+        const currentName = columnNameSpan.textContent;
+        const newName = prompt("Editar nome da coluna:", currentName);
+        if (newName && newName !== currentName) {
+            columnNameSpan.textContent = newName;
+            // Enviar atualização para o backend
+            fetch(`/update_column_name`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ old_name: currentName, new_name: newName })
+            }).then(response => {
+                if (!response.ok) {
+                    console.error("Erro ao atualizar o nome da coluna:", response.statusText);
+                    alert("Erro ao atualizar o nome da coluna.");
+                    columnNameSpan.textContent = currentName; // Reverter em caso de erro
+                }
+            }).catch(error => {
+                console.error("Erro ao atualizar o nome da coluna:", error);
+                columnNameSpan.textContent = currentName; // Reverter em caso de erro
+            });
+        }
+    };
 
     // Função para alternar seleção de colunas
     
@@ -25,6 +48,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                    <span>Coluna ${columnCount + 1}</span>
                                    <div class="column-actions">
                                        <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
+                                       <i class="fa-solid fa-pen" onclick="editColumnName(this)"></i>
                                        <i class="fa-solid fa-trash" onclick="removeColumn(this)"></i>
                                    </div>
                                </div>
@@ -32,7 +56,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                    <p>IP: 192.168.1.${columnCount + 1}</p>
                                    <p>MAC: 00:1A:2B:3C:4D:${(columnCount + 1).toString(16).padStart(2, '0')}</p>
                                    <p>Zona: Nenhuma</p>
-                               </div>`;+
+                               </div>`;
     
         // Adicionar a nova coluna antes do botão "+ Coluna"
         columnList.insertBefore(newColumn, document.querySelector(".add-column"));
