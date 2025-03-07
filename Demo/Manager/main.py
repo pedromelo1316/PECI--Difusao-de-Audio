@@ -14,7 +14,7 @@ import subprocess
 
 
 import base64
-def send_info(nodes, removed=False):
+def send_info(nodes, removed=False):  #aqui
 
     if not removed:
         dic = {}
@@ -518,7 +518,7 @@ def main(stdscr, stop_event, msg_buffer):
                             m.change_channel_transmission(channel, transmission)
                             msg = f"Transmission set to {transmission} in channel {channel}"
                             add_msg(msg_win, menu_win, msg)
-                            change_channel_process_thread = threading.Thread(target=change_channel_process, args=(int(channel), manage_db.get_channel_source(channel), transmission), daemon=True)
+                            change_channel_process_thread = threading.Thread(target=change_channel_process, args=(int(channel), manage_db.get_channel_source(channel), transmission), daemon=True) #aqui
                             change_channel_process_thread.start()
 
 
@@ -559,7 +559,7 @@ def main(stdscr, stop_event, msg_buffer):
         raise e
                         
 
-# fiz alterações a partir de aqui
+# fiz alterações em tudo a partir de aqui
 
 QUAL = "16K"
 FREQ = "48000"
