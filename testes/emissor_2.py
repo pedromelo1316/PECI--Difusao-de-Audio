@@ -78,9 +78,14 @@ def start_ffmpeg_process(input_file, is_mic=False):
         cmd = [
             "ffmpeg",
             "-hide_banner", "-loglevel", "error",
+            "-stream_loop", "-1",
+            "-f", "concat",          # Adicione esta linha
+            "-safe", "0",            # Permite caminhos absolutos/relativos
             "-re",
-            "-vn",
             "-i", input_file,
+            "-vn",
+
+            
             "-acodec", "libopus",
             "-b:a", QUAL,
             "-ar", FREQ,
@@ -97,33 +102,25 @@ mic_queue = queue.Queue()
 # Função atualizada para percorrer os arquivos na pasta Playlist
 def get_local():
     global LOCAL_HEADER
-    playlist_dir = "Playlist"
-    # Lista os arquivos .mp3 na pasta (pode-se adicionar outras extensões se necessário)
-    songs = sorted([os.path.join(playlist_dir, f) for f in os.listdir(playlist_dir) if f.lower().endswith(".mp3")])
-    if not songs:
-        print("Nenhum arquivo de áudio encontrado na pasta Playlist.")
-        local_queue.put((None, 'local'))
-        return
 
-    for song in songs:
-        print(f"\nReproduzindo: {song}")
-        process = start_ffmpeg_process(song)
-        # Lê o cabeçalho para o arquivo atual
-        LOCAL_HEADER = process.stdout.read(HEADER_SIZE)
-        send_header("local")
-        while True:
-            try:
-                data = process.stdout.read(CHUNK_SIZE)
-                if not data:
-                    break
-                local_queue.put((data, 'local'))
-            except Exception as e:
-                print(f"Erro na leitura local do arquivo {song}: {e}")
+    print(f"\nReproduzindo: {"Playlists/default.txt"}")
+    process = start_ffmpeg_process("Playlists/default.txt")
+    # Lê o cabeçalho para o arquivo atual
+    LOCAL_HEADER = process.stdout.read(HEADER_SIZE)
+    print("Enviando cabeçalho para novos recetores")
+    send_header("local")
+    while True:
+        try:
+            data = process.stdout.read(CHUNK_SIZE)
+            if not data:
                 break
-        process.stdout.close()
-        process.terminate()
-        process.wait()
-    local_queue.put((None, 'local'))
+            local_queue.put((data, 'local'))
+        except Exception as e:
+            print(f"Erro na leitura local do arquivo {"Playlists/default.txt"}: {e}")
+            break
+    process.stdout.close()
+    process.terminate()
+    process.wait()
 
 def get_mic():
     global MIC_HEADER

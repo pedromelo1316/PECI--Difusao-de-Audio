@@ -8,7 +8,7 @@ def init_db():
     c = conn.cursor()
     c.execute("CREATE TABLE IF NOT EXISTS nodes (id INTEGER PRIMARY KEY, name TEXT, mac TEXT, area_id INTEGER)")
     c.execute("CREATE TABLE IF NOT EXISTS areas (id INTEGER PRIMARY KEY, name TEXT, channel_id INTEGER, nodes TEXT, volume FLOAT)")
-    c.execute("CREATE TABLE IF NOT EXISTS channels (id INTEGER PRIMARY KEY, type TEXT)")
+    c.execute("CREATE TABLE IF NOT EXISTS channels (id INTEGER PRIMARY KEY, type TEXT, source TEXT)")
     conn.commit()
 
     
@@ -286,6 +286,11 @@ def get_nodes_not_in_areas():
     c.execute("SELECT name FROM nodes WHERE area_id IS NULL")
     return c.fetchall()
 
+
+
+
+
+
 #CHANNEL
 
 
@@ -298,13 +303,11 @@ def init_channels(num):
     if len(channels) != num:
         c.execute("DELETE FROM channels")
         for i in range(num):
-            c.execute("INSERT INTO channels (type) VALUES (?)", ("LOCAL",))
+            c.execute("INSERT INTO channels (type, source) VALUES (?, ?)", ("LOCAL", "default"))
         conn.commit()
 
 
     
-
-
 def get_channels():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
@@ -382,3 +385,19 @@ def get_nodes_by_channel(id):
     for area in areas:
         nodes += get_nodes_by_area(area[1])
     return nodes
+
+
+
+def get_channel_source(id):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM channels WHERE id=?", (id,))
+    return c.fetchone()[2]
+
+
+def change_channel_source(id, source):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("UPDATE channels SET source=? WHERE id=?", (source, id))
+    conn.commit()
+

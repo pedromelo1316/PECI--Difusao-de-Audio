@@ -196,17 +196,6 @@ class manager:
         manage_db.change_area_volume(area_name,volume)
 
         return True
-    
-    
-
-
-
-
-
-
-
-
-
 
 
 

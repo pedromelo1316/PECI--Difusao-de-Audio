@@ -40,23 +40,27 @@ stream = p_instance.open(format=pyaudio.paInt16,
 # Comando ffmpeg para decodificar Opus
 ffmpeg_cmd = [
     "ffmpeg",
-    "-hide_banner", "-loglevel", "error",
-    "-f", "ogg",  # Formato de entrada Opus (usar 'ogg' para Opus)
+    "-hide_banner",
+    "-loglevel", "error",
+    # Configurações de entrada
+    "-f", "ogg",
     "-i", "pipe:0",
-    "-f", "s16le",  # Formato de saída PCM 16-bit
+    # Configurações de saída
+    "-f", "s16le",
     "-acodec", "pcm_s16le",
-    "-ar", FREQ,  # Taxa de amostragem de 48 kHz
-    "-ac", "1",      # Mono
+    "-ar", FREQ,
+    "-ac", "1",
     "pipe:1"
 ]
 process = None
 count = 0
 last_seq = None  # Variável global para o último número de sequência
+channel = None
 
 
 
 def wait_for_info(n, port=8081, stop_event=None):
-    global process, HEADER, OP
+    global process, HEADER, OP, channel
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as server_socket:
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server_socket.bind(('0.0.0.0', port))
@@ -78,15 +82,6 @@ def wait_for_info(n, port=8081, stop_event=None):
                     channel = info["channel"] if info["channel"] is not None else None
                     volume = info["volume"] if info["volume"] is not None else None
                     _HEADER = info["header"] if info["header"] is not None else None
-                    TRANSMISSION_type = info["type"] if info["type"] is not None else None
-                    if TRANSMISSION_type == "LOCAL":
-                        OP = LOCAL
-                    elif TRANSMISSION_type == "VOICE":
-                        OP = VOICE
-                    elif TRANSMISSION_type == "TRANSMISSION":
-                        OP = TRANSMISSION
-                    else:
-                        OP = 3
                     _HEADER = base64.b64decode(_HEADER) if _HEADER is not None else None
                     print("Header:", _HEADER)
                     n.setChannel(channel)
@@ -154,23 +149,23 @@ def udp_receiver(stop_event = None):
             if data:
                 # Extrair o número de sequência (primeiro byte) e o dado real
 
-                packet_seq = data[0]
-                _type = data[1]
+                _channel = data[0]
+                packet_seq = data[1]
 
 
-                if _type != OP or not HEADER:
+                if _channel != channel or not HEADER:
                     continue
 
-                print(f"Recebido pacote {packet_seq} de {_type}")
+                print(f"Recebido pacote {packet_seq} de {_channel}")
 
                 audio_data = data[2:]
 
-                if last_seq is None:
+                '''if last_seq is None:
                     last_seq = packet_seq
                 elif packet_seq != (last_seq + 1) % 256:
                     print(f"Pacote perdido: {last_seq} -> {packet_seq}")
 
-                last_seq = packet_seq
+                last_seq = packet_seq'''
 
                 channel_data = audio_data
 
