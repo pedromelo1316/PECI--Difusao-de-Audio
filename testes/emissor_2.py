@@ -150,6 +150,7 @@ def send_packets():
     seq_local = 0
     seq_mic = 0
     count = 0
+    start_time = time.time()
 
     while True:
         if local_data is None:
@@ -168,7 +169,7 @@ def send_packets():
             if local_data is None:
                 break
             sock.sendto(bytes([seq_local]) + bytes([0]) + local_data, (UDP_IP, UDP_PORT))
-            print(f"Enviando pacote {seq_local} de áudio local")
+            #print(f"Enviando pacote {seq_local} de áudio local")
             seq_local = (seq_local + 1) % 256
             count += len(local_data)
             local_data = None
@@ -177,10 +178,12 @@ def send_packets():
             if mic_data is None:
                 break
             sock.sendto(bytes([seq_mic]) + bytes([1]) + mic_data, (UDP_IP, UDP_PORT))
-            print(f"Enviando pacote {seq_mic} de áudio do microfone")
+            #print(f"Enviando pacote {seq_mic} de áudio do microfone")
             seq_mic = (seq_mic + 1) % 256
             count += len(mic_data)
             mic_data = None
+
+        print(f"\rEnviados {count} bytes, velocidade: {count/(time.time()-start_time):.2f} B/s")
 
 local_thread = threading.Thread(target=get_local, daemon=True)
 mic_thread = threading.Thread(target=get_mic, daemon=True)

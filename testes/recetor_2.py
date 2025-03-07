@@ -7,7 +7,7 @@ import threading
 UDP_IP = "0.0.0.0"
 UDP_PORT = 5005
 CHUNK_SIZE = 960  # Tamanho de chunk recomendado para Opus (20 ms de áudio)
-PACKET_SIZE = 2 * CHUNK_SIZE  # 2 canais de transmissão
+PACKET_SIZE = CHUNK_SIZE  # 2 canais de transmissão
 FREQ = "48000"
 HEADER_SIZE = 256
 
