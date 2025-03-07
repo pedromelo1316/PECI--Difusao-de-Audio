@@ -12,8 +12,15 @@ import numpy as np
 import struct
 import subprocess
 
+header_local = None
+header_voz = None
+header_transmission = None
 
+import base64
 def send_info(nodes, removed=False):
+
+    with open("nodes.json", "w") as f:
+        json.dump(nodes, f)
 
     if not removed:
         dic = {}
@@ -26,11 +33,29 @@ def send_info(nodes, removed=False):
             channel = None
             area = manage_db.get_area_by_id(area_id) if area_id else None
             
-            volume = area[4] if area != None else None
-            channel = area[2] if area != None else None
+            volume = area[4] if area is not None else None
+            channel = area[2] if area is not None else None
 
-            dic[mac] = {"volume": volume, "channel": channel}
-    
+            if channel:  # nesta parte
+                transmission_type = manage_db.get_channel_type(channel)
+                if transmission_type == "LOCAL":
+                    header = header_local
+                elif transmission_type == "TRANSMISSION":
+                    header = header_transmission
+                elif transmission_type == "VOICE":
+                    header = header_voz
+                else:
+                    header = None
+            else:
+                header = None
+
+            # Converte header de bytes para string usando base64 se não for None
+            if header is not None and isinstance(header, bytes):
+                header_str = base64.b64encode(header).decode('utf-8')
+            else:
+                header_str = None
+
+            dic[mac] = {"volume": volume, "channel": channel, "header": header_str, "type": transmission_type}
     else:
         dic = {}
         for node in nodes:
@@ -39,10 +64,7 @@ def send_info(nodes, removed=False):
             dic[mac] = {"removed": True}
 
     msg = json.dumps(dic)
-
-    #print(msg)
     
-    #mandar broadcast do dic
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
         client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         client_socket.sendto(msg.encode('utf-8'), ('<broadcast>', 8081))
@@ -519,6 +541,7 @@ def main(stdscr, stop_event, msg_buffer):
                             m.change_channel_transmission(channel, transmission)
                             msg = f"Transmission set to {transmission} in channel {channel}"
                             add_msg(msg_win, menu_win, msg)
+                            send_info(manage_db.get_nodes_by_channel(channel))
 
                         except Exception as e:
                             msg = f"Error: {e}"
@@ -556,64 +579,153 @@ def main(stdscr, stop_event, msg_buffer):
         curses.endwin()  # Restaura o terminal
         raise e
                         
+
+# fiz alterações a partir de aqui
+
+QUAL = "16K"
+FREQ = "48000"
+CHUNK_SIZE = 960
+HEADER_SIZE = 256
+
+LOCAL = 0
+VOICE = 1
+TRANSMISSION = 2
                 
 
-
-
-def get_local(q, stop_event=None):
-
-    current_index = 0
-    playlist = []
-
-    for root, dirs, files in os.walk("Playlist"):
-        for file in files:
-            if file.endswith(".mp3"):
-                playlist.append(os.path.join(root, file))
-
-    while not stop_event.is_set():
-        loc = playlist[current_index]
-        ffmpeg_local_cmd = [
+# Configura o stdout dos processos FFmpeg para ser não bufferizado
+def start_ffmpeg_process(input_file, is_mic=False):
+    if is_mic:
+        cmd = [
+            "ffmpeg",
+            "-hide_banner", "-loglevel", "error",
+            "-f", "alsa", "-i", "default",
+            "-acodec", "libopus",
+            "-b:a", QUAL,
+            "-ar", FREQ,
+            "-ac", "1",
+            "-f", "ogg",
+            "pipe:1"
+        ]
+    else:
+        cmd = [
             "ffmpeg",
             "-hide_banner", "-loglevel", "error",
             "-re",
             "-vn",
-            "-i", loc,
-            "-acodec", "libmp3lame",
-            "-b:a", "64k",
-            "-ar", "44100",
+            "-i", input_file,
+            "-acodec", "libopus",
+            "-b:a", QUAL,
+            "-ar", FREQ,
             "-ac", "1",
-            "-write_xing", "0",
-            "-f", "mp3",
+            "-f", "ogg",
             "pipe:1"
         ]
-        process_local = subprocess.Popen(ffmpeg_local_cmd, stdout=subprocess.PIPE)
-        process_local.wait()  # Wait for the current file to finish
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=int(CHUNK_SIZE/2))
+    return process
 
-        current_index = (current_index + 1) % len(playlist)  # Move to the next file in the playlist
+
+def get_local(q, stop_event=None):
+    global header_local
+    playlist_dir = "Playlist"
+    # Lista os arquivos .mp3 na pasta (pode-se adicionar outras extensões se necessário)
+    songs = sorted([os.path.join(playlist_dir, f) for f in os.listdir(playlist_dir) if f.lower().endswith(".mp3")])
+    if not songs:
+        print("Nenhum arquivo de áudio encontrado na pasta Playlist.")
+        return
+
+    while not stop_event.is_set():
+        for song in songs:
+            if stop_event.is_set():
+                break
+            print(f"\nReproduzindo: {song}")
+            process = start_ffmpeg_process(song)
+            # Lê o cabeçalho para o arquivo atual
+            header_local = process.stdout.read(HEADER_SIZE)
+            send_info(manage_db.get_nodes_by_channel_type("LOCAL"))
+            while not stop_event.is_set():
+                try:
+                    data = process.stdout.read(CHUNK_SIZE)
+                    if not data:
+                        break
+                    q.put((data, 'local'))
+                except Exception as e:
+                    print(f"Erro na leitura local do arquivo {song}: {e}")
+                    break
+            process.kill()
+            time.sleep(1)
+
 
 def get_transmission(q, stop_event=None):
     while not stop_event.is_set():
         time.sleep(1)
 
 def get_voz(q, stop_event=None):
-
+    global header_voz
     while not stop_event.is_set():
+        process_mic = start_ffmpeg_process(None, is_mic=True)
+        header_voz = process_mic.stdout.read(HEADER_SIZE)
+        send_info(manage_db.get_nodes_by_channel_type("VOICE"))
+        while not stop_event.is_set():
+            try:
+                data = process_mic.stdout.read(CHUNK_SIZE)
+                if not data:
+                    q.put((None, 'mic'))
+                    break
+                q.put((data, 'mic'))
+            except Exception as e:
+                print(f"Erro na leitura mic: {e}")
+                break
+    
+        process_mic.kill()
         time.sleep(1)
 
 
 
-def send_audio(port=8081, stop_event=None, q_local=None, q_transmission=None, q_voz=None):
+def send_audio(port=8082, stop_event=None, q_local=None, q_transmission=None, q_voz=None):
     MULTICAST_GROUP = "224.1.1.1"
     UDP_IP = MULTICAST_GROUP
     UDP_PORT = port
-    CHUNK_SIZE = 8192
-    PACKET_SIZE = 3 * CHUNK_SIZE
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     ttl = 1
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, struct.pack('b', ttl))
+
+    local_data = None
+    mic_data = None
+    seq_local = 0
+    seq_mic = 0
+    count = 0
+
     while not stop_event.is_set():
-        time.sleep(1)
+        if local_data is None:
+            try:
+                local_data, _ = q_local.get(timeout=0.05)
+            except Exception:
+                pass
+
+        if mic_data is None:
+            try:
+                mic_data, _ = q_voz.get(timeout=0.05)
+            except Exception:
+                pass
+
+        if local_data is not None:
+            if local_data is None:
+                break
+            sock.sendto(bytes([seq_local]) + bytes([LOCAL]) + local_data, (UDP_IP, UDP_PORT))
+            #print(f"Enviando pacote {seq_local} de áudio local")
+            seq_local = (seq_local + 1) % 256
+            count += len(local_data)
+            local_data = None
+
+        if mic_data is not None:
+            if mic_data is None:
+                break
+            sock.sendto(bytes([seq_mic]) + bytes([VOICE]) + mic_data, (UDP_IP, UDP_PORT))
+            #print(f"Enviando pacote {seq_mic} de áudio do microfone")
+            seq_mic = (seq_mic + 1) % 256
+            count += len(mic_data)
+            mic_data = None
 
 
 if __name__ == "__main__":
@@ -665,7 +777,7 @@ if __name__ == "__main__":
  
 
     # Thread do play_audio que aguarda as queues e envia pacotes a cada 0.5s
-    t_play = threading.Thread(target=send_audio, args=(8081, stop_event, q_local, q_transmission, q_voz), daemon=True)
+    t_play = threading.Thread(target=send_audio, args=(8082, stop_event, q_local, q_transmission, q_voz), daemon=True)
     t_play.start()
 
 

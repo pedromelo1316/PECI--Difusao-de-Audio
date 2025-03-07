@@ -353,3 +353,30 @@ def get_channel_type(id):
     c = conn.cursor()
     c.execute("SELECT * FROM channels WHERE id=?", (id,))
     return c.fetchone()[1]
+
+
+
+def get_nodes_by_channel_type(type):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM channels WHERE type=?", (type,))
+    channels = c.fetchall()
+    nodes = []
+    for channel in channels:
+        c.execute("SELECT * FROM areas WHERE channel_id=?", (channel[0],))
+        areas = c.fetchall()
+        for area in areas:
+            nodes += get_nodes_by_area(area[1])
+    return nodes
+
+
+
+def get_nodes_by_channel(id):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM areas WHERE channel_id=?", (id,))
+    areas = c.fetchall()
+    nodes = []
+    for area in areas:
+        nodes += get_nodes_by_area(area[1])
+    return nodes

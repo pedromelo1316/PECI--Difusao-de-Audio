@@ -17,38 +17,47 @@ QUAL = "16k"
 
 HEADER_SIZE = 256
 
-
-
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 ttl = 1
 sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, struct.pack('b', ttl))
-
 
 # Canal de controle para novos recetores
 control_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 control_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 control_sock.bind(("0.0.0.0", CONTROL_PORT))
 
-
 LOCAL_HEADER = b""
 MIC_HEADER = b""
+
+NOS = []
 
 # Thread para detetar novos recetores e enviar cabeçalho + metadados
 def handle_new_receivers():
     while True:
         data, addr = control_sock.recvfrom(1024)
         if data == b"connect":
-            print(f"Novo recetor detectado: {addr}. Enviando cabeçalho e metadados...")
-            
-            # Espera até ter 960 * 2 pacotes
-            while len(LOCAL_HEADER) < HEADER_SIZE:
-                time.sleep(0.01)
+            print(f"Novo recetor detectado: {addr}")
+            NOS.append(addr)
+            send_header("local", addr)
+            send_header("mic", addr)
 
-            print("\n--------------------------------------->",len(LOCAL_HEADER))
-            # Envia cabeçalho Opus
-            sock.sendto(LOCAL_HEADER, addr)
+            print(f"Enviando cabeçalho para {addr}")
 
-# Inicia a thread de controle
+
+def send_header(source, ip=None):
+    if source == 'local':
+        header = bytes([1])+bytes([2+0]) + LOCAL_HEADER
+    elif source == 'mic':
+        header = bytes([1])+bytes([2+1]) + MIC_HEADER
+    else:
+        return
+    
+    if ip:
+        sock.sendto(header, (ip[0], UDP_PORT))
+    else:
+        for ip in NOS:
+            sock.sendto(header, (ip[0], UDP_PORT))
+
 threading.Thread(target=handle_new_receivers, daemon=True).start()
 
 # Configura o stdout dos processos FFmpeg para ser não bufferizado
@@ -79,42 +88,50 @@ def start_ffmpeg_process(input_file, is_mic=False):
             "-f", "ogg",
             "pipe:1"
         ]
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=int(CHUNK_SIZE/2))  # Desativa bufferização
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=int(CHUNK_SIZE/2))
     return process
-
-# Inicializa os processos
-process_local = start_ffmpeg_process("Playlist/audio.mp3")
-process_mic = start_ffmpeg_process(None, is_mic=True)
 
 local_queue = queue.Queue()
 mic_queue = queue.Queue()
 
+# Função atualizada para percorrer os arquivos na pasta Playlist
 def get_local():
     global LOCAL_HEADER
-    LOCAL_HEADER = process_local.stdout.read(HEADER_SIZE)
-    while True:
-        try:
-            start_time = time.time()
-            data = process_local.stdout.read(CHUNK_SIZE)
-            read_time = time.time() - start_time
-            #print(f"Tempo de leitura local: {read_time:.6f} segundos")
-            if not data:
-                local_queue.put((None, 'local'))
+    playlist_dir = "Playlist"
+    # Lista os arquivos .mp3 na pasta (pode-se adicionar outras extensões se necessário)
+    songs = sorted([os.path.join(playlist_dir, f) for f in os.listdir(playlist_dir) if f.lower().endswith(".mp3")])
+    if not songs:
+        print("Nenhum arquivo de áudio encontrado na pasta Playlist.")
+        local_queue.put((None, 'local'))
+        return
+
+    for song in songs:
+        print(f"\nReproduzindo: {song}")
+        process = start_ffmpeg_process(song)
+        # Lê o cabeçalho para o arquivo atual
+        LOCAL_HEADER = process.stdout.read(HEADER_SIZE)
+        send_header("local")
+        while True:
+            try:
+                data = process.stdout.read(CHUNK_SIZE)
+                if not data:
+                    break
+                local_queue.put((data, 'local'))
+            except Exception as e:
+                print(f"Erro na leitura local do arquivo {song}: {e}")
                 break
-            local_queue.put((data, 'local'))
-        except Exception as e:
-            print(f"Erro na leitura local: {e}")
-            break
+        process.stdout.close()
+        process.terminate()
+        process.wait()
+    local_queue.put((None, 'local'))
 
 def get_mic():
     global MIC_HEADER
+    process_mic = start_ffmpeg_process(None, is_mic=True)
     MIC_HEADER = process_mic.stdout.read(HEADER_SIZE)
     while True:
         try:
-            start_time = time.time()
             data = process_mic.stdout.read(CHUNK_SIZE)
-            read_time = time.time() - start_time
-            #print(f"Tempo de leitura mic: {read_time:.6f} segundos")
             if not data:
                 mic_queue.put((None, 'mic'))
                 break
@@ -122,11 +139,11 @@ def get_mic():
         except Exception as e:
             print(f"Erro na leitura mic: {e}")
             break
-
+    process_mic.stdout.close()
+    process_mic.terminate()
+    process_mic.wait()
 
 def send_packets():
-
-    global LOCAL_HEADER, MIC_HEADER
 
     local_data = None
     mic_data = None
@@ -135,51 +152,47 @@ def send_packets():
     count = 0
 
     while True:
-
         if local_data is None:
             try:
                 local_data, _ = local_queue.get(timeout=0.05)
-            except Exception as e:
+            except Exception:
                 pass
 
         if mic_data is None:
             try:
                 mic_data, _ = mic_queue.get(timeout=0.05)
-            except Exception as e:
+            except Exception:
                 pass
 
-
         if local_data is not None:
-            sock.sendto(bytes([seq_local])+bytes([0])+local_data, (UDP_IP, UDP_PORT))
+            if local_data is None:
+                break
+            sock.sendto(bytes([seq_local]) + bytes([0]) + local_data, (UDP_IP, UDP_PORT))
+            print(f"Enviando pacote {seq_local} de áudio local")
             seq_local = (seq_local + 1) % 256
             count += len(local_data)
             local_data = None
 
         if mic_data is not None:
-            sock.sendto(bytes([seq_mic])+bytes([1])+mic_data, (UDP_IP, UDP_PORT))
+            if mic_data is None:
+                break
+            sock.sendto(bytes([seq_mic]) + bytes([1]) + mic_data, (UDP_IP, UDP_PORT))
+            print(f"Enviando pacote {seq_mic} de áudio do microfone")
             seq_mic = (seq_mic + 1) % 256
             count += len(mic_data)
             mic_data = None
 
-        #print(f"\rEnviados {count} bytes com velocidade: {count/(time.time()-start_time):.2f} B/s", end='')
-        
-
-
 local_thread = threading.Thread(target=get_local, daemon=True)
 mic_thread = threading.Thread(target=get_mic, daemon=True)
 sender_thread = threading.Thread(target=send_packets)
+
 local_thread.start()
 mic_thread.start()
 sender_thread.start()
+
 local_thread.join()
 mic_thread.join()
 sender_thread.join()
 
-process_local.stdout.close()
-process_local.terminate()
-process_local.wait()
-process_mic.stdout.close()
-process_mic.terminate()
-process_mic.wait()
 sock.close()
 print("\nTransmissão concluída.")

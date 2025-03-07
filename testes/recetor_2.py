@@ -17,33 +17,17 @@ sock.bind((UDP_IP, UDP_PORT))
 MULTICAST_GROUP = "224.1.1.1"
 sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, socket.inet_aton(MULTICAST_GROUP) + socket.inet_aton("0.0.0.0"))
 
-# Adicione isso no início do receptor
-control_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-control_sock.sendto(b"connect", (MULTICAST_GROUP, 5006))  # Envia mensagem de conexão
-
-
-
-
-
-#esperar por resposta
-HEADER = b""
-
-data, addr = control_sock.recvfrom(HEADER_SIZE)
-print(f"Recebendo cabeçalho...{len(HEADER)}")
-HEADER += data
-
-
-control_sock.close()
-
-
-print("Cabeçalho recebido.")
-print(len(HEADER))
 
 
 op = 0
-while op != "1" and op != "2":
-    op = input("Local(1) ou Voz(2)? ")
+while op != "0" and op != "1":
+    op = input("Local(0) ou Voz(1)? ")
 op = int(op)
+
+# Adicione isso no início do receptor
+control_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+control_sock.sendto(b"connect", (MULTICAST_GROUP, 5006))  # Envia mensagem de conexão
+control_sock.close()
 
 p_instance = pyaudio.PyAudio()
 stream = p_instance.open(format=pyaudio.paInt16,
@@ -64,15 +48,14 @@ ffmpeg_cmd = [
     "-ac", "1",      # Mono
     "pipe:1"
 ]
-process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-process.stdin.write(HEADER)
-process.stdin.flush()
+process = None
 count = 0
 last_seq = None  # Variável global para o último número de sequência
 
 
 def udp_receiver():
-    global count, last_seq
+    global count, last_seq, process
+    header = False
 
     while True:
         try:
@@ -81,11 +64,29 @@ def udp_receiver():
             recv_time = time.time() - start_time
             if data:
                 # Extrair o número de sequência (primeiro byte) e o dado real
+
                 
                 _type = data[1]
-                packet_seq = data[0]        
+                packet_seq = data[0]
 
-                if _type != op - 1:
+                type(_type)
+
+                if _type == 2 + op:
+                    header = True
+                    print("Header recebido.")
+                    if process is None:
+                        process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+                        print("Processo FFmpeg iniciado.")
+                    else:
+                        process.stdin.close()
+                        process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+                        print("Processo FFmpeg reiniciado.")
+
+                    process.stdin.write(data[2:])
+                    process.stdin.flush()
+                    continue
+
+                if _type != op or not header:
                     continue
 
                 audio_data = data[2:]
@@ -111,6 +112,7 @@ def audio_player():
     while True:
         try:
             if process is None:
+                time.sleep(0.1)
                 continue
             pcm_chunk = process.stdout.read(CHUNK_SIZE)
             count += len(pcm_chunk)
