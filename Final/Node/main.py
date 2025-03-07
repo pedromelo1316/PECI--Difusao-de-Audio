@@ -117,10 +117,11 @@ def wait_for_info(n, port=8081, stop_event=None):
 
 
 def wait_for_connection(n, port=8080):
-    while True:
-        msg = f"{n.getName()},{n.getMac()}"
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
-            client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
+        client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        client_socket.settimeout(5)
+        while True:
+            msg = f"{n.getName()},{n.getMac()}"
             client_socket.sendto(msg.encode('utf-8'), ('<broadcast>', port))
             
             print("Sent information to manager")
@@ -135,10 +136,10 @@ def wait_for_connection(n, port=8080):
                     print("Connection refused")
                     time.sleep(5)
                     continue
-            except Exception as e:
-                print("Error in wait_for_connection:", e)
-                time.sleep(5)
-    return True
+            except:
+                print("Connection refused")
+                time.sleep(1)
+        return True
 
 
 
