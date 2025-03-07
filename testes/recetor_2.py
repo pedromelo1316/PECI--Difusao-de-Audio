@@ -26,7 +26,8 @@ op = int(op)
 
 # Adicione isso no início do receptor
 control_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-control_sock.sendto(b"connect", (MULTICAST_GROUP, 5006))  # Envia mensagem de conexão
+control_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+control_sock.sendto(b"connect", ("<broadcast>", 5006))  # Envia mensagem de conexão
 control_sock.close()
 
 p_instance = pyaudio.PyAudio()
@@ -68,8 +69,6 @@ def udp_receiver():
                 
                 _type = data[1]
                 packet_seq = data[0]
-
-                type(_type)
 
                 if _type == 2 + op:
                     header = True

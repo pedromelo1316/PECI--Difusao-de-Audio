@@ -19,9 +19,6 @@ header_transmission = None
 import base64
 def send_info(nodes, removed=False):
 
-    with open("nodes.json", "w") as f:
-        json.dump(nodes, f)
-
     if not removed:
         dic = {}
         for node in nodes:
@@ -35,6 +32,8 @@ def send_info(nodes, removed=False):
             
             volume = area[4] if area is not None else None
             channel = area[2] if area is not None else None
+
+            transmission_type = None
 
             if channel:  # nesta parte
                 transmission_type = manage_db.get_channel_type(channel)

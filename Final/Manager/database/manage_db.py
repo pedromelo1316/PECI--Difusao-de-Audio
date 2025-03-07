@@ -261,6 +261,8 @@ def get_area_channel(name):
     c = conn.cursor()
     c.execute("SELECT * FROM areas WHERE name=?", (name,))
     area = c.fetchone()
+    if not area:
+        return None
     if area[2] is None:
         return None
     c.execute("SELECT * FROM channels WHERE id=?", (area[2],))
