@@ -41,22 +41,15 @@ def receive_and_play():
     try:
         while True:
             # Recebe um pacote que contém um frame PCM (FRAME_SIZE * 2 bytes)
-            opus_frame, addr = sock.recvfrom(4096)
-            '''if not packet:
-                break
-
-            seq = packet[0]
-            if last_seq == -1:
-                last_seq = seq
-            if seq != last_seq + 1:
-                for i in range(last_seq + 1, seq):
-                    print(f"Perdido: {i}")
-            last_seq = seq'''
-            #opus_frame = opus_frame[1:]  # Remove o byte de sequência
-            # Decodifica o frame Opus para PCM
-            pcm_frame = decoder.decode(opus_frame, FRAME_SIZE)
-            # Reproduz o áudio
-            stream.write(pcm_frame)
+            frame, addr = sock.recvfrom(4096)
+            channel = frame[0]
+            if channel == 0:
+                opus_frame = frame[1:]
+                #opus_frame = opus_frame[1:]  # Remove o byte de sequência
+                # Decodifica o frame Opus para PCM
+                pcm_frame = decoder.decode(opus_frame, FRAME_SIZE)
+                # Reproduz o áudio
+                stream.write(pcm_frame)
     except KeyboardInterrupt:
         print("Recepção interrompida.")
     finally:
