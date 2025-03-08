@@ -1,96 +1,67 @@
-import socket
-import time
 import subprocess
-import os
-import threading
+import socket
 
-import opuslib  # se continuar utilizando para outras funções
-
-# ...existing code...
+# Configurações do multicast
 MCAST_GRP = "224.1.1.1"
 MCAST_PORT = 5005
 
-SAMPLE_RATE = 48000
-CHANNELS = 1
-FRAME_SIZE = 960
-BITRATE = 256000
-COMPLEXITY = 10
-APPLICATION = "audio"
-source = "default"
+# Configurações do FFmpeg
+source = "default"    # Nome do arquivo de playlist
+INPUT_FILE = "default"  # Dispositivo de áudio padrão
+BITRATE = "128k"        # Ajuste conforme necessário
+SAMPLE_RATE = "48000"   # Opus recomenda 48kHz
+CHANNELS = "1"          # Mono
+CHUNCK_SIZE = 960     # Tamanho do pacote (ajuste conforme a rede)
 
-# Inicializa o socket multicast
+# Configurar socket UDP multicast
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
 sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
 
-playlist_path = f"Playlists/{source}.txt"
-if not os.path.exists(playlist_path):
-    print(f"Playlist {playlist_path} not found")
-    exit()
-
-cmd = [
+# Comando FFmpeg para codificar em Opus e enviar para stdout
+ffmpeg_command = [
     "ffmpeg",
-    "-hide_banner", "-loglevel", "error",
     "-stream_loop", "-1",
-    "-re",
-    "-f", "concat",
-    "-safe", "0",
+    "-re",                   # Simula tempo real
+    "-f", "concat",          # Utiliza o arquivo de concatenação
+    "-safe", "0",            # Permite caminhos absolutos/relativos
     "-i", f"Playlists/{source}.txt",
-    "-af", "apad",
-    "-vn",
-    "-f", "s16le",
-    "-ar", str(SAMPLE_RATE),
-    "-ac", str(CHANNELS),
-    "pipe:1"
+    "-af", "apad",           # Preenche com silêncio entre músicas
+    "-vn",                  # Sem vídeo
+    "-c:a", "libopus",      # Codec Opus
+    "-b:a", BITRATE,        # Bitrate (ex: 64k, 128k)
+    "-ar", SAMPLE_RATE,     # Taxa de amostragem
+    "-ac", CHANNELS,        # Canais
+    "-f", "opus",           # Formato de saída: Opus bruto
+    "-packet_size", str(CHUNCK_SIZE), # Tamanho do pacote (ajuste conforme a rede)
+    "pipe:1"                # Saída para stdout
 ]
 
-def process_stream(i):
-    # Inicia o subprocess de ffmpeg e o subprocess do encoder para este fluxo
-    ffmpeg_proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=FRAME_SIZE * 2)
-    encoder_proc = subprocess.Popen(
-        ["python3", "encoder_subprocess.py"],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE
-    )
-    try:
-        while True:
-            pcm_frame = ffmpeg_proc.stdout.read(FRAME_SIZE * 2)
-            if len(pcm_frame) != FRAME_SIZE * 2:
-                break
+print("Codificando áudio com FFmpeg e enviando via multicast...")
 
-            # Envia o frame PCM para o subprocess de encoder
-            encoder_proc.stdin.write(pcm_frame)
-            encoder_proc.stdin.flush()
 
-            # Lê os 2 bytes do tamanho do frame codificado
-            size_bytes = encoder_proc.stdout.read(2)
-            if not size_bytes:
-                break
-            frame_size = int.from_bytes(size_bytes, byteorder='big')
+processes = {}
 
-            # Lê o frame codificado
-            opus_frame = encoder_proc.stdout.read(frame_size)
-            if len(opus_frame) != frame_size:
-                break
 
-            # Envia o frame codificado via multicast (prefixado com o id do fluxo)
-            sock.sendto(bytes([i]) + opus_frame, (MCAST_GRP, MCAST_PORT))
-    except Exception as e:
-        print(f"Erro no fluxo {i}: {e}")
-    finally:
-        ffmpeg_proc.terminate()
-        encoder_proc.terminate()
+for i in range(50):
+    processes[i] = subprocess.Popen(ffmpeg_command, stdout=subprocess.PIPE, bufsize=CHUNCK_SIZE*2)
 
-threads = []
-for i in range(3):
-    t = threading.Thread(target=process_stream, args=(i,))
-    t.daemon = True
-    threads.append(t)
-    t.start()
+# Executar FFmpeg e ler a saída
 
 try:
     while True:
-        time.sleep(1)
+        for i in range(50):
+            # Ler dados codificados em Opus do stdout do FFmpeg
+            opus_data = processes[i].stdout.read(CHUNCK_SIZE*2)  # Ajuste o tamanho conforme necessário
+            if not opus_data:
+                break
+            
+            # Enviar via UDP multicast
+            sock.sendto(bytes([i]) + opus_data, (MCAST_GRP, MCAST_PORT))
+        
 except KeyboardInterrupt:
     print("Transmissão interrompida.")
 finally:
     sock.close()
+    for i in range(3):
+        processes[i].terminate()
+        processes[i].wait()
