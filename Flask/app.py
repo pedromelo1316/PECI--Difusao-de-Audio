@@ -212,7 +212,7 @@ def add_area():
         return jsonify({"error": "Área já existe"}), 400
 
     try:
-        new_area = Areas(name=area_name, volume=50)  # Volume = 50%, Canal 1 como padrão
+        new_area = Areas(name=area_name, volume=1)  # Volume = 50%, Canal 1 como padrão
         db.session.add(new_area)
         db.session.commit()
 
@@ -453,6 +453,20 @@ def get_zones():
 
 '''     
 
+def get_local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.settimeout(0)
+    try:
+        # Attempt to connect to an unreachable address to determine the local IP
+        s.connect(('10.254.254.254', 1))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = '127.0.0.1'  # Fallback if it fails
+    finally:
+        s.close()
+
+    return ip
+
 if __name__ == '__main__':
     stop_event = threading.Event()
     msg_buffer = queue.Queue()
@@ -463,10 +477,15 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         create_default_channels()
-    socketio.run(app, debug=False)
 
-    thread.join()
-
+    local_ip = get_local_ip()
+    try:
+        socketio.run(app, host=local_ip, port=5000, debug=False)
+    except KeyboardInterrupt:
+        print("Shutting down gracefully...")
+        
+    stop_event.set()  # Signal the thread to stop
+    thread.join()  # Wait for the thread to exit
 
 
 

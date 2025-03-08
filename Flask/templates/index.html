@@ -128,8 +128,8 @@
                             <h4>Volume</h4>
                             <form action="/update_volume" method="POST" class="volume-form">
                                 <input type="hidden" name="name" value="{{ area.name }}">
-                                <input type="range" name="volume" min="0" max="100" value="{{ area.volume }}" id="volume-slider">
-                                <p id="volume-label">Volume: {{ area.volume }}%</p>
+                                <input type="range" name="volume" min="0" max="100" value="{{ (area.volume * 50) | int}}" id="volume-slider-{{ area.id }}">
+                                <p id="volume-label-{{ area.id }}">Volume: {{ (area.volume * 50) | int }}%</p>
                             </form>
                         </div>
                     </div>
@@ -211,21 +211,47 @@
         location.reload();  // Recarrega a página
     });
     //to change the volume of the area
-    document.getElementById('volume-slider').addEventListener('change', function() {
     let volume = this.value;
     let areaName = document.querySelector('input[name="name"]').value;
 
-    // Update label dynamically
-    document.getElementById('volume-label').textContent = `Volume: ${volume}%`;
+    
+    // Handle volume change for all areas only when the slider is released
+    document.querySelectorAll("input[type='range']").forEach(slider => {
+        slider.addEventListener("mouseup", function () {
+            const areaId = this.id.split('-')[2]; // Get the area ID from the slider's id
+            const volume = this.value;
+            const volumeLabel = document.getElementById(`volume-label-${areaId}`);
+            volumeLabel.textContent = `Volume: ${volume}%`;
 
-    // Send the updated volume to the server
-    fetch('/update_volume', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `name=${encodeURIComponent(areaName)}&volume=${encodeURIComponent(volume)}`
-    }).then(response => console.log(`Volume updated to ${volume}`));
+            const areaName = this.closest('form').querySelector('input[name="name"]').value;
+
+            // Send updated volume to the server when the slider is released
+            fetch('/update_volume', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `name=${encodeURIComponent(areaName)}&volume=${encodeURIComponent(volume)}`
+            }).then(response => console.log(`Volume updated to ${volume}`));
+        });
+
+        // In case of mobile, listen for touchend as well
+        slider.addEventListener("touchend", function () {
+            const areaId = this.id.split('-')[2]; // Get the area ID from the slider's id
+            const volume = this.value;
+            const volumeLabel = document.getElementById(`volume-label-${areaId}`);
+            volumeLabel.textContent = `Volume: ${volume}%`;
+
+            const areaName = this.closest('form').querySelector('input[name="name"]').value;
+
+            // Send updated volume to the server when the slider is released
+            fetch('/update_volume', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `name=${encodeURIComponent(areaName)}&volume=${encodeURIComponent(volume)}`
+            }).then(response => console.log(`Volume updated to ${volume}`));
+        });
     });
-
+   
+    
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //to change the channel type
