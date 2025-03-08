@@ -8,7 +8,7 @@ MCAST_PORT = 5005
 # Configurações do FFmpeg
 source = "default"    # Nome do arquivo de playlist
 INPUT_FILE = "default"  # Dispositivo de áudio padrão
-BITRATE = "128k"        # Ajuste conforme necessário
+BITRATE = "64k"        # Ajuste conforme necessário
 SAMPLE_RATE = "48000"   # Opus recomenda 48kHz
 CHANNELS = "1"          # Mono
 CHUNCK_SIZE = 960     # Tamanho do pacote (ajuste conforme a rede)
@@ -21,6 +21,7 @@ sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
 ffmpeg_command = [
     "ffmpeg",
     "-stream_loop", "-1",
+    "-hide_banner", "-loglevel", "error",
     "-re",                   # Simula tempo real
     "-f", "concat",          # Utiliza o arquivo de concatenação
     "-safe", "0",            # Permite caminhos absolutos/relativos
@@ -41,15 +42,17 @@ print("Codificando áudio com FFmpeg e enviando via multicast...")
 
 processes = {}
 
+NUM_PROCESSES = 250
 
-for i in range(50):
+
+for i in range(NUM_PROCESSES):
     processes[i] = subprocess.Popen(ffmpeg_command, stdout=subprocess.PIPE, bufsize=CHUNCK_SIZE*2)
 
 # Executar FFmpeg e ler a saída
 
 try:
     while True:
-        for i in range(50):
+        for i in range(NUM_PROCESSES):
             # Ler dados codificados em Opus do stdout do FFmpeg
             opus_data = processes[i].stdout.read(CHUNCK_SIZE*2)  # Ajuste o tamanho conforme necessário
             if not opus_data:
