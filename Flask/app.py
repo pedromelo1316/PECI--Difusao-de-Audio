@@ -78,6 +78,8 @@ def delete(id):
         db.session.commit()
         socketio.emit('update', {'action': 'delete', 'id': id})
         send_info([node_to_delete], removed=True)
+        with app.app_context():
+                socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
         return redirect('/')
     except:
         return 'Houve um problema ao remover o nó'
@@ -94,6 +96,9 @@ def update(id):
         try:
             db.session.commit()
             socketio.emit('update', {'action': 'update', 'id': id, 'name': node.name})
+
+            with app.app_context():
+                socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
             return redirect('/')
         except:
             return 'Houve um problema ao atualizar a tarefa'
@@ -194,6 +199,8 @@ def rename_node(id):
         node = Nodes.query.get_or_404(id)
         node.name = new_name
         db.session.commit()
+
+        
         return redirect('/')
     
     except Exception as e:
@@ -215,6 +222,10 @@ def add_area():
         new_area = Areas(name=area_name, volume=1)  # Volume = 50%, Canal 1 como padrão
         db.session.add(new_area)
         db.session.commit()
+
+        with app.app_context():
+            socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
+
 
         return jsonify({"success": True, "id": new_area.id, "name": new_area.name}), 200
     except Exception as e:
@@ -248,7 +259,12 @@ def remove_area():
 
         send_info(nodes_in_area)
         flash(f"Area {area_name} removed", "success")
+
+        with app.app_context():
+            socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
+
         return redirect('/')
+        
     except Exception as e:
         flash(str(e), "error")
         return redirect('/')
@@ -270,6 +286,10 @@ def update_volume():
         print(f"Volume updated to {new_volume} for area {area_name}")
         db.session.commit()
         send_info(Nodes.query.filter_by(area_id=area.id).all())
+
+        with app.app_context():
+            socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
+
         return redirect('/')
     except Exception as e:
         
@@ -301,6 +321,9 @@ def associate_node():
     # Associar o nó à zona
     node.area_id = area.id
     db.session.commit()
+
+    with app.app_context():
+            socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
 
     return jsonify({"success": True})
 
@@ -335,6 +358,9 @@ def add_column_to_zone():
     db.session.commit()
     send_info([column])
 
+    with app.app_context():
+            socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
+
     return jsonify({"success": "Coluna associada com sucesso!"}), 200
 
 
@@ -363,6 +389,10 @@ def remove_column_from_zone():
         db.session.commit()
         send_info([column])
         print(f"Column {column_name} removed from zone {zone_name}")
+
+        with app.app_context():
+            socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
+
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -392,7 +422,11 @@ def update_channel(channel_id):
         channel.type = ChannelType[new_type]  # Update the channel's type
         print(f"Channel {channel_id} updated to {new_type}")
         db.session.commit()  # Save the changes to the database
+
+        with app.app_context():
+            socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
         return redirect('/')
+
     except Exception as e:
         return redirect('/')
 
@@ -414,7 +448,12 @@ def update_area_channel():
         print(f"Channel updated to {new_channel_id} for area {area_name}")
         db.session.commit()
         send_info(Nodes.query.filter_by(area_id=area.id).all())
+
+        with app.app_context():
+            socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
+        
         return redirect('/')
+
     except Exception as e:
         flash(str(e), "error")
         return redirect('/')
