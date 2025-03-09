@@ -1,5 +1,7 @@
 import subprocess
 import socket
+import time
+import struct
 
 # Configurações do multicast
 MCAST_GRP = "224.1.1.1"
@@ -12,6 +14,8 @@ BITRATE = "64k"        # Ajuste conforme necessário
 SAMPLE_RATE = "48000"   # Opus recomenda 48kHz
 CHANNELS = "1"          # Mono
 CHUNCK_SIZE = 960     # Tamanho do pacote (ajuste conforme a rede)
+MULTIPLICADOR = 20   # Ajuste conforme necessário max 65
+
 
 # Configurar socket UDP multicast
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -42,24 +46,33 @@ print("Codificando áudio com FFmpeg e enviando via multicast...")
 
 processes = {}
 
-NUM_PROCESSES = 250
+NUM_PROCESSES = 10
 
 
 for i in range(NUM_PROCESSES):
-    processes[i] = subprocess.Popen(ffmpeg_command, stdout=subprocess.PIPE, bufsize=CHUNCK_SIZE*2)
+    processes[i] = subprocess.Popen(ffmpeg_command, stdout=subprocess.PIPE, bufsize=CHUNCK_SIZE*65)
 
 # Executar FFmpeg e ler a saída
+
+seq = 0
+count = 0
+start_time = time.time()
 
 try:
     while True:
         for i in range(NUM_PROCESSES):
             # Ler dados codificados em Opus do stdout do FFmpeg
-            opus_data = processes[i].stdout.read(CHUNCK_SIZE*2)  # Ajuste o tamanho conforme necessário
+            opus_data = processes[i].stdout.read(CHUNCK_SIZE*MULTIPLICADOR)  # Ajuste o tamanho conforme necessário
             if not opus_data:
                 break
             
-            # Enviar via UDP multicast
-            sock.sendto(bytes([i]) + opus_data, (MCAST_GRP, MCAST_PORT))
+            dados = struct.pack('!I', i) + struct.pack('!B', seq) + opus_data
+            sock.sendto(dados, (MCAST_GRP, MCAST_PORT))
+
+            print(f"\rEnviado: {seq}, velocidade: {(count*CHUNCK_SIZE*MULTIPLICADOR)*8/(time.time()-start_time)/1000000:.2f}Mbits/s", end="")
+            count += 1
+
+        seq = (seq + 1)%256
         
 except KeyboardInterrupt:
     print("Transmissão interrompida.")

@@ -7,54 +7,32 @@ import queue
 import json
 import pyaudio
 import subprocess
-import base64
+import opuslib
 
 
-UDP_IP = "0.0.0.0"
-UDP_PORT = 8082
-CHUNK_SIZE = 960  # Tamanho de chunk recomendado para Opus (20 ms de áudio)
-FREQ = "48000"
-HEADER_SIZE = 256
+# Configurações do multicast
+MCAST_GRP = "224.1.1.1"
+MCAST_PORT = 5005
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-sock.bind((UDP_IP, UDP_PORT))
-MULTICAST_GROUP = "224.1.1.1"
-sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, socket.inet_aton(MULTICAST_GROUP) + socket.inet_aton("0.0.0.0"))
+# Configurações de áudio (PCM raw)
+SAMPLE_RATE = 48000
+CHANNELS = 1
+FRAME_SIZE = 960  # 20ms de áudio
+BYTES_PER_FRAME = FRAME_SIZE * 2 # 2 bytes por amostra (16-bit)
 
-HEADER = None
+# Inicializa o decoder Opus
+decoder = opuslib.Decoder(SAMPLE_RATE, CHANNELS)
 
-LOCAL = 0
-VOICE = 1
-TRANSMISSION = 2
+# Configura o PyAudio para reprodução
+p = pyaudio.PyAudio()
+stream = p.open(
+    format=pyaudio.paInt16,
+    channels=CHANNELS,
+    rate=SAMPLE_RATE,
+    output=True,
+    frames_per_buffer=FRAME_SIZE
+)
 
-OP = 3
-
-p_instance = pyaudio.PyAudio()
-stream = p_instance.open(format=pyaudio.paInt16,
-                         channels=1,
-                         rate=int(FREQ),  # Taxa de amostragem do Opus
-                         output=True,
-                         frames_per_buffer=CHUNK_SIZE)
-
-# Comando ffmpeg para decodificar Opus
-ffmpeg_cmd = [
-    "ffmpeg",
-    "-hide_banner",
-    "-loglevel", "error",
-    # Configurações de entrada
-    "-f", "ogg",
-    "-i", "pipe:0",
-    # Configurações de saída
-    "-f", "s16le",
-    "-acodec", "pcm_s16le",
-    "-ar", FREQ,
-    "-ac", "1",
-    "pipe:1"
-]
-process = None
-count = 0
-last_seq = None  # Variável global para o último número de sequência
 channel = None
 
 
@@ -81,27 +59,8 @@ def wait_for_info(n, port=8081, stop_event=None):
                     # Se os valores forem null (None) atualiza para None explicitamente
                     channel = info["channel"] if info["channel"] is not None else None
                     volume = info["volume"] if info["volume"] is not None else None
-                    _HEADER = info["header"] if info["header"] is not None else None
-                    _HEADER = base64.b64decode(_HEADER) if _HEADER is not None else None
-                    print("Header:", _HEADER)
                     n.setChannel(channel)
                     n.setVolume(volume)
-                    if _HEADER != HEADER:
-                        HEADER = _HEADER
-                        print("Header atualizado.")
-                        if process is None:
-                            process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-                            print("Processo FFmpeg iniciado.")
-                            process.stdin.write(HEADER)
-                            process.stdin.flush()
-                        else:
-                            process.stdin.close()
-                            process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-                            print("Processo FFmpeg reiniciado.")
-                            process.stdin.write(HEADER)
-                            process.stdin.flush()
-
-
 
                     print("Channel:", n.getChannel())
                     print("Volume:", n.getVolume())
@@ -139,58 +98,60 @@ def wait_for_connection(n, port=8080):
 
 
 def udp_receiver(stop_event = None):
-    global last_seq, process
+    global last_seq
 
+    # Configura o socket multicast
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(("", MCAST_PORT))
+    mreq = socket.inet_aton(MCAST_GRP) + socket.inet_aton("0.0.0.0")
+    sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+
+    last_seq = None
     while not stop_event.is_set():
         try:
-            start_time = time.time()
-            data, _ = sock.recvfrom(CHUNK_SIZE + 2)  # buffer maior para o byte extra
-            recv_time = time.time() - start_time
-            if data:
-                # Extrair o número de sequência (primeiro byte) e o dado real
+            while not stop_event.is_set():
+                data, _ = sock.recvfrom(4096)  # buffer maior para o byte extra
+                if data:
+                    # Extrair o número de sequência (primeiro byte) e o dado real
 
-                _channel = data[0]
-                packet_seq = data[1]
+                    _channel = data[0]
+                    packet_seq = data[1]
 
 
-                if _channel != channel or not HEADER:
-                    continue
+                    if _channel != channel:
+                        continue
 
-                #print(f"Recebido pacote {packet_seq} de {_channel}")
+                    print(f"Recebido pacote {packet_seq} de {_channel}")
 
-                audio_data = data[2:]
+                    opus_frame = data[2:]
 
-                if last_seq is None:
+                    if last_seq is None:
+                        last_seq = packet_seq
+                    elif packet_seq != (last_seq + 1) % 256:
+                        print(f"Pacote perdido: {last_seq} -> {packet_seq}")
+
                     last_seq = packet_seq
-                elif packet_seq != (last_seq + 1) % 256:
-                    print(f"Pacote perdido: {last_seq} -> {packet_seq}")
 
-                last_seq = packet_seq
+                    pcm_frame = decoder.decode(opus_frame, FRAME_SIZE)
 
-                channel_data = audio_data
-
-                process.stdin.write(channel_data)
-                process.stdin.flush()
-
+                    stream.write(pcm_frame)
+                    
         except Exception as e:
-            #print(f"\nErro na recepção: {e}")
+            print(f"\nErro na recepção: {e}")
             break
 
-def audio_player(stop_event = None):
-    count = 0
-    while not stop_event.is_set():
-        try:
-            if process is None:
-                time.sleep(0.1)
-                continue
-            pcm_chunk = process.stdout.read(CHUNK_SIZE)
-            count += len(pcm_chunk)
-            if not pcm_chunk:
-                break
-            stream.write(pcm_chunk)
-        except Exception as e:
-            print(f"\nErro na reprodução: {e}")
+        except KeyboardInterrupt:
+            print("Recepção interrompida.")
             break
+
+        finally:
+            stream.stop_stream()
+            stream.close()
+            p.terminate()
+            sock.close()
+
+
 
 
 
@@ -212,16 +173,12 @@ def main():
     t_info = threading.Thread(target=wait_for_info, args=(n,8081,stop_event))
     t_info.start()
 
-    recv_thread = threading.Thread(target=udp_receiver, args=(stop_event,))
-    play_thread = threading.Thread(target=audio_player, args=(stop_event,))
-    recv_thread.start()
-    play_thread.start()
-
-
     t_connection.join()
+    recv_thread = threading.Thread(target=udp_receiver, args=(stop_event,))
+    recv_thread.start()
+    
     t_info.join()
     recv_thread.join()
-    play_thread.join()
 
 if __name__ == "__main__":
     main()

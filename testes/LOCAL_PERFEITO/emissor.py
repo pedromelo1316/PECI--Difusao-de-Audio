@@ -17,7 +17,7 @@ raw_data = audio.raw_data
 SAMPLE_RATE = 48000
 CHANNELS = 1
 FRAME_SIZE = 960  # 20ms (para latência balanceada)
-BITRATE = 128000  # Bitrate desejado (64kbps para voz, 256kbps para música)
+BITRATE = 64000  # Bitrate desejado (64kbps para voz, 256kbps para música)
 COMPLEXITY = 10   # Complexidade (0-10, maior = mais CPU/melhor qualidade)
 APPLICATION = "audio"  # "voip", "audio", "restricted_lowdelay"
 
