@@ -13,7 +13,8 @@ import struct
 import subprocess
 import opuslib
 
-def send_info(nodes, removed=False):  #aqui
+import base64
+def send_info(nodes, removed=False):
 
     if not removed:
         dic = {}
@@ -25,10 +26,13 @@ def send_info(nodes, removed=False):  #aqui
             volume = None
             channel = None
             area = manage_db.get_area_by_id(area_id) if area_id else None
+            header = None
             
             volume = area[4] if area is not None else None
             channel = area[2] if area is not None else None
-            dic[mac] = {"volume": volume, "channel": channel}
+            header = process_dict[channel]["header"] if channel in process_dict else None
+            header = base64.b64encode(header).decode('utf-8') if header is not None else None
+            dic[mac] = {"volume": volume, "channel": channel, "header": header}
     else:
         dic = {}
         for node in nodes:
@@ -569,6 +573,7 @@ BITRATE = 256000  # Bitrate desejado (64kbps para voz, 256kbps para música)
 COMPLEXITY = 10   # Complexidade (0-10, maior = mais CPU/melhor qualidade)
 APPLICATION = "audio"  # "voip", "audio", "restricted_lowdelay"
 source = "default"
+HEADER_SIZE = 300
 
 # Inicializa o encoder Opus com configurações de qualidade
 encoder = opuslib.Encoder(SAMPLE_RATE, CHANNELS, APPLICATION)
@@ -643,14 +648,12 @@ def send_audio(port=8082, stop_event=None):
         for channel in list(process_dict.keys()):
             if process_dict[channel] is None:
                 continue
-            process = process_dict[channel]
+            process = process_dict[channel]["process"]
             if process:
-                pcm_frame = process.stdout.read(FRAME_SIZE * 2)
-                if len(pcm_frame) != FRAME_SIZE * 2:
+                opus_frame = process.stdout.read(FRAME_SIZE * 2)
+                if not data:
                     continue
                     
-                # Codifica o frame PCM para Opus
-                opus_frame = encoder.encode(pcm_frame, FRAME_SIZE)
                 data = bytes([channel]) + bytes([count_packets]) + opus_frame
                 #if count_packets % 10 != 0:
         
@@ -668,17 +671,20 @@ def send_audio(port=8082, stop_event=None):
 def change_channel_process(channel, source, transmission_type):
     global process_dict
     if channel in process_dict:
-        process = process_dict[channel]
+        process = process_dict[channel]["process"]
         process.kill()
+        process_dict[channel] = {"process": None, "header": None}
         process = start_ffmpeg_process(source, transmission_type)
         if process:
-            process_dict[channel] = process
+            header = process.stdout.read(HEADER_SIZE)
+            process_dict[channel] = {"process": process, "header": header}
         else:
             process_dict[channel] = None
     else:
         process = start_ffmpeg_process(source, transmission_type)
         if process:
-            process_dict[channel] = process
+            header = process.stdout.read(HEADER_SIZE)
+            process_dict[channel] = {"process": process, "header": header}
             send_info(manage_db.get_nodes_by_channel(channel))
         else:
             process_dict[channel] = None
@@ -693,11 +699,21 @@ def init_processes():
         source = manage_db.get_channel_source(channel)
         process = start_ffmpeg_process(source, transmission_type)
         if process:
-            process_dict[channel] = process
+            process_dict[channel] = {"process": process, "header": None}
             send_info(manage_db.get_nodes_by_channel(channel))
             #print(f"Channel {channel} started")
         else:
             process_dict[channel] = None
+
+
+
+    for channel in process_dict:
+        if process_dict[channel]:
+            process = process_dict[channel]["process"]
+            header = process.stdout.read(HEADER_SIZE)
+            process_dict[channel]["header"] = header
+            send_info(manage_db.get_nodes_by_channel(channel))
+            #print(f"Channel {channel} header received")
 
 
 if __name__ == "__main__":
