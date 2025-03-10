@@ -155,6 +155,10 @@ def udp_receiver(stop_event = None):
             # Receber dados Opus via UDP
             packet, addr = sock.recvfrom(CHUNCK_SIZE*MULTIPLICADOR + 5)  # Tamanho máximo de um pacote UDP
 
+            if len(packet) < CHUNCK_SIZE*MULTIPLICADOR + 5:
+                print(f"Pacote incompleto recebido de {addr}")
+                continue
+
             # Desempacotar os 4 primeiros bytes para obter o canal
             packet_channel = struct.unpack('!I', packet[0:4])[0]
             if channel != packet_channel:
@@ -181,9 +185,12 @@ def udp_receiver(stop_event = None):
 
 def ffmpeg_reader(stop_event = None):
     global process
+    count = 0
     while not stop_event.is_set():
         if process:
+            count += 1
             data = process.stdout.read(CHUNCK_SIZE*MULTIPLICADOR)
+                
             if not data:
                 break
             stream.write(data)
