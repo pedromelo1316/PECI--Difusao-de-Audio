@@ -561,7 +561,7 @@ def main(stdscr, stop_event, msg_buffer):
 
 # fiz alterações a partir de aqui
 
-BITRATE = "64K"
+BITRATE = "128K"
 SAMPLE_RATE = "48000"
 CHUNCK_SIZE = 960
 HEADER_SIZE = 300

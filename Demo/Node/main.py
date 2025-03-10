@@ -155,6 +155,9 @@ def udp_receiver(stop_event = None):
             # Receber dados Opus via UDP
             packet, addr = sock.recvfrom(CHUNCK_SIZE*MULTIPLICADOR + 5)  # Tamanho máximo de um pacote UDP
 
+            if not process:
+                continue
+
             if len(packet) < CHUNCK_SIZE*MULTIPLICADOR + 5:
                 print(f"Pacote incompleto recebido de {addr}")
                 continue
