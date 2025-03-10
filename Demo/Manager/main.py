@@ -11,7 +11,7 @@ import sounddevice as sd
 import numpy as np
 import struct
 import subprocess
-import opuslib
+
 
 import base64
 def send_info(nodes, removed=False):
@@ -30,7 +30,7 @@ def send_info(nodes, removed=False):
             
             volume = area[4] if area is not None else None
             channel = area[2] if area is not None else None
-            header = process_dict[channel]["header"] if channel in process_dict else None
+            header = channels_dict[channel]["header"] if channel in channels_dict else None
             header = base64.b64encode(header).decode('utf-8') if header is not None else None
             dic[mac] = {"volume": volume, "channel": channel, "header": header}
     else:
@@ -518,7 +518,7 @@ def main(stdscr, stop_event, msg_buffer):
                             m.change_channel_transmission(channel, transmission)
                             msg = f"Transmission set to {transmission} in channel {channel}"
                             add_msg(msg_win, menu_win, msg)
-                            change_channel_process_thread = threading.Thread(target=change_channel_process, args=(int(channel), manage_db.get_channel_source(channel), transmission), daemon=True) #aqui
+                            change_channel_process_thread = threading.Thread(target=change_channel_process, args=(int(channel), manage_db.get_channel_source(channel), transmission), daemon=True)
                             change_channel_process_thread.start()
 
 
@@ -559,30 +559,19 @@ def main(stdscr, stop_event, msg_buffer):
         raise e
                         
 
-# fiz alterações em tudo a partir de aqui
+# fiz alterações a partir de aqui
 
-# Configurações do multicast
-MCAST_GRP = "224.1.1.1"
-MCAST_PORT = 5005
-
-# Configurações do Opus (ajuste conforme a qualidade desejada)
-SAMPLE_RATE = 48000
-CHANNELS = 1
-FRAME_SIZE = 960  # 20ms (para latência balanceada)
-BITRATE = 256000  # Bitrate desejado (64kbps para voz, 256kbps para música)
-COMPLEXITY = 10   # Complexidade (0-10, maior = mais CPU/melhor qualidade)
-APPLICATION = "audio"  # "voip", "audio", "restricted_lowdelay"
-source = "default"
+BITRATE = "64K"
+SAMPLE_RATE = "48000"
+CHUNCK_SIZE = 960
 HEADER_SIZE = 300
+AUDIO_CHANNELS = "1"         # Mono
+MULTIPLICADOR = 20   # Ajuste conforme necessário max 65
 
-# Inicializa o encoder Opus com configurações de qualidade
-encoder = opuslib.Encoder(SAMPLE_RATE, CHANNELS, APPLICATION)
-encoder.bitrate = BITRATE
-encoder.complexity = COMPLEXITY
 
-# Configura o socket multicast
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
+LOCAL = 0
+VOICE = 1
+TRANSMISSION = 2
                 
 
 # Configura o stdout dos processos FFmpeg para ser não bufferizado
@@ -592,13 +581,11 @@ def start_ffmpeg_process(source, _type):
             "ffmpeg",
             "-hide_banner", "-loglevel", "error",
             "-f", "alsa", "-i", source,
-            "-vn",
-            "-b:a", str(BITRATE),
-            "-ar", str(SAMPLE_RATE),
-            "-ac", "1",
-            "-f", "s16le",           # Saída em PCM 16-bit little-endian
-            "-ar", str(SAMPLE_RATE),
-            "-ac", str(CHANNELS),
+            "-acodec", "libopus",
+            "-b:a", BITRATE,
+            "-ar", SAMPLE_RATE,
+            "-ac", AUDIO_CHANNELS,
+            "-f", "opus",
             "pipe:1"
         ]
     elif _type == "LOCAL":
@@ -611,115 +598,131 @@ def start_ffmpeg_process(source, _type):
             "ffmpeg",
             "-hide_banner", "-loglevel", "error",
             "-stream_loop", "-1",
-            "-re",                  # Lê a entrada em tempo real
-            "-f", "concat",          # Utiliza o arquivo de concatenação
+            "-f", "concat",          # Adicione esta linha
             "-safe", "0",            # Permite caminhos absolutos/relativos
+            "-re",                   # Opcional (simula velocidade real)
             "-i", f"Playlists/{source}.txt",
-            "-af", "apad",           # Preenche com silêncio entre músicas
+            "-af", "apad",  # Preenche com silêncio entre as músicas
             "-vn",
-            "-f", "s16le",           # Saída em PCM 16-bit little-endian
-            "-ar", str(SAMPLE_RATE),
-            "-ac", str(CHANNELS),
+            "-acodec", "libopus",
+            "-b:a", BITRATE,
+            "-ar", SAMPLE_RATE,
+            "-ac", AUDIO_CHANNELS,
+            "-packet_size", str(CHUNCK_SIZE), # Tamanho do pacote (ajuste conforme a rede)
+            "-f", "opus",
             "pipe:1"
         ]
-
     elif _type == "TRANSMISSION":
         return None
     else:
         return None
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=FRAME_SIZE*2)
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=int(CHUNCK_SIZE*2))
     return process
-
-
-q = queue.Queue()
-
- 
 
 
 
 def send_audio(port=8082, stop_event=None):
+    global start_time
+    MCAST_GRP = "224.1.1.1"
+    MCAST_PORT = port
 
     count = 0
-    count_packets = 0
-    start_time = time.time()
+    seq = 0
 
-    channel = 1
-    while not stop_event.is_set():
-        for channel in list(process_dict.keys()):
-            if process_dict[channel] is None:
-                continue
-            process = process_dict[channel]["process"]
-            if process:
-                opus_frame = process.stdout.read(FRAME_SIZE * 2)
-                if not data:
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    ttl = 2
+    sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
+
+    try:
+        while not stop_event.is_set():
+            for channel in list(channels_dict.keys()):
+                if channels_dict[channel] is None:
                     continue
+                process = channels_dict[channel]["process"]
+                if process:
+                    opus_data = process.stdout.read(CHUNCK_SIZE*MULTIPLICADOR)  # Ajuste o tamanho conforme necessário
+                    if not opus_data:
+                        break
                     
-                data = bytes([channel]) + bytes([count_packets]) + opus_frame
-                #if count_packets % 10 != 0:
-        
-                sock.sendto(data, (MCAST_GRP, MCAST_PORT))
-                count += len(data)
+                    dados = struct.pack('!I', channel) + struct.pack('!B', seq) + opus_data
+                    sock.sendto(dados, (MCAST_GRP, MCAST_PORT))
 
-            #time.sleep(((FRAME_SIZE / SAMPLE_RATE)*0.9)/len(list(process_dict.keys())))  # Tempo proporcional ao frame (ex: 0.02s para 960 amostras)
-        
-        count_packets = (count_packets + 1) % 256
-            
+                    #print(f"\rEnviado: {seq}, velocidade: {(count*CHUNCK_SIZE*MULTIPLICADOR)*8/(time.time()-start_time)/1000000:.2f}Mbits/s", end="")
+                    count += 1
+                
+            seq = (seq + 1) % 256
+            #print(f"\rEnviado: {seq}, velocidade: {(count*CHUNCK_SIZE*MULTIPLICADOR)*8/(time.time()-start_time)/1000000:.2f}Mbits/s", end="")
 
-        print(f"\rSent {count_packets}, velocity: {count/(time.time()-start_time):.2f} B/s", end="")
+    except KeyboardInterrupt:
+        print("Transmissão interrompida.")
+    finally:
+        sock.close()
+        for channel in list(channels_dict.keys()):
+            if channels_dict[channel]:
+                process = channels_dict[channel]["process"]
+                process.terminate()
+                process.wait()
+        print("Processes terminated")
+        stop_event.set()
 
 
 def change_channel_process(channel, source, transmission_type):
-    global process_dict
-    if channel in process_dict:
-        process = process_dict[channel]["process"]
+    global channels_dict
+    if channel in channels_dict:
+        process = channels_dict[channel]["process"]
         process.kill()
-        process_dict[channel] = {"process": None, "header": None}
+        channels_dict[channel] = {"process": None, "header": None}
         process = start_ffmpeg_process(source, transmission_type)
         if process:
             header = process.stdout.read(HEADER_SIZE)
-            process_dict[channel] = {"process": process, "header": header}
+            channels_dict[channel] = {"process": process, "header": header}
+            send_info(manage_db.get_nodes_by_channel(channel))
         else:
-            process_dict[channel] = None
+            channels_dict[channel] = None
     else:
         process = start_ffmpeg_process(source, transmission_type)
         if process:
             header = process.stdout.read(HEADER_SIZE)
-            process_dict[channel] = {"process": process, "header": header}
+            channels_dict[channel] = {"process": process, "header": header}
             send_info(manage_db.get_nodes_by_channel(channel))
         else:
-            process_dict[channel] = None
+            channels_dict[channel] = None
 
 
 
 def init_processes():
-    global process_dict
+    global channels_dict, start_time
 
-    for channel in process_dict:
+    for channel in channels_dict:
         transmission_type = manage_db.get_channel_type(channel)
         source = manage_db.get_channel_source(channel)
         process = start_ffmpeg_process(source, transmission_type)
         if process:
-            process_dict[channel] = {"process": process, "header": None}
-            send_info(manage_db.get_nodes_by_channel(channel))
+            channels_dict[channel] = {"process": process, "header": None}
             #print(f"Channel {channel} started")
         else:
-            process_dict[channel] = None
+            channels_dict[channel] = None
 
 
 
-    for channel in process_dict:
-        if process_dict[channel]:
-            process = process_dict[channel]["process"]
+    start_time = time.time()
+    for channel in channels_dict:
+        if channels_dict[channel]:
+            process = channels_dict[channel]["process"]
             header = process.stdout.read(HEADER_SIZE)
-            process_dict[channel]["header"] = header
+            channels_dict[channel]["header"] = header
             send_info(manage_db.get_nodes_by_channel(channel))
             #print(f"Channel {channel} header received")
 
 
-if __name__ == "__main__":
-    global process_dict
+    
+    #print(channels_dict)
 
-    process_dict = {}
+
+if __name__ == "__main__":
+    global channels_dict
+
+    channels_dict = {}
 
     msg_buffer = queue.Queue()
 
@@ -733,7 +736,7 @@ if __name__ == "__main__":
     channels = [i[0] for i in channels] if channels else []
 
     for channel in channels:
-        process_dict[channel] = None
+        channels_dict[channel] = None
 
     init_processes_thread = threading.Thread(target=init_processes, daemon=True)
     init_processes_thread.start()
@@ -742,15 +745,15 @@ if __name__ == "__main__":
     stop_event = threading.Event()
 
     # Thread do menu (curses)
-    '''t_menu = threading.Thread(
+    t_menu = threading.Thread(
         target=curses.wrapper, 
         args=(lambda stdscr: main(stdscr, stop_event, msg_buffer),),
         daemon=True
-    )'''
+    )
 
 
 
-    #t_menu.start()
+    t_menu.start()
 
 
     detect = threading.Thread(target=detect_new_nodes, args=(stop_event,msg_buffer), daemon=True)
@@ -760,7 +763,6 @@ if __name__ == "__main__":
     init_processes_thread.join()
 
     # Thread do play_audio que aguarda as queues e envia pacotes a cada 0.5s
-
     t_play = threading.Thread(target=send_audio, args=(8082, stop_event), daemon=True)
     t_play.start()
 

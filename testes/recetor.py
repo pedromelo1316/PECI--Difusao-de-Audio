@@ -68,8 +68,13 @@ try:
 
         # Desempacotar os 4 primeiros bytes para obter o canal
         packet_channel = struct.unpack('!I', packet[0:4])[0]
+
+        print(packet_channel)
+
         if channel != packet_channel:
             continue
+
+        
 
         seq = packet[4]
         if last_seq is not None and seq != (last_seq + 1) % 256:
