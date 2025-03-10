@@ -46,11 +46,11 @@ print("Codificando áudio com FFmpeg e enviando via multicast...")
 
 processes = {}
 
-NUM_PROCESSES = 10
+NUM_PROCESSES = 3
 
 
 for i in range(NUM_PROCESSES):
-    processes[i] = subprocess.Popen(ffmpeg_command, stdout=subprocess.PIPE, bufsize=CHUNCK_SIZE*65)
+    processes[i] = subprocess.Popen(ffmpeg_command, stdout=subprocess.PIPE, bufsize=CHUNCK_SIZE*MULTIPLICADOR)
 
 # Executar FFmpeg e ler a saída
 
