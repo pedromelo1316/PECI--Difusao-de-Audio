@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Editar Playlist</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% endblock %}
+
+{% block body %}
+<header>
+    <div class="header-content">
+        <button onclick="window.history.back()" class="back-button"><i class="fas fa-arrow-left"></i></button>
+        <div class="title">
+            <h1>Playlist {{ playlist_name }}</h1>
+            <button onclick="renamePlaylist('{{ playlist_name }}')" class="edit-button"><i class="fas fa-pen"></i></button>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <div class="content">
+        <div class="grid-container">
+            <!-- Left Section: Playlist -->
+            <div class="playlist-section">
+                <h2>Playlist</h2>
+                <ul class="playlist-list" id="playlist-list">
+                    {% for song in playlist_songs %}
+                    <li class="playlist-item">
+                        <span>{{ loop.index }}. {{ song }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Right Section: Músicas -->
+            <div class="songs-section">
+                <h2>Músicas</h2>
+                {% if all_songs|length == 0 %}
+                <script>
+                    alert("Não existem músicas disponíveis. Por favor, adicione músicas.");
+                </script>
+                {% else %}
+                <ul class="songs-list" id="songs-list">
+                    {% for song in all_songs %}
+                    <li class="song-item">
+                        <span>{{ song }}</span>
+                        <i class="fa-solid fa-{{ 'check' if song in playlist_songs else 'square' }}" onclick="toggleSong(this, '{{ song }}', '{{ playlist_name }}')"></i>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+        <!-- New Save Playlist Button -->
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="save-playlist-btn" onclick="savePlaylist('{{ playlist_name }}')">Guardar Playlist</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function renamePlaylist(playlistName) {
+    const newName = prompt('Novo nome da playlist:', playlistName);
+    if (newName && newName !== playlistName) {
+        fetch(`/edit_playlist/${playlistName}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ new_name: newName })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update the header title without reloading
+                document.querySelector('.title h1').textContent = "Playlist " + newName;
+            } else {
+                alert('Erro ao renomear a playlist.');
+            }
+        })
+        .catch(err => {
+            alert('Erro ao renomear a playlist.');
+        });
+    }
+}
+
+function toggleSong(icon, songName, playlistName) {
+    const action = icon.classList.contains('fa-check') ? 'remove' : 'add';
+    fetch(`/edit_playlist/${playlistName}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ song_name: songName, action: action })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            icon.classList.toggle('fa-check');
+            icon.classList.toggle('fa-square');
+            const playlistList = document.getElementById('playlist-list');
+            if (action === 'add') {
+                const newIndex = playlistList.querySelectorAll('li').length + 1;
+                const li = document.createElement('li');
+                li.className = 'playlist-item';
+                li.innerHTML = `<span>${newIndex}. ${songName}</span>`;
+                playlistList.appendChild(li);
+            } else {
+                const items = playlistList.querySelectorAll('li');
+                items.forEach(item => {
+                    if (item.textContent.includes(songName)) {
+                        playlistList.removeChild(item);
+                    }
+                });
+            }
+        } else {
+            alert('Erro ao atualizar a playlist.');
+        }
+    });
+}
+
+function savePlaylist(playlistName) {
+    fetch(`/save_playlist/${playlistName}`, {
+        method: 'POST'
+    })
+    .then(res => {
+        if (res.ok) {
+            // Redirect to main page on success
+            window.location.href = '/';
+        } else {
+            alert("Erro ao guardar playlist.");
+        }
+    })
+    .catch(err => {
+        alert("Erro ao guardar playlist.");
+    });
+}
+</script>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #fff;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.grid-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.playlist-section, .songs-section {
+    width: 45%;
+}
+
+.playlist-list, .songs-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.playlist-item, .song-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    background-color: #fff;
+    transition: background-color 0.3s;
+}
+
+.playlist-item:hover, .song-item:hover {
+    background-color: #f9f9f9;
+}
+
+.add-song {
+    cursor: pointer;
+    color: #22cc3f;
+    font-weight: bold;
+}
+
+.fa-check {
+    color: #22cc3f;
+    cursor: pointer;
+}
+
+.fa-square {
+    color: #ccc;
+    cursor: pointer;
+}
+
+header {
+    background: white;
+    padding: 20px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.title {
+    text-align: center;
+    flex-grow: 1;
+}
+
+h1 {
+    margin: 0;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+h2 {
+    font-size: 22px;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+.back-button, .edit-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.back-button {
+    margin-right: auto;
+}
+
+.edit-button {
+    margin-left: auto;
+}
+
+.save-playlist-btn {
+    background-color: #22cc3f;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+.save-playlist-btn:hover {
+    background-color: #1e9e31;
+}
+</style>
+{% endblock %}
