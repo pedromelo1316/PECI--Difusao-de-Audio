@@ -64,7 +64,8 @@ class Song(db.Model):
 
 playlist_song = db.Table('playlist_song',
     db.Column('playlist_id', db.Integer, db.ForeignKey('playlist.id'), primary_key=True),
-    db.Column('song_id', db.Integer, db.ForeignKey('song.id'), primary_key=True)
+    db.Column('song_id', db.Integer, db.ForeignKey('song.id'), primary_key=True),
+    db.Column('song_order', db.Integer, nullable=False, default=999999)  # new column
 )
 
 def create_default_channels():
@@ -75,7 +76,18 @@ def create_default_channels():
             db.session.add(new_channel)
             db.session.commit()
 
-
+# ...existing code...
+def ensure_column_song_order():
+    from sqlalchemy import inspect
+    engine = db.engine
+    with engine.connect() as conn:
+        inspector = inspect(conn)
+        if inspector.has_table('playlist_song'):
+            columns = [row[1] for row in conn.exec_driver_sql("PRAGMA table_info('playlist_song')")]
+            if 'song_order' not in columns:
+                print("Adding 'song_order' column...")
+                conn.exec_driver_sql("ALTER TABLE playlist_song ADD COLUMN song_order INTEGER NOT NULL DEFAULT 999999")
+# ...existing code...
 
 @app.route('/', methods=['GET'])
 def index():
@@ -532,11 +544,16 @@ def save_playlist(playlist_name):
 
     try:
         # Clear existing songs and add them in the new order
-        playlist.songs = []
-        for song_name in song_order:
+        db.session.execute(playlist_song.delete().where(playlist_song.c.playlist_id == playlist.id))  # clear old data
+        for index, song_name in enumerate(song_order, start=1):
             song = Song.query.filter_by(name=song_name).first()
             if song:
-                playlist.songs.append(song)
+                insert_stmt = playlist_song.insert().values(
+                    playlist_id=playlist.id,
+                    song_id=song.id,
+                    song_order=index
+                )
+                db.session.execute(insert_stmt)
         db.session.commit()
         return jsonify({"success": True}), 200
     except Exception as e:
@@ -570,10 +587,25 @@ def update_song(song_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+
 @app.route('/get_songs', methods=['GET'])
 def get_songs():
     songs = Song.query.all()
     return jsonify({"songs": [song.name for song in songs]})
+
+@app.route('/playlist_order/<playlist_name>', methods=['GET'])
+def playlist_order(playlist_name):
+    playlist = Playlist.query.filter_by(name=playlist_name).first()
+    if not playlist:
+        return jsonify({"error": "Playlist não encontrada"}), 404
+    query = db.session.query(
+        playlist_song.c.song_order, Song.name
+    ).join(Song, playlist_song.c.song_id == Song.id
+    ).filter(playlist_song.c.playlist_id == playlist.id
+    ).order_by(playlist_song.c.song_order)
+    song_order_names = [row[1] for row in query.all()]
+    return jsonify({"songs": song_order_names})
 
 if __name__ == '__main__':
     stop_event = threading.Event()
@@ -584,6 +616,7 @@ if __name__ == '__main__':
 
     with app.app_context():
         db.create_all()
+        ensure_column_song_order()
         create_default_channels()
         
     # socketio.run(app, debug=True)

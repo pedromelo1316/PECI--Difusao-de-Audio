@@ -3,6 +3,7 @@
 {% block head %}
 <title>Editar Playlist</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/edit_playlist.css') }}">
 {% endblock %}
 
 {% block body %}
@@ -22,12 +23,17 @@
             <!-- Left Section: Playlist -->
             <div class="playlist-section">
                 <h2>Playlist</h2>
+                <div class="playlist-bar"></div>
                 <ul class="playlist-list" id="playlist-list">
+                    {% if playlist_songs|length == 0 %}
+                    <li class="empty-playlist-message">Adicione músicas à sua playlist</li>
+                    {% else %}
                     {% for song in playlist_songs %}
                     <li class="playlist-item" draggable="true" data-song="{{ song }}">
                         <span>{{ loop.index }}. {{ song }}</span>
                     </li>
                     {% endfor %}
+                    {% endif %}
                 </ul>
             </div>
 
@@ -52,245 +58,10 @@
         </div>
         <!-- New Save Playlist Button -->
         <div style="text-align: center; margin-top: 20px;">
-            <button class="save-playlist-btn" onclick="savePlaylist('{{ playlist_name }}')">Guardar Playlist</button>
+            <button class="save-playlist-btn" onclick="savePlaylistAndRedirect('{{ playlist_name }}')">Guardar Playlist</button>
         </div>
     </div>
 </div>
 
-<script>
-function renamePlaylist(playlistName) {
-    const newName = prompt('Novo nome da playlist:', playlistName);
-    if (newName && newName !== playlistName) {
-        fetch(`/edit_playlist/${playlistName}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ new_name: newName })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Update the header title without reloading
-                document.querySelector('.title h1').textContent = "Playlist " + newName;
-            } else {
-                alert('Erro ao renomear a playlist.');
-            }
-        })
-        .catch(err => {
-            alert('Erro ao renomear a playlist.');
-        });
-    }
-}
-
-function toggleSong(icon, songName, playlistName) {
-    const action = icon.classList.contains('fa-check') ? 'remove' : 'add';
-    fetch(`/edit_playlist/${playlistName}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ song_name: songName, action: action })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            icon.classList.toggle('fa-check');
-            icon.classList.toggle('fa-square');
-            const playlistList = document.getElementById('playlist-list');
-            if (action === 'add') {
-                const newIndex = playlistList.querySelectorAll('li').length + 1;
-                const li = document.createElement('li');
-                li.className = 'playlist-item';
-                li.draggable = true;
-                li.dataset.song = songName;
-                li.innerHTML = `<span>${newIndex}. ${songName}</span>`;
-                playlistList.appendChild(li);
-            } else {
-                const items = playlistList.querySelectorAll('li');
-                items.forEach(item => {
-                    if (item.dataset.song === songName) {
-                        playlistList.removeChild(item);
-                    }
-                });
-            }
-            updatePlaylistOrder();
-        } else {
-            alert('Erro ao atualizar a playlist.');
-        }
-    });
-}
-
-function savePlaylist(playlistName) {
-    const playlistItems = document.querySelectorAll('#playlist-list .playlist-item');
-    const songOrder = Array.from(playlistItems).map(item => item.dataset.song);
-    fetch(`/save_playlist/${playlistName}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ song_order: songOrder })
-    })
-    .then(res => {
-        if (res.ok) {
-            // Redirect to main page on success
-            window.location.href = '/';
-        } else {
-            alert("Erro ao guardar playlist.");
-        }
-    })
-    .catch(err => {
-        alert("Erro ao guardar playlist.");
-    });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const playlistList = document.getElementById('playlist-list');
-
-    let draggedItem = null;
-
-    playlistList.addEventListener('dragstart', (event) => {
-        draggedItem = event.target;
-        event.dataTransfer.effectAllowed = 'move';
-    });
-
-    playlistList.addEventListener('dragover', (event) => {
-        event.preventDefault();
-    });
-
-    playlistList.addEventListener('drop', (event) => {
-        event.preventDefault();
-        if (event.target.classList.contains('playlist-item') && draggedItem !== event.target) {
-            playlistList.insertBefore(draggedItem, event.target.nextSibling);
-            updatePlaylistOrder();
-        }
-    });
-});
-
-function updatePlaylistOrder() {
-    const playlistItems = document.querySelectorAll('#playlist-list .playlist-item');
-    playlistItems.forEach((item, index) => {
-        item.querySelector('span').textContent = `${index + 1}. ${item.dataset.song}`;
-    });
-}
-</script>
-
-<style>
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #fff;
-}
-
-.container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-}
-
-.grid-container {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-}
-
-.playlist-section, .songs-section {
-    width: 45%;
-}
-
-.playlist-list, .songs-list {
-    list-style-type: none;
-    padding: 0;
-}
-
-.playlist-item, .song-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    border: 1px solid #ccc;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    background-color: #fff;
-    transition: background-color 0.3s;
-}
-
-.playlist-item:hover, .song-item:hover {
-    background-color: #f9f9f9;
-}
-
-.add-song {
-    cursor: pointer;
-    color: #22cc3f;
-    font-weight: bold;
-}
-
-.fa-check {
-    color: #22cc3f;
-    cursor: pointer;
-}
-
-.fa-square {
-    color: #ccc;
-    cursor: pointer;
-}
-
-header {
-    background: white;
-    padding: 20px;
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-}
-
-.header-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-}
-
-.title {
-    text-align: center;
-    flex-grow: 1;
-}
-
-h1 {
-    margin: 0;
-    font-size: 25px;
-    font-weight: bold;
-}
-
-h2 {
-    font-size: 22px;
-    font-weight: bold;
-    margin: 20px 0;
-}
-
-.back-button, .edit-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 20px;
-}
-
-.back-button {
-    margin-right: auto;
-}
-
-.edit-button {
-    margin-left: auto;
-}
-
-.save-playlist-btn {
-    background-color: #22cc3f;
-    color: white;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-.save-playlist-btn:hover {
-    background-color: #1e9e31;
-}
-</style>
+<script src="{{ url_for('static', filename='js/edit_playlist.js') }}"></script>
 {% endblock %}
