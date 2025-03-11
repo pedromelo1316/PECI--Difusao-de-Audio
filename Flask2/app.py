@@ -453,40 +453,6 @@ def update_column_name():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-'''
-corrigir isto dps
-
-@app.route("/get_columns", methods=["GET"])
-def get_columns():
-    columns = Nodes.query.all()
-    return jsonify([
-        {"id": column.id, "name": column.name, "zone_id": column.zone_id}
-        for column in columns
-    ])
-
-@app.route("/get_column", methods=["GET"])
-def get_column():
-    column_name = request.args.get("name")
-    column = Nodes.query.filter_by(name=column_name).first()
-    
-    if not column:
-        return jsonify({"error": "Coluna não encontrada"}), 404
-    
-    return jsonify({"id": column.id, "name": column.name, "zone_id": column.zone_id})
-
-@app.route("/get_zones", methods=["GET"])
-def get_zones():
-    zones = Areas.query.all()
-    return jsonify([
-        {"id": zone.id, "name": zone.name, "columns": [
-            {"id": col.id, "name": col.name} for col in Nodes.query.filter_by(zone_id=zone.id)
-        ]}
-        for zone in zones
-    ])
-
-'''     
-
-# ...existing code...
 @app.route('/edit_playlist/<playlist_name>', methods=['GET', 'POST'])
 def edit_playlist(playlist_name):
     if request.method == 'POST':
@@ -555,9 +521,26 @@ def delete_song(song_id):
 
 @app.route('/save_playlist/<playlist_name>', methods=['POST'])
 def save_playlist(playlist_name):
-    # In this simple case, changes are automatically committed as songs are added/removed.
-    # This endpoint exists to acknowledge that the user "saved" the playlist.
-    return jsonify({"success": True}), 200
+    data = request.get_json()
+    song_order = data.get('song_order')
+    if not song_order:
+        return jsonify({"error": "Ordem das músicas é obrigatória"}), 400
+
+    playlist = Playlist.query.filter_by(name=playlist_name).first()
+    if not playlist:
+        return jsonify({"error": "Playlist não encontrada"}), 404
+
+    try:
+        # Clear existing songs and add them in the new order
+        playlist.songs = []
+        for song_name in song_order:
+            song = Song.query.filter_by(name=song_name).first()
+            if song:
+                playlist.songs.append(song)
+        db.session.commit()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/delete_playlist/<playlist_name>', methods=['DELETE'])
 def delete_playlist(playlist_name):
@@ -602,9 +585,10 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         create_default_channels()
-    socketio.run(app, debug=False)
-
-    thread.join()
+        
+    # socketio.run(app, debug=True)
+    app.run(debug=True)
+    #thread.join()
 
 
 

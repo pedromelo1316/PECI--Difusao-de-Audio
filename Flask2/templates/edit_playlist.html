@@ -24,7 +24,7 @@
                 <h2>Playlist</h2>
                 <ul class="playlist-list" id="playlist-list">
                     {% for song in playlist_songs %}
-                    <li class="playlist-item">
+                    <li class="playlist-item" draggable="true" data-song="{{ song }}">
                         <span>{{ loop.index }}. {{ song }}</span>
                     </li>
                     {% endfor %}
@@ -98,16 +98,19 @@ function toggleSong(icon, songName, playlistName) {
                 const newIndex = playlistList.querySelectorAll('li').length + 1;
                 const li = document.createElement('li');
                 li.className = 'playlist-item';
+                li.draggable = true;
+                li.dataset.song = songName;
                 li.innerHTML = `<span>${newIndex}. ${songName}</span>`;
                 playlistList.appendChild(li);
             } else {
                 const items = playlistList.querySelectorAll('li');
                 items.forEach(item => {
-                    if (item.textContent.includes(songName)) {
+                    if (item.dataset.song === songName) {
                         playlistList.removeChild(item);
                     }
                 });
             }
+            updatePlaylistOrder();
         } else {
             alert('Erro ao atualizar a playlist.');
         }
@@ -115,8 +118,12 @@ function toggleSong(icon, songName, playlistName) {
 }
 
 function savePlaylist(playlistName) {
+    const playlistItems = document.querySelectorAll('#playlist-list .playlist-item');
+    const songOrder = Array.from(playlistItems).map(item => item.dataset.song);
     fetch(`/save_playlist/${playlistName}`, {
-        method: 'POST'
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ song_order: songOrder })
     })
     .then(res => {
         if (res.ok) {
@@ -128,6 +135,36 @@ function savePlaylist(playlistName) {
     })
     .catch(err => {
         alert("Erro ao guardar playlist.");
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const playlistList = document.getElementById('playlist-list');
+
+    let draggedItem = null;
+
+    playlistList.addEventListener('dragstart', (event) => {
+        draggedItem = event.target;
+        event.dataTransfer.effectAllowed = 'move';
+    });
+
+    playlistList.addEventListener('dragover', (event) => {
+        event.preventDefault();
+    });
+
+    playlistList.addEventListener('drop', (event) => {
+        event.preventDefault();
+        if (event.target.classList.contains('playlist-item') && draggedItem !== event.target) {
+            playlistList.insertBefore(draggedItem, event.target.nextSibling);
+            updatePlaylistOrder();
+        }
+    });
+});
+
+function updatePlaylistOrder() {
+    const playlistItems = document.querySelectorAll('#playlist-list .playlist-item');
+    playlistItems.forEach((item, index) => {
+        item.querySelector('span').textContent = `${index + 1}. ${item.dataset.song}`;
     });
 }
 </script>
