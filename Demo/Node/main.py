@@ -87,11 +87,11 @@ def wait_for_info(n, port=8081, stop_event=None):
                     volume = info["volume"] if info["volume"] is not None else None
                     _HEADER = info["header"] if info["header"] is not None else None
                     _HEADER = base64.b64decode(_HEADER) if _HEADER is not None else None
-                    print("Header:", _HEADER)
                     n.setChannel(channel)
                     n.setVolume(volume)
                     if _HEADER != HEADER:
                         HEADER = _HEADER
+                        print("Header:", _HEADER)
                         print("Header atualizado.")
                         if process is None:
                             process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -153,26 +153,27 @@ def udp_receiver(stop_event = None):
     try:
         while not stop_event.is_set():
             # Receber dados Opus via UDP
-            packet, addr = sock.recvfrom(CHUNCK_SIZE*MULTIPLICADOR + 5)  # Tamanho máximo de um pacote UDP
+            packet, addr = sock.recvfrom(CHUNCK_SIZE*MULTIPLICADOR + 2)  # Tamanho máximo de um pacote UDP
+
 
             if not process:
                 continue
 
-            if len(packet) < CHUNCK_SIZE*MULTIPLICADOR + 5:
-                print(f"Pacote incompleto recebido de {addr}")
-                continue
-
             # Desempacotar os 4 primeiros bytes para obter o canal
-            packet_channel = struct.unpack('!I', packet[0:4])[0]
+            packet_channel = packet[0]
+
             if channel != packet_channel:
                 continue
 
-            seq = packet[4]
+            seq = packet[1]
+
+            print(f"Recebido: {seq}")
+
             if last_seq is not None and seq != (last_seq + 1) % 256:
                 print(f"Esperado: {last_seq + 1}, recebido: {seq}")
             last_seq = seq
 
-            opus_data = packet[5:]
+            opus_data = packet[2:]
             
             # Enviar dados para o ffmpeg decodificar e reproduzir
             if process.poll() is not None:

@@ -8,8 +8,9 @@ import queue
 import time
 import socket
 import json
-
-
+import struct
+import os
+import base64
 
 
 app = Flask(__name__)
@@ -19,6 +20,126 @@ db = SQLAlchemy(app)
 socketio = SocketIO(app)
 
 
+BITRATE = "64k"  # max 256k
+SAMPLE_RATE = "48000"
+CHUNCK_SIZE = 960
+HEADER_SIZE = 300
+AUDIO_CHANNELS = "1"         # Mono
+MULTIPLICADOR = 20   # Ajuste conforme necessário max 65
+
+def start_ffmpeg_process(source, _type):
+    if _type == ChannelType.VOICE:
+        cmd = [
+            "ffmpeg",
+            "-hide_banner", "-loglevel", "error",
+            "-f", "alsa", "-i", source,
+            "-acodec", "libopus",
+            "-b:a", BITRATE,
+            "-ar", SAMPLE_RATE,
+            "-ac", AUDIO_CHANNELS,
+            "-f", "opus",
+            "pipe:1"
+        ]
+    elif _type == ChannelType.LOCAL:
+        playlist_path = f"Playlists/{source}.txt"
+        if not os.path.exists(playlist_path):
+            print(f"Playlist {playlist_path} not found")
+            return None
+
+        cmd = [
+            "ffmpeg",
+            "-hide_banner", "-loglevel", "error",
+            "-stream_loop", "-1",
+            "-f", "concat",          # Adicione esta linha
+            "-safe", "0",            # Permite caminhos absolutos/relativos
+            "-re",                   # Opcional (simula velocidade real)
+            "-i", f"Playlists/{source}.txt",
+            "-af", "apad",  # Preenche com silêncio entre as músicas
+            "-vn",
+            "-acodec", "libopus",
+            "-b:a", BITRATE,
+            "-ar", SAMPLE_RATE,
+            "-ac", AUDIO_CHANNELS,
+            "-packet_size", str(CHUNCK_SIZE), # Tamanho do pacote (ajuste conforme a rede)
+            "-f", "opus",
+            "pipe:1"
+        ]
+    elif _type == ChannelType.STREAMING:
+        return None
+    else:
+        return None
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=0)
+    return process
+
+def send_audio(port=8082, stop_event=None):
+    global start_time, channels_dict
+    MCAST_GRP = "224.1.1.1"
+    MCAST_PORT = port
+
+    count = 0
+    seq = 0
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    ttl = 2
+    sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
+
+    start_time = time.time()
+
+    try:
+        while not stop_event.is_set():
+            for channel in list(channels_dict.keys()):
+                if channels_dict[channel] is None:
+                    continue
+                process = channels_dict[channel]["process"]
+                if process:
+                    opus_data = process.stdout.read(CHUNCK_SIZE*MULTIPLICADOR)  # Ajuste o tamanho conforme necessário
+                    if not opus_data:
+                        break
+                    
+                    dados = bytes([channel]) + bytes([seq]) + opus_data
+                    sock.sendto(dados, (MCAST_GRP, MCAST_PORT))
+
+                    #print(f"\rEnviado: {seq}, velocidade: {(count*CHUNCK_SIZE*MULTIPLICADOR)*8/(time.time()-start_time)/1000000:.2f}Mbits/s", end="")
+                    count += 1
+                
+            seq = (seq + 1) % 256
+            print(f"\rEnviado: {seq}, velocidade: {(count*CHUNCK_SIZE*MULTIPLICADOR)*8/(time.time()-start_time)/1000000:.2f} Mbits/s", end="")
+
+    except KeyboardInterrupt:
+        print("Transmissão interrompida.")
+    finally:
+        sock.close()
+        for channel in list(channels_dict.keys()):
+            if channels_dict[channel]:
+                process = channels_dict[channel]["process"]
+                process.terminate()
+                process.wait()
+        print("Processes terminated")
+        stop_event.set()
+
+
+
+def change_channel_process(channel, source, transmission_type):
+    global channels_dict
+    if channel in channels_dict:
+        process = channels_dict[channel]["process"]
+        process.kill()
+        channels_dict[channel] = {"process": None, "header": None}
+        process = start_ffmpeg_process(source, transmission_type)
+        if process:
+            header = process.stdout.read(HEADER_SIZE)
+            channels_dict[channel] = {"process": process, "header": header}
+            send_info(Nodes.query.filter_by(channel_id=channel).all())
+        else:
+            channels_dict[channel] = None
+    else:
+        process = start_ffmpeg_process(source, transmission_type)
+        if process:
+            header = process.stdout.read(HEADER_SIZE)
+            channels_dict[channel] = {"process": process, "header": header}
+            send_info(Nodes.query.filter_by(channel_id=channel).all())
+        else:
+            channels_dict[channel] = None
 
 class Areas(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -49,17 +170,49 @@ class ChannelType(str, Enum):  # Enum to restrict allowed values
 class Channels(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.Enum(ChannelType), nullable=False)  # Enforce restriction
-
+    source = db.Column(db.String(200), nullable=True)
     def __repr__(self):
         return 
     
 def create_default_channels():
+    global channels_dict
+    channels_dict = {}
+    NUM_CHANNELS = 3  #max 256
     ##add channels if less than 3
-    if db.session.query(Channels).count() < 3:
+    if db.session.query(Channels).count() < NUM_CHANNELS:
         for channel in ChannelType:
-            new_channel = Channels(type=channel)
+            new_channel = Channels(type=channel, source="default")
             db.session.add(new_channel)
             db.session.commit()
+            channels_dict[new_channel.id] = None
+
+
+
+
+    for channel_id in range(1, NUM_CHANNELS+1):
+        channel = Channels.query.filter_by(id=channel_id).first()
+        transmission_type = channel.type
+        source = channel.source
+        process = start_ffmpeg_process(source, transmission_type)
+        if process:
+            channels_dict[channel_id] = {"process": process, "header": None}
+            #print(f"Channel {channel} started")
+        else:
+            channels_dict[channel_id] = None
+
+
+
+
+    for channel_id in channels_dict:
+        if channels_dict[channel_id]:
+            channel = Channels.query.filter_by(id=channel_id).first()
+            process = channels_dict[channel_id]["process"]
+            header = process.stdout.read(HEADER_SIZE)
+            channels_dict[channel_id]["header"] = header
+            _Areas = Areas.query.filter_by(channel_id=channel_id).all()
+            for area in _Areas:
+                send_info(Nodes.query.filter_by(area_id=area.id).all())
+            
 
 
 
@@ -102,6 +255,7 @@ def update(id):
     
 
 def send_info(nodes, removed=False):
+    channels_dict
     if not removed:
         dic = {}
         for node in nodes:
@@ -112,7 +266,9 @@ def send_info(nodes, removed=False):
             volume = area.volume if area else None
             channel = area.channel_id if area else None
 
-            dic[mac] = {"volume": volume, "channel": channel}
+            header = channels_dict[channel]["header"] if channel in channels_dict else None
+            header = base64.b64encode(header).decode('utf-8') if header is not None else None
+            dic[mac] = {"volume": volume, "channel": channel, "header": header}
     else:
         dic = {}
         for node in nodes:
@@ -391,6 +547,8 @@ def update_channel(channel_id):
         channel.type = ChannelType[new_type]  # Update the channel's type
         print(f"Channel {channel_id} updated to {new_type}")
         db.session.commit()  # Save the changes to the database
+        change_channel_process_thread = threading.Thread(target=change_channel_process, args=(int(channel), manage_db.get_channel_source(channel), transmission), daemon=True)
+        change_channel_process_thread.start()
         return redirect('/')
     except Exception as e:
         return redirect('/')
@@ -456,15 +614,20 @@ if __name__ == '__main__':
     stop_event = threading.Event()
     msg_buffer = queue.Queue()
 
-    thread = threading.Thread(target=detect_new_nodes, args=(stop_event, msg_buffer), daemon=True)
-    thread.start()
-
     with app.app_context():
         db.create_all()
         create_default_channels()
+
+    thread = threading.Thread(target=detect_new_nodes, args=(stop_event, msg_buffer), daemon=True)
+    thread.start()
+
+    # Thread do play_audio que aguarda as queues e envia pacotes a cada 0.5s
+    t_play = threading.Thread(target=send_audio, args=(8082, stop_event), daemon=True)
+    t_play.start()
     socketio.run(app, debug=False)
 
     thread.join()
+    t_play.join()
 
 
 

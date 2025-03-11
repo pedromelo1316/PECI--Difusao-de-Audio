@@ -22,7 +22,6 @@ def send_info(nodes, removed=False):
             node = manage_db.get_node_by_name(node)
             mac = node[2]
             area_id = node[3]
-            area = None
             volume = None
             channel = None
             area = manage_db.get_area_by_id(area_id) if area_id else None
@@ -561,12 +560,12 @@ def main(stdscr, stop_event, msg_buffer):
 
 # fiz alterações a partir de aqui
 
-BITRATE = "128K"
+BITRATE = "256k"  # max 256k
 SAMPLE_RATE = "48000"
 CHUNCK_SIZE = 960
 HEADER_SIZE = 300
 AUDIO_CHANNELS = "1"         # Mono
-MULTIPLICADOR = 20   # Ajuste conforme necessário max 65
+MULTIPLICADOR = 65   # Ajuste conforme necessário max 65
 
 
 LOCAL = 0
@@ -745,7 +744,7 @@ if __name__ == "__main__":
     stop_event = threading.Event()
 
     # Thread do menu (curses)
-    t_menu = threading.Thread(
+    '''t_menu = threading.Thread(
         target=curses.wrapper, 
         args=(lambda stdscr: main(stdscr, stop_event, msg_buffer),),
         daemon=True
@@ -753,7 +752,7 @@ if __name__ == "__main__":
 
 
 
-    t_menu.start()
+    t_menu.start()'''
 
 
     detect = threading.Thread(target=detect_new_nodes, args=(stop_event,msg_buffer), daemon=True)
