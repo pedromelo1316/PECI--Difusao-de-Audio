@@ -20,12 +20,12 @@ db = SQLAlchemy(app)
 socketio = SocketIO(app)
 
 
-BITRATE = "64k"  # max 256k
+BITRATE = "256k"  # max 256k
 SAMPLE_RATE = "48000"
 CHUNCK_SIZE = 960
 HEADER_SIZE = 300
 AUDIO_CHANNELS = "1"         # Mono
-MULTIPLICADOR = 20   # Ajuste conforme necessário max 65
+MULTIPLICADOR = 10   # Ajuste conforme necessário max 65
 
 def start_ffmpeg_process(source, _type):
     if _type == ChannelType.VOICE:
@@ -60,7 +60,6 @@ def start_ffmpeg_process(source, _type):
             "-b:a", BITRATE,
             "-ar", SAMPLE_RATE,
             "-ac", AUDIO_CHANNELS,
-            "-packet_size", str(CHUNCK_SIZE), # Tamanho do pacote (ajuste conforme a rede)
             "-f", "opus",
             "pipe:1"
         ]
@@ -87,6 +86,7 @@ def send_audio(port=8082, stop_event=None):
 
     try:
         while not stop_event.is_set():
+            t2 = time.time()
             for channel in list(channels_dict.keys()):
                 if channels_dict[channel] is None:
                     continue
@@ -99,7 +99,6 @@ def send_audio(port=8082, stop_event=None):
                     dados = bytes([channel]) + bytes([seq]) + opus_data
                     sock.sendto(dados, (MCAST_GRP, MCAST_PORT))
 
-                    #print(f"\rEnviado: {seq}, velocidade: {(count*CHUNCK_SIZE*MULTIPLICADOR)*8/(time.time()-start_time)/1000000:.2f}Mbits/s", end="")
                     count += 1
                 
             seq = (seq + 1) % 256

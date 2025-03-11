@@ -14,7 +14,7 @@ import struct
 MCAST_GRP = "224.1.1.1"
 MCAST_PORT = 8082
 
-MULTIPLICADOR = 20   # Ajuste conforme necessário max 65
+MULTIPLICADOR = 10   # Ajuste conforme necessário max 65
 
 FREQ = 48000
 CHUNCK_SIZE = 960
@@ -189,15 +189,13 @@ def udp_receiver(stop_event = None):
 
 def ffmpeg_reader(stop_event = None):
     global process
-    count = 0
     while not stop_event.is_set():
         if process:
-            count += 1
+            print(time.time())
             data = process.stdout.read(CHUNCK_SIZE*MULTIPLICADOR)
                 
             if not data:
                 break
-            stream.write(data)
 
     stream.stop_stream()
     stream.close()
