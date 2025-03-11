@@ -191,11 +191,12 @@ def ffmpeg_reader(stop_event = None):
     global process
     while not stop_event.is_set():
         if process:
-            print(time.time())
             data = process.stdout.read(CHUNCK_SIZE*MULTIPLICADOR)
                 
             if not data:
                 break
+
+            stream.write(data)
 
     stream.stop_stream()
     stream.close()
