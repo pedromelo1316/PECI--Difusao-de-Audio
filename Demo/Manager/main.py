@@ -650,7 +650,7 @@ def send_audio(port=8082, stop_event=None):
                     count += 1
                 
             seq = (seq + 1) % 256
-            #print(f"\rEnviado: {seq}, velocidade: {(count*CHUNCK_SIZE*MULTIPLICADOR)*8/(time.time()-start_time)/1000000:.2f}Mbits/s", end="")
+            print(f"\rEnviado: {seq}, velocidade: {(count*CHUNCK_SIZE*MULTIPLICADOR)*8/(time.time()-start_time)/1000000:.2f}Mbits/s", end="")
 
     except KeyboardInterrupt:
         print("Transmissão interrompida.")

@@ -20,12 +20,12 @@ db = SQLAlchemy(app)
 socketio = SocketIO(app)
 
 
-BITRATE = "256k"  # max 256k
+BITRATE = "64k"  # max 256k
 SAMPLE_RATE = "48000"
 CHUNCK_SIZE = 960
 HEADER_SIZE = 300
 AUDIO_CHANNELS = "1"         # Mono
-MULTIPLICADOR = 10   # Ajuste conforme necessário max 65
+MULTIPLICADOR = 65   # Ajuste conforme necessário max 65
 
 def start_ffmpeg_process(source, _type):
     if _type == ChannelType.VOICE:
@@ -67,7 +67,7 @@ def start_ffmpeg_process(source, _type):
         return None
     else:
         return None
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=0)
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=CHUNCK_SIZE*MULTIPLICADOR)
     return process
 
 def send_audio(port=8082, stop_event=None):
@@ -86,7 +86,7 @@ def send_audio(port=8082, stop_event=None):
 
     try:
         while not stop_event.is_set():
-            t2 = time.time()
+
             for channel in list(channels_dict.keys()):
                 if channels_dict[channel] is None:
                     continue
@@ -102,7 +102,7 @@ def send_audio(port=8082, stop_event=None):
                     count += 1
                 
             seq = (seq + 1) % 256
-            print(f"\rEnviado: {seq}, velocidade: {(count*CHUNCK_SIZE*MULTIPLICADOR)*8/(time.time()-start_time)/1000000:.2f} Mbits/s", end="")
+            print(f"\rEnviado: {seq}, velocidade: {(count*CHUNCK_SIZE)*8/(time.time()-start_time)/1000000:.2f} Mbits/s", end="")
 
     except KeyboardInterrupt:
         print("Transmissão interrompida.")

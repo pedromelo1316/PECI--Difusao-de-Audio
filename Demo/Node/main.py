@@ -14,7 +14,7 @@ import struct
 MCAST_GRP = "224.1.1.1"
 MCAST_PORT = 8082
 
-MULTIPLICADOR = 10   # Ajuste conforme necessário max 65
+MULTIPLICADOR = 65   # Ajuste conforme necessário max 65
 
 FREQ = 48000
 CHUNCK_SIZE = 960
