@@ -1,45 +1,76 @@
 import subprocess
 import signal
 import sys
+import threading
+import socket
+
+source = "default"
+BITRATE = "128k"
+CHANNELS = "2"
+
+multicast_addresses = ["rtp://239.255.0.1:12345", "rtp://239.255.0.2:12345", "rtp://239.255.0.3:12345"]
+sdp_files = ["session1.sdp", "session2.sdp", "session3.sdp"]
+
+def start_ffmpeg(index, addr, sdp_filename):
+    cmd = [
+        "ffmpeg",
+        "-stream_loop", "-1",
+        "-re",
+        #"-f", "concat",
+        #"-safe", "0",
+        "-i", f"Playlists/Songs/{index+2}.mp3",
+        "-af", "apad",
+        "-vn",
+        "-c:a", "libopus",
+        "-b:a", BITRATE,
+        "-f", "rtp",
+        "-ac", CHANNELS,
+        "-sdp_file", sdp_filename,
+        addr
+    ]
+    return subprocess.Popen(cmd)
+
+# Inicia 3 processos ffmpeg
+processes = []
+for i in range(3):
+    processes.append(start_ffmpeg(i, multicast_addresses[i], sdp_files[i]))
+
+def socket_server():
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(("", 9000))
+    server.listen(1)
+    print("Servidor SDP do emissor escutando na porta 9000")
+    while True:
+        conn, addr = server.accept()
+        try:
+            data = conn.recv(1024).decode().strip()
+            if data in ["1", "2", "3"]:
+                idx = int(data)-1
+                with open(sdp_files[idx], "r") as f:
+                    content = f.read()
+                conn.sendall(content.encode())
+            else:
+                conn.sendall(b"Selecao invalida.")
+        except Exception as ex:
+            print("Erro:", ex)
+        finally:
+            conn.close()
+
+server_thread = threading.Thread(target=socket_server, daemon=True)
+server_thread.start()
 
 def signal_handler(sig, frame):
-    print("Signal received, terminating process.")
-    process.terminate()
+    print("Signal recebido, terminando processos.")
+    for p in processes:
+        p.terminate()
     sys.exit(0)
 
-multicast_address = "rtp://239.255.0.1:12345"
-
-source = "default"    # Nome do arquivo de playlist
-INPUT_FILE = "default"  # Dispositivo de áudio padrão
-BITRATE = "128k"        # Ajuste conforme necessário
-SAMPLE_RATE = "48000"   # Opus recomenda 48kHz
-CHANNELS = "1"          # Mono
-CHUNCK_SIZE = 960     # Tamanho do pacote (ajuste conforme a rede)Z
-
-ffmpeg_cmd = [
-    "ffmpeg",
-    "-stream_loop", "-1",
-    #"-hide_banner", "-loglevel", "error",
-    "-re",                   # Simula tempo real
-    "-f", "concat",          # Utiliza o arquivo de concatenação
-    "-safe", "0",            # Permite caminhos absolutos/relativos
-    "-i", f"Playlists/{source}.txt",
-    "-af", "apad",           # Preenche com silêncio entre músicas
-    "-vn",                  # Sem vídeo
-    "-c:a", "libopus",      # Codec Opus
-    "-b:a", BITRATE,        # Bitrate (ex: 64k, 128k)
-    "-f", "rtp",             # Formato RTP
-    #"-ar", SAMPLE_RATE,     # Taxa de amostragem
-    "-ac", CHANNELS,        # Canais
-    "-sdp_file", "session.sdp",  # Gera arquivo SDP (opcional)
-    multicast_address        # Endereço multicast
-]
 signal.signal(signal.SIGINT, signal_handler)
-process = subprocess.Popen(ffmpeg_cmd)
 
 try:
-    process.wait()
+    for p in processes:
+        p.wait()
 except KeyboardInterrupt:
-    process.terminate()
-    process.wait()
-    print("Processo interrompido pelo usuário.")
+    for p in processes:
+        p.terminate()
+    sys.exit(0)
