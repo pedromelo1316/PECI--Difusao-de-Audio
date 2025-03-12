@@ -4,6 +4,7 @@ import sys
 
 sdp_file = "session.sdp"  # Usa o arquivo SDP gerado pelo emissor
 
+
 ffmpeg_cmd = [
     "ffmpeg",
     "-protocol_whitelist", "file,rtp,udp",  # Adicione 'file' aqui
