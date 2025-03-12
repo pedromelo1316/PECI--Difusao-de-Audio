@@ -1,4 +1,6 @@
 import subprocess
+import signal
+import sys
 
 sdp_file = "session.sdp"  # Usa o arquivo SDP gerado pelo emissor
 
@@ -18,7 +20,18 @@ player_cmd = [
     "-"
 ]
 
+def signal_handler(sig, frame):
+    print('Ctrl+C pressed, terminating processes...')
+    ffmpeg.terminate()
+    player.terminate()
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+
 ffmpeg = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
 player = subprocess.Popen(player_cmd, stdin=ffmpeg.stdout)
 
-player.communicate()
+try:
+    player.communicate()
+except KeyboardInterrupt:
+    signal_handler(None, None)

@@ -1,4 +1,6 @@
 import subprocess
+import signal
+import sys
 
 input_file = "audio.mp3"
 multicast_address = "rtp://239.255.0.1:12345"
@@ -13,4 +15,11 @@ ffmpeg_cmd = [
     multicast_address        # Endereço multicast
 ]
 
-subprocess.run(ffmpeg_cmd)
+process = subprocess.Popen(ffmpeg_cmd)
+
+try:
+    process.wait()
+except KeyboardInterrupt:
+    process.terminate()
+    process.wait()
+    print("Processo interrompido pelo usuário.")
