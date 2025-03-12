@@ -11,6 +11,8 @@ import json
 import struct
 import os
 import base64
+import signal
+import sys
 
 
 app = Flask(__name__)
@@ -186,7 +188,7 @@ def create_default_channels():
             channels_dict[new_channel.id] = None
 
 
-
+    '''
 
     for channel_id in range(1, NUM_CHANNELS+1):
         channel = Channels.query.filter_by(id=channel_id).first()
@@ -211,7 +213,7 @@ def create_default_channels():
             _Areas = Areas.query.filter_by(channel_id=channel_id).all()
             for area in _Areas:
                 send_info(Nodes.query.filter_by(area_id=area.id).all())
-            
+    ''' 
 
 
 
@@ -264,10 +266,11 @@ def send_info(nodes, removed=False):
             
             volume = area.volume if area else None
             channel = area.channel_id if area else None
-
+            '''
             header = channels_dict[channel]["header"] if channel in channels_dict else None
-            header = base64.b64encode(header).decode('utf-8') if header is not None else None
-            dic[mac] = {"volume": volume, "channel": channel, "header": header}
+            header = base64.b64encode(header).decode('utf-8') if header is not None else None'
+            '''
+            dic[mac] = {"volume": volume, "channel": channel} # "header": header
     else:
         dic = {}
         for node in nodes:
@@ -576,38 +579,31 @@ def update_area_channel():
         return redirect('/')
 
 
-'''
-corrigir isto dps
+def shutdown_handler(signum, frame):
+        """Handles Ctrl+C (SIGINT) and ensures a clean shutdown."""
+        print("\nShutting down gracefully...")
 
-@app.route("/get_columns", methods=["GET"])
-def get_columns():
-    columns = Nodes.query.all()
-    return jsonify([
-        {"id": column.id, "name": column.name, "zone_id": column.zone_id}
-        for column in columns
-    ])
+        # Set the stop event to signal threads to stop
+        stop_event.set()
 
-@app.route("/get_column", methods=["GET"])
-def get_column():
-    column_name = request.args.get("name")
-    column = Nodes.query.filter_by(name=column_name).first()
+        # Wait for threads to exit
+        thread.join()
+        #t_play.join()
+
+        # Kill subprocesses
+        with app.app_context():
+            for channel_id in channels_dict:
+                if channels_dict[channel_id]:
+                    process = channels_dict[channel_id]["process"]
+                    process.terminate()
+                    process.wait()
+            print("Processes terminated")
+
+        sys.exit(0)  # Exit program cleanly
+
+    # Bind SIGINT (Ctrl+C) to shutdown_handler
     
-    if not column:
-        return jsonify({"error": "Coluna não encontrada"}), 404
-    
-    return jsonify({"id": column.id, "name": column.name, "zone_id": column.zone_id})
 
-@app.route("/get_zones", methods=["GET"])
-def get_zones():
-    zones = Areas.query.all()
-    return jsonify([
-        {"id": zone.id, "name": zone.name, "columns": [
-            {"id": col.id, "name": col.name} for col in Nodes.query.filter_by(zone_id=zone.id)
-        ]}
-        for zone in zones
-    ])
-
-'''     
 
 if __name__ == '__main__':
     stop_event = threading.Event()
@@ -621,12 +617,14 @@ if __name__ == '__main__':
     thread.start()
 
     # Thread do play_audio que aguarda as queues e envia pacotes a cada 0.5s
-    t_play = threading.Thread(target=send_audio, args=(8082, stop_event), daemon=True)
-    t_play.start()
+    #t_play = threading.Thread(target=send_audio, args=(8082, stop_event), daemon=True)
+    
+    #t_play.start()
     socketio.run(app, debug=False)
 
-    thread.join()
-    t_play.join()
+    signal.signal(signal.SIGINT, shutdown_handler)
+
+    #with control c to quit
 
 
 
