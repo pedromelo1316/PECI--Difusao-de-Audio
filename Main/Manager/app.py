@@ -22,7 +22,7 @@ db = SQLAlchemy(app)
 socketio = SocketIO(app)
 
 
-BITRATE = "64K"  # max 256k
+BITRATE = "256k"  # max 256k
 SAMPLE_RATE = "48000"
 CHUNCK_SIZE = 960
 AUDIO_CHANNELS = "1"         # Mono
