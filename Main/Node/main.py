@@ -34,8 +34,8 @@ def play_audio(sdp_file):
     print("Playing audio stream... from", sdp_file)
     ffmpeg_cmd = [
         "ffmpeg",
-        "-hide_banner",
-        "-loglevel", "error",
+        #"-hide_banner",
+        #"-loglevel", "error",
         "-protocol_whitelist", "file,rtp,udp",
         "-i", sdp_file,
         "-c:a", "pcm_s16le",
@@ -45,8 +45,8 @@ def play_audio(sdp_file):
 
     player_cmd = [
         "ffplay",
-        "-hide_banner",
-        "-loglevel", "error",
+        #"-hide_banner",
+        #"-loglevel", "error",
         "-nodisp",
         "-autoexit",
         "-"
