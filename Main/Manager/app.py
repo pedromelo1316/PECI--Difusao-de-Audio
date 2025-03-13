@@ -25,11 +25,18 @@ socketio = SocketIO(app)
 BITRATE = "64k"  # max 256k
 SAMPLE_RATE = "48000"
 CHUNCK_SIZE = 960
-HEADER_SIZE = 300
 AUDIO_CHANNELS = "1"         # Mono
-MULTIPLICADOR = 65   # Ajuste conforme necessário max 65
 
-def start_ffmpeg_process(source, _type):
+NUM_CHANNELS = 3
+
+
+def start_ffmpeg_process(channel, source, _type):
+    
+    multicast_address = f"rtp://239.255.0.{channel+1}:12345"
+    print(f"session_{channel}.sdp")
+    print("source: ", source)
+    print("type: ", _type)
+    
     if _type == ChannelType.VOICE:
         cmd = [
             "ffmpeg",
@@ -37,10 +44,11 @@ def start_ffmpeg_process(source, _type):
             "-f", "alsa", "-i", source,
             "-acodec", "libopus",
             "-b:a", BITRATE,
-            "-ar", SAMPLE_RATE,
+            #"-ar", SAMPLE_RATE,
             "-ac", AUDIO_CHANNELS,
-            "-f", "opus",
-            "pipe:1"
+            "-f", "rtp",
+            "-sdp_file", f"session_{channel}.sdp",
+            multicast_address
         ]
     elif _type == ChannelType.LOCAL:
         playlist_path = f"Playlists/{source}.txt"
@@ -60,87 +68,46 @@ def start_ffmpeg_process(source, _type):
             "-vn",
             "-acodec", "libopus",
             "-b:a", BITRATE,
-            "-ar", SAMPLE_RATE,
+            #"-ar", SAMPLE_RATE,
             "-ac", AUDIO_CHANNELS,
-            "-f", "opus",
-            "pipe:1"
+            "-f", "rtp",
+            "-sdp_file", f"session_{channel}.sdp",
+            multicast_address
         ]
     elif _type == ChannelType.STREAMING:
         return None
     else:
         return None
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=CHUNCK_SIZE*MULTIPLICADOR)
+    process = subprocess.Popen(cmd)
     return process
 
-def send_audio(port=8082, stop_event=None):
-    global start_time, channels_dict
-    MCAST_GRP = "224.1.1.1"
-    MCAST_PORT = port
 
-    count = 0
-    seq = 0
-
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-    ttl = 2
-    sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
-
-    start_time = time.time()
-
-    try:
-        while not stop_event.is_set():
-
-            for channel in list(channels_dict.keys()):
-                if channels_dict[channel] is None:
-                    continue
-                process = channels_dict[channel]["process"]
-                if process:
-                    opus_data = process.stdout.read(CHUNCK_SIZE*MULTIPLICADOR)  # Ajuste o tamanho conforme necessário
-                    if not opus_data:
-                        break
-                    
-                    dados = bytes([channel]) + bytes([seq]) + opus_data
-                    sock.sendto(dados, (MCAST_GRP, MCAST_PORT))
-
-                    count += 1
-                
-            seq = (seq + 1) % 256
-            print(f"\rEnviado: {seq}, velocidade: {(count*CHUNCK_SIZE)*8/(time.time()-start_time)/1000000:.2f} Mbits/s", end="")
-
-    except KeyboardInterrupt:
-        print("Transmissão interrompida.")
-    finally:
-        sock.close()
-        for channel in list(channels_dict.keys()):
-            if channels_dict[channel]:
-                process = channels_dict[channel]["process"]
-                process.terminate()
-                process.wait()
-        print("Processes terminated")
-        stop_event.set()
 
 
 
 def change_channel_process(channel, source, transmission_type):
-    global channels_dict
-    if channel in channels_dict:
-        process = channels_dict[channel]["process"]
-        process.kill()
-        channels_dict[channel] = {"process": None, "header": None}
-        process = start_ffmpeg_process(source, transmission_type)
-        if process:
-            header = process.stdout.read(HEADER_SIZE)
-            channels_dict[channel] = {"process": process, "header": header}
-            send_info(Nodes.query.filter_by(channel_id=channel).all())
-        else:
-            channels_dict[channel] = None
+    
+    
+    global processes
+    
+    print("Changing channel...")
+    
+    if processes[channel]:
+        processes[channel].terminate()
+        processes[channel].wait()
+        processes[channel] = None
+        
+    process = start_ffmpeg_process(channel, source, transmission_type)
+    if process:
+        processes[channel] = process
     else:
-        process = start_ffmpeg_process(source, transmission_type)
-        if process:
-            header = process.stdout.read(HEADER_SIZE)
-            channels_dict[channel] = {"process": process, "header": header}
-            send_info(Nodes.query.filter_by(channel_id=channel).all())
-        else:
-            channels_dict[channel] = None
+        processes[channel] = None
+        
+        
+    send_info(Nodes.query.filter_by(area_id=channel+1).all())
+    
+    
+    
 
 class Areas(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -176,44 +143,24 @@ class Channels(db.Model):
         return 
     
 def create_default_channels():
-    global channels_dict
-    channels_dict = {}
-    NUM_CHANNELS = 3  #max 256
+    global proocesses, NUM_CHANNELS
+    processes = [None] * NUM_CHANNELS
     ##add channels if less than 3
     if db.session.query(Channels).count() < NUM_CHANNELS:
-        for channel in ChannelType:
-            new_channel = Channels(type=channel, source="default")
+        for i in range(NUM_CHANNELS):
+            new_channel = Channels(type=ChannelType.LOCAL, source="default")
             db.session.add(new_channel)
             db.session.commit()
-            channels_dict[new_channel.id] = None
+            processes[i] = start_ffmpeg_process(i, "default", ChannelType.LOCAL)
+            print(f"Channel {i} started")
+    else:
+        for channel in db.session.query(Channels).all():
+            index = channel.id - 1
+            processes[index] = start_ffmpeg_process(index, channel.source, channel.type)
+            print(f"Channel {channel.id} started")
+            
+    return processes
 
-
-    '''
-
-    for channel_id in range(1, NUM_CHANNELS+1):
-        channel = Channels.query.filter_by(id=channel_id).first()
-        transmission_type = channel.type
-        source = channel.source
-        process = start_ffmpeg_process(source, transmission_type)
-        if process:
-            channels_dict[channel_id] = {"process": process, "header": None}
-            #print(f"Channel {channel} started")
-        else:
-            channels_dict[channel_id] = None
-
-
-
-
-    for channel_id in channels_dict:
-        if channels_dict[channel_id]:
-            channel = Channels.query.filter_by(id=channel_id).first()
-            process = channels_dict[channel_id]["process"]
-            header = process.stdout.read(HEADER_SIZE)
-            channels_dict[channel_id]["header"] = header
-            _Areas = Areas.query.filter_by(channel_id=channel_id).all()
-            for area in _Areas:
-                send_info(Nodes.query.filter_by(area_id=area.id).all())
-    ''' 
 
 
 
@@ -256,7 +203,6 @@ def update(id):
     
 
 def send_info(nodes, removed=False):
-    channels_dict
     if not removed:
         dic = {}
         for node in nodes:
@@ -266,16 +212,22 @@ def send_info(nodes, removed=False):
             
             volume = area.volume if area else None
             channel = area.channel_id if area else None
-            '''
-            header = channels_dict[channel]["header"] if channel in channels_dict else None
-            header = base64.b64encode(header).decode('utf-8') if header is not None else None'
-            '''
-            dic[mac] = {"volume": volume, "channel": channel} # "header": header
+            header = None
+            
+            
+            if channel:
+                file = open(f"session_{channel-1}.sdp", "r")
+                header = file.read()
+                file.close()
+            
+            dic[mac] = {"volume": volume, "channel": channel, "header": header} 
     else:
         dic = {}
         for node in nodes:
             mac = node.mac
             dic[mac] = {"removed": True}
+            
+    
 
     msg = json.dumps(dic)
 
@@ -293,6 +245,7 @@ def detect_new_nodes(stop_event, msg_buffer):
         server_socket.bind(('0.0.0.0', 8080))
         msg_buffer.put("Detection started")
         while not stop_event.is_set():
+            print("Waiting for data...")
             data, addr = server_socket.recvfrom(1024)
             data = data.decode('utf-8')
             if data:
@@ -527,10 +480,6 @@ def remove_column_from_zone():
       
  
 
-
-
-
-
 @app.route('/update_channel/<int:channel_id>', methods=['POST'])
 def update_channel(channel_id):
     # Get the selected type from the form submission
@@ -592,11 +541,11 @@ def shutdown_handler(signum, frame):
 
         # Kill subprocesses
         with app.app_context():
-            for channel_id in channels_dict:
+            '''for channel_id in channels_dict:
                 if channels_dict[channel_id]:
                     process = channels_dict[channel_id]["process"]
                     process.terminate()
-                    process.wait()
+                    process.wait()'''
             print("Processes terminated")
 
         sys.exit(0)  # Exit program cleanly
@@ -615,11 +564,7 @@ if __name__ == '__main__':
 
     thread = threading.Thread(target=detect_new_nodes, args=(stop_event, msg_buffer), daemon=True)
     thread.start()
-
-    # Thread do play_audio que aguarda as queues e envia pacotes a cada 0.5s
-    #t_play = threading.Thread(target=send_audio, args=(8082, stop_event), daemon=True)
     
-    #t_play.start()
     socketio.run(app, debug=False)
 
     signal.signal(signal.SIGINT, shutdown_handler)

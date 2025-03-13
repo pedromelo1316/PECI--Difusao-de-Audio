@@ -14,7 +14,7 @@ NUM_CHANNELS = 3
 
 def start_ffmpeg(index):
     
-    multicast_addresses = f"rtp://239.255.0.{index+1}:12345"
+    multicast_address = f"rtp://239.255.0.{index+1}:12345"
     sdp_filename = f"session{index+1}.sdp"
     
     cmd = [
@@ -29,7 +29,7 @@ def start_ffmpeg(index):
         "-f", "rtp",
         "-ac", CHANNELS,
         "-sdp_file", sdp_filename,
-        multicast_addresses
+        multicast_address
     ]
     return subprocess.Popen(cmd)
 

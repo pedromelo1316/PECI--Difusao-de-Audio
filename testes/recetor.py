@@ -75,6 +75,7 @@ def main():
 
     sdp_file = request_sdp(channel)
     play_audio(sdp_file)
+    print("Playback finished.")
 
 if __name__ == "__main__":
     main()
