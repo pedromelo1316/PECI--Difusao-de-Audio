@@ -96,11 +96,6 @@ def wait_for_info(n, port=8081, stop_event=None):
                         sync_time = info.get("sync_time", None)
                         with open("session_received.sdp", "w") as f:
                             f.write(HEADER)
-                        if sync_time:
-                            delay = sync_time - time.time()
-                            if delay > 0:
-                                print("Waiting for sync delay:", delay)
-                                time.sleep(delay)
                                 
                         if ffmpeg is None and player is None:
                             play_thread = threading.Thread(target=play_audio, args=("session_received.sdp",))
