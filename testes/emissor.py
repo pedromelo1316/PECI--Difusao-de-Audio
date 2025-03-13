@@ -1,83 +1,85 @@
 import subprocess
+import signal
+import sys
 import socket
+import os
 import time
-import struct
 
-# Configurações do multicast
-MCAST_GRP = "224.1.1.1"
-MCAST_PORT = 5005
+source = "default"
+BITRATE = "256k"
+CHANNELS = "1"
 
-# Configurações do FFmpeg
-source = "default"    # Nome do arquivo de playlist
-INPUT_FILE = "default"  # Dispositivo de áudio padrão
-BITRATE = "64k"        # Ajuste conforme necessário
-SAMPLE_RATE = "48000"   # Opus recomenda 48kHz
-CHANNELS = "1"          # Mono
-CHUNCK_SIZE = 960     # Tamanho do pacote (ajuste conforme a rede)
-MULTIPLICADOR = 20   # Ajuste conforme necessário max 65
+NUM_CHANNELS = 3
 
 
-# Configurar socket UDP multicast
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
+def start_ffmpeg(index):
+    
+    multicast_addresses = f"rtp://239.255.0.{index+1}:12345"
+    sdp_filename = f"session{index+1}.sdp"
+    
+    cmd = [
+        "ffmpeg",
+        "-stream_loop", "-1",
+        "-re",
+        "-i", f"Playlists/Songs/{index+2}.mp3",
+        "-af", "apad",
+        "-vn",
+        "-c:a", "libopus",
+        "-b:a", BITRATE,
+        "-f", "rtp",
+        "-ac", CHANNELS,
+        "-sdp_file", sdp_filename,
+        multicast_addresses
+    ]
+    return subprocess.Popen(cmd)
 
-# Comando FFmpeg para codificar em Opus e enviar para stdout
-ffmpeg_command = [
-    "ffmpeg",
-    "-stream_loop", "-1",
-    "-hide_banner", "-loglevel", "error",
-    "-re",                   # Simula tempo real
-    "-f", "concat",          # Utiliza o arquivo de concatenação
-    "-safe", "0",            # Permite caminhos absolutos/relativos
-    "-i", f"Playlists/{source}.txt",
-    "-af", "apad",           # Preenche com silêncio entre músicas
-    "-vn",                  # Sem vídeo
-    "-c:a", "libopus",      # Codec Opus
-    "-b:a", BITRATE,        # Bitrate (ex: 64k, 128k)
-    "-ar", SAMPLE_RATE,     # Taxa de amostragem
-    "-ac", CHANNELS,        # Canais
-    "-f", "opus",           # Formato de saída: Opus bruto
-    "-packet_size", str(CHUNCK_SIZE), # Tamanho do pacote (ajuste conforme a rede)
-    "pipe:1"                # Saída para stdout
-]
+# Start 3 ffmpeg processes
+processes = []
+for i in range(NUM_CHANNELS):
+    processes.append(start_ffmpeg(i))
 
-print("Codificando áudio com FFmpeg e enviando via multicast...")
+def udp_server():
+    server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    server.bind(("", 9000))  # Bind to port 9000 for UDP
+    print("SDP server listening on port 9000 (UDP)")
 
+    while True:
+        try:
+            data, addr = server.recvfrom(1024)
+            message = data.decode().strip()
+            if message.startswith("hello"):
+                channel = message.split()[1]
+                if channel in ["1", "2", "3"]:
+                    sdp_file = f"session{channel}.sdp"
+                    with open(sdp_file, "r") as f:
+                        content = f.read()
+                    server.sendto(content.encode(), addr)
+                    print(f"SDP file sent to {addr}")
+                else:
+                    server.sendto(b"Invalid channel.", addr)
+            else:
+                server.sendto(b"Invalid request.", addr)
+        except Exception as ex:
+            print("Error:", ex)
 
-processes = {}
+def signal_handler(sig, frame):
+    print("Signal received, terminating processes.")
+    for p in processes:
+        p.terminate()
+    sys.exit(0)
 
-NUM_PROCESSES = 3
+signal.signal(signal.SIGINT, signal_handler)
 
-
-for i in range(NUM_PROCESSES):
-    processes[i] = subprocess.Popen(ffmpeg_command, stdout=subprocess.PIPE, bufsize=CHUNCK_SIZE*MULTIPLICADOR)
-
-# Executar FFmpeg e ler a saída
-
-seq = 0
-count = 0
-start_time = time.time()
+# Start the UDP server in the main thread
+udp_server()
 
 try:
-    while True:
-        for i in range(NUM_PROCESSES):
-            # Ler dados codificados em Opus do stdout do FFmpeg
-            opus_data = processes[i].stdout.read(CHUNCK_SIZE*MULTIPLICADOR)  # Ajuste o tamanho conforme necessário
-            if not opus_data:
-                break
-            
-            dados = struct.pack('!I', i) + struct.pack('!B', seq) + opus_data
-            sock.sendto(dados, (MCAST_GRP, MCAST_PORT))
-
-            print(f"\rEnviado: {seq}, velocidade: {(count*CHUNCK_SIZE*MULTIPLICADOR)*8/(time.time()-start_time)/1000000:.2f}Mbits/s", end="")
-            count += 1
-
-        seq = (seq + 1)%256
-        
+    for p in processes:
+        p.wait()
 except KeyboardInterrupt:
-    print("Transmissão interrompida.")
-finally:
-    sock.close()
-    for i in range(3):
-        processes[i].terminate()
-        processes[i].wait()
+    for p in processes:
+        p.terminate()
+    time.sleep(0.5)
+    sys.exit(0)

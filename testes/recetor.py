@@ -1,100 +1,80 @@
 import subprocess
+import signal
+import sys
 import socket
-import pyaudio
-import threading  # Adicionado threading
-import struct       # Adicionado
+import time
 
-# Configurações do multicast
-MCAST_GRP = "224.1.1.1"
-MCAST_PORT = 5005
+PORT = 9000  # SDP server port
 
-MULTIPLICADOR = 20   # Ajuste conforme necessário max 65
+def request_sdp(channel):
+    """Requests the SDP file from the server."""
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    client_socket.settimeout(5)
 
-# Configurar socket UDP multicast
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 0)
-sock.bind(("", MCAST_PORT))
+    request_message = f"hello {channel}"
 
-# Entrar no grupo multicast
-mreq = socket.inet_aton(MCAST_GRP) + socket.inet_aton("0.0.0.0")
-sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+    for _ in range(5):  # Retry 5 times if no response
+        client_socket.sendto(request_message.encode(), ('<broadcast>', PORT))
+        print(f"Requesting SDP for channel {channel}...")
 
-FREQ = 48000
-CHUNCK_SIZE = 960
+        try:
+            data, addr = client_socket.recvfrom(4096)
+            sdp_content = data.decode()
+            with open("session_received.sdp", "w") as f:
+                f.write(sdp_content)
+            print(f"SDP received from {addr}")
+            return "session_received.sdp"
+        except socket.timeout:
+            print("No response from server, retrying...")
+    
+    print("Failed to obtain SDP.")
+    sys.exit(1)
 
-p_instance = pyaudio.PyAudio()
-stream = p_instance.open(format=pyaudio.paInt16,
-                         channels=1,
-                         rate=int(FREQ),  # Taxa de amostragem do Opus
-                         output=True,
-                         frames_per_buffer=CHUNCK_SIZE*MULTIPLICADOR)
+def play_audio(sdp_file):
+    """Plays the RTP audio stream using FFmpeg."""
+    print("Playing audio stream... from", sdp_file)
+    ffmpeg_cmd = [
+        "ffmpeg",
+        "-protocol_whitelist", "file,rtp,udp",
+        "-i", sdp_file,
+        "-c:a", "pcm_s16le",
+        "-f", "wav",
+        "pipe:1"
+    ]
 
-# Comando FFmpeg para decodificar Opus e reproduzir áudio
-ffmpeg_cmd = [
-    "ffmpeg",
-    "-hide_banner",
-    "-loglevel", "error",
-    # Configurações de entrada
-    "-f", "ogg",
-    "-i", "pipe:0",
-    # Configurações de saída
-    "-f", "s16le",
-    "-acodec", "pcm_s16le",
-    "-ar", str(FREQ),
-    "-ac", "1",
-    "pipe:1"
-]
-# Alterado para capturar a saída do ffmpeg
-ffmpeg_proc = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    player_cmd = [
+        "ffplay",
+        "-nodisp",
+        "-autoexit",
+        "-"
+    ]
 
-def ffmpeg_reader():
-    while True:
-        data = ffmpeg_proc.stdout.read(CHUNCK_SIZE*MULTIPLICADOR)
-        if not data:
-            break
-        stream.write(data)
+    def signal_handler(sig, frame):
+        print('Ctrl+C pressed, terminating processes...')
+        ffmpeg.terminate()
+        player.terminate()
+        time.sleep(0.5)
+        sys.exit(0)
 
-# Iniciar thread para ler do ffmpeg e enviar para a stream
-reader_thread = threading.Thread(target=ffmpeg_reader, daemon=True)
-reader_thread.start()
+    signal.signal(signal.SIGINT, signal_handler)
 
-channel = 0
-seq = None
-last_seq = None
-try:
-    while True:
-        # Receber dados Opus via UDP
-        packet, addr = sock.recvfrom(CHUNCK_SIZE*MULTIPLICADOR + 5)  # Tamanho máximo de um pacote UDP
+    ffmpeg = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
+    player = subprocess.Popen(player_cmd, stdin=ffmpeg.stdout)
 
-        # Desempacotar os 4 primeiros bytes para obter o canal
-        packet_channel = struct.unpack('!I', packet[0:4])[0]
+    try:
+        player.communicate()
+    except KeyboardInterrupt:
+        signal_handler(None, None)
 
-        print(packet_channel)
+def main():
+    channel = input("Choose channel (1, 2, or 3): ").strip()
+    if channel not in ["1", "2", "3"]:
+        print("Invalid channel!")
+        sys.exit(1)
 
-        if channel != packet_channel:
-            continue
+    sdp_file = request_sdp(channel)
+    play_audio(sdp_file)
 
-        
-
-        seq = packet[4]
-        if last_seq is not None and seq != (last_seq + 1) % 256:
-            print(f"Esperado: {last_seq + 1}, recebido: {seq}")
-        last_seq = seq
-
-        opus_data = packet[5:]
-        
-        # Enviar dados para o ffmpeg decodificar e reproduzir
-        if ffmpeg_proc.poll() is not None:
-            print("ffmpeg terminou")
-            break
-        ffmpeg_proc.stdin.write(opus_data)
-        
-except KeyboardInterrupt:
-    print("Recepção interrompida.")
-finally:
-    ffmpeg_proc.terminate()
-    reader_thread.join(timeout=1)
-    stream.stop_stream()
-    stream.close()
-    p_instance.terminate()
-    sock.close()
+if __name__ == "__main__":
+    main()

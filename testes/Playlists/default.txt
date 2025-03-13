@@ -1,1 +1,3 @@
-file audio.wav
+file Songs/2.mp3
+file Songs/3.mp3
+file Songs/4.mp3
