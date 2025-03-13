@@ -24,7 +24,7 @@ socketio = SocketIO(app)
 
 BITRATE = "256k"  # max 256k
 SAMPLE_RATE = "48000"
-CHUNCK_SIZE = 960
+CHUNK_SIZE = 1200
 AUDIO_CHANNELS = "1"         # Mono
 
 NUM_CHANNELS = 3
@@ -46,6 +46,8 @@ def start_ffmpeg_process(channel, source, _type):
             "-b:a", BITRATE,
             #"-ar", SAMPLE_RATE,
             "-ac", AUDIO_CHANNELS,
+            #"-frame_duration", "40",
+            #"-packet_size", str(CHUNK_SIZE),
             "-f", "rtp",
             "-sdp_file", f"session_{channel}.sdp",
             multicast_address
@@ -70,6 +72,8 @@ def start_ffmpeg_process(channel, source, _type):
             "-b:a", BITRATE,
             #"-ar", SAMPLE_RATE,
             "-ac", AUDIO_CHANNELS,
+            #"-frame_duration", "40",
+            #"-packet_size", str(CHUNK_SIZE),
             "-f", "rtp",
             "-sdp_file", f"session_{channel}.sdp",
             multicast_address
@@ -221,7 +225,7 @@ def send_info(nodes, removed=False):
                 file.close()
             
             # Agrega o tempo para sincronização (por exemplo, 2 segundos no futuro)
-            sync_time = time.time() + 2
+            sync_time = time.time()
             dic[mac] = {"volume": volume, "channel": channel, "header": header, "sync_time": sync_time} 
     else:
         dic = {}
