@@ -309,6 +309,9 @@ def rename_node(id):
         node = Nodes.query.get_or_404(id)
         node.name = new_name
         db.session.commit()
+
+        socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
+
         return redirect('/')
     
     except Exception as e:
@@ -330,6 +333,9 @@ def add_area():
         new_area = Areas(name=area_name, volume=50)  # Volume = 50%, Canal 1 como padrão
         db.session.add(new_area)
         db.session.commit()
+
+        socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
+
 
         return jsonify({"success": True, "id": new_area.id, "name": new_area.name}), 200
     except Exception as e:
@@ -363,6 +369,9 @@ def remove_area():
 
         send_info(nodes_in_area)
         flash(f"Area {area_name} removed", "success")
+        
+        socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
+
         return redirect('/')
     except Exception as e:
         flash(str(e), "error")
@@ -385,6 +394,10 @@ def update_volume():
         print(f"Volume updated to {new_volume} for area {area_name}")
         db.session.commit()
         send_info(Nodes.query.filter_by(area_id=area.id).all())
+
+        print(area.volume)
+
+
         return redirect('/')
     except Exception as e:
         
@@ -416,6 +429,9 @@ def associate_node():
     # Associar o nó à zona
     node.area_id = area.id
     db.session.commit()
+
+    socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
+
 
     return jsonify({"success": True})
 
@@ -450,6 +466,9 @@ def add_column_to_zone():
     db.session.commit()
     send_info([column])
 
+    socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
+
+
     return jsonify({"success": "Coluna associada com sucesso!"}), 200
 
 
@@ -478,6 +497,9 @@ def remove_column_from_zone():
         db.session.commit()
         send_info([column])
         print(f"Column {column_name} removed from zone {zone_name}")
+
+        socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
+
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -505,8 +527,14 @@ def update_channel(channel_id):
         db.session.commit()  # Save the changes to the database
         change_channel_process_thread = threading.Thread(target=change_channel_process, args=(int(channel), manage_db.get_channel_source(channel), transmission), daemon=True)
         change_channel_process_thread.start()
+
+        socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
+
         return redirect('/')
     except Exception as e:
+
+        socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
+
         return redirect('/')
 
 
@@ -527,9 +555,15 @@ def update_area_channel():
         print(f"Channel updated to {new_channel_id} for area {area_name}")
         db.session.commit()
         send_info(Nodes.query.filter_by(area_id=area.id).all())
+
+        socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
+
         return redirect('/')
     except Exception as e:
         flash(str(e), "error")
+
+        socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
+
         return redirect('/')
 
 
