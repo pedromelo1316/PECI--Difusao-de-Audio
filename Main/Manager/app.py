@@ -224,9 +224,7 @@ def send_info(nodes, removed=False):
                 header = file.read()
                 file.close()
             
-            # Agrega o tempo para sincronização (por exemplo, 2 segundos no futuro)
-            sync_time = time.time()
-            dic[mac] = {"volume": volume, "channel": channel, "header": header, "sync_time": sync_time} 
+            dic[mac] = {"volume": volume, "channel": channel, "header": header} 
     else:
         dic = {}
         for node in nodes:

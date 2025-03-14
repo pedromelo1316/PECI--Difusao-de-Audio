@@ -93,12 +93,6 @@ def wait_for_info(n, port=8081, stop_event=None):
                     n.setVolume(volume)
                     if _HEADER != HEADER:
                         HEADER = _HEADER
-                        sync_time = info.get("sync_time", None)
-                        if sync_time:
-                            delay = sync_time - time.time()
-                            if delay > 0:
-                                print("Waiting for sync delay:", delay)
-                                time.sleep(delay)
                         with open("session_received.sdp", "w") as f:
                             f.write(HEADER)
                             
