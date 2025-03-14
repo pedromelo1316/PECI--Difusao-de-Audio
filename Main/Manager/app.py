@@ -297,6 +297,7 @@ def detect_new_nodes(stop_event, msg_buffer):
                 with app.app_context():
                     node = db.session.query(Nodes).filter(Nodes.mac == node_mac).first()
                     send_info([node])
+                    socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
 
 
 
@@ -555,7 +556,16 @@ def shutdown_handler(signum, frame):
         sys.exit(0)  # Exit program cleanly
 
     # Bind SIGINT (Ctrl+C) to shutdown_handler
-    
+
+def get_host_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))  # Connect to an external server
+        ip = s.getsockname()[0]  # Get the local IP
+        s.close()
+        return ip
+    except Exception as e:
+        return f"Error: {e}"
 
 
 if __name__ == '__main__':
@@ -569,7 +579,7 @@ if __name__ == '__main__':
     thread = threading.Thread(target=detect_new_nodes, args=(stop_event, msg_buffer), daemon=True)
     thread.start()
     
-    socketio.run(app, debug=False)
+    socketio.run(app,host=get_host_ip(), debug=False,port=5000)
 
     signal.signal(signal.SIGINT, shutdown_handler)
 
