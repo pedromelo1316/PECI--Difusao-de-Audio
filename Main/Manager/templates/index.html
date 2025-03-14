@@ -122,12 +122,13 @@
                                 </form>
                             </div>
                         </div>
+                        <!-- filepath: /home/pedro-melo/Documents/UA/3ano/PECI/PECI--Difusao-de-Audio/Main/Manager/templates/index.html -->
                         <div class="volume-section">
                             <h4>Volume</h4>
                             <form action="/update_volume" method="POST" class="volume-form">
                                 <input type="hidden" name="name" value="{{ area.name }}">
-                                <input type="range" name="volume" min="0" max="100" value="{{ area.volume }}" id="volume-slider">
-                                <p id="volume-label">Volume: {{ area.volume}}%</p>
+                                <input type="range" name="volume" min="0" max="100" value="{{ area.volume }}" class="volume-slider">
+                                <p class="volume-label">Volume: {{ area.volume }}%</p>
                             </form>
                         </div>
                     </div>
@@ -201,19 +202,30 @@
 
 <script>
     //to change the volume of the area
-    document.getElementById('volume-slider').addEventListener('change', function() {
-    let volume = this.value;
-    let areaName = document.querySelector('input[name="name"]').value;
-
-    // Update label dynamically
-    document.getElementById('volume-label').textContent = `Volume: ${volume}%`;
-
-    // Send the updated volume to the server
-    fetch('/update_volume', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `name=${encodeURIComponent(areaName)}&volume=${encodeURIComponent(volume)}`
-    }).then(response => console.log(`Volume updated to ${volume}`));
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.volume-form').forEach(form => {
+            const slider = form.querySelector('.volume-slider');
+            const label = form.querySelector('.volume-label');
+    
+            // Atualiza o label em tempo real
+            slider.addEventListener('input', function() {
+                label.textContent = `Volume: ${this.value}%`;
+            });
+    
+            // Envia a atualização para o servidor quando o valor muda
+            slider.addEventListener('change', function() {
+                const volume = this.value;
+                const areaName = form.querySelector('input[name="name"]').value;
+    
+                fetch('/update_volume', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `name=${encodeURIComponent(areaName)}&volume=${encodeURIComponent(volume)}`
+                })
+                .then(response => console.log(`Volume updated to ${volume}`))
+                .catch(error => console.error('Erro ao atualizar volume:', error));
+            });
+        });
     });
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
