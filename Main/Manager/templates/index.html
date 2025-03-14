@@ -9,7 +9,6 @@
     <div class="header-content">
         <div class="title">
             <h1>Gestor de Áudio</h1>
-            <p>Hotel Montebelo</p>
         </div>
     </div>
 </header>
@@ -128,7 +127,7 @@
                             <form action="/update_volume" method="POST" class="volume-form">
                                 <input type="hidden" name="name" value="{{ area.name }}">
                                 <input type="range" name="volume" min="0" max="100" value="{{ area.volume }}" id="volume-slider">
-                                <p id="volume-label">Volume: {{ area.volume }}%</p>
+                                <p id="volume-label">Volume: {{ area.volume}}%</p>
                             </form>
                         </div>
                     </div>

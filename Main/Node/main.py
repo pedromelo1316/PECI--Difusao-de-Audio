@@ -88,11 +88,10 @@ def wait_for_info(n, port=8081, stop_event=None):
                     # Se os valores forem null (None) atualiza para None explicitamente
                     channel = info["channel"] if info["channel"] is not None else None
                     volume = info["volume"] if info["volume"] is not None else None
-                    _HEADER = info["header"] if info["header"] is not None else None
+                    HEADER = info["header"] if info["header"] is not None else None
                     #_HEADER = base64.b64decode(_HEADER) if _HEADER is not None else None
                     n.setChannel(channel)
-                    n.setVolume(volume)
-                    HEADER = _HEADER
+                    n.setVolume(float(volume))
                     with open("session_received.sdp", "w") as f:
                         f.write(HEADER)
                             

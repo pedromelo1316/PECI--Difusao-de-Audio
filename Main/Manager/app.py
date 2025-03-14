@@ -222,7 +222,7 @@ def send_info(nodes, removed=False):
             area_id = node.area_id
             area = db.session.get(Areas, area_id) if area_id is not None else None
             
-            volume = area.volume if area else None
+            volume = (area.volume/50) if area else 1
             channel = area.channel_id if area else None
             header = None
             
@@ -383,7 +383,7 @@ def remove_area():
 @app.route('/update_volume', methods=['POST'])
 def update_volume():
     area_name = request.form.get('name')
-    new_volume = float(request.form.get('volume', 0)) / 50.0
+    new_volume = float(request.form.get('volume', 0))
 
     area = Areas.query.filter_by(name=area_name).first()
     if not area:
