@@ -264,6 +264,7 @@ def detect_new_nodes(stop_event, msg_buffer):
             data, addr = server_socket.recvfrom(1024)
             data = data.decode('utf-8')
             if data:
+                server_socket.sendto(b"OK", addr)
                 node_name, node_mac = data.split(',')
                 node_ip = addr[0]
 
@@ -289,7 +290,6 @@ def detect_new_nodes(stop_event, msg_buffer):
                         
 
                     msg_buffer.put(f"Node {node_name} connected")
-                    server_socket.sendto(b"OK", addr)
                 except Exception as e:
                     if str(e) == "Limit of nodes with the same name reached":
                         msg_buffer.put("Limit of nodes with the same name reached")
@@ -300,7 +300,6 @@ def detect_new_nodes(stop_event, msg_buffer):
                         
                         node_name = node.name
                         msg_buffer.put(f"Node {node_name} reconnected")
-                        server_socket.sendto(b"OK", addr)
                     else:
                         msg_buffer.put(f"Error: {e}")
                         server_socket.sendto(b"Error " + str(e).encode('utf-8'), addr)
@@ -405,9 +404,6 @@ def update_volume():
         print(f"Volume updated to {new_volume} for area {area_name}")
         db.session.commit()
         send_info(Nodes.query.filter_by(area_id=area.id).all())
-
-        print(area.volume)
-
 
         return redirect('/')
     except Exception as e:

@@ -120,8 +120,6 @@ def wait_for_info(n, port=8081, stop_event=None):
                             player.terminate()
                             play_thread.join()
                             print("Processo FFmpeg terminado.")
-                        else:
-                            print("Nada a fazer.")
 
 
 
