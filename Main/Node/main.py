@@ -34,8 +34,8 @@ def play_audio(sdp_file):
     print("Playing audio stream... from", sdp_file)
     ffmpeg_cmd = [
         "ffmpeg",
-        #"-hide_banner",
-        #"-loglevel", "error",
+        "-hide_banner",
+        "-loglevel", "error",
         "-protocol_whitelist", "file,rtp,udp",
         "-i", sdp_file,
         "-c:a", "pcm_s16le",
@@ -45,8 +45,8 @@ def play_audio(sdp_file):
 
     player_cmd = [
         "ffplay",
-        #"-hide_banner",
-        #"-loglevel", "error",
+        "-hide_banner",
+        "-loglevel", "error",
         "-nodisp",
         "-autoexit",
         "-"
@@ -78,6 +78,7 @@ def wait_for_info(n, port=8081, stop_event=None):
                 dic = json.loads(data)
                 if n.mac in dic.keys():
                     info = dic[n.mac]
+                    print("Received info:", info)
 
                     if "removed" in info.keys():
                         print("Node removed")
@@ -91,23 +92,21 @@ def wait_for_info(n, port=8081, stop_event=None):
                     #_HEADER = base64.b64decode(_HEADER) if _HEADER is not None else None
                     n.setChannel(channel)
                     n.setVolume(volume)
-                    if _HEADER != HEADER:
-                        HEADER = _HEADER
-                        sync_time = info.get("sync_time", None)
-                        with open("session_received.sdp", "w") as f:
-                            f.write(HEADER)
-                                
-                        if ffmpeg is None and player is None:
-                            play_thread = threading.Thread(target=play_audio, args=("session_received.sdp",))
-                            play_thread.start()
-                            print("Processo FFmpeg iniciado.")
-                        else:
-                            ffmpeg.terminate()
-                            player.terminate()
-                            play_thread.join()
-                            play_thread = threading.Thread(target=play_audio, args=("session_received.sdp",))
-                            play_thread.start()
-                            print("Processo FFmpeg reiniciado.")
+                    HEADER = _HEADER
+                    with open("session_received.sdp", "w") as f:
+                        f.write(HEADER)
+                            
+                    if ffmpeg is None and player is None:
+                        play_thread = threading.Thread(target=play_audio, args=("session_received.sdp",))
+                        play_thread.start()
+                        print("Processo FFmpeg iniciado.")
+                    else:
+                        ffmpeg.terminate()
+                        player.terminate()
+                        play_thread.join()
+                        play_thread = threading.Thread(target=play_audio, args=("session_received.sdp",))
+                        play_thread.start()
+                        print("Processo FFmpeg reiniciado.")
 
 
 
