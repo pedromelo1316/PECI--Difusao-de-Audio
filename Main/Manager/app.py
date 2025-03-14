@@ -32,7 +32,7 @@ NUM_CHANNELS = 3
 
 def start_ffmpeg_process(channel, source, _type):
     
-    multicast_address = f"rtp://239.255.0.{channel+1}:12345"
+    multicast_address = f"rtp://239.255.0.{channel}:12345"
     print(f"session_{channel}.sdp")
     print("source: ", source)
     print("type: ", _type)
@@ -86,26 +86,35 @@ def start_ffmpeg_process(channel, source, _type):
 
 
 def change_channel_process(channel, source, transmission_type):
-    
-    
     global processes
     
     print("Changing channel...")
     
     if processes[channel]:
+        print("Terminating process...")
         processes[channel].terminate()
         processes[channel].wait()
         processes[channel] = None
         
+    print("channel: ", channel)
+    print("transmission_type: ", transmission_type)
+        
     process = start_ffmpeg_process(channel, source, transmission_type)
     if process:
         processes[channel] = process
+        print(f"Channel {channel} started")
     else:
         processes[channel] = None
         
         
-    send_info(Nodes.query.filter_by(area_id=channel+1).all())
+    with app.app_context():
+        areas = db.session.query(Areas).filter(Areas.channel_id == channel).all()
+        nodes = []
+        for area in areas:
+            nodes += area.nodes
+        send_info(nodes)
     
+    print(processes)
     
     
 
@@ -143,11 +152,13 @@ class Channels(db.Model):
         return 
     
 def create_default_channels():
-    global proocesses, NUM_CHANNELS
-    processes = [None] * NUM_CHANNELS
+    global processes, NUM_CHANNELS
+    processes = {}
     ##add channels if less than 3
-    if db.session.query(Channels).count() < NUM_CHANNELS:
-        for i in range(NUM_CHANNELS):
+    if db.session.query(Channels).count() != NUM_CHANNELS:
+        db.session.query(Channels).delete()
+        db.session.commit()
+        for i in range(1,NUM_CHANNELS+1):
             new_channel = Channels(type=ChannelType.LOCAL, source="default")
             db.session.add(new_channel)
             db.session.commit()
@@ -155,9 +166,10 @@ def create_default_channels():
             print(f"Channel {i} started")
     else:
         for channel in db.session.query(Channels).all():
-            index = channel.id - 1
+            index = channel.id
             processes[index] = start_ffmpeg_process(index, channel.source, channel.type)
             print(f"Channel {channel.id} started")
+            
             
     return processes
 
@@ -216,7 +228,7 @@ def send_info(nodes, removed=False):
             
             
             if channel:
-                file = open(f"session_{channel-1}.sdp", "r")
+                file = open(f"session_{channel}.sdp", "r")
                 header = file.read()
                 file.close()
             
@@ -236,6 +248,9 @@ def send_info(nodes, removed=False):
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
         client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         client_socket.sendto(msg.encode('utf-8'), ('<broadcast>', 8081))
+        
+        
+    print("Info sent to nodes:", nodes)
 
 def detect_new_nodes(stop_event, msg_buffer):
     time.sleep(0.1)
@@ -498,7 +513,7 @@ def update_channel(channel_id):
         channel.type = ChannelType[new_type]  # Update the channel's type
         print(f"Channel {channel_id} updated to {new_type}")
         db.session.commit()  # Save the changes to the database
-        change_channel_process_thread = threading.Thread(target=change_channel_process, args=(int(channel), manage_db.get_channel_source(channel), transmission), daemon=True)
+        change_channel_process_thread = threading.Thread(target=change_channel_process, args=(channel.id, channel.source , channel.type), daemon=True)
         change_channel_process_thread.start()
         return redirect('/')
     except Exception as e:
