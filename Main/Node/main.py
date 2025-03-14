@@ -36,7 +36,7 @@ def play_audio(sdp_file):
         "ffmpeg",
         #"-hide_banner",
         #"-loglevel", "error",
-        "-protocol_whitelist", "file,udp",  # modificado removendo "rtp"
+        "-protocol_whitelist", "file,rtp,udp",
         "-i", sdp_file,
         "-c:a", "pcm_s16le",
         "-f", "wav",
@@ -93,9 +93,10 @@ def wait_for_info(n, port=8081, stop_event=None):
                     n.setVolume(volume)
                     if _HEADER != HEADER:
                         HEADER = _HEADER
+                        sync_time = info.get("sync_time", None)
                         with open("session_received.sdp", "w") as f:
                             f.write(HEADER)
-                            
+                                
                         if ffmpeg is None and player is None:
                             play_thread = threading.Thread(target=play_audio, args=("session_received.sdp",))
                             play_thread.start()

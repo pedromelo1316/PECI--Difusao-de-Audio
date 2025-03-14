@@ -24,14 +24,15 @@ socketio = SocketIO(app)
 
 BITRATE = "256k"  # max 256k
 SAMPLE_RATE = "48000"
-CHUNK_SIZE = 30000
+CHUNCK_SIZE = 960
 AUDIO_CHANNELS = "1"         # Mono
 
 NUM_CHANNELS = 3
 
 
 def start_ffmpeg_process(channel, source, _type):
-    multicast_address = f"udp://239.255.0.{channel+1}:12345"  # modificado para udp
+    
+    multicast_address = f"rtp://239.255.0.{channel+1}:12345"
     print(f"session_{channel}.sdp")
     print("source: ", source)
     print("type: ", _type)
@@ -43,11 +44,9 @@ def start_ffmpeg_process(channel, source, _type):
             "-f", "alsa", "-i", source,
             "-acodec", "libopus",
             "-b:a", BITRATE,
-            #"-ar", SAMPLE_RATE,
+            "-ar", SAMPLE_RATE,  #talvez tirar
             "-ac", AUDIO_CHANNELS,
-            #"-frame_duration", "40",
-            #"-packet_size", str(CHUNK_SIZE),
-            "-f", "udp",  # modificado para udp
+            "-f", "rtp",
             "-sdp_file", f"session_{channel}.sdp",
             multicast_address
         ]
@@ -61,19 +60,17 @@ def start_ffmpeg_process(channel, source, _type):
             "ffmpeg",
             "-hide_banner", "-loglevel", "error",
             "-stream_loop", "-1",
-            "-f", "concat",          # Adicione esta linha
-            "-safe", "0",            # Permite caminhos absolutos/relativos
-            "-re",                   # Opcional (simula velocidade real)
+            "-f", "concat",
+            "-safe", "0",
+            "-re",
             "-i", f"Playlists/{source}.txt",
-            "-af", "apad",  # Preenche com silêncio entre as músicas
+            "-af", "apad",
+            "-ar", SAMPLE_RATE,
             "-vn",
             "-acodec", "libopus",
             "-b:a", BITRATE,
-            #"-ar", SAMPLE_RATE,
             "-ac", AUDIO_CHANNELS,
-            #"-frame_duration", "40",
-            "-packet_size", str(CHUNK_SIZE),
-            "-f", "udp",  # modificado para udp
+            "-f", "rtp",
             "-sdp_file", f"session_{channel}.sdp",
             multicast_address
         ]
