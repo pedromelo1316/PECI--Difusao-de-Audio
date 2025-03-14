@@ -201,6 +201,14 @@
 
 
 <script>
+
+    const socket = io.connect('http://' + document.domain + ':' + location.port);
+        
+    // Escuta o sinal para recarregar
+    socket.on('reload_page', function() {
+        console.log('Recarregando página...');
+        location.reload();  // Recarrega a página
+    });
     //to change the volume of the area
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.volume-form').forEach(form => {
