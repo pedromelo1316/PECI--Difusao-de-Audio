@@ -36,7 +36,7 @@ def play_audio(sdp_file):
         "ffmpeg",
         #"-hide_banner",
         #"-loglevel", "error",
-        "-protocol_whitelist", "file,rtp,udp",
+        "-protocol_whitelist", "file,udp",  # modificado removendo "rtp"
         "-i", sdp_file,
         "-c:a", "pcm_s16le",
         "-f", "wav",

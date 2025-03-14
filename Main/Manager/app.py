@@ -24,15 +24,14 @@ socketio = SocketIO(app)
 
 BITRATE = "256k"  # max 256k
 SAMPLE_RATE = "48000"
-CHUNK_SIZE = 1200
+CHUNK_SIZE = 30000
 AUDIO_CHANNELS = "1"         # Mono
 
 NUM_CHANNELS = 3
 
 
 def start_ffmpeg_process(channel, source, _type):
-    
-    multicast_address = f"rtp://239.255.0.{channel+1}:12345"
+    multicast_address = f"udp://239.255.0.{channel+1}:12345"  # modificado para udp
     print(f"session_{channel}.sdp")
     print("source: ", source)
     print("type: ", _type)
@@ -48,7 +47,7 @@ def start_ffmpeg_process(channel, source, _type):
             "-ac", AUDIO_CHANNELS,
             #"-frame_duration", "40",
             #"-packet_size", str(CHUNK_SIZE),
-            "-f", "rtp",
+            "-f", "udp",  # modificado para udp
             "-sdp_file", f"session_{channel}.sdp",
             multicast_address
         ]
@@ -73,8 +72,8 @@ def start_ffmpeg_process(channel, source, _type):
             #"-ar", SAMPLE_RATE,
             "-ac", AUDIO_CHANNELS,
             #"-frame_duration", "40",
-            #"-packet_size", str(CHUNK_SIZE),
-            "-f", "rtp",
+            "-packet_size", str(CHUNK_SIZE),
+            "-f", "udp",  # modificado para udp
             "-sdp_file", f"session_{channel}.sdp",
             multicast_address
         ]
