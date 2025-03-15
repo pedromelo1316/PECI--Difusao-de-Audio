@@ -9,28 +9,21 @@ import subprocess
 import base64
 import signal
 import sys
+import numpy as np
 
 FREQ = 48000
-CHUNCK_SIZE = 960
-
-SAMPLE_WIDTH = 2  # bytes por sample (pcm_s16le)
 CHUNK_SIZE = 960
-
-
-
+SAMPLE_WIDTH = 2  # bytes per sample (pcm_s16le)
 
 OP = 3
 HEADER = None
-player = None
 ffmpeg = None
 play_thread = None
 channel = None
 
-
-
-def play_audio(n,sdp_file):
-    global ffmpeg, player
-    """Plays the RTP audio stream using FFmpeg."""
+def play_audio(n, sdp_file):
+    global ffmpeg, play_thread
+    """Plays the RTP audio stream using FFmpeg and pyaudio with dynamic volume control."""
     print("Playing audio stream... from", sdp_file)
     ffmpeg_cmd = [
         "ffmpeg",
@@ -38,37 +31,39 @@ def play_audio(n,sdp_file):
         "-loglevel", "error",
         "-protocol_whitelist", "file,rtp,udp",
         "-i", sdp_file,
-        "-af", f"volume={n.getVolume()}",
-        "-c:a", "pcm_s16le",
-        "-f", "wav",
-        "pipe:1"
-    ]
-
-    player_cmd = [
-        "ffplay",
-        "-hide_banner",
-        "-loglevel", "error",
-        "-nodisp",
-        "-autoexit",
+        "-f", "s16le",
+        "-acodec", "pcm_s16le",
         "-"
     ]
-
-    # Removed signal.signal registration since signals only work in the main thread.
     ffmpeg = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
-    player = subprocess.Popen(player_cmd, stdin=ffmpeg.stdout)
-
+    p = pyaudio.PyAudio()
+    # Assuming a stereo stream; adjust channels if needed.
+    stream = p.open(format=p.get_format_from_width(SAMPLE_WIDTH), channels=2, rate=FREQ, output=True)
+    
     try:
-        player.communicate()
+        # Calculate bytes to read per chunk (CHUNK_SIZE samples per channel x channels)
+        bytes_per_chunk = CHUNK_SIZE * SAMPLE_WIDTH * 1  # 2 channels
+        while True:
+            chunk = ffmpeg.stdout.read(bytes_per_chunk)
+            if not chunk:
+                break
+            # Convert raw bytes to numpy array of int16 samples
+            audio_data = np.frombuffer(chunk, dtype=np.int16)
+            # Get the current volume from the node (default to 1.0 if not set)
+            volume = n.getVolume() if n.getVolume() is not None else 1.0
+            # Multiply samples by volume factor (with clipping to avoid overflow)
+            audio_data = np.clip(audio_data * volume, -32768, 32767).astype(np.int16)
+            stream.write(audio_data.tobytes())
     except KeyboardInterrupt:
-        print("KeyboardInterrupt received. Terminating processes...")
+        print("KeyboardInterrupt received. Terminating playback...")
+    finally:
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
         ffmpeg.terminate()
-        player.terminate()
-        time.sleep(0.5)
-
-
 
 def wait_for_info(n, port=8081, stop_event=None):
-    global ffmpeg, player, HEADER, OP, channel, play_thread
+    global ffmpeg, HEADER, OP, channel, play_thread
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as server_socket:
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server_socket.bind(('0.0.0.0', port))
@@ -85,53 +80,49 @@ def wait_for_info(n, port=8081, stop_event=None):
                         print("Node removed")
                         if play_thread is not None:
                             ffmpeg.terminate()
-                            player.terminate()
                             play_thread.join()
-                            print("Processo FFmpeg terminado.")
+                            print("FFmpeg process terminated.")
                         stop_event.set()
                         break
 
-                    # Se os valores forem null (None) atualiza para None explicitamente
                     channel = info["channel"] if info["channel"] is not None else None
                     volume = info["volume"] if info["volume"] is not None else None
-                    HEADER = info["header"] if info["header"] is not None else None
-                    #_HEADER = base64.b64decode(_HEADER) if _HEADER is not None else None
-                    n.setChannel(channel)
-                    n.setVolume(float(volume))
-                    if HEADER:
+                    new_HEADER = info["header"] if info["header"] is not None else None
+                    
+                    if volume is not None and n.getVolume() != volume:
+                        n.setVolume(float(volume))
+                    if (new_HEADER is not None and HEADER != new_HEADER) or (channel is not None and channel != n.getChannel()):
+                        HEADER = new_HEADER 
                         with open("session_received.sdp", "w") as f:
                             f.write(HEADER)
+                        n.setChannel(channel)
                             
-                        if ffmpeg is None and player is None:
-                            play_thread = threading.Thread(target=play_audio, args=(n,"session_received.sdp",))
+                        if play_thread is None:
+                            play_thread = threading.Thread(target=play_audio, args=(n, "session_received.sdp",))
                             play_thread.start()
-                            print("Processo FFmpeg iniciado.")
+                            print("FFmpeg process started.")
                         else:
+                            # Terminate and restart playback for updated stream
                             ffmpeg.terminate()
-                            player.terminate()
                             play_thread.join()
-                            play_thread = threading.Thread(target=play_audio, args=(n,"session_received.sdp",))
+                            play_thread = threading.Thread(target=play_audio, args=(n, "session_received.sdp",))
                             play_thread.start()
-                            print("Processo FFmpeg reiniciado.")
+                            print("FFmpeg process restarted.")
                             
                     if channel is None or HEADER is None:
                         if play_thread is not None:
                             ffmpeg.terminate()
-                            player.terminate()
                             play_thread.join()
-                            print("Processo FFmpeg terminado.")
-
-
+                            play_thread = None
+                            print("FFmpeg process terminated due to missing channel/header.")
 
                     print("Channel:", n.getChannel())
                     print("Volume:", n.getVolume())
-
 
             except ValueError as e:
                 print("Error in wait_for_info:", e)
 
     server_socket.close()
-
 
 def wait_for_connection(n, port=8080, stop_event=None):
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
@@ -140,9 +131,7 @@ def wait_for_connection(n, port=8080, stop_event=None):
         while not stop_event.is_set():
             msg = f"{n.getName()},{n.getMac()}"
             client_socket.sendto(msg.encode('utf-8'), ('<broadcast>', port))
-            
             print("Sent information to manager")
-
             try:
                 data, addr = client_socket.recvfrom(1024)
                 if data == b"OK":
@@ -158,24 +147,18 @@ def wait_for_connection(n, port=8080, stop_event=None):
                 time.sleep(1)
         client_socket.close()
         return True
-    
-    
-
 
 def main():
-    global play_thread, ffmpeg, player, HEADER, OP, channel
+    global play_thread, ffmpeg, HEADER, OP, channel
     nome = socket.gethostname()
     mac = ':'.join([f'{(uuid.getnode() >> i) & 0xff:02x}' for i in reversed(range(0, 48, 8))])
     n = node_client.node_client(nome, mac)
     stop_event = threading.Event()
 
     t_connection = threading.Thread(target=wait_for_connection, args=(n,8080, stop_event))
-    t_connection.start()
-    
-
-    t_info = threading.Thread(target=wait_for_info, args=(n,8081,stop_event))
+    t_connection.start()    
+    t_info = threading.Thread(target=wait_for_info, args=(n,8081, stop_event))
     t_info.start()
-
 
     t_connection.join()
     t_info.join()
@@ -186,9 +169,6 @@ def main():
     if ffmpeg is not None:
         ffmpeg.terminate()
         
-    if player is not None:
-        player.terminate()
-        time.sleep(0.5)
     print("Exiting...")
     sys.exit(0)
 
