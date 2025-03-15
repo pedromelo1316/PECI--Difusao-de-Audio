@@ -75,7 +75,45 @@ def start_ffmpeg_process(channel, source, _type):
             multicast_address
         ]
     elif _type == ChannelType.STREAMING:
-        return None
+        # Passo 1: Obter a URL direta do stream com yt-dlp
+        
+        source = "https://www.youtube.com/live/36YnV9STBqc?si=O_hKJoKzhhDqRYYV"
+        
+        try:
+            ytdl_cmd = [
+                "yt-dlp",
+                "-g",
+                "-f", "bestaudio[protocol!=m3u8_native]/bestaudio",  # Evitar HLS se possível
+                "--no-check-certificates",  # Ignorar erros de SSL (opcional)
+                "--socket-timeout", "10",  # Timeout para conexão
+                source
+            ]
+            direct_url = subprocess.check_output(ytdl_cmd, text=True).strip()
+        except Exception as e:
+            print(f"Erro ao obter URL: {e}")
+            return None
+
+        cmd = [
+            "ffmpeg",
+            "-hide_banner",
+            "-loglevel", "fatal",  # Para diagnóstico (altere para 'error' após testes)
+            "-re",                   # Importante para streams ao vivo!
+            "-analyzeduration", "10M",  # Reduz tempo de análise inicial
+            "-probesize", "10M",
+            "-rw_timeout", "5000000",  # Timeout de leitura (5 segundos)
+            "-i", direct_url,
+            "-acodec", "libopus",
+            "-b:a", BITRATE,
+            "-ar", SAMPLE_RATE,
+            "-ac", AUDIO_CHANNELS,
+            "-buffer_size", "1024",  # Buffer de saída maior
+            "-max_delay", "200000",  # Atraso máximo permitido (200ms)
+            "-f", "rtp",
+            "-sdp_file", f"session_{channel}.sdp",
+            "-muxdelay", "0.1",      # Atraso de muxagem reduzido
+            "-muxpreload", "0.1",
+            multicast_address
+        ]
     else:
         return None
     process = subprocess.Popen(cmd)
