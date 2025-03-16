@@ -30,14 +30,14 @@ stop_event = threading.Event()
 player_stop_event = threading.Event()
 
 
-
-def shutdown_handler(sig, frame):
-    global stop_event, player_stop_event, play_thread, ffmpeg, stream, player
-    print("Received SIGINT, shutting down...")
+def terminate_routine():
+    global stop_event, player_stop_event, play_thread, ffmpeg, stream, player, channel, HEADER
+    
     try:
         if play_thread is not None:
             player_stop_event.set()
             play_thread.join(timeout=1)
+            play_thread = None
     except Exception as e:
         print("Error stopping play_thread:", e)
     try:
@@ -48,19 +48,30 @@ def shutdown_handler(sig, frame):
             except subprocess.TimeoutExpired:
                 print("ffmpeg did not terminate in time, killing it.")
                 ffmpeg.kill()
+            ffmpeg = None
     except Exception as e:
         print("Error terminating ffmpeg:", e)
     try:
         if stream is not None:
             stream.stop_stream()
             stream.close()
+            stream = None
     except Exception as e:
         print("Error closing stream:", e)
     try:
         if player is not None:
             player.terminate()
+            player = None
     except Exception as e:
         print("Error terminating player:", e)
+        
+    HEADER = None
+    channel = None
+
+
+def shutdown_handler(sig, frame):
+    print("Received SIGINT, shutting down...")
+    terminate_routine()
     stop_event.set()
     sys.exit(0)
 
@@ -132,42 +143,18 @@ def wait_for_info(n, port=8081):
                     # Verifica se a informação indica que o nó foi removido
                     if "removed" in info.keys():
                         print("Node removed")
-                        if play_thread is not None:
-                            player_stop_event.set()
-                            play_thread.join()
-                            ffmpeg.terminate()
-                            stream.stop_stream()
-                            stream.close()
-                            player.terminate()
-                            HEADER = None
-                            channel = None
-                            play_thread = None
-                            ffmpeg = None
-                            stream = None
-                            player = None
+                        terminate_routine()
                         stop_event.set()
                         break
                     
                     elif "suspended" in info.keys():
-                        if play_thread is not None:
-                            player_stop_event.set()
-                            play_thread.join()
-                            ffmpeg.terminate()
-                            stream.stop_stream()
-                            stream.close()
-                            player.terminate()
-                            print("FFmpeg process suspended.")
-                            HEADER = None
-                            channel = None
-                            play_thread = None
-                            ffmpeg = None
-                            stream = None
-                            player = None
+                        print("Node suspended")
+                        terminate_routine()
                         continue
                     
                     
                     # Atualiza as configurações de canal, volume e header a partir da mensagem
-                    channel = info["channel"] if "channel" in info.keys() else None
+                    new_channel = info["channel"] if "channel" in info.keys() else None
                     volume = info["volume"] if "volume" in info.keys() else None
                     new_HEADER = info["header"] if "header" in info.keys() else None
                     
@@ -176,15 +163,26 @@ def wait_for_info(n, port=8081):
                         n.setVolume(float(volume))
                     
                     # Se o header ou canal mudou, atualiza estação e reinicia o processo do ffmpeg
-                    if (new_HEADER is not None and HEADER != new_HEADER) or (channel is not None and channel != n.getChannel()):
+                    if (new_HEADER is not None and HEADER != new_HEADER) or (new_channel is not None and new_channel != n.getChannel()):
+                        print("New header or channel received")
+                        # Se houver uma thread de reprodução ativa, termina-a
+                        terminate_routine()
+                        player_stop_event.clear()
+                        
+                        # Atualiza o HEADER e o canal do nó
                         HEADER = new_HEADER 
                         # Grava o novo SDP em arquivo para que o ffmpeg o utilize
                         with open("session_received.sdp", "w") as f:
                             f.write(HEADER)
+                        channel = new_channel
+                        
+                        # Atualiza o canal do nó
                         n.setChannel(channel)
                         
-                        player_stop_event.clear()
+                        
+                    
                             
+                        # Se não houver uma thread de reprodução ativa, inicia uma nova
                         if play_thread is None:
                             play_thread = threading.Thread(target=play_audio, args=(n, "session_received.sdp",))
                             play_thread.start()
@@ -192,23 +190,18 @@ def wait_for_info(n, port=8081):
                         else:
                             # Termina a thread atual do ffmpeg e inicia uma nova, para atualizar o stream
                             
-                            stream.stop_stream()
-                            stream.close()
-                            player.terminate()
-                            ffmpeg.terminate()
-                            play_thread.join()
                             play_thread = threading.Thread(target=play_audio, args=(n, "session_received.sdp",))
                             play_thread.start()
                             print("FFmpeg process restarted.")
                     
-                    # Se o canal ou header estiverem ausentes, encerra a reprodução
-                    if channel is None or HEADER is None:
-                        if play_thread is not None:
-                            ffmpeg.terminate()
-                            play_thread.join()
-                            play_thread = None
-                            print("FFmpeg process terminated due to missing channel/header.")
-
+                    if new_HEADER is None and new_channel is None:
+                        print("No new header or channel received")
+                        terminate_routine()
+                        player_stop_event.clear()
+                        print("FFmpeg process stopped.")
+                        
+                        
+                        
                     # Imprime as configurações atuais para debug
                     print("Channel:", n.getChannel())
                     print("Volume:", n.getVolume())
