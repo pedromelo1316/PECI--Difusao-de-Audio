@@ -1,5 +1,6 @@
+# Importações de módulos e bibliotecas necessárias
 from enum import Enum
-from flask import Flask, render_template, request, redirect, flash,jsonify
+from flask import Flask, render_template, request, redirect, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
 import subprocess
@@ -14,48 +15,51 @@ import base64
 import signal
 import sys
 
-
+# Inicialização do app Flask, SQLAlchemy e SocketIO
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-app.config['SECRET_KEY'] = 'your_secret_key'  # acho que tenho de meter esta linha para poder usar o flash
+app.config['SECRET_KEY'] = 'your_secret_key'
 db = SQLAlchemy(app)
 socketio = SocketIO(app)
 
-
-BITRATE = "256k"  # max 256k
-SAMPLE_RATE = "48000"
+# Configurações de áudio
+BITRATE = "256k"  # Taxa de bits máxima
+SAMPLE_RATE = "48000"  # Taxa de amostragem
 CHUNCK_SIZE = 960
-AUDIO_CHANNELS = "1"         # Mono
+AUDIO_CHANNELS = "1"  # Mono
 
-NUM_CHANNELS = 3
+NUM_CHANNELS = 3  # Número total de canais
 
-
+# Função para iniciar o processo do ffmpeg para um canal específico
 def start_ffmpeg_process(channel, source, _type):
-    
+    # Define o endereço de multicast baseado no número do canal
     multicast_address = f"rtp://239.255.0.{channel}:12345"
     print(f"session_{channel}.sdp")
     print("source: ", source)
     print("type: ", _type)
     
+    # Verifica o tipo de transmissão e configura o comando do ffmpeg apropriado
     if _type == ChannelType.VOICE:
+        # Transmissão de voz via dispositivo de áudio (alsa)
         cmd = [
             "ffmpeg",
             "-hide_banner", "-loglevel", "error",
             "-f", "alsa", "-i", source,
             "-acodec", "libopus",
             "-b:a", BITRATE,
-            "-ar", SAMPLE_RATE,  #talvez tirar
+            "-ar", SAMPLE_RATE,
             "-ac", AUDIO_CHANNELS,
             "-f", "rtp",
             "-sdp_file", f"session_{channel}.sdp",
             multicast_address
         ]
     elif _type == ChannelType.LOCAL:
+        # Transmissão local utilizando um arquivo de playlist
         playlist_path = f"Playlists/{source}.txt"
         if not os.path.exists(playlist_path):
             print(f"Playlist {playlist_path} not found")
             return None
-
+        
         cmd = [
             "ffmpeg",
             "-hide_banner", "-loglevel", "error",
@@ -75,17 +79,17 @@ def start_ffmpeg_process(channel, source, _type):
             multicast_address
         ]
     elif _type == ChannelType.STREAMING:
-        # Passo 1: Obter a URL direta do stream com yt-dlp
-        
+        # Transmissão via streaming com URL proveniente do yt-dlp
         source = "https://www.youtube.com/live/36YnV9STBqc?si=O_hKJoKzhhDqRYYV"
         
         try:
+            # Comando para obter a URL direta do stream
             ytdl_cmd = [
                 "yt-dlp",
                 "-g",
-                "-f", "bestaudio[protocol!=m3u8_native]/bestaudio",  # Evitar HLS se possível
-                "--no-check-certificates",  # Ignorar erros de SSL (opcional)
-                "--socket-timeout", "10",  # Timeout para conexão
+                "-f", "bestaudio[protocol!=m3u8_native]/bestaudio",
+                "--no-check-certificates", 
+                "--socket-timeout", "10", 
                 source
             ]
             direct_url = subprocess.check_output(ytdl_cmd, text=True).strip()
@@ -93,41 +97,41 @@ def start_ffmpeg_process(channel, source, _type):
             print(f"Erro ao obter URL: {e}")
             return None
 
+        # Comando do ffmpeg utilizando a URL obtida
         cmd = [
             "ffmpeg",
             "-hide_banner",
-            "-loglevel", "fatal",  # Para diagnóstico (altere para 'error' após testes)
-            "-re",                   # Importante para streams ao vivo!
-            "-analyzeduration", "10M",  # Reduz tempo de análise inicial
+            "-loglevel", "fatal",  # Modo silencioso (altere para 'error' para testar)
+            "-re",  # Força a leitura no tempo real para streams
+            "-analyzeduration", "10M",  # Reduz o tempo de análise inicial
             "-probesize", "10M",
-            "-rw_timeout", "5000000",  # Timeout de leitura (5 segundos)
+            "-rw_timeout", "5000000",  # Timeout de leitura
             "-i", direct_url,
             "-acodec", "libopus",
             "-b:a", BITRATE,
             "-ar", SAMPLE_RATE,
             "-ac", AUDIO_CHANNELS,
-            "-buffer_size", "1024",  # Buffer de saída maior
-            "-max_delay", "200000",  # Atraso máximo permitido (200ms)
+            "-buffer_size", "1024",  # Aumenta o buffer de saída
+            "-max_delay", "200000",  # Limita o atraso máximo
             "-f", "rtp",
             "-sdp_file", f"session_{channel}.sdp",
-            "-muxdelay", "0.1",      # Atraso de muxagem reduzido
+            "-muxdelay", "0.1",  # Reduz o atraso de muxagem
             "-muxpreload", "0.1",
             multicast_address
         ]
     else:
         return None
+    # Inicia o subprocesso do ffmpeg
     process = subprocess.Popen(cmd)
     return process
 
-
-
-
-
+# Função para trocar o processo do canal (reinicia se necessário)
 def change_channel_process(channel, source, transmission_type):
     global processes
-    
+
     print("Changing channel...")
     
+    # Se já existir um processo para o canal, termina-o
     if processes[channel]:
         print("Terminating process...")
         processes[channel].terminate()
@@ -137,6 +141,7 @@ def change_channel_process(channel, source, transmission_type):
     print("channel: ", channel)
     print("transmission_type: ", transmission_type)
         
+    # Inicia o novo processo para o canal com os parâmetros fornecidos
     process = start_ffmpeg_process(channel, source, transmission_type)
     if process:
         processes[channel] = process
@@ -144,7 +149,7 @@ def change_channel_process(channel, source, transmission_type):
     else:
         processes[channel] = None
         
-        
+    # Após a mudança, envia informações atualizadas para os nós
     with app.app_context():
         areas = db.session.query(Areas).filter(Areas.channel_id == channel).all()
         nodes = []
@@ -153,9 +158,10 @@ def change_channel_process(channel, source, transmission_type):
         send_info(nodes)
     
     print(processes)
-    
-    
 
+# Definição dos modelos de dados com SQLAlchemy
+
+# Modelo para "Áreas"
 class Areas(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
@@ -166,6 +172,7 @@ class Areas(db.Model):
     def __repr__(self):
         return f'<Area {self.id}: {self.name}>'
 
+# Modelo para "Nós" (Nodes)
 class Nodes(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ip = db.Column(db.String(200), nullable=False)
@@ -176,27 +183,31 @@ class Nodes(db.Model):
     def __repr__(self):
         return f'<Node {self.id}: {self.name}>'
 
-
-class ChannelType(str, Enum):  # Enum to restrict allowed values
+# Enum para definir os tipos de canais permitidos
+class ChannelType(str, Enum):
     LOCAL = "LOCAL"
     STREAMING = "STREAMING"
     VOICE = "VOICE"
 
+# Modelo para canais
 class Channels(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.Enum(ChannelType), nullable=False)  # Enforce restriction
+    type = db.Column(db.Enum(ChannelType), nullable=False)
     source = db.Column(db.String(200), nullable=True)
+
     def __repr__(self):
         return 
-    
+
+# Função para criar canais padrões caso não existam
 def create_default_channels():
     global processes, NUM_CHANNELS
     processes = {}
-    ##add channels if less than 3
+    # Verifica se o número de canais no banco é diferente do esperado
     if db.session.query(Channels).count() != NUM_CHANNELS:
         db.session.query(Channels).delete()
         db.session.commit()
-        for i in range(1,NUM_CHANNELS+1):
+        # Cria os canais padrão com tipo LOCAL e fonte "default"
+        for i in range(1, NUM_CHANNELS+1):
             new_channel = Channels(type=ChannelType.LOCAL, source="default")
             db.session.add(new_channel)
             db.session.commit()
@@ -209,18 +220,19 @@ def create_default_channels():
             print(f"Channel {channel.id} started")
             
             
+    send_info(Nodes.query.all())  # Envia informações iniciais para os nós
+            
     return processes
 
-
-
-
+# Rota principal (index) que renderiza a página inicial com os nós, áreas e canais
 @app.route('/', methods=['GET'])
 def index():
     nodes = Nodes.query.order_by(Nodes.id).all()
     areas = Areas.query.order_by(Areas.id).all()
     channels = Channels.query.order_by(Channels.id).all()
-    return render_template("index.html", nodes=nodes,areas=areas,channels=channels)
+    return render_template("index.html", nodes=nodes, areas=areas, channels=channels)
 
+# Rota para deleção de um nó específico
 @app.route('/delete/<int:id>')
 def delete(id):
     node_to_delete = Nodes.query.get_or_404(id)
@@ -233,10 +245,12 @@ def delete(id):
     except:
         return 'Houve um problema ao remover o nó'
     
+# Rota para atualizar a lista de nós (simples redirecionamento)
 @app.route('/refresh_nodes', methods=['POST'])
 def refresh_nodes():
     return redirect('/')
 
+# Rota para atualização dos dados de um nó
 @app.route('/update/<int:id>', methods=['GET', 'POST'])
 def update(id):
     node = Nodes.query.get_or_404(id)
@@ -250,58 +264,66 @@ def update(id):
             return 'Houve um problema ao atualizar a tarefa'
     else:
         return render_template('update.html', node=node)
-    
 
-def send_info(nodes, removed=False):
-    if not removed:
+# Função para enviar informações atualizadas para os nós via broadcast UDP
+def send_info(nodes, removed=False, suspended=False):
+    if not removed and not suspended:
         dic = {}
         for node in nodes:
             mac = node.mac
             area_id = node.area_id
             area = db.session.get(Areas, area_id) if area_id is not None else None
-            
             volume = (area.volume/50) if area else 1
             channel = area.channel_id if area else None
             header = None
             
-            
+            # Se existir canal, lê o arquivo SDP gerado
             if channel:
                 file = open(f"session_{channel}.sdp", "r")
                 header = file.read()
                 file.close()
             
-            dic[mac] = {"volume": volume, "channel": channel, "header": header} 
-    else:
+            dic[mac] = {"volume": volume, "channel": channel, "header": header}
+    elif removed:
         dic = {}
         for node in nodes:
             mac = node.mac
             dic[mac] = {"removed": True}
             
-    
+    elif suspended:
+        dic = {}
+        for node in nodes:
+            mac = node.mac
+            dic[mac] = {"suspended": True}
 
+            
     msg = json.dumps(dic)
-
-    #print(msg)
-    #mandar broadcast do dic
+    
+    # Envia mensagem via broadcast UDP
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
         client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         client_socket.sendto(msg.encode('utf-8'), ('<broadcast>', 8081))
         
-        
     print("Info sent to nodes:", nodes)
 
+# Função que detecta novos nós na rede
 def detect_new_nodes(stop_event, msg_buffer):
     time.sleep(0.1)
-
+    # Cria um socket para escutar na porta 8080
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as server_socket:
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server_socket.bind(('0.0.0.0', 8080))
+        server_socket.settimeout(2) 
         msg_buffer.put("Detection started")
         while not stop_event.is_set():
-            print("Waiting for data...")
-            data, addr = server_socket.recvfrom(1024)
+            try:
+                data, addr = server_socket.recvfrom(1024)
+                print("Received data from", addr)
+            except socket.timeout:
+                continue
             data = data.decode('utf-8')
             if data:
+                # Envia confirmação para o nó
                 server_socket.sendto(b"OK", addr)
                 node_name, node_mac = data.split(',')
                 node_ip = addr[0]
@@ -310,23 +332,18 @@ def detect_new_nodes(stop_event, msg_buffer):
                     with app.app_context():
                         if db.session.query(Nodes).filter(Nodes.mac == node_mac).first():
                             raise Exception("MAC already in use")
-                    
                         node_name = node_name.upper()
-
                         node = Nodes(name=node_name, mac=node_mac, ip=node_ip)
                         db.session.add(node)
                         db.session.commit()
                     
                     socketio.emit('update', {
-                            'action': 'add',
-                            'id': node.id,
-                            'name': node.name,
-                            'mac': node.mac,
-                            'ip': node.ip
-                        }
-                    )
-                        
-
+                        'action': 'add',
+                        'id': node.id,
+                        'name': node.name,
+                        'mac': node.mac,
+                        'ip': node.ip
+                    })
                     msg_buffer.put(f"Node {node_name} connected")
                 except Exception as e:
                     if str(e) == "Limit of nodes with the same name reached":
@@ -335,7 +352,6 @@ def detect_new_nodes(stop_event, msg_buffer):
                     elif str(e) == "MAC already in use":
                         with app.app_context():
                             node = db.session.query(Nodes).filter(Nodes.mac == node_mac).first()
-                        
                         node_name = node.name
                         msg_buffer.put(f"Node {node_name} reconnected")
                     else:
@@ -345,11 +361,9 @@ def detect_new_nodes(stop_event, msg_buffer):
                 with app.app_context():
                     node = db.session.query(Nodes).filter(Nodes.mac == node_mac).first()
                     send_info([node])
-                    socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
+                    socketio.emit('reload_page', namespace='/')  # Envia comando para recarregar a página
 
-
-
-
+# Rota para renomear um nó
 @app.route('/rename_node/<int:id>', methods=['POST'])
 def rename_node(id):
     new_name = request.form['name']
@@ -357,48 +371,36 @@ def rename_node(id):
         node = Nodes.query.get_or_404(id)
         node.name = new_name
         db.session.commit()
-
-        socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
-
+        socketio.emit('reload_page', namespace='/')
         return redirect('/')
-    
     except Exception as e:
         return str(e), 500
 
-
+# Rota para adicionar uma nova área
 @app.route('/add_area', methods=['POST'])
 def add_area():
     data = request.json  
     area_name = data.get('name')
-
     if not area_name:
         return jsonify({"error": "Nome da área é obrigatório"}), 400
-
     if Areas.query.filter_by(name=area_name).first():
         return jsonify({"error": "Área já existe"}), 400
-
     try:
-        new_area = Areas(name=area_name, volume=50)  # Volume = 50%, Canal 1 como padrão
+        new_area = Areas(name=area_name, volume=50)
         db.session.add(new_area)
         db.session.commit()
-
-        socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
-
-
+        socketio.emit('reload_page', namespace='/')
         return jsonify({"success": True, "id": new_area.id, "name": new_area.name}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-
+# Rota para remover uma área
 @app.route('/remove_area', methods=['POST'])
 def remove_area():
     area_name = request.form.get('name')
-    
     if not area_name:
         flash("Area name is required", "error")
         return redirect('/')
-    
     try:
         area = Areas.query.filter_by(name=area_name).first()
         if not area:
@@ -406,7 +408,7 @@ def remove_area():
             return redirect('/')
         
         print(f"Removing area: {area_name} with ID: {area.id}")
-
+        # Remove a associação dos nós à área antes de removê-la
         nodes_in_area = Nodes.query.filter_by(area_id=area.id).all()
         for node in nodes_in_area:
             node.area_id = None  
@@ -414,256 +416,197 @@ def remove_area():
 
         db.session.delete(area)
         db.session.commit()
-
         send_info(nodes_in_area)
         flash(f"Area {area_name} removed", "success")
         
-        socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
-
+        socketio.emit('reload_page', namespace='/')
         return redirect('/')
     except Exception as e:
         flash(str(e), "error")
         return redirect('/')
 
-    
-
+# Rota para atualizar o volume de uma área
 @app.route('/update_volume', methods=['POST'])
 def update_volume():
     area_name = request.form.get('name')
     new_volume = float(request.form.get('volume', 0))
-
     area = Areas.query.filter_by(name=area_name).first()
     if not area:
         flash("Area not found", "error")
         return redirect('/')
-    
     try:
         area.volume = new_volume
         print(f"Volume updated to {new_volume} for area {area_name}")
         db.session.commit()
         send_info(Nodes.query.filter_by(area_id=area.id).all())
-
         return redirect('/')
     except Exception as e:
-        
         return redirect('/')
 
-
+# Rota para obter nós que não estão associados a nenhuma área
 @app.route('/get_free_nodes')
 def get_nodes():
-    nodes = Nodes.query.filter_by(area_id=None).all()  # Apenas os não associados
+    nodes = Nodes.query.filter_by(area_id=None).all()
     return jsonify([{"id": node.id, "name": node.name} for node in nodes])
 
-
+# Rota para associar um nó a uma área específica
 @app.route('/associate_node', methods=['POST'])
 def associate_node():
     data = request.get_json()
     zone_name = data.get("zone_name")
     node_id = data.get("node_id")
-
-    # Buscar a zona e o nó no banco de dados
+    # Busca a área e o nó no banco de dados
     area = Areas.query.filter_by(name=zone_name).first()
     node = Nodes.query.get(node_id)
-
     if not area or not node:
         return jsonify({"success": False, "error": "Zona ou nó inválido"}), 400
-
     if node.area_id:
         return jsonify({"success": False, "error": "Este nó já está associado a uma zona!"}), 400
 
-    # Associar o nó à zona
+    # Realiza a associação e salva no banco de dados
     node.area_id = area.id
     db.session.commit()
 
-    socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
-
-
+    socketio.emit('reload_page', namespace='/')
     return jsonify({"success": True})
 
-
+# Rota para adicionar uma coluna (nó) a uma zona (área)
 @app.route("/add_column_to_zone", methods=["POST"])
 def add_column_to_zone():
     data = request.get_json()
     zone_name = data.get("zone_name")
     column_name = data.get("column_name")
-
     
     if not zone_name or not column_name:
         return jsonify({"error": "Zona e coluna são obrigatórias"}), 400
 
-    # Buscar zona e coluna no banco de dados
     area = Areas.query.filter_by(name=zone_name).first()
     column = Nodes.query.filter_by(name=column_name).first()
-
     if not area:
         return jsonify({"error": "Zona não encontrada"}), 404
     if not column:
         return jsonify({"error": "Coluna não encontrada"}), 404
-
-    # Verificar se a coluna já está associada a alguma zona
     if column.area_id:
         return jsonify({"error": "Essa coluna já está associada a outra zona"}), 400
 
-    # Associar a coluna à zona
     column.area_id = area.id
     print(f"Column {column_name} associated with zone {zone_name}")
-
     db.session.commit()
     send_info([column])
-
-    socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
-
-
+    socketio.emit('reload_page', namespace='/')
     return jsonify({"success": "Coluna associada com sucesso!"}), 200
 
-
-
-# remove column FROM zone
+# Rota para remover uma coluna de uma zona
 @app.route("/remove_column_from_zone", methods=["POST"])
 def remove_column_from_zone():
     data = request.get_json()
-
     if not data or "zone_name" not in data or "column_name" not in data:
         return jsonify({"error": "Zone and column are required"}), 400
-
     zone_name = data["zone_name"]
     column_name = data["column_name"]
-
     area = Areas.query.filter_by(name=zone_name).first()
     if not area:
         return jsonify({"error": "Zone not found"}), 404
     column = Nodes.query.filter_by(name=column_name, area_id=area.id).first()
-
     if not column:
         return jsonify({"error": "Column not found"}), 404
-    
     try:       
         column.area_id = None  
         db.session.commit()
         send_info([column])
         print(f"Column {column_name} removed from zone {zone_name}")
-
-        socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
-
+        socketio.emit('reload_page', namespace='/')
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-      
- 
-
+# Rota para atualizar o tipo de canal
 @app.route('/update_channel/<int:channel_id>', methods=['POST'])
 def update_channel(channel_id):
-    # Get the selected type from the form submission
+    # Recupera o novo tipo de canal enviado pelo formulário
     new_type = request.form.get('channel_type')
-    # Ensure the type is valid (check against the enum)
     if new_type not in [channel.value for channel in ChannelType]:
         return redirect('/')
-
-    # Find the channel by ID and update its type
     channel = db.session.get(Channels, channel_id)
-
     if not channel:
         return redirect('/')
-    
     try:
-        channel.type = ChannelType[new_type]  # Update the channel's type
+        # Atualiza o tipo do canal e reinicia o processo correspondente
+        channel.type = ChannelType[new_type]
         print(f"Channel {channel_id} updated to {new_type}")
-        db.session.commit()  # Save the changes to the database
-        change_channel_process_thread = threading.Thread(target=change_channel_process, args=(channel.id, channel.source , channel.type), daemon=True)
+        db.session.commit()
+        change_channel_process_thread = threading.Thread(target=change_channel_process, args=(channel.id, channel.source, channel.type), daemon=True)
         change_channel_process_thread.start()
-
-        socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
-
+        socketio.emit('reload_page', namespace='/')
         return redirect('/')
     except Exception as e:
-
-        socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
-
+        socketio.emit('reload_page', namespace='/')
         return redirect('/')
 
-
-
+# Rota para atualizar o canal associado a uma área
 @app.route('/update_area_channel', methods=['POST'])
 def update_area_channel():
     area_name = request.form.get('name')
     new_channel_id = request.form.get('channel_id')
     print(f"Updating channel for area {area_name} to {new_channel_id}")
-
     area = Areas.query.filter_by(name=area_name).first()
     if not area:
         flash("Area not found", "error")
         return redirect('/')
-    
     try:
         area.channel_id = new_channel_id
         print(f"Channel updated to {new_channel_id} for area {area_name}")
         db.session.commit()
         send_info(Nodes.query.filter_by(area_id=area.id).all())
-
-        socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
-
+        socketio.emit('reload_page', namespace='/')
         return redirect('/')
     except Exception as e:
         flash(str(e), "error")
-
-        socketio.emit('reload_page', namespace='/')  # Emite para todos os clientes
-
+        socketio.emit('reload_page', namespace='/')
         return redirect('/')
 
-
+# Função para tratar o desligamento do sistema (Ctrl+C)
 def shutdown_handler(signum, frame):
-        """Handles Ctrl+C (SIGINT) and ensures a clean shutdown."""
-        print("\nShutting down gracefully...")
+    """Trata o SIGINT (Ctrl+C) e garante o desligamento limpo."""
+    print("\nShutting down gracefully...")
+    with app.app_context():
+        nodes = Nodes.query.all()
+    send_info(nodes, suspended=True)  # Envia mensagem de suspensão para os nós
+    stop_event.set()  # Sinaliza para parar as threads
+    thread.join()     # Aguarda a thread de detecção de nós terminar
+    # Aqui poderia-se terminar outros subprocessos, se necessário
+    print("Processes terminated")
+    sys.exit(0)  # Encerra o programa de forma limpa
 
-        # Set the stop event to signal threads to stop
-        stop_event.set()
-
-        # Wait for threads to exit
-        thread.join()
-        #t_play.join()
-
-        # Kill subprocesses
-        with app.app_context():
-            '''for channel_id in channels_dict:
-                if channels_dict[channel_id]:
-                    process = channels_dict[channel_id]["process"]
-                    process.terminate()
-                    process.wait()'''
-            print("Processes terminated")
-
-        sys.exit(0)  # Exit program cleanly
-
-    # Bind SIGINT (Ctrl+C) to shutdown_handler
-
+# Função para obter o IP local do host
 def get_host_ip():
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))  # Connect to an external server
-        ip = s.getsockname()[0]  # Get the local IP
+        s.connect(("8.8.8.8", 80))  # Conecta a um servidor externo
+        ip = s.getsockname()[0]
         s.close()
         return ip
     except Exception as e:
         return f"Error: {e}"
 
-
+# Bloco principal de execução
 if __name__ == '__main__':
-    stop_event = threading.Event()
-    msg_buffer = queue.Queue()
+    stop_event = threading.Event()  # Evento para interromper a thread
+    msg_buffer = queue.Queue()  # Fila para mensagens de status
 
     with app.app_context():
-        db.create_all()
-        create_default_channels()
+        db.create_all()  # Cria as tabelas no banco de dados, se ainda não existirem
+        create_default_channels()  # Inicializa os canais padrão
+        
+        
+    # Associa o sinal SIGINT ao shutdown_handler para tratamento de Ctrl+C
+    signal.signal(signal.SIGINT, shutdown_handler)
 
+    # Inicia a thread para detectar novos nós
     thread = threading.Thread(target=detect_new_nodes, args=(stop_event, msg_buffer), daemon=True)
     thread.start()
     
-    socketio.run(app,host=get_host_ip(), debug=False,port=5000)
+    # Inicia o servidor Flask com SocketIO
+    socketio.run(app, host=get_host_ip(), debug=False, port=5000)
 
-    signal.signal(signal.SIGINT, shutdown_handler)
-
-    #with control c to quit
-
-
-
-
+    

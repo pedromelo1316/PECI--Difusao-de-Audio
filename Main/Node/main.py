@@ -2,7 +2,7 @@ import socket
 import uuid
 import threading
 import time
-import node_client
+import node_client  # Módulo customizado para a classe node_client
 import json
 import pyaudio
 import subprocess
@@ -10,21 +10,68 @@ import base64
 import signal
 import sys
 import numpy as np
+import signal
 
-FREQ = 48000
-CHUNK_SIZE = 960
-SAMPLE_WIDTH = 2  # bytes per sample (pcm_s16le)
+# Configurações básicas de áudio e transmissão
+FREQ = 48000  # Frequência de amostragem do áudio
+CHUNK_SIZE = 960  # Tamanho do bloco de áudio a ser lido do stream
+SAMPLE_WIDTH = 2  # Bytes por amostra (pcm_s16le)
 
-OP = 3
-HEADER = None
-ffmpeg = None
-play_thread = None
-channel = None
+# Variáveis globais de controle do fluxo de mídia e estado do nó
+HEADER = None    # Contém o SDP recebido que define a sessão de áudio
+ffmpeg = None    # Processo do ffmpeg que vai tratar do stream de áudio
+play_thread = None  # Thread utilizada para reprodução do áudio
+channel = None   # Canal de áudio recebido
+player = None    # Objeto de player de áudio
+stream = None    # Stream de áudio
+
+global stop_event, player_stop_event
+stop_event = threading.Event()
+player_stop_event = threading.Event()
+
+
+
+def shutdown_handler(sig, frame):
+    global stop_event, player_stop_event, play_thread, ffmpeg, stream, player
+    print("Received SIGINT, shutting down...")
+    try:
+        if play_thread is not None:
+            player_stop_event.set()
+            play_thread.join(timeout=1)
+    except Exception as e:
+        print("Error stopping play_thread:", e)
+    try:
+        if ffmpeg is not None:
+            ffmpeg.terminate()
+            try:
+                ffmpeg.wait(timeout=1)
+            except subprocess.TimeoutExpired:
+                print("ffmpeg did not terminate in time, killing it.")
+                ffmpeg.kill()
+    except Exception as e:
+        print("Error terminating ffmpeg:", e)
+    try:
+        if stream is not None:
+            stream.stop_stream()
+            stream.close()
+    except Exception as e:
+        print("Error closing stream:", e)
+    try:
+        if player is not None:
+            player.terminate()
+    except Exception as e:
+        print("Error terminating player:", e)
+    stop_event.set()
+    sys.exit(0)
 
 def play_audio(n, sdp_file):
-    global ffmpeg, play_thread
-    """Plays the RTP audio stream using FFmpeg and pyaudio with dynamic volume control."""
+    global ffmpeg, player, stream, player_stop_event
+    """
+    Inicia a reprodução do stream de áudio via FFmpeg e pyaudio.
+    Permite controle dinâmico do volume usando a configuração do nó.
+    """
     print("Playing audio stream... from", sdp_file)
+    # Comando ffmpeg montado para receber o stream RTP conforme o arquivo SDP
     ffmpeg_cmd = [
         "ffmpeg",
         "-hide_banner",
@@ -35,36 +82,41 @@ def play_audio(n, sdp_file):
         "-acodec", "pcm_s16le",
         "-"
     ]
+    # Inicia o processo ffmpeg com redirecionamento da saída padrão
     ffmpeg = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
-    p = pyaudio.PyAudio()
-    # Assuming a stereo stream; adjust channels if needed.
-    stream = p.open(format=p.get_format_from_width(SAMPLE_WIDTH), channels=2, rate=FREQ, output=True)
+    player = pyaudio.PyAudio()
+    # Abre um stream de áudio para saída; o formato é PCM com SAMPLE_WIDTH bytes e 2 canais
+    stream = player.open(format=player.get_format_from_width(SAMPLE_WIDTH), channels=2, rate=FREQ, output=True)
     
     try:
-        # Calculate bytes to read per chunk (CHUNK_SIZE samples per channel x channels)
-        bytes_per_chunk = CHUNK_SIZE * SAMPLE_WIDTH * 1  # 2 channels
-        while True:
+        # Calcula o número de bytes por chunk (CHUNK_SIZE amostras por canal * SAMPLE_WIDTH * número de canais)
+        bytes_per_chunk = CHUNK_SIZE * SAMPLE_WIDTH * 1  # Observação: comentário indica "2 channels" mas o cálculo é para 1 canal
+        while not player_stop_event.is_set():
+            # Lê um bloco de dados do stdout do ffmpeg
             chunk = ffmpeg.stdout.read(bytes_per_chunk)
             if not chunk:
                 break
-            # Convert raw bytes to numpy array of int16 samples
+            # Converte os bytes do stream em array numpy de inteiros (int16)
             audio_data = np.frombuffer(chunk, dtype=np.int16)
-            # Get the current volume from the node (default to 1.0 if not set)
+            # Obtém o volume atual do nó (padrão 1.0 se não setado)
             volume = n.getVolume() if n.getVolume() is not None else 1.0
-            # Multiply samples by volume factor (with clipping to avoid overflow)
+            # Aplica o fator de volume aos dados do áudio, com clipping para evitar estouro
             audio_data = np.clip(audio_data * volume, -32768, 32767).astype(np.int16)
+            # Reproduz o áudio ajustado
             stream.write(audio_data.tobytes())
-    except KeyboardInterrupt:
-        print("KeyboardInterrupt received. Terminating playback...")
-    finally:
-        stream.stop_stream()
-        stream.close()
-        p.terminate()
-        ffmpeg.terminate()
+    except Exception as e:
+        print("Error in play_audio:", e)
+        
+    print("Audio stream stopped.")
 
-def wait_for_info(n, port=8081, stop_event=None):
-    global ffmpeg, HEADER, OP, channel, play_thread
+def wait_for_info(n, port=8081):
+    global ffmpeg, HEADER, channel, play_thread, player, stream, player_stop_event, stop_event
+    """
+    Aguarda informações de controle do nó através de um socket UDP.
+    Esse socket recebe mensagens JSON que alteram configurações como header, canal e volume.
+    """
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as server_socket:
+        # Permite reutilização do endereço para evitar erros de "address already in use"
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server_socket.bind(('0.0.0.0', port))
         while not stop_event.is_set():
@@ -72,43 +124,84 @@ def wait_for_info(n, port=8081, stop_event=None):
             data = data.decode('utf-8')
             try:
                 dic = json.loads(data)
+                # Verifica se a mensagem contém a chave que representa o MAC do nó
                 if n.mac in dic.keys():
                     info = dic[n.mac]
                     print("Received info:", info)
 
+                    # Verifica se a informação indica que o nó foi removido
                     if "removed" in info.keys():
                         print("Node removed")
                         if play_thread is not None:
-                            ffmpeg.terminate()
+                            player_stop_event.set()
                             play_thread.join()
-                            print("FFmpeg process terminated.")
+                            ffmpeg.terminate()
+                            stream.stop_stream()
+                            stream.close()
+                            player.terminate()
+                            HEADER = None
+                            channel = None
+                            play_thread = None
+                            ffmpeg = None
+                            stream = None
+                            player = None
                         stop_event.set()
                         break
-
-                    channel = info["channel"] if info["channel"] is not None else None
-                    volume = info["volume"] if info["volume"] is not None else None
-                    new_HEADER = info["header"] if info["header"] is not None else None
                     
+                    elif "suspended" in info.keys():
+                        if play_thread is not None:
+                            player_stop_event.set()
+                            play_thread.join()
+                            ffmpeg.terminate()
+                            stream.stop_stream()
+                            stream.close()
+                            player.terminate()
+                            print("FFmpeg process suspended.")
+                            HEADER = None
+                            channel = None
+                            play_thread = None
+                            ffmpeg = None
+                            stream = None
+                            player = None
+                        continue
+                    
+                    
+                    # Atualiza as configurações de canal, volume e header a partir da mensagem
+                    channel = info["channel"] if "channel" in info.keys() else None
+                    volume = info["volume"] if "volume" in info.keys() else None
+                    new_HEADER = info["header"] if "header" in info.keys() else None
+                    
+                    # Se volume recebido for diferente do atual, atualiza
                     if volume is not None and n.getVolume() != volume:
                         n.setVolume(float(volume))
+                    
+                    # Se o header ou canal mudou, atualiza estação e reinicia o processo do ffmpeg
                     if (new_HEADER is not None and HEADER != new_HEADER) or (channel is not None and channel != n.getChannel()):
                         HEADER = new_HEADER 
+                        # Grava o novo SDP em arquivo para que o ffmpeg o utilize
                         with open("session_received.sdp", "w") as f:
                             f.write(HEADER)
                         n.setChannel(channel)
+                        
+                        player_stop_event.clear()
                             
                         if play_thread is None:
                             play_thread = threading.Thread(target=play_audio, args=(n, "session_received.sdp",))
                             play_thread.start()
                             print("FFmpeg process started.")
                         else:
-                            # Terminate and restart playback for updated stream
+                            # Termina a thread atual do ffmpeg e inicia uma nova, para atualizar o stream
+                            
+                            stream.stop_stream()
+                            stream.close()
+                            player.terminate()
                             ffmpeg.terminate()
                             play_thread.join()
                             play_thread = threading.Thread(target=play_audio, args=(n, "session_received.sdp",))
                             play_thread.start()
                             print("FFmpeg process restarted.")
-                            
+                    
+                    # Se o canal ou header estiverem ausentes, encerra a reprodução
                     if channel is None or HEADER is None:
                         if play_thread is not None:
                             ffmpeg.terminate()
@@ -116,23 +209,33 @@ def wait_for_info(n, port=8081, stop_event=None):
                             play_thread = None
                             print("FFmpeg process terminated due to missing channel/header.")
 
+                    # Imprime as configurações atuais para debug
                     print("Channel:", n.getChannel())
                     print("Volume:", n.getVolume())
 
             except ValueError as e:
                 print("Error in wait_for_info:", e)
 
+    # Fecha o socket ao finalizar o processo
     server_socket.close()
 
-def wait_for_connection(n, port=8080, stop_event=None):
+def wait_for_connection(n, port=8080):
+    global stop_event
+    """
+    Estabelece uma conexão com o gerenciador através de broadcast UDP.
+    Envia periodicamente informações do nó e aguarda uma resposta de "OK".
+    """
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
+        # Habilita o envio de broadcast
         client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        client_socket.settimeout(5)
+        client_socket.settimeout(5)  # Timeout de 5 segundos para a resposta
         while not stop_event.is_set():
+            # Monta a mensagem com nome do host e MAC
             msg = f"{n.getName()},{n.getMac()}"
             client_socket.sendto(msg.encode('utf-8'), ('<broadcast>', port))
             print("Sent information to manager")
             try:
+                # Aguarda a resposta do gerenciador
                 data, addr = client_socket.recvfrom(1024)
                 if data == b"OK":
                     n.setHostIp(addr[0])
@@ -149,23 +252,34 @@ def wait_for_connection(n, port=8080, stop_event=None):
         return True
 
 def main():
-    global play_thread, ffmpeg, HEADER, OP, channel
+    global play_thread, ffmpeg, HEADER, OP, channel, player, stream
+    # Obtém o nome do host e o endereço MAC do computador atual
     nome = socket.gethostname()
     mac = ':'.join([f'{(uuid.getnode() >> i) & 0xff:02x}' for i in reversed(range(0, 48, 8))])
+    # Cria o objeto node_client com as informações do dispositivo
     n = node_client.node_client(nome, mac)
-    stop_event = threading.Event()
 
-    t_connection = threading.Thread(target=wait_for_connection, args=(n,8080, stop_event))
+    
+    # Associa o sinal SIGINT ao shutdown_handler para tratamento de Ctrl+C
+    signal.signal(signal.SIGINT, shutdown_handler)
+
+    # Cria e inicia a thread responsável por estabelecer a conexão com o gerenciador
+    t_connection = threading.Thread(target=wait_for_connection, args=(n,8080))
     t_connection.start()    
-    t_info = threading.Thread(target=wait_for_info, args=(n,8081, stop_event))
+    
+    # Cria e inicia a thread que ficará aguardando informações para controle do stream
+    t_info = threading.Thread(target=wait_for_info, args=(n,8081))
     t_info.start()
 
+    # Aguarda o término das threads de conexão e recebimento de informações
     t_connection.join()
     t_info.join()
     
+    # Se houver uma thread de reprodução ativa, espera seu término
     if play_thread is not None:
         play_thread.join()
         
+    # Garante o término do processo ffmpeg se estiver ativo
     if ffmpeg is not None:
         ffmpeg.terminate()
         
