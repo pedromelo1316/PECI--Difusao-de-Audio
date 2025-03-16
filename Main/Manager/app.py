@@ -288,7 +288,8 @@ def send_info(nodes, removed=False, suspended=False):
             header = None
             
             # Se existir canal, lê o arquivo SDP gerado
-            if processes[channel] != None:
+            #if processes[channel] != None:
+            if channel is not None and processes.get(channel) is not None:
                 try:
                     file = open(f"session_{channel}.sdp", "r")
                     header = file.read()
