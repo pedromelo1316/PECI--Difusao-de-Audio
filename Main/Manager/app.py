@@ -140,6 +140,16 @@ def change_channel_process(channel, source, transmission_type):
         
     print("channel: ", channel)
     print("transmission_type: ", transmission_type)
+    
+     # Após a mudança, envia informações atualizadas para os nós
+    with app.app_context():
+        areas = db.session.query(Areas).filter(Areas.channel_id == channel).all()
+        nodes = []
+        for area in areas:
+            nodes += area.nodes
+        send_info(nodes)
+    
+    
         
     # Inicia o novo processo para o canal com os parâmetros fornecidos
     process = start_ffmpeg_process(channel, source, transmission_type)
@@ -278,10 +288,13 @@ def send_info(nodes, removed=False, suspended=False):
             header = None
             
             # Se existir canal, lê o arquivo SDP gerado
-            if channel:
-                file = open(f"session_{channel}.sdp", "r")
-                header = file.read()
-                file.close()
+            if processes[channel] != None:
+                try:
+                    file = open(f"session_{channel}.sdp", "r")
+                    header = file.read()
+                    file.close()
+                except:
+                    pass
             
             dic[mac] = {"volume": volume, "channel": channel, "header": header}
     elif removed:

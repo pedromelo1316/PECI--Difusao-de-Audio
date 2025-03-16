@@ -194,7 +194,7 @@ def wait_for_info(n, port=8081):
                             play_thread.start()
                             print("FFmpeg process restarted.")
                     
-                    if new_HEADER is None and new_channel is None:
+                    if new_HEADER is None or new_channel is None:
                         print("No new header or channel received")
                         terminate_routine()
                         player_stop_event.clear()
