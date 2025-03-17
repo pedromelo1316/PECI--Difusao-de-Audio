@@ -118,21 +118,29 @@ document.addEventListener("DOMContentLoaded", function () {
         container.classList.add("select-container");
         const select = document.createElement("select");
         select.classList.add("select-column");
-        const defaultOption = document.createElement("option");
-        defaultOption.value = "";
-        defaultOption.disabled = true;
-        defaultOption.selected = true;
-        defaultOption.textContent = "Select a speaker";
-        select.appendChild(defaultOption);
+
         fetch("/get_free_nodes")
             .then(response => response.json())
             .then(nodes => {
-                nodes.forEach(node => {
+                if (nodes.length === 0) {
                     const option = document.createElement("option");
-                    option.value = node.name;
-                    option.textContent = node.name;
+                    option.value = "";
+                    option.disabled = true;
+                    option.selected = true;
+                    option.textContent = "No speakers available";
                     select.appendChild(option);
-                });
+                } else {
+                    nodes.forEach((node, index) => {
+                        const option = document.createElement("option");
+                        option.value = node.name;
+                        option.textContent = node.name;
+                        select.appendChild(option);
+                    });
+                    setTimeout(() => {
+                        select.focus();
+                        select.click(); // Automatically open the dropdown
+                    }, 100);
+                }
             })
             .catch(error => console.error("Error fetching nodes:", error));
         const cancelButton = document.createElement("button");
