@@ -598,15 +598,16 @@ def shutdown_handler(signum, frame):
     sys.exit(0)  # Encerra o programa de forma limpa
 
 # Função para obter o IP local do host
-# Função para obter o IP local do host
 def get_host_ip():
+    iface = 'eno1'
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))  # Conecta a um servidor externo
-        ip = s.getsockname()[0]
-        s.close()
+        iface_bytes = iface.encode('utf-8')
+        packed_iface = struct.pack('256s', iface_bytes[:15])
+        ip = socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8915, packed_iface)[20:24])
         return ip
     except Exception as e:
+        f"Error: {e}"
         return "127.0.0.1"
 
 # Bloco principal de execução
