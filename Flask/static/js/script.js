@@ -8,15 +8,13 @@ document.addEventListener("DOMContentLoaded", function () {
         details.style.display = isHidden ? 'block' : 'none';
     };
 
-    // Função para editar o nome da coluna
     window.editColumnName = function(icon) {
         const columnItem = icon.closest(".column-item");
         const columnNameSpan = columnItem.querySelector("span");
         const currentName = columnNameSpan.textContent;
-        const newName = prompt("Editar nome da coluna:", currentName);
+        const newName = prompt("Edit column name:", currentName);
         if (newName && newName !== currentName) {
             columnNameSpan.textContent = newName;
-            // Enviar atualização para o backend
             fetch(`/update_column_name`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -25,50 +23,96 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (!response.ok) {
                     console.error("Erro ao atualizar o nome da coluna:", response.statusText);
                     alert("Erro ao atualizar o nome da coluna.");
-                    columnNameSpan.textContent = currentName; // Reverter em caso de erro
+                    columnNameSpan.textContent = currentName;
                 }
             }).catch(error => {
-                console.error("Erro ao atualizar o nome da coluna:", error);
-                columnNameSpan.textContent = currentName; // Reverter em caso de erro
+                console.error("Error updating column name:", error);
+                columnNameSpan.textContent = currentName;
             });
         }
     };
 
-    // Função para alternar seleção de colunas
-    
+    document.querySelectorAll('input[type="radio"]').forEach((radio) => {
+        radio.addEventListener('change', function(event) {
+            event.preventDefault();
+            const channelId = this.closest('form').id.split('_')[1];
+            const form = document.getElementById(`form_${channelId}`);
+            form.submit();
+        });
+    });
 
-    // Função para adicionar uma nova coluna
-    window.addColumn = function() {
-        const columnList = document.querySelector(".column-list");
-        const columnCount = columnList.querySelectorAll(".column-item").length; // Conta apenas colunas reais
-        const newColumn = document.createElement("div");
-    
-        newColumn.classList.add("column-item");
-        newColumn.innerHTML = `<div class="column-header">
-                                   <span>Coluna ${columnCount + 1}</span>
-                                   <div class="column-actions">
-                                       <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
-                                       <i class="fa-solid fa-pen" onclick="editColumnName(this)"></i>
-                                       <i class="fa-solid fa-trash" onclick="removeColumn(this)"></i>
-                                   </div>
-                               </div>
-                               <div class="column-details" style="display: none;">
-                                   <p>IP: 192.168.1.${columnCount + 1}</p>
-                                   <p>MAC: 00:1A:2B:3C:4D:${(columnCount + 1).toString(16).padStart(2, '0')}</p>
-                                   <p>Zona: Nenhuma</p>
-                               </div>`;
-    
-        // Adicionar a nova coluna antes do botão "+ Coluna"
-        columnList.insertBefore(newColumn, document.querySelector(".add-column"));
+    document.querySelectorAll('input[type="radio"]').forEach((radio) => {
+        radio.addEventListener('change', function(event) {
+            event.preventDefault();
+            const form = this.closest('form');
+            form.submit();
+        });
+    });
+
+    document.querySelectorAll('.volume-slider').forEach(slider => {
+        slider.addEventListener('change', function(event) {
+            event.preventDefault();
+            let volume = this.value;
+            let areaName = this.closest('form').querySelector('input[name="name"]').value;
+            this.nextElementSibling.textContent = `Volume: ${volume}%`;
+            fetch('/update_volume', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `name=${encodeURIComponent(areaName)}&volume=${encodeURIComponent(volume)}`
+            }).then(response => console.log(`Volume updated to ${volume}`));
+        });
+    });
+
+    function addArea() {
+        const areaName = prompt("Name of the new zone:");
+        if (!areaName) {
+            alert("The zone name is required!");
+            return;
+        }
+        fetch('/add_area', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: areaName })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => { throw new Error(data.error); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert("Zone added successfully!");
+            location.reload();
+        })
+        .catch(error => {
+            alert("Error: " + error.message);
+        });
     }
-    
-    // Global state to track used columns in zonas
+
+    document.getElementById("addAreaButton").addEventListener("click", addArea);
+
     let usedZoneColumns = [];
+    document.querySelectorAll(".add-column-button").forEach(button => {
+        button.addEventListener("click", function (event) {
+            event.preventDefault();
+            showSelectForZone(this);
+        });
+    });
+    document.querySelectorAll(".delete-column-button").forEach(btn => {
+        btn.addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const columnItem = this.closest(".column-item");
+            removeZoneColumn(columnItem);
+        });
+    });
+    document.querySelectorAll("input[type='range']").forEach(slider => {
+        slider.addEventListener("input", function (event) {
+            event.preventDefault();
+            this.nextElementSibling.textContent = `Volume: ${this.value}%`;
+        });
+    });
 
-    // Função para adicionar uma nova coluna dentro de uma zona
-    
-
-    // Helper: show select element to pick a column from Wi-Fi columns
     function showSelectForZone(buttonElement) {
         const container = document.createElement("div");
         container.classList.add("select-container");
@@ -78,144 +122,126 @@ document.addEventListener("DOMContentLoaded", function () {
         defaultOption.value = "";
         defaultOption.disabled = true;
         defaultOption.selected = true;
-        defaultOption.textContent = "Selecione uma coluna";
+        defaultOption.textContent = "Select a speaker";
         select.appendChild(defaultOption);
-        // Populate with available columns from Conexões Wi-Fi, filtering usedZoneColumns
-        const wifiColumns = document.querySelectorAll("#columnBox .column-item");
-        wifiColumns.forEach(column => {
-            const colName = column.querySelector("span").textContent.replace("✔ ", "").trim();
-            if (!usedZoneColumns.includes(colName)) {  // Only add if not used
-                const option = document.createElement("option");
-                option.value = colName;
-                option.textContent = colName;
-                select.appendChild(option);
-            }
+        fetch("/get_free_nodes")
+            .then(response => response.json())
+            .then(nodes => {
+                nodes.forEach(node => {
+                    const option = document.createElement("option");
+                    option.value = node.name;
+                    option.textContent = node.name;
+                    select.appendChild(option);
+                });
+            })
+            .catch(error => console.error("Error fetching nodes:", error));
+        const cancelButton = document.createElement("button");
+        cancelButton.classList.add("cancel-button");
+        cancelButton.textContent = "X";
+        cancelButton.addEventListener("click", function (event) {
+            event.preventDefault();
+            container.replaceWith(buttonElement);
         });
         container.appendChild(select);
-        // Replace the add button with the select container
-        buttonElement.parentElement.replaceChild(container, buttonElement);
-        // On selection change, add the zone column
-        select.addEventListener("change", function () {
-            addZoneColumn(select);
+        container.appendChild(cancelButton);
+        buttonElement.replaceWith(container);
+        select.addEventListener("change", function (event) {
+            event.preventDefault();
+            addZoneColumn(select, buttonElement);
         });
     }
 
-    // Aplicar funcionalidade ao botão "+ Coluna"
-    document.querySelector(".add-column").addEventListener("click", addColumn);
-
-    // Adicionar funcionalidade de seleção às colunas existentes
-    document.querySelectorAll(".column-item").forEach(item => {
-        item.addEventListener("click", function () {
-            toggleColumnSelection(this);
+    function addZoneColumn(selectElement, buttonElement) {
+        const selectedColumn = selectElement.value;
+        if (!selectedColumn) return;
+        const zoneName = selectElement.closest(".zone-box").querySelector("h3").textContent.trim();
+        const columnItem = document.createElement("div");
+        columnItem.classList.add("column-item");
+        columnItem.innerHTML = `
+            <span>${selectedColumn}</span>
+            <button class="delete-column-button">
+                <i class="fa-solid fa-trash" style="color: black;"></i>
+            </button>
+        `;
+        columnItem.dataset.column = selectedColumn;
+        columnItem.dataset.zone = zoneName;
+        columnItem.querySelector(".delete-column-button").addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            removeZoneColumn(columnItem);
         });
-    });
-
-    // Adicionar funcionalidade de remoção às colunas existentes
-    document.querySelectorAll(".delete-column").forEach(btn => {
-        btn.addEventListener("click", function (event) {
-            event.stopPropagation(); // Impede a ativação da seleção ao clicar no ícone de lixo
-            this.closest(".column-item").remove();
-        });
-    });
-
-    // Controle de volume
-    document.querySelectorAll("input[type='range']").forEach(slider => {
-        slider.addEventListener("input", function () {
-            const volumeLabel = this.nextElementSibling;
-            volumeLabel.textContent = `Volume: ${this.value}%`;
-        });
-    });
-
-   
-
-    // Populate zone options in channel selects
-    function populateZoneOptions() {
-        const zoneNames = Array.from(document.querySelectorAll(".zone-header h3")).map(zone => zone.textContent);
-        const channelSelects = document.querySelectorAll(".channels-container select");
-        channelSelects.forEach(select => {
-            select.innerHTML = '<option value="" disabled>Selecione as zonas</option>';
-            zoneNames.forEach(zoneName => {
-                const option = document.createElement("option");
-                option.value = zoneName;
-                option.textContent = zoneName;
-                select.appendChild(option);
-            });
-        });
+        const zoneContainer = selectElement.closest(".column-list");
+        zoneContainer.insertBefore(columnItem, selectElement.parentElement);
+        selectElement.parentElement.replaceWith(buttonElement);
+        usedZoneColumns.push(selectedColumn);
+        fetch("/add_column_to_zone", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ zone_name: zoneName, column_name: selectedColumn })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert("Error: " + data.error);
+                columnItem.remove();
+                usedZoneColumns = usedZoneColumns.filter(name => name !== selectedColumn);
+            }
+        })
+        .catch(error => console.error("Error adding speaker:", error));
     }
 
-    // Populate zone options in the add zone selects
-    function populateAddZoneSelects() {
-        const zoneNames = Array.from(document.querySelectorAll(".zone-header h3")).map(zone => zone.textContent);
-        const addZoneSelects = document.querySelectorAll("[id^='addZoneSelect']");
-        addZoneSelects.forEach(select => {
-            select.innerHTML = '<option value="" disabled selected>Adicionar Zona</option>';
-            zoneNames.forEach(zoneName => {
-                const option = document.createElement("option");
-                option.value = zoneName;
-                option.textContent = zoneName;
-                select.appendChild(option);
-            });
-        });
+    function removeZoneColumn(columnElement) {
+        const columnName = columnElement.dataset.column;
+        const zoneName = columnElement.dataset.zone;
+        console.log("Removing speaker:", columnName, "from zone:", zoneName);
+        fetch("/remove_column_from_zone", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ zone_name: zoneName, column_name: columnName })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log("Speaker removed successfully!");
+                columnElement.remove();
+            } else {
+                console.error("Error removing speaker:", data.error);
+                alert("Error: " + data.error);
+            }
+        })
+        .catch(error => console.error("Error removing speaker:", error));
     }
 
-    // Update zones table based on selected zones
-    function updateZonesTable() {
-        const zonesChannel1 = Array.from(document.getElementById("channel1").selectedOptions).map(option => option.value).join(", ");
-        const zonesChannel2 = Array.from(document.getElementById("channel2").selectedOptions).map(option => option.value).join(", ");
-        const zonesChannel3 = Array.from(document.getElementById("channel3").selectedOptions).map(option => option.value).join(", ");
-        document.getElementById("zonesChannel1").textContent = zonesChannel1;
-        document.getElementById("zonesChannel2").textContent = zonesChannel2;
-        document.getElementById("zonesChannel3").textContent = zonesChannel3;
-    }
-
-    // Add zone to channel
-    window.addZoneToChannel = function(channelNumber) {
-        const select = document.getElementById(`addZoneSelect${channelNumber}`);
-        const zoneName = select.value;
-        if (!zoneName) return;
-
-        const zonesCell = document.getElementById(`zonesChannel${channelNumber}`);
-        const currentZones = zonesCell.textContent ? zonesCell.textContent.split(", ") : [];
-        if (!currentZones.includes(zoneName)) {
-            currentZones.push(zoneName);
-            zonesCell.textContent = currentZones.join(", ");
+    window.removeArea = function(areaName) {
+        if (confirm(`Are you sure you want to delete the zone "${areaName}"?`)) {
+            const form = document.getElementById(`remove-area-form-${areaName}`);
+            if (form) {
+                form.submit();
+            } else {
+                console.error(`Form for area ${areaName} not found`);
+                // Alternative approach if form submission doesn't work
+                fetch('/remove_area', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name: areaName })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Zone deleted successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error deleting zone: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting zone:', error);
+                    alert('Error deleting zone. Please try again.');
+                });
+            }
         }
     };
-
-    // Remove zone from channel
-    window.removeZoneFromChannel = function(channelNumber) {
-        const zoneName = prompt("Nome da zona a remover:");
-        if (!zoneName) return;
-
-        const zonesCell = document.getElementById(`zonesChannel${channelNumber}`);
-        let currentZones = zonesCell.textContent ? zonesCell.textContent.split(", ") : [];
-        currentZones = currentZones.filter(zone => zone !== zoneName);
-        zonesCell.textContent = currentZones.join(", ");
-    };
-
-    // Remove column
-    window.removeColumn = function(icon, columnName) {
-        const columnItem = icon.closest(".column-item");
-        columnItem.remove();
-        // If it was a zone column (columnName provided), free it up for reuse
-        if (columnName) {
-            usedZoneColumns = usedZoneColumns.filter(col => col !== columnName);
-        }
-    };
-
-    // Toggle column details
-    
-
-    // Initial population of zone options
-    populateAddZoneSelects();
-    populateZoneOptions();
-
-    // Add event listeners to update zones table when selections change
-    document.getElementById("channel1").addEventListener("change", updateZonesTable);
-    document.getElementById("channel2").addEventListener("change", updateZonesTable);
-    document.getElementById("channel3").addEventListener("change", updateZonesTable);
-
-    // Initial update of zones table
-    updateZonesTable();
 });
 

@@ -1,8 +1,9 @@
+/* General Styles */
 body {
-    font-family: Arial, sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     margin: 0;
     padding: 100;
-    background-color: #ffff;
+    background: linear-gradient(to bottom, #fffcfc, #ffffff);
 }
 
 .detalhes {
@@ -23,12 +24,9 @@ body {
     transform: rotate(180deg);
 }
 
-
-
-
 /* Header */
 header {
-    background: white;
+    background: #fffcfc;
     padding: 20px;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
     margin-bottom: 2px;
@@ -37,7 +35,8 @@ header {
 .header-content {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
+    font-size: 110%;
 }
 
 .title {
@@ -75,7 +74,7 @@ p {
 }
 
 .content {
-    max-width: 500px;
+    max-width: 540px;
     width: 100%;
 }
 
@@ -87,40 +86,11 @@ h2 {
 
 .toggle-item {
     display: flex;
-    
     align-items: center;
-    padding: 10px ;
-  
+    padding: 10px;
 }
 
-/* Removed switch slider styles */
-/*
-.slider {
-    background-color: #cccccc;
-    border-radius: 100px;
-    padding: 1px;
-    cursor: pointer;
-    position: relative;
-    display: block;
-    width: 100%;
-    height: 100%;
-    box-shadow: inset 0px 0px 5px rgba(0, 0, 0, 0.1);
-}
-
-.slider::after {
-    content: "";
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 26px;
-    height: 26px;
-    background-color: white;
-    border-radius: 50px;
-    transition: left 300ms ease-in-out;
-}
-*/
-
-/* Estilos para a caixa de colunas */
+/* Column Box */
 .column-box {
     display: block; /* Was display: none; now always visible */
     background: white;
@@ -139,7 +109,9 @@ h2 {
 
 .column-item {
     display: flex;
-    flex-direction: column;
+    flex-direction: row; /* Change to row to place trash icon on right side */
+    justify-content: space-between; /* Push content to ends */
+    align-items: center; /* Center vertically */
     padding: 8px;
     border-bottom: 1px solid #ddd;
     cursor: pointer;
@@ -148,11 +120,13 @@ h2 {
     background-color: white !important;
 }
 
+.column-item span {
+    flex-grow: 1; /* Take available space */
+}
+
 .column-item:hover {
     background: #f0f0f0;
 }
-
-
 
 .add-column {
     padding: 8px;
@@ -162,39 +136,39 @@ h2 {
     cursor: pointer;
 }
 
-/* Caixa das Zonas de Áudio */
+/* Zone Container */
 .zone-container {
     background: white;
-    padding: 35px;
-    border-radius: 12px;
+    padding: 55px 55px 35px 35px; /* Reduced left padding to shift content left */
+    border-radius: 6px;
     box-shadow: 0px 4px 5px rgba(0, 0, 0, 0.1);
     width: 200%;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 30px;
+    gap: 40px;
     flex-direction: column;
     align-items: center;
-    margin-top: 10px; /* Abaixar o título para não estar em cima da caixa */
-    max-height: 625px; /* Adiciona uma altura máxima */
-    overflow-y: auto; 
+
 }
 
-/* Zona de Áudio */
+/* Zone Box */
 .zone-box {
     background: white;
     border-radius: 12px;
     box-shadow: 0px 4px 5px rgba(0, 0, 0, 0.1);
-    padding: 5px;
-    width: 100%; /* Ajusta ao tamanho da caixa */
-    min-height: 350px; /* Ajusta ao tamanho da caixa */
+    padding: 8px;
+    width: 100%; /* Adjusts to the size of the container */
+    min-height: 300px; /* Reduced minimum height */
+    transition: transform 0.2s ease-in-out;
+    margin-left: 0; /* Ensure no additional left margin */
 }
 
+.zone-box:hover {
+    transform: scale(1.02);
+    transition: transform 0.2s ease-in-out;
+}
 
-
-
-
-
-/* Cabeçalho da Zona */
+/* Zone Header */
 .zone-header {
     display: flex;
     justify-content: space-between;
@@ -209,26 +183,37 @@ h2 {
     color: black; /* Mudando a cor do ícone para preto */
 }
 
-/* Seção das Colunas */
-.column-section {
+.zone-header h3 {
+    text-align: center;
     width: 100%;
+}
+
+/* Column Section */
+.column-section {
+    width: 50%;
 }
 
 .column-list {
     background: white;
-    border-radius: 8px;
-    padding: 10px;
+    border-radius: 6px; /* Smaller border radius */
+    padding: 8px; /* Reduced padding */
+    max-height: 150px; /* Reduced max height */
 }
 
-/* Cada Item de Coluna */
+/* Column Item */
 .column-item {
     display: flex;
-    flex-direction: column;
-   
+    flex-direction: row; /* Change to row to place trash icon on right side */
+    justify-content: space-between; /* Push content to ends */
+    align-items: center; /* Center vertically */
     border-bottom: 1px solid #ddd;
     cursor: pointer;
     border-radius: 8px;
     transition: background 0.3s;
+}
+
+.column-item span {
+    flex-grow: 1; /* Take available space */
 }
 
 .column-item:hover {
@@ -260,7 +245,7 @@ h2 {
 .column-details {
     margin-top: 10px;
     padding: 10px;
-    background: #f9f9f9;
+    background: #f9f9f971;
     border-radius: 8px;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
 }
@@ -274,20 +259,64 @@ h2 {
     font-size: 16px;
 }
 
-
-/* Seção do Canal */
+/* Channel Section */
 .channel-section {
-    width: 100%;
-    margin-top: 15px;
+    width: 50%;
+    background: white;
+    border-radius: 8px; /* Smaller border radius */
+    padding: 22px; /* Reduced padding */
+    
+    flex: 1; /* Make channels section take less space */
+    align-self: center;
 }
 
 .channel-options label {
     display: block;
-    font-size: 14px;
-    margin-bottom: 5px;
+    font-size: 13px; /* Smaller font size */
+    margin-bottom: 4px; /* Reduced margin */
 }
 
-/* Volume */
+/* Volume Section */
+.volume-section {
+    background: white;
+    border-radius: 6px; /* Smaller border radius */
+    padding: 8px; /* Reduced padding */
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.05); /* Lighter shadow */
+    display: flex;
+    flex-direction: row; /* Change to row for a more compact layout */
+    align-items: center; /* Center items vertically */
+    gap: 10px; /* Gap between elements */
+    width: 100%; /* Full width as requested */
+   
+}
+
+.volume-section h4 {
+    margin: 0;
+    font-size: 14px;
+    min-width: 60px; /* Fixed width for the label */
+}
+
+.volume-form {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 10px;
+}
+
+.volume-section input[type="range"] {
+    flex: 1; /* Take up available space */
+    margin: 0;
+}
+
+.volume-section p {
+    margin: 0;
+    font-size: 13px;
+    color: #555;
+    min-width: 80px; /* Fixed width for the volume label */
+    text-align: right;
+}
+
+/* Input Styles */
 input[type="range"] {
     width: 100%;
     margin-top: 5px;
@@ -295,7 +324,6 @@ input[type="range"] {
     accent-color: #22cc3f; /* Barra de seleção do volume também verde */
 }
 
-/* Cores para checkboxes e seleção */
 input[type="checkbox"]:checked {
     background-color: #22cc3f; /* Checkboxes verdes */
 }
@@ -304,6 +332,7 @@ input[type="checkbox"] {
     accent-color: #22cc3f; /* Cor do checkbox */
 }
 
+/* Add Zone Button */
 #addZoneBtn {
     margin: 10px;
     padding: 8px 16px;
@@ -315,48 +344,57 @@ input[type="checkbox"] {
 }
 
 .add-zone {
-    
     display: flex;
     justify-content: center;
     align-items: center;
-   
     cursor: pointer;
     font-size: 40px;
     font-weight: bold;
+    
 }
 
-.zone-content {
+/* Dual Section */
+.dual-section {
     display: flex;
+    justify-content: space-between;
     gap: 20px;
 }
 
-.column-section {
-    flex: 1;
+.section-left {
+    flex: none;
+    width: 100%;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
 }
 
-.channel-volume {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+.section-right {
+    flex: none;
+    width: 100%;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
 }
 
+/* Centered Container */
 .centered-container {
     justify-content: center;
 }
 
+/* Channels Container */
 .channels-container {
     background: white;
     border-radius: 12px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    padding: 25px;
+    
+    padding: 15px;
     margin-top: 25px;
     display: flex;
-   /* Force channels to remain in one row */
     gap: 20px;
 }
 
 .channel-group {
-    
     margin-bottom: 20px;
 }
 
@@ -389,6 +427,7 @@ input[type="checkbox"] {
     gap: 20px;
 }
 
+/* Select Column */
 .select-column option[disabled] {
     font-style: italic;
     color: #999;
@@ -396,7 +435,6 @@ input[type="checkbox"] {
     font-size: 20px; /* Aumenta o tamanho da letra para "Selecione uma coluna" */
 }
 
-/* Style for the select dropdown to make "Selecione uma coluna" more attractive */
 .select-column {
     appearance: none;
     -webkit-appearance: none;
@@ -416,7 +454,6 @@ input[type="checkbox"] {
     outline: none;
 }
 
-/* Option styling */
 .select-column option {
     padding: 8px;
 }
@@ -467,8 +504,7 @@ footer {
     background-color: #f0f0f0;
 }
 
-
-
+/* Add/Delete Column Button */
 .add-column-button {
     padding: 8px;
     text-align: center;
@@ -482,4 +518,103 @@ footer {
     border: none;
     color: red;
     cursor: pointer;
+    padding: 0 5px;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+}
+
+/* Site Logo */
+.site-logo {
+    height: 120px;
+    margin: 0;
+    display: inline-block;
+    margin-right: 20px;
+}
+
+/* Responsive Styles */
+@media (max-width: 600px) {
+    .container {
+        width: 90%;
+        margin: 0 auto;
+    }
+    .zone-content {
+        flex-direction: column;
+    }
+}
+
+/* Zone Content */
+.zone-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Reduced gap */
+    padding: 10px; /* Reduced padding */
+    background: white;
+    border-radius: 8px; /* Smaller border radius */
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05); /* Lighter shadow */
+}
+
+/* Row Container for Speakers and Channels */
+.row-container {
+    display: flex;
+    flex-direction: row;
+    gap: 20px; /* Reduced gap */
+    width: 100%;
+}
+
+.column-section, .channel-section {
+    background: white;
+    border-radius: 8px; /* Smaller border radius */
+    padding: 12px; /* Reduced padding */
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05); /* Lighter shadow */
+    flex: 1; /* Make them take equal space */
+    gap: 20px; /* Gap between sections */
+}
+
+.column-section {
+    flex: 2; /* Make speakers section take more space */
+}
+
+.channel-section {
+    flex: 1; /* Make channels section take less space */
+}
+
+/* Volume Section */
+.volume-section {
+    background: white;
+    border-radius: 6px; /* Smaller border radius */
+    padding: 8px; /* Reduced padding */
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.05); /* Lighter shadow */
+    display: flex;
+    flex-direction: row; /* Change to row for a more compact layout */
+    align-items: center; /* Center items vertically */
+    gap: 10px; /* Gap between elements */
+    width: 95%; /* Full width as requested */
+  
+}
+
+.volume-section h4 {
+    margin: 0;
+    font-size: 14px;
+    min-width: 60px; /* Fixed width for the label */
+}
+
+.volume-form {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 10px;
+}
+
+.volume-section input[type="range"] {
+    flex: 1; /* Take up available space */
+    margin: 0;
+}
+
+.volume-section p {
+    margin: 0;
+    font-size: 13px;
+    color: #555;
+    min-width: 80px; /* Fixed width for the volume label */
+    text-align: right;
 }
