@@ -14,6 +14,7 @@ import os
 import base64
 import signal
 import sys
+import socket, fcntl, struct
 
 # Inicialização do app Flask, SQLAlchemy e SocketIO
 app = Flask(__name__)
@@ -594,11 +595,12 @@ def shutdown_handler(signum, frame):
 
 # Função para obter o IP local do host
 def get_host_ip():
+    iface = 'eno1'
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))  # Conecta a um servidor externo
-        ip = s.getsockname()[0]
-        s.close()
+        iface_bytes = iface.encode('utf-8')
+        packed_iface = struct.pack('256s', iface_bytes[:15])
+        ip = socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8915, packed_iface)[20:24])
         return ip
     except Exception as e:
         return f"Error: {e}"
