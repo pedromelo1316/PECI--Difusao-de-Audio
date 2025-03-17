@@ -603,7 +603,8 @@ def get_host_ip():
         ip = socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8915, packed_iface)[20:24])
         return ip
     except Exception as e:
-        return f"Error: {e}"
+        f"Error: {e}"
+        return "127.0.0.1"
 
 # Bloco principal de execução
 if __name__ == '__main__':
