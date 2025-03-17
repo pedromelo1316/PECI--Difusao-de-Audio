@@ -28,16 +28,16 @@ body {
     width: 100%;
 }
 
-.playlists-section, .songs-section {
+.playlists-section, .songs-section, .voice-section {
     width: 45%;
 }
 
-.playlists-list, .songs-list {
+.playlists-list, .songs-list, .voice-list {
     list-style-type: none;
     padding: 0;
 }
 
-.playlist-item, .song-item {
+.playlist-item, .song-item, .voice-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -49,17 +49,17 @@ body {
     transition: background-color 0.3s;
 }
 
-.playlist-item:hover, .song-item:hover {
+.playlist-item:hover, .song-item:hover, .voice-item:hover {
     background-color: #f9f9f9;
 }
 
-.add-playlist, .add-song {
+.add-playlist, .add-song, .add-microphone {
     cursor: pointer;
     color: #22cc3f;
     font-weight: bold;
 }
 
-.fa-pen, .fa-trash {
+.fa-pen, .fa-trash, .fa-sync {
     cursor: pointer;
 }
 
@@ -181,7 +181,7 @@ button:hover {
     box-sizing: border-box;
 }
 
-.song-actions {
+.song-actions, .voice-actions {
     display: inline-flex;
     gap: 8px;
     vertical-align: middle;

@@ -62,6 +62,10 @@ class Song(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False, unique=True)
 
+class Microphone(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False, unique=True)
+
 playlist_song = db.Table('playlist_song',
     db.Column('playlist_id', db.Integer, db.ForeignKey('playlist.id'), primary_key=True),
     db.Column('song_id', db.Integer, db.ForeignKey('song.id'), primary_key=True),
@@ -96,7 +100,8 @@ def index():
     channels = Channels.query.order_by(Channels.id).all()
     playlists = Playlist.query.order_by(Playlist.id).all()
     songs = Song.query.order_by(Song.id).all()
-    return render_template("index.html", nodes=nodes, areas=areas, channels=channels, playlists=playlists, songs=songs)
+    microphones = Microphone.query.order_by(Microphone.id).all()
+    return render_template("index.html", nodes=nodes, areas=areas, channels=channels, playlists=playlists, songs=songs, microphones=microphones)
 
 @app.route('/delete/<int:id>')
 def delete(id):
@@ -607,6 +612,33 @@ def playlist_order(playlist_name):
     song_order_names = [row[1] for row in query.all()]
     return jsonify({"songs": song_order_names})
 
+@app.route('/add_microphone', methods=['POST'])
+def add_microphone():
+    data = request.get_json()
+    mic_name = data.get('name')
+    if not mic_name:
+        return jsonify({"error": "Nome do microfone é obrigatório"}), 400
+    new_mic = Microphone(name=mic_name)
+    db.session.add(new_mic)
+    db.session.commit()
+    return jsonify({"success": True}), 200
+
+@app.route('/delete_microphone/<int:mic_id>', methods=['DELETE'])
+def delete_microphone(mic_id):
+    mic = Microphone.query.get_or_404(mic_id)
+    db.session.delete(mic)
+    db.session.commit()
+    return jsonify({"success": True}), 200
+
+@app.route('/sync_microphone/<int:mic_id>', methods=['POST'])
+def sync_microphone(mic_id):
+    microphone = Microphone.query.get_or_404(mic_id)
+    try:
+        # Logic to sync the microphone
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     stop_event = threading.Event()
     msg_buffer = queue.Queue()
@@ -620,7 +652,7 @@ if __name__ == '__main__':
         create_default_channels()
         
     # socketio.run(app, debug=True)
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
     #thread.join()
 
 

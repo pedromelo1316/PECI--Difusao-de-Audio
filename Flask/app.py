@@ -419,25 +419,6 @@ def update_area_channel():
         flash(str(e), "error")
         return redirect('/')
 
-@app.route('/update_column_name', methods=['POST'])
-def update_column_name():
-    data = request.get_json()
-    old_name = data.get('old_name')
-    new_name = data.get('new_name')
-
-    if not old_name or not new_name:
-        return jsonify({"error": "Nome antigo e novo nome são obrigatórios"}), 400
-
-    try:
-        column = Nodes.query.filter_by(name=old_name).first()
-        if not column:
-            return jsonify({"error": "Coluna não encontrada"}), 404
-
-        column.name = new_name
-        db.session.commit()
-        return jsonify({"success": "Nome da coluna atualizado com sucesso"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 '''
 corrigir isto dps

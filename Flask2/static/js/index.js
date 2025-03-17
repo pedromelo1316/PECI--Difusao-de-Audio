@@ -106,3 +106,60 @@ function editSong(songId, currentName) {
         });
     }
 }
+
+function syncMicrophone(micId) {
+    fetch(`/sync_microphone/${micId}`, {
+        method: 'POST'
+    }).then(response => {
+        if (response.ok) {
+            alert('Microfone sincronizado com sucesso.');
+        } else {
+            alert('Erro ao sincronizar o microfone.');
+        }
+    });
+}
+
+function syncAllMicrophones() {
+    fetch('/sync_all_microphones', {
+        method: 'POST'
+    }).then(response => {
+        if (response.ok) {
+            alert('Todos os microfones foram sincronizados com sucesso.');
+        } else {
+            alert('Erro ao sincronizar todos os microfones.');
+        }
+    });
+}
+
+function addMicrophone() {
+    const micName = prompt('Nome do novo microfone:');
+    if (micName) {
+        fetch('/add_microphone', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: micName })
+        }).then(response => {
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                alert('Erro ao adicionar o microfone.');
+            }
+        });
+    }
+}
+
+function deleteMicrophone(micId) {
+    if (confirm("Tem certeza de que deseja eliminar o microfone?")) {
+        fetch(`/delete_microphone/${micId}`, { method: 'DELETE' })
+        .then(res => {
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                alert('Erro ao eliminar o microfone.');
+            }
+        })
+        .catch(err => {
+            alert('Erro ao eliminar o microfone.');
+        });
+    }
+}

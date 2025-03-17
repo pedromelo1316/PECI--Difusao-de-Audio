@@ -118,84 +118,85 @@ document.addEventListener("DOMContentLoaded", function () {
         container.classList.add("select-container");
         const select = document.createElement("select");
         select.classList.add("select-column");
+        select.multiple = true; // Allow multiple selections
 
         fetch("/get_free_nodes")
             .then(response => response.json())
             .then(nodes => {
                 if (nodes.length === 0) {
-                    const option = document.createElement("option");
-                    option.value = "";
-                    option.disabled = true;
-                    option.selected = true;
-                    option.textContent = "No speakers available";
-                    select.appendChild(option);
+                    buttonElement.remove(); // Remove the "+ Speaker" button if no speakers are available
                 } else {
-                    nodes.forEach((node, index) => {
-                        const option = document.createElement("option");
-                        option.value = node.name;
-                        option.textContent = node.name;
-                        select.appendChild(option);
+                    nodes.forEach(node => {
+                        if (!usedZoneColumns.includes(node.name)) {
+                            const option = document.createElement("option");
+                            option.value = node.name;
+                            option.textContent = node.name;
+                            select.appendChild(option);
+                        }
                     });
                     setTimeout(() => {
                         select.focus();
-                        select.click(); // Automatically open the dropdown
+                        select.size = nodes.length; // Show all options
                     }, 100);
                 }
             })
             .catch(error => console.error("Error fetching nodes:", error));
-        const cancelButton = document.createElement("button");
-        cancelButton.classList.add("cancel-button");
-        cancelButton.textContent = "X";
-        cancelButton.addEventListener("click", function (event) {
-            event.preventDefault();
-            container.replaceWith(buttonElement);
-        });
+
         container.appendChild(select);
-        container.appendChild(cancelButton);
         buttonElement.replaceWith(container);
+
         select.addEventListener("change", function (event) {
             event.preventDefault();
-            addZoneColumn(select, buttonElement);
+            addZoneColumns(select, buttonElement);
         });
     }
 
-    function addZoneColumn(selectElement, buttonElement) {
-        const selectedColumn = selectElement.value;
-        if (!selectedColumn) return;
+    function addZoneColumns(selectElement, buttonElement) {
+        const selectedOptions = Array.from(selectElement.selectedOptions);
+        if (selectedOptions.length === 0) return;
         const zoneName = selectElement.closest(".zone-box").querySelector("h3").textContent.trim();
-        const columnItem = document.createElement("div");
-        columnItem.classList.add("column-item");
-        columnItem.innerHTML = `
-            <span>${selectedColumn}</span>
-            <button class="delete-column-button">
-                <i class="fa-solid fa-trash" style="color: black;"></i>
-            </button>
-        `;
-        columnItem.dataset.column = selectedColumn;
-        columnItem.dataset.zone = zoneName;
-        columnItem.querySelector(".delete-column-button").addEventListener("click", function (event) {
-            event.preventDefault();
-            event.stopPropagation();
-            removeZoneColumn(columnItem);
-        });
         const zoneContainer = selectElement.closest(".column-list");
-        zoneContainer.insertBefore(columnItem, selectElement.parentElement);
+
+        selectedOptions.forEach(option => {
+            const columnItem = document.createElement("div");
+            columnItem.classList.add("column-item");
+            columnItem.innerHTML = `
+                <span>${option.value}</span>
+                <button class="delete-column-button">
+                    <i class="fa-solid fa-trash" style="color: black;"></i>
+                </button>
+            `;
+            columnItem.dataset.column = option.value;
+            columnItem.dataset.zone = zoneName;
+            columnItem.querySelector(".delete-column-button").addEventListener("click", function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                removeZoneColumn(columnItem);
+            });
+            zoneContainer.insertBefore(columnItem, selectElement.parentElement);
+            usedZoneColumns.push(option.value); // Add to used columns
+        });
+
         selectElement.parentElement.replaceWith(buttonElement);
-        usedZoneColumns.push(selectedColumn);
-        fetch("/add_column_to_zone", {
+
+        const selectedColumns = selectedOptions.map(option => option.value);
+        fetch("/add_columns_to_zone", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ zone_name: zoneName, column_name: selectedColumn })
+            body: JSON.stringify({ zone_name: zoneName, column_names: selectedColumns })
         })
         .then(response => response.json())
         .then(data => {
             if (data.error) {
                 alert("Error: " + data.error);
-                columnItem.remove();
-                usedZoneColumns = usedZoneColumns.filter(name => name !== selectedColumn);
+                selectedColumns.forEach(column => {
+                    const columnItem = zoneContainer.querySelector(`.column-item[data-column="${column}"]`);
+                    if (columnItem) columnItem.remove();
+                    usedZoneColumns = usedZoneColumns.filter(name => name !== column); // Remove from used columns
+                });
             }
         })
-        .catch(error => console.error("Error adding speaker:", error));
+        .catch(error => console.error("Error adding speakers:", error));
     }
 
     function removeZoneColumn(columnElement) {
@@ -212,6 +213,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (data.success) {
                 console.log("Speaker removed successfully!");
                 columnElement.remove();
+                usedZoneColumns = usedZoneColumns.filter(name => name !== columnName); // Remove from used columns
             } else {
                 console.error("Error removing speaker:", data.error);
                 alert("Error: " + data.error);

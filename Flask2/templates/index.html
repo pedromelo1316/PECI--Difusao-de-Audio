@@ -19,7 +19,7 @@
 <div class="container">
     <div class="content">
         <div class="local-box">
-            <h3>Local</h3>
+            <h3>Adicionar Playlist</h3>
             <div class="grid-container">
                 <!-- Playlists Section -->
                 <div class="playlists-section">
@@ -34,9 +34,7 @@
                             </div>
                         </li>
                         {% endfor %}
-                        <li class="playlist-item add-playlist" onclick="addPlaylist()">
-                            <span>Adicionar +</span>
-                        </li>
+
                     </ul>
                 </div>
 
@@ -89,6 +87,30 @@
         <span class="close" onclick="closeErrorModal()">&times;</span>
         <h2>Erro</h2>
         <p>Não existem músicas disponíveis. Por favor, adicione músicas.</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="content">
+        <div class="local-box">
+            <h3>Adicionar Microfone</h3>
+            <div class="grid-container">
+                <!-- Voice Section -->
+                <div class="voice-section">
+                    <h2><i class="fa-solid fa-sync" onclick="syncAllMicrophones()"></i> Microfones</h2>
+                    <ul class="voice-list" id="voice-list">
+                        {% for mic in microphones %}
+                        <li class="voice-item">
+                            <span>{{ mic.name }}</span>
+                            <div class="voice-actions">
+                                <i class="fa-solid fa-trash" onclick="deleteMicrophone('{{ mic.id }}')"></i>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
