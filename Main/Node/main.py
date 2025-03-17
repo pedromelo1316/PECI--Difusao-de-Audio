@@ -163,7 +163,7 @@ def wait_for_info(n, port=8081):
                         n.setVolume(float(volume))
                     
                     # Se o header ou canal mudou, atualiza estação e reinicia o processo do ffmpeg
-                    if (new_HEADER is not None and HEADER != new_HEADER) or (new_channel is not None and new_channel != n.getChannel()):
+                    if (new_HEADER is not None and new_channel is not None) and (HEADER != new_HEADER or new_channel != n.getChannel()):
                         print("New header or channel received")
                         # Se houver uma thread de reprodução ativa, termina-a
                         terminate_routine()
