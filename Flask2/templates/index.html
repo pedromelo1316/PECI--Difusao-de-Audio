@@ -87,8 +87,22 @@
 
 
 
+<!-- Modal para adicionar playlist 
+<div id="playlistModal" class="modal">
+    <div class="modal-content">
+        <h2>Nome da nova playlist:</h2>
+        <input type="text" id="playlist-name" placeholder="Digite o nome..." oninput="toggleConfirmButton()"/>
+        <div class="modal-buttons">
+            <button class="cancel" onclick="hidePlaylistModal()">Cancelar</button>
+            <button id="confirm-btn" class="confirm" onclick="confirmPlaylist()" disabled>OK</button>
+        </div>
+    </div>
+</div>
 
-<!-- Add Song Modal -->
+-->
+
+
+<!-- Add Song Modal 
 <div id="addSongModal" class="modal">
     <div class="modal-content">
         <span class="close" onclick="closeAddSongModal()">&times;</span>
@@ -108,6 +122,23 @@
         </form>
     </div>
 </div>
+
+-->
+
+<!-- Modal Personalizado -->
+<div id="customModal" class="custom-modal">
+    <div class="custom-modal-content">
+        <span class="close" onclick="closeCustomModal()">&times;</span>
+        <h2 id="modal-title">Título do Pop-up</h2>
+        <p id="modal-message">Mensagem do Pop-up</p>
+        <input type="text" id="modal-input" placeholder="Digite aqui..." style="display: none;">
+        <div class="modal-buttons">
+            <button class="cancel" onclick="closeCustomModal()">Cancelar</button>
+            <button id="modal-confirm" class="confirm" onclick="confirmCustomModal()">OK</button>
+        </div>
+    </div>
+</div>
+
 
 <div id="errorModal" class="modal">
     <div class="modal-content">

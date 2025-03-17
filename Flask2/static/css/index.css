@@ -223,43 +223,116 @@ h3 {
     margin-bottom: 20px;
 }
 
+/* Modal */
 .modal {
     display: none;
     position: fixed;
-    z-index: 1;
-    left: 0;
+    z-index: 1000;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    max-width: 90%;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    color: black;
+    text-align: center;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Efeito de fundo escuro ao abrir o modal */
+.modal::before {
+    content: "";
+    position: fixed;
     top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.4);
+    background: rgba(0, 0, 0, 0.4);
+    z-index: -1;
 }
 
-.modal-content {
-    background-color: #fff;
-    margin: 10% auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
-    max-width: 500px;
-    border-radius: 10px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    text-align: center;
-    position: relative;
+/* Animação de fade-in */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, -55%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
 }
+
+/* Input dentro do modal */
+.modal input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: #f9f9f9;
+    color: black;
+    outline: none;
+    transition: border 0.3s;
+}
+
+.modal input:focus {
+    border-color: #00aaff;
+}
+
+/* Botões */
+.modal-buttons {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.modal-buttons button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.modal-buttons .cancel {
+    background-color: #ddd;
+    color: black;
+}
+
+.modal-buttons .confirm {
+    background-color: #22cc3f;
+    color: white;
+}
+
+.modal-buttons .cancel:hover {
+    background-color: #bbb;
+}
+
+.modal-buttons .confirm:hover {
+    background-color: #1a8c2b;
+}
+
+.modal-buttons .confirm:disabled {
+    background-color: #888;
+    cursor: not-allowed;
+}
+
 
 .close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
     color: #aaa;
-    float: right;
     font-size: 28px;
     font-weight: bold;
+    cursor: pointer;
 }
 
 .close:hover, .close:focus {
     color: black;
     text-decoration: none;
-    cursor: pointer;
 }
+
 
 button {
     background-color: #22cc3f;
@@ -305,4 +378,94 @@ button:hover {
     display: inline-flex;
     gap: 8px;
     vertical-align: middle;
+}
+
+
+.custom-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    max-width: 90%;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    color: black;
+    text-align: center;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.custom-modal .close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.custom-modal .close:hover {
+    color: black;
+}
+
+.custom-modal-content {
+    position: relative;
+    padding: 20px;
+}
+
+.custom-modal input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: #f9f9f9;
+    color: black;
+    outline: none;
+    transition: border 0.3s;
+    display: block;
+    margin-top: 10px;
+}
+
+.custom-modal input:focus {
+    border-color: #00aaff;
+}
+
+.custom-modal .modal-buttons {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.custom-modal .modal-buttons button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.custom-modal .modal-buttons .cancel {
+    background-color: #ddd;
+    color: black;
+}
+
+.custom-modal .modal-buttons .confirm {
+    background-color: #22cc3f;
+    color: white;
+}
+
+.custom-modal .modal-buttons .cancel:hover {
+    background-color: #bbb;
+}
+
+.custom-modal .modal-buttons .confirm:hover {
+    background-color: #1a8c2b;
 }
