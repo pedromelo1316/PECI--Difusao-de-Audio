@@ -86,17 +86,21 @@ def start_ffmpeg_process(channel, source, _type):
         try:
             # Comando para obter a URL direta do stream
             ytdl_cmd = [
-                "yt-dlp",
-                "-g",
-                "-f", "bestaudio[protocol!=m3u8_native]/bestaudio",
-                "--no-check-certificates", 
-                "--socket-timeout", "10", 
-                source
+            "yt-dlp",
+            "-g",
+            "-f", "bestaudio[protocol!=m3u8_native]/bestaudio",
+            "--no-check-certificates", 
+            "--socket-timeout", "10", 
+            source
             ]
-            direct_url = subprocess.check_output(ytdl_cmd, text=True).strip()
+            direct_url = subprocess.check_output(ytdl_cmd, text=True, timeout=3).strip()
+        except subprocess.TimeoutExpired:
+            print("Timeout ao obter URL.")
+            return None
         except Exception as e:
             print(f"Erro ao obter URL: {e}")
             return None
+        
 
         # Comando do ffmpeg utilizando a URL obtida
         cmd = [
@@ -594,16 +598,15 @@ def shutdown_handler(signum, frame):
     sys.exit(0)  # Encerra o programa de forma limpa
 
 # Função para obter o IP local do host
+# Função para obter o IP local do host
 def get_host_ip():
-    iface = 'eno1'
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        iface_bytes = iface.encode('utf-8')
-        packed_iface = struct.pack('256s', iface_bytes[:15])
-        ip = socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8915, packed_iface)[20:24])
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))  # Conecta a um servidor externo
+        ip = s.getsockname()[0]
+        s.close()
         return ip
     except Exception as e:
-        f"Error: {e}"
         return "127.0.0.1"
 
 # Bloco principal de execução
@@ -625,5 +628,6 @@ if __name__ == '__main__':
     
     # Inicia o servidor Flask com SocketIO
     socketio.run(app, host=get_host_ip(), debug=False, port=5000)
+    #socketio.run(app, debug=False)
 
     
