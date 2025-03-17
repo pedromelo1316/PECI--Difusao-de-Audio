@@ -15,6 +15,7 @@ import base64
 import signal
 import sys
 import socket, fcntl, struct
+import netifaces
 
 # Inicialização do app Flask, SQLAlchemy e SocketIO
 app = Flask(__name__)
@@ -24,7 +25,7 @@ db = SQLAlchemy(app)
 socketio = SocketIO(app)
 
 # Configurações de áudio
-BITRATE = "256k"  # Taxa de bits máxima
+BITRATE = "128k"  # Taxa de bits máxima
 SAMPLE_RATE = "48000"  # Taxa de amostragem
 CHUNCK_SIZE = 960
 AUDIO_CHANNELS = "2"  # Stereo
@@ -34,7 +35,7 @@ NUM_CHANNELS = 3  # Número total de canais
 # Função para iniciar o processo do ffmpeg para um canal específico
 def start_ffmpeg_process(channel, source, _type):
     # Define o endereço de multicast baseado no número do canal
-    multicast_address = f"rtp://239.255.0.{channel}:12345"
+    multicast_address = f"rtp://239.255.0.{channel}:12345?localaddr={get_host_ip()}"
     print(f"session_{channel}.sdp")
     print("source: ", source)
     print("type: ", _type)
@@ -317,10 +318,12 @@ def send_info(nodes, removed=False, suspended=False):
 
             
     msg = json.dumps(dic)
-    
+    host_ip = get_host_ip()
+    print("Sending info with IP:", host_ip)
     # Envia mensagem via broadcast UDP
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
         client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        client_socket.bind((host_ip, 0))
         client_socket.sendto(msg.encode('utf-8'), ('<broadcast>', 8081))
         
     print("Info sent to nodes:", nodes)
@@ -599,16 +602,35 @@ def shutdown_handler(signum, frame):
 
 # Função para obter o IP local do host
 def get_host_ip():
-    iface = 'eno1'
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        iface_bytes = iface.encode('utf-8')
-        packed_iface = struct.pack('256s', iface_bytes[:15])
-        ip = socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8915, packed_iface)[20:24])
+        # Itera sobre todas as interfaces disponíveis, ignorando a interface loopback
+        for iface in netifaces.interfaces():
+            if iface == 'lo':
+                continue
+            addrs = netifaces.ifaddresses(iface)
+            if netifaces.AF_INET in addrs:
+                for addr in addrs[netifaces.AF_INET]:
+                    ip = addr.get('addr')
+                    if ip:
+                        return ip
+    except ImportError:
+        # Fallback para quando a biblioteca netifaces não está disponível:
+        def get_ip_address(ifname):
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            try:
+                return socket.inet_ntoa(fcntl.ioctl(
+                    s.fileno(),
+                    0x8915,  # SIOCGIFADDR
+                    struct.pack('256s', ifname[:15].encode('utf-8'))
+                )[20:24])
+            except Exception:
+                return None
+        ip = get_ip_address("eth0") or get_ip_address("wlan0")
+        if not ip:
+            ip = "127.0.0.1"
         return ip
-    except Exception as e:
-        f"Error: {e}"
-        return "127.0.0.1"
+
+    return "127.0.0.1"
 
 # Bloco principal de execução
 if __name__ == '__main__':
@@ -628,7 +650,7 @@ if __name__ == '__main__':
     thread.start()
     
     # Inicia o servidor Flask com SocketIO
-    socketio.run(app, host=get_host_ip(), debug=False, port=5000)
+    socketio.run(app, host="127.0.0.1", debug=False, port=5000)
     #socketio.run(app, debug=False)
 
     
