@@ -597,6 +597,17 @@ def shutdown_handler(signum, frame):
     sys.exit(0)  # Encerra o programa de forma limpa
 
 
+# Função para obter o IP local do host
+def get_host_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))  # Conecta a um servidor externo
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception as e:
+        return f"Error: {e}"
+
 # Bloco principal de execução
 if __name__ == '__main__':
     stop_event = threading.Event()  # Evento para interromper a thread
@@ -615,7 +626,7 @@ if __name__ == '__main__':
     thread.start()
     
     # Inicia o servidor Flask com SocketIO
-    socketio.run(app, debug=False)
+    socketio.run(app, host=get_host_ip() ,debug=False, port=5000)
     #socketio.run(app, debug=False)
 
     
