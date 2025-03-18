@@ -27,7 +27,7 @@ socketio = SocketIO(app)
 BITRATE = "128k"  # Taxa de bits máxima
 SAMPLE_RATE = "48000"  # Taxa de amostragem
 CHUNCK_SIZE = 960
-AUDIO_CHANNELS = "2"  # Stereo
+AUDIO_CHANNELS = "1"  # Mono
 
 NUM_CHANNELS = 1  # Número total de canais
 
@@ -78,7 +78,7 @@ def start_ffmpeg_process(channel, source, _type):
             "-ac", AUDIO_CHANNELS,
             "-f", "rtp",
             "-sdp_file", f"session_{channel}.sdp",
-            f"{multicast_address}?pkt_size=20000"  # Tamanho máximo do pacote
+            f"{multicast_address}?pkt_size=5000"  # Tamanho máximo do pacote
         ]
     elif _type == ChannelType.STREAMING:
         # Transmissão via streaming com URL proveniente do yt-dlp

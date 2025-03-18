@@ -1,0 +1,5 @@
+python ffmpeg_stdout_rtp.py 239.255.0.1 12345 ffmpeg -re -hide_banner -loglevel error -i 1.wav -f s16le -
+
+
+
+ffmpeg -hide_banner -loglevel error -stream_loop -1 -f concat -safe 0 -re -i Playlists/default.txt -af apad -ar 48000 -vn -acodec libopus -b:a 128k -ac 1 -f ogg -
