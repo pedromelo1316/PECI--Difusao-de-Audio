@@ -221,7 +221,7 @@ def wait_for_connection(n, port=8080):
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
         # Habilita o envio de broadcast
         client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        client_socket.settimeout(5)  # Timeout de 5 segundos para a resposta
+        client_socket.settimeout(1)  # Timeout de 5 segundos para a resposta
         while not stop_event.is_set():
             # Monta a mensagem com nome do host e MAC
             msg = f"{n.getName()},{n.getMac()}"
