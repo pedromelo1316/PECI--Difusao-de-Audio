@@ -27,9 +27,9 @@ socketio = SocketIO(app)
 BITRATE = "128k"  # Taxa de bits máxima
 SAMPLE_RATE = "48000"  # Taxa de amostragem
 CHUNCK_SIZE = 960
-AUDIO_CHANNELS = "1"  # Mono
+AUDIO_CHANNELS = "2"  # Mono
 
-NUM_CHANNELS = 1  # Número total de canais
+NUM_CHANNELS = 3  # Número total de canais
 
 # Função para iniciar o processo do ffmpeg para um canal específico
 def start_ffmpeg_process(channel, source, _type):
@@ -50,9 +50,10 @@ def start_ffmpeg_process(channel, source, _type):
             "-b:a", BITRATE,
             "-ar", SAMPLE_RATE,
             "-ac", AUDIO_CHANNELS,
+            "-frame_duration", "40",  # Frames de 40 ms
             "-f", "rtp",
             "-sdp_file", f"session_{channel}.sdp",
-            multicast_address
+            f"{multicast_address}?pkt_size=5000"  # Tamanho máximo do pacote
         ]
     elif _type == ChannelType.LOCAL:
         # Transmissão local utilizando um arquivo de playlist
@@ -74,7 +75,7 @@ def start_ffmpeg_process(channel, source, _type):
             "-vn",
             "-acodec", "libopus",
             "-b:a", BITRATE,
-            "-frame_duration", "120",  # Frames de 120 ms
+            "-frame_duration", "40",  # Frames de 40 ms
             "-ac", AUDIO_CHANNELS,
             "-f", "rtp",
             "-sdp_file", f"session_{channel}.sdp",
@@ -82,7 +83,7 @@ def start_ffmpeg_process(channel, source, _type):
         ]
     elif _type == ChannelType.STREAMING:
         # Transmissão via streaming com URL proveniente do yt-dlp
-        source = "https://www.youtube.com/live/36YnV9STBqc?si=O_hKJoKzhhDqRYYV"
+        source = "https://www.youtube.com/live/YDvsBbKfLPA?si=TdUqXCrxJojjNDns"
         
         try:
             # Comando para obter a URL direta do stream
@@ -120,10 +121,11 @@ def start_ffmpeg_process(channel, source, _type):
             "-buffer_size", "1024",  # Aumenta o buffer de saída
             "-max_delay", "200000",  # Limita o atraso máximo
             "-f", "rtp",
+            "-frame_duration", "40",  # Frames de 40 ms
             "-sdp_file", f"session_{channel}.sdp",
             "-muxdelay", "0.1",  # Reduz o atraso de muxagem
             "-muxpreload", "0.1",
-            multicast_address
+            f"{multicast_address}?pkt_size=5000"  # Tamanho máximo do pacote
         ]
     else:
         return None
