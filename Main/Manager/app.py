@@ -192,7 +192,7 @@ class Nodes(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ip = db.Column(db.String(200), nullable=False)
     name = db.Column(db.String(200), nullable=False)
-    mac = db.Column(db.String(200), nullable=False)
+    mac = db.Column(db.String(200), unique=True, nullable=False)
     area_id = db.Column(db.Integer, db.ForeignKey('areas.id'), nullable=True)
 
     def __repr__(self):
