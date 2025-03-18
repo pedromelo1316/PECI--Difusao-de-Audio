@@ -90,10 +90,10 @@ def start_ffmpeg_process(channel, source, _type):
             "-g",
             "-f", "bestaudio[protocol!=m3u8_native]/bestaudio",
             "--no-check-certificates", 
-            "--socket-timeout", "10", 
+            "--socket-timeout", "15", 
             source
             ]
-            direct_url = subprocess.check_output(ytdl_cmd, text=True, timeout=3).strip()
+            direct_url = subprocess.check_output(ytdl_cmd, text=True).strip()
         except subprocess.TimeoutExpired:
             print("Timeout ao obter URL.")
             return None
@@ -110,7 +110,7 @@ def start_ffmpeg_process(channel, source, _type):
             "-re",  # Força a leitura no tempo real para streams
             "-analyzeduration", "10M",  # Reduz o tempo de análise inicial
             "-probesize", "10M",
-            "-rw_timeout", "5000000",  # Timeout de leitura
+            #"-rw_timeout", "5000000",  # Timeout de leitura
             "-i", direct_url,
             "-acodec", "libopus",
             "-b:a", BITRATE,
