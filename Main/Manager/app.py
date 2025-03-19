@@ -121,11 +121,11 @@ def start_ffmpeg_process(channel, source, _type):
             "-buffer_size", "1024",  # Aumenta o buffer de saída
             "-max_delay", "200000",  # Limita o atraso máximo
             "-f", "rtp",
-            "-frame_duration", "120",  # Frames de 40 ms
+            #"-frame_duration", "120",  # Frames de 120 ms
             "-sdp_file", f"session_{channel}.sdp",
             "-muxdelay", "0.1",  # Reduz o atraso de muxagem
             "-muxpreload", "0.1",
-            f"{multicast_address}?pkt_size=5000"  # Tamanho máximo do pacote
+            f"{multicast_address}"  #?pkt_size=2500"  # Tamanho máximo do pacote
         ]
     else:
         return None
