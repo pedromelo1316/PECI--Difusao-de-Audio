@@ -48,8 +48,8 @@ def start_ffmpeg_process(channel, source, _type):
             "ffmpeg",
             "-hide_banner", "-loglevel", "error",
             "-f", "alsa",
-            "-i", f"hw:{mic['card']},{mic['device']}",  # Ex: hw:1,0
-            "-af", "afftdn=nt=w:tn=1",  # Filtro para redução de ruído (noise reduction)
+            "-i", f"default",  # Ex: hw:1,0
+            "-af", "anlmdn=s=0.8:p=0.05",  # Non-local means denoiser
             "-acodec", "libopus",
             "-vn",
             "-b:a", BITRATE,
@@ -118,6 +118,7 @@ def start_ffmpeg_process(channel, source, _type):
             "-analyzeduration", "10M",  # Reduz o tempo de análise inicial
             "-probesize", "10M",
             #"-rw_timeout", "5000000",  # Timeout de leitura
+            "-vn",
             "-i", direct_url,
             "-acodec", "libopus",
             "-b:a", BITRATE,
