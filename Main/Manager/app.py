@@ -46,6 +46,7 @@ def start_ffmpeg_process(channel, source, _type):
             "ffmpeg",
             "-hide_banner", "-loglevel", "error",
             "-f", "alsa", "-i", source,
+            "-af", "arnndn=model=rnnoise.rnnn",  # Filtro de cancelamento de eco
             "-acodec", "libopus",
             "-b:a", BITRATE,
             "-ar", SAMPLE_RATE,
