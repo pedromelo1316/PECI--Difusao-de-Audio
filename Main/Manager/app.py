@@ -39,23 +39,25 @@ def start_ffmpeg_process(channel, source, _type):
     print("source: ", source)
     print("type: ", _type)
     
-    mic = {"card": "1", "device": "0"}  #usar no terminal arecord -l  # Lista dispositivos de captura (microfones) 
+    
     
     # Verifica o tipo de transmissão e configura o comando do ffmpeg apropriado
     if _type == ChannelType.VOICE:
+        
+        mic = {"card": "1", "device": "0"}  #usar no terminal arecord -l  # Lista dispositivos de captura (microfones) 
+        
         # Transmissão de voz via dispositivo de áudio (alsa)
         cmd = [
             "ffmpeg",
             "-hide_banner", "-loglevel", "error",
-            "-f", "alsa",
-            "-i", f"default",  # Ex: hw:1,0
-            "-af", "anlmdn=s=0.8:p=0.05",  # Non-local means denoiser
+            "-f", "pulse",
+            "-i", "echo-cancel",  # Usa o cancelamento de eco do PulseAudio
+            "-af", "afftdn=nf=-20,speechnorm=e=50",
             "-acodec", "libopus",
-            "-vn",
+            "-application", "voip",
             "-b:a", BITRATE,
             "-ar", SAMPLE_RATE,
             "-ac", AUDIO_CHANNELS,
-            #"-frame_duration", "120",  # Frames de 40 ms
             "-f", "rtp",
             "-sdp_file", f"session_{channel}.sdp",
             f"{multicast_address}"
