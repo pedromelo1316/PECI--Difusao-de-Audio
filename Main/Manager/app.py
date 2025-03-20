@@ -84,7 +84,7 @@ def start_ffmpeg_process(channel, source, _type):
         ]
     elif _type == ChannelType.STREAMING:
         # Transmissão via streaming com URL proveniente do yt-dlp
-        source = "https://www.youtube.com/live/YDvsBbKfLPA?si=TdUqXCrxJojjNDns"
+        source = "https://www.youtube.com/live/36YnV9STBqc?si=Q2lSK-3fsOUdItq6"
         
         try:
             # Comando para obter a URL direta do stream
