@@ -34,7 +34,7 @@ NUM_CHANNELS = 3  # Número total de canais
 # Função para iniciar o processo do ffmpeg para um canal específico
 def start_ffmpeg_process(channel, source, _type):
     # Define o endereço de multicast baseado no número do canal
-    multicast_address = f"rtp://239.255.0.{channel}:12345"
+    multicast_address = f"rtp://239.255.0.{channel}:12345?pkt_size=2500"
     print(f"session_{channel}.sdp")
     print("source: ", source)
     print("type: ", _type)
@@ -50,10 +50,10 @@ def start_ffmpeg_process(channel, source, _type):
             "-b:a", BITRATE,
             "-ar", SAMPLE_RATE,
             "-ac", AUDIO_CHANNELS,
-            "-frame_duration", "40",  # Frames de 40 ms
+            "-frame_duration", "120",  # Frames de 40 ms
             "-f", "rtp",
             "-sdp_file", f"session_{channel}.sdp",
-            f"{multicast_address}?pkt_size=5000"  # Tamanho máximo do pacote
+            f"{multicast_address}"
         ]
     elif _type == ChannelType.LOCAL:
         # Transmissão local utilizando um arquivo de playlist
@@ -75,11 +75,11 @@ def start_ffmpeg_process(channel, source, _type):
             "-vn",
             "-acodec", "libopus",
             "-b:a", BITRATE,
-            "-frame_duration", "40",  # Frames de 40 ms
+            "-frame_duration", "120",  # Frames de 40 ms
             "-ac", AUDIO_CHANNELS,
             "-f", "rtp",
             "-sdp_file", f"session_{channel}.sdp",
-            f"{multicast_address}?pkt_size=5000"  # Tamanho máximo do pacote
+            f"{multicast_address}"
         ]
     elif _type == ChannelType.STREAMING:
         # Transmissão via streaming com URL proveniente do yt-dlp
@@ -121,11 +121,11 @@ def start_ffmpeg_process(channel, source, _type):
             "-buffer_size", "1024",  # Aumenta o buffer de saída
             "-max_delay", "200000",  # Limita o atraso máximo
             "-f", "rtp",
-            #"-frame_duration", "120",  # Frames de 120 ms
+            "-frame_duration", "120",  # Frames de 120 ms
             "-sdp_file", f"session_{channel}.sdp",
             "-muxdelay", "0.1",  # Reduz o atraso de muxagem
             "-muxpreload", "0.1",
-            f"{multicast_address}"  #?pkt_size=2500"  # Tamanho máximo do pacote
+            f"{multicast_address}"
         ]
     else:
         return None
