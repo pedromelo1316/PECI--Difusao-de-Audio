@@ -52,7 +52,7 @@ def start_ffmpeg_process(channel, source, _type):
             "-hide_banner", "-loglevel", "error",
             "-f", "pulse",
             "-i", "echo-cancel",  # Usa o cancelamento de eco do PulseAudio
-            "-af", "afftdn=nf=-20,speechnorm=e=50",
+            #"-af", "afftdn=nf=-20,speechnorm=e=50",
             "-acodec", "libopus",
             "-application", "voip",
             "-b:a", BITRATE,
