@@ -27,7 +27,7 @@ socketio = SocketIO(app)
 BITRATE = "128k"  # Taxa de bits máxima
 SAMPLE_RATE = "48000"  # Taxa de amostragem
 CHUNCK_SIZE = 960
-AUDIO_CHANNELS = "2"  # Mono
+AUDIO_CHANNELS = "1"  # Mono
 
 NUM_CHANNELS = 3  # Número total de canais
 
