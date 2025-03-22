@@ -80,38 +80,7 @@
                                 </div>
                             </div>
                             
-                            <!-- Right: Microphone Button -->
-                            <div class="microphone-container">
-                                <div class="mic-header">
-                                    <h4 class="mic-title">Microphone</h4>
-                                    <i id="mic-dropdown-toggle" class="fa-solid fa-chevron-down mic-dropdown-icon"></i>
-                                </div>
-                                
-                                <div id="mic-device-dropdown" class="mic-device-dropdown">
-                                    <select id="mic-device-select" class="mic-select">
-                                        <option value="" disabled selected>Select microphone...</option>
-                                        <!-- Microphone options will be populated by JavaScript -->
-                                    </select>
-                                </div>
-                                
-                                <button id="microphoneButton" class="microphone-button" onclick="toggleRecording()">
-                                    <i class="fa-solid fa-microphone"></i>
-                                </button>
-                                <div id="recordingTimer" class="recording-timer">00:00</div>
-                                <div id="recordingStatus" class="recording-status">Click to record</div>
-                                
-                                <!-- Channel selection for microphone -->
-                                <div class="mic-channel-selection">
-                                    <div class="mic-channels-label">Broadcast to:</div>
-                                    <div class="mic-channels-options">
-                                        {% for channel in channels %}
-                                        <div class="mic-channel-option">
-                                            <input type="checkbox" id="mic-channel-{{ channel.id }}" class="mic-channel-checkbox" 
-                                                   data-channel-id="{{ channel.id }}">
-                                            <label for="mic-channel-{{ channel.id }}">Ch {{ channel.id }}</label>
-                                        </div>
-                                        {% endfor %}
-                                    </div>
+                            
                                 </div>
                             </div>
                         </div>
