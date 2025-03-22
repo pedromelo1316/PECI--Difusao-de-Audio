@@ -9,15 +9,11 @@ import time
 import socket
 import json
 
-
-
-
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SECRET_KEY'] = 'your_secret_key'  # acho que tenho de meter esta linha para poder usar o flash
 db = SQLAlchemy(app)
 socketio = SocketIO(app)
-
 
 
 class Areas(db.Model):
@@ -482,9 +478,9 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         create_default_channels()
-    socketio.run(app, debug=False)
-
-    thread.join()
+    #socketio.run(app, debug=False)
+    app.run(debug=True, port=5001)
+    #thread.join()
 
 
 

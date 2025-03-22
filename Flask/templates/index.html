@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block head %}
-<title>Nodes</title>
+<title>Audio Manager</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endblock %}
@@ -44,37 +44,94 @@
                     {% endif %}
                 </div>
             </div>
+
             <div class="section-right">
-                <h3>Channels</h3>
-                <div class="channels-content">
+                <div class="section-header">
+                    <h3>Channels</h3>
+                    <a href="/Flask2/index.html" class="settings-link">
+                        <i class="fa-solid fa-gear settings-icon"></i>
+                    </a>
+                </div>
+                <div class="column-box" id="channelsBox" style="display: block;">
                     {% if channels|length < 1 %}
-                    <h1>No Channels</h1>
+                    <h1>No channels found</h1>
                     {% else %}
-                    <div class="channels-container">
-                        {% for channel in channels %}
-                        <div class="channel-group">
-                            <label for="channel{{ channel.id }}">Canal {{ channel.id }}:</label>
-                            <div class="channel-options">
-                                <form id="form_{{ channel.id }}" action="/update_channel/{{ channel.id }}" method="POST">
-                                    <label>
-                                        <input type="radio" name="channel_type" value="LOCAL"
-                                            {% if channel.type.value == 'LOCAL' %} checked {% endif %}
-                                            style="accent-color: #22cc3f;"> Local
-                                    </label>
-                                    <label>
-                                        <input type="radio" name="channel_type" value="STREAMING"
-                                            {% if channel.type.value == 'STREAMING' %} checked {% endif %}
-                                            style="accent-color: #22cc3f;"> Streaming
-                                    </label>
-                                    <label>
-                                        <input type="radio" name="channel_type" value="VOICE"
-                                            {% if channel.type.value == 'VOICE' %} checked {% endif %}
-                                            style="accent-color: #22cc3f;"> Microphone
-                                    </label>
-                                </form>
+                    <div class="channels-layout">
+
+                        <div class="bottom-controls">
+                            <!-- Left: Audio Transmission -->
+                            <div class="channel-selection-panel">
+                                <h4>Audio Transmission</h4>
+                                <div class="channel-cards">
+                                    {% for channel in channels %}
+                                    <div class="channel-card" data-channel-id="{{ channel.id }}">
+                                        <div class="card-content">
+                                            <span class="channel-name">Channel {{ channel.id }}</span>
+                                            <div class="channel-status">
+                                                <span class="status-indicator"></span>
+                                                <span class="status-text">Inactive</span>
+                                            </div>
+                                        </div>
+                                        <button class="toggle-transmission-btn" onclick="toggleChannelTransmission({{ channel.id }})">
+                                            <i class="fa-solid fa-play"></i>
+                                        </button>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <!-- Right: Microphone Button -->
+                            <div class="microphone-container">
+                                <div class="mic-header">
+                                    <h4 class="mic-title">Microphone</h4>
+                                    <i id="mic-dropdown-toggle" class="fa-solid fa-chevron-down mic-dropdown-icon"></i>
+                                </div>
+                                
+                                <div id="mic-device-dropdown" class="mic-device-dropdown">
+                                    <select id="mic-device-select" class="mic-select">
+                                        <option value="" disabled selected>Select microphone...</option>
+                                        <!-- Microphone options will be populated by JavaScript -->
+                                    </select>
+                                </div>
+                                
+                                <button id="microphoneButton" class="microphone-button" onclick="toggleRecording()">
+                                    <i class="fa-solid fa-microphone"></i>
+                                </button>
+                                <div id="recordingTimer" class="recording-timer">00:00</div>
+                                <div id="recordingStatus" class="recording-status">Click to record</div>
+                                
+                                <!-- Channel selection for microphone -->
+                                <div class="mic-channel-selection">
+                                    <div class="mic-channels-label">Broadcast to:</div>
+                                    <div class="mic-channels-options">
+                                        {% for channel in channels %}
+                                        <div class="mic-channel-option">
+                                            <input type="checkbox" id="mic-channel-{{ channel.id }}" class="mic-channel-checkbox" 
+                                                   data-channel-id="{{ channel.id }}">
+                                            <label for="mic-channel-{{ channel.id }}">Ch {{ channel.id }}</label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        {% endfor %}
+                        <!--<div class="column-list">
+                            {% for channel in channels %}
+                            <div class="column-item channel-item" data-channel-id="{{ channel.id }}" onclick="toggleChannelOptions(this)">
+                                <span>Channel {{ channel.id }}</span>
+                                <div class="column-actions" onclick="event.stopPropagation()">
+                                    <i class="fa-solid fa-pen tooltip-icon" onclick="editChannelName(this, {{ channel.id }})">
+                                        <span class="tooltip-text">Edit Channel Name</span>
+                                    </i>
+                                    <i class="fa-solid fa-gear tooltip-icon" onclick="configureProgramming({{ channel.id }})"></i>
+                                </div>
+                                
+                                <div class="channel-options" style="display: none;">
+                                    <button onclick="interruptWithMicrophone({{ channel.id }})" class="interrupt-button">Interrupt with Microphone</button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>-->
                     </div>
                     {% endif %}
                 </div>
