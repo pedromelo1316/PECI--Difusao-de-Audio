@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Editar Playlist</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/edit_playlist.css') }}">
+{% endblock %}
+
+{% block body %}
+<header>
+    <div class="header-content">
+        <button onclick="window.history.back()" class="back-button"><i class="fas fa-arrow-left"></i></button>
+        <div class="title">
+            <h1>Playlist {{ playlist_name }}</h1>
+            <button onclick="renamePlaylist('{{ playlist_name }}')" class="edit-button"><i class="fas fa-pen"></i></button>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <div class="content">
+        <div class="grid-container">
+            <!-- Left Section: Playlist -->
+            <div class="playlist-section">
+                <h2>Playlist</h2>
+                <div class="playlist-bar"></div>
+                <ul class="playlist-list" id="playlist-list">
+                    {% if playlist_songs|length == 0 %}
+                    <li class="empty-playlist-message">Adicione músicas à sua playlist</li>
+                    {% else %}
+                    {% for song in playlist_songs %}
+                    <li class="playlist-item" draggable="true" data-song="{{ song }}">
+                        <span>{{ loop.index }}. {{ song }}</span>
+                    </li>
+                    {% endfor %}
+                    {% endif %}
+                </ul>
+            </div>
+
+            <!-- Right Section: Músicas -->
+            <div class="songs-section">
+                <h2>Músicas</h2>
+                {% if all_songs|length == 0 %}
+                <script>
+                    alert("Não existem músicas disponíveis. Por favor, adicione músicas.");
+                </script>
+                {% else %}
+                <ul class="songs-list" id="songs-list">
+                    {% for song in all_songs %}
+                    <li class="song-item">
+                        <span>{{ song }}</span>
+                        <i class="fa-solid fa-{{ 'check' if song in playlist_songs else 'square' }}" onclick="toggleSong(this, '{{ song }}', '{{ playlist_name }}')"></i>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+        <!-- New Save Playlist Button -->
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="save-playlist-btn" onclick="savePlaylistAndRedirect('{{ playlist_name }}')">Guardar Playlist</button>
+        </div>
+    </div>
+</div>
+
+
+
+<script src="{{ url_for('static', filename='js/edit_playlist.js') }}"></script>
+{% endblock %}

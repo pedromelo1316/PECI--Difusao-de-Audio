@@ -1,0 +1,143 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #fff;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.grid-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.playlist-section, .songs-section {
+    width: 45%;
+    position: relative;
+}
+
+.playlist-bar {
+    position: absolute;
+    left: -20px;
+    top: 50px; /* Start after the "Playlist" heading */
+    bottom: -10px; /* Extend the height */
+    width: 5px; /* Make the bar wider */
+    background-color: #d7d8d7;
+    border-radius: 5px;
+}
+
+
+.playlist-list, .songs-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.playlist-item, .song-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    background-color: #fff;
+    transition: background-color 0.3s;
+}
+
+.playlist-item:hover, .song-item:hover {
+    background-color: #f9f9f9;
+}
+
+.empty-playlist-message {
+    text-align: center;
+    padding: 20px;
+    border: 2px dashed #ccc;
+    border-radius: 5px;
+    color: #999;
+    font-style: italic;
+}
+
+.add-song {
+    cursor: pointer;
+    color: #22cc3f;
+    font-weight: bold;
+}
+
+.fa-check {
+    color: #22cc3f;
+    cursor: pointer;
+}
+
+.fa-square {
+    color: #ccc;
+    cursor: pointer;
+}
+
+header {
+    background: white;
+    padding: 20px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.title {
+    text-align: center;
+    flex-grow: 1;
+}
+
+h1 {
+    margin: 0;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+h2 {
+    font-size: 22px;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+.back-button, .edit-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.back-button {
+    margin-right: auto;
+}
+
+.edit-button {
+    margin-left: auto;
+}
+
+.save-playlist-btn {
+    background-color: #22cc3f;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+.save-playlist-btn:hover {
+    background-color: #1e9e31;
+}

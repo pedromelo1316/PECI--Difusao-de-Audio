@@ -208,6 +208,23 @@ class ChannelType(str, Enum):
     STREAMING = "STREAMING"
     VOICE = "VOICE"
 
+
+#################################################################################
+#################################################################################
+
+# Modelo para "Playlist"
+class Playlist(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    items = db.Column(db.Text, nullable=True)  
+
+    def __repr__(self):
+        return f'<Playlist {self.id}: {self.name}>'
+
+#################################################################################
+#################################################################################
+
+
 # Modelo para canais
 class Channels(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -249,8 +266,11 @@ def index():
     nodes = Nodes.query.order_by(Nodes.id).all()
     areas = Areas.query.order_by(Areas.id).all()
     channels = Channels.query.order_by(Channels.id).all()
-    return render_template("index.html", nodes=nodes, areas=areas, channels=channels)
+    ####
+    playlist = db.session.query(Playlist).first()  # Substitua por lógica específica, se necessário
 
+    ###
+    return render_template("index.html", nodes=nodes, areas=areas, channels=channels, playlist=playlist)
 # Rota para deleção de um nó específico
 @app.route('/delete/<int:id>')
 def delete(id):
@@ -586,6 +606,28 @@ def update_area_channel():
         flash(str(e), "error")
         socketio.emit('reload_page', namespace='/')
         return redirect('/')
+
+
+
+
+@app.route('/edit_playlist')
+def edit_playlist():
+    return render_template('edit_playlist.html')
+
+
+@app.route('/edit_stream/<int:playlist_id>')
+def edit_stream(playlist_id):
+    # Substitua pelo código correto para buscar a playlist no banco de dados
+    playlist = db.session.query(Playlist).filter_by(id=playlist_id).first()
+    
+    if not playlist:
+        # Retorne um erro ou redirecione se a playlist não for encontrada
+        return "Playlist não encontrada", 404
+
+    return render_template('edit_stream.html', playlist=playlist)
+
+
+
 
 # Função para tratar o desligamento do sistema (Ctrl+C)
 def shutdown_handler(signum, frame):

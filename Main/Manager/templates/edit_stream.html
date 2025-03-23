@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Editar Link de Streaming</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% endblock %}
+
+{% block body %}
+<header>
+    <div class="header-content">
+        <button onclick="window.history.back()" class="back-button"><i class="fas fa-arrow-left"></i></button>
+        <div class="title">
+            <h1>Editar Link de Streaming - {{ playlist.name }}</h1>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <div class="content">
+        <form id="stream-form" action="{{ url_for('update_stream', playlist_id=playlist.id) }}" method="POST">
+            <label for="stream_url">Novo Link de Streaming:</label>
+            <input type="text" id="stream_url" name="stream_url" value="{{ playlist.stream_url if playlist.stream_url else '' }}" required>
+            <button type="submit" class="save-btn">Guardar</button>
+        </form>        
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/edit_stream.js') }}"></script>
+{% endblock %}
