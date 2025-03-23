@@ -663,9 +663,9 @@ footer {
 .channel-selection-panel {
     flex: 1;
     background: #fff;
-    padding: 12px; /* Reduced from 15px */
+    padding: 20px; /* Reduced from 15px */
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05);
-    max-width: 200px; /* Control overall panel width */
+    max-width: 500px; /* Control overall panel width */
 }
 
 .channel-selection-panel h4 {
@@ -693,7 +693,7 @@ footer {
     border: 1px solid #eee;
     transition: all 0.2s ease;
     box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-    max-width: 180px; /* Added max-width to restrict card size */
+    max-width: 460px; /* Added max-width to restrict card size */
     width: 100%; /* Allow it to shrink if needed */
 }
 
@@ -795,13 +795,6 @@ footer {
     margin-top: 10px;
 }
 
-.channel-selection-panel {
-    flex: 1;
-    background: #fff;
-    
-    padding: 10px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05);
-}
 
 .microphone-container {
     flex: 1;
