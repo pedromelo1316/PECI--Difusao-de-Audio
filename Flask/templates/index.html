@@ -48,9 +48,15 @@
             <div class="section-right">
                 <div class="section-header">
                     <h3>Channels</h3>
-                    <a href="http://localhost:5000/" class="settings-link">
-                        <i class="fa-solid fa-gear settings-icon"></i>
-                    </a>
+                    <div class="header-icons">
+                        <a href="http://localhost:5000/" class="settings-link">
+                            <i class="fa-solid fa-gear settings-icon"></i>
+                        </a>
+                        <!-- New icon linking to edit_channels.html -->
+                        <a href="{{ url_for('edit_channels') }}" class="edit-link">
+                            <i class="fa-solid fa-pen settings-icon"></i>
+                        </a>
+                    </div>
                 </div>
                 <div class="column-box" id="channelsBox" style="display: block;">
                     {% if channels|length < 1 %}

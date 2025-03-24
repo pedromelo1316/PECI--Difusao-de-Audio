@@ -366,7 +366,10 @@ def remove_column_from_zone():
       
  
 
-
+@app.route('/edit_channels', methods=['GET'])
+def edit_channels():
+    channels = Channels.query.order_by(Channels.id).all()
+    return render_template("edit_channels.html", channels=channels)
 
 
 
