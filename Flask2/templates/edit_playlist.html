@@ -9,7 +9,7 @@
 {% block body %}
 <header>
     <div class="header-content">
-        <button onclick="window.history.back()" class="back-button"><i class="fas fa-arrow-left"></i></button>
+        <i class="fa-solid fa-backward-step" onclick="window.location.href='http://localhost:5000/'"></i>
         <div class="title">
             <h1>Playlist {{ playlist_name }}</h1>
             <button onclick="renamePlaylist('{{ playlist_name }}')" class="edit-button"><i class="fas fa-pen"></i></button>

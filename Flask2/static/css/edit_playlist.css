@@ -1,8 +1,316 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     margin: 0;
+    padding: 100;
+    background: linear-gradient(to bottom, #fffcfc, #ffffff);
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.grid-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.playlist-section, .songs-section {
+    width: 45%;
+    position: relative;
+}
+
+.playlist-bar {
+    position: absolute;
+    left: -20px;
+    top: 50px; /* Start after the "Playlist" heading */
+    bottom: -10px; /* Extend the height */
+    width: 5px; /* Make the bar wider */
+    background-color: #d7d8d7;
+    border-radius: 5px;
+}
+
+
+.playlist-list, .songs-list {
+    list-style-type: none;
     padding: 0;
+}
+
+.playlist-item, .song-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    border-radius: 5px;
     background-color: #fff;
+    transition: background-color 0.3s;
+}
+
+.playlist-item:hover, .song-item:hover {
+    background-color: #f9f9f9;
+}
+
+.empty-playlist-message {
+    text-align: center;
+    padding: 20px;
+    border: 2px dashed #ccc;
+    border-radius: 5px;
+    color: #999;
+    font-style: italic;
+}
+
+.add-song {
+    cursor: pointer;
+    color: #22cc3f;
+    font-weight: bold;
+}
+
+.fa-check {
+    color: #22cc3f;
+    cursor: pointer;
+}
+
+.fa-square {
+    color: #ccc;
+    cursor: pointer;
+}
+
+header {
+    background: white;
+    padding: 20px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.title {
+    text-align: center;
+    flex-grow: 1;
+}
+
+h1 {
+    margin: 0;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+h2 {
+    font-size: 22px;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+.back-button, .edit-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.back-button {
+    margin-right: auto;
+}
+
+.edit-button {
+    margin-left: auto;
+}
+
+.save-playlist-btn {
+    background-color: #22cc3f;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+.save-playlist-btn:hover {
+    background-color: #1e9e31;
+}
+
+
+/* Header */
+header {
+    background: white;
+    padding: 20px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.title {
+    text-align: center;
+}
+
+h1 {
+    margin: 0;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+p {
+    margin: 0;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.logout-icon {
+    font-size: 28px;
+    cursor: pointer;
+}
+
+/* Container */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.content {
+    max-width: 500px;
+    width: 100%;
+}
+
+.grid-container {
+    display: flex;
+    justify-content: space-between;
+    width: 80%;
+}
+
+.playlists-section, .songs-section {
+    width: 45%;
+}
+
+.playlists-list, .songs-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.playlist-item, .song-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+.add-playlist, .add-song {
+    cursor: pointer;
+    color: #22cc3f;
+    font-weight: bold;
+}
+
+.fa-pen, .fa-trash {
+    cursor: pointer;
+}
+
+h2 {
+    font-size: 22px;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+.toggle-item {
+    display: flex;
+    
+    align-items: center;
+    padding: 10px ;
+  
+}
+
+
+
+
+/* Custom Dropdown */
+.dropdown-button {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 6px 10px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.dropdown-button i {
+    margin-left: 5px;
+}
+
+.dropdown-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border: 1px solid #ddd;
+    background-color: #fff;
+    position: absolute;
+    z-index: 1000;
+    width: 7%;
+}
+
+.dropdown-menu li {
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+.dropdown-menu li:hover {
+    background-color: #f0f0f0;
+}
+
+
+
+.add-column-button {
+    padding: 8px;
+    text-align: center;
+    color: #22cc3f;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.delete-column-button {
+    background: none;
+    border: none;
+    color: red;
+    cursor: pointer;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    text-align: left; /* Ensure labels are aligned to the left */
+}
+
+.modal-content h2 {
+    margin-bottom: 20px; /* Increase spacing below the heading */
+}
+
+.form-group {
+    margin-bottom: 15px;
 }
 
 .container {

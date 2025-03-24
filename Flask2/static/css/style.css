@@ -1,19 +1,9 @@
 /* --- Início: styles.css --- */
 body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     margin: 0;
-    padding: 0;
-    font-family: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
-    background-color: #fff;
-}
-
-
-.detalhes {
-    display: none;
-    padding: 5px;
-    font-size: 14px;
-    color: #555;
-    border-top: 1px solid #ddd;
-    margin-top: 5px;
+    padding: 100;
+    background: linear-gradient(to bottom, #fffcfc, #ffffff);
 }
 
 .icone {
@@ -28,10 +18,6 @@ body {
 html, body {
     overflow-y: auto;
 }
-
-/* Header */
-
-
 
 
 .title {
@@ -67,6 +53,13 @@ p {
     display: flex;
     justify-content: space-between;
     width: 80%;
+}
+
+
+.playlist-actions {
+    display: inline-flex;
+    gap: 8px;
+    vertical-align: middle;
 }
 
 .playlists-section, .songs-section {
@@ -111,33 +104,6 @@ h2 {
     padding: 10px ;
   
 }
-
-/* Removed switch slider styles */
-/*
-.slider {
-    background-color: #cccccc;
-    border-radius: 100px;
-    padding: 1px;
-    cursor: pointer;
-    position: relative;
-    display: block;
-    width: 100%;
-    height: 100%;
-    box-shadow: inset 0px 0px 5px rgba(0, 0, 0, 0.1);
-}
-
-.slider::after {
-    content: "";
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 26px;
-    height: 26px;
-    background-color: white;
-    border-radius: 50px;
-    transition: left 300ms ease-in-out;
-}
-*/
 
 /* Estilos para a caixa de colunas */
 .column-box {
@@ -210,12 +176,6 @@ h2 {
     width: 100%; /* Ajusta ao tamanho da caixa */
     min-height: 350px; /* Ajusta ao tamanho da caixa */
 }
-
-
-
-
-
-
 
 /* Cabeçalho da Zona */
 .zone-header {
@@ -576,16 +536,9 @@ body {
     width: 100%;
 }
 
-.playlists-section, .songs-section {
-    width: 45%;
-}
-
 .streaming-section {
     width: 100%;
 }
-
-
-
 
 
 .playlists-list, .songs-list, .streaming-list {
