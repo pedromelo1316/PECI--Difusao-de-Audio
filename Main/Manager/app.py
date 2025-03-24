@@ -225,7 +225,7 @@ playlist_songs = db.Table('playlist_songs',
 # Classe Songs
 class Songs(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False)
+    name = db.Column(db.String(200), nullable=False,unique=True)
 
     def __repr__(self):
         return f'<Song {self.id}: {self.name}>'
@@ -701,12 +701,18 @@ def get_songs():
 def add_song():
     data = request.json
     song_name = data.get('name')
+    # se já tiver na base de dados nao poder adiiconar
+    if Songs.query.filter_by(name=song_name).first():
+        return jsonify({"error": "Música já existe"}), 400
     if not song_name:
         return jsonify({"error": "Nome da música é obrigatório"}), 400
     try:
         new_song = Songs(name=song_name)
         db.session.add(new_song)
         db.session.commit()
+
+        print("Nova música adicionada:", new_song.name)
+
         return jsonify({"success": True, "id": new_song.id, "name": new_song.name}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
