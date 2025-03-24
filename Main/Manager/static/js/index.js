@@ -1,3 +1,52 @@
+document.addEventListener('DOMContentLoaded', loadPlaylists);
+
+function loadPlaylists() {
+    fetch('/playlists')
+        .then(response => response.json())
+        .then(data => {
+            const playlistsList = document.getElementById('playlists-list');
+            playlistsList.innerHTML = '';
+            data.forEach(playlist => {
+                const li = document.createElement('li');
+                li.className = 'playlist-item';
+                li.innerHTML = `
+                    <span>${playlist.name}</span>
+                    <div class="playlist-actions">
+                        <i class="fa-solid fa-pen" onclick="editPlaylist(${playlist.id}, '${playlist.name}')"></i>
+                        <i class="fa-solid fa-trash" onclick="deletePlaylist(${playlist.id})"></i>
+                    </div>
+                `;
+                playlistsList.appendChild(li);
+            });
+            const addPlaylistItem = document.createElement('li');
+            addPlaylistItem.className = 'playlist-item add-playlist';
+            addPlaylistItem.onclick = addPlaylist;
+            addPlaylistItem.innerHTML = '<span>Adicionar +</span>';
+            playlistsList.appendChild(addPlaylistItem);
+        })
+        .catch(err => console.error('Erro ao carregar playlists:', err));
+}
+
+function addPlaylist() {
+    const playlistName = prompt('Digite o nome da nova playlist:');
+    if (!playlistName) return;
+    fetch('/add_playlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: playlistName })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadPlaylists(); // Atualiza a lista de playlists
+        } else {
+            alert(data.error || 'Erro ao adicionar playlist.');
+        }
+    })
+    .catch(err => console.error('Erro ao adicionar playlist:', err));
+}
+
+
 let editingSongId = null;
 
 // Carregar músicas
@@ -185,35 +234,26 @@ function closeCustomModal() {
 }
 
 
-
-// Redirecionar para editar a playlist
-function editPlaylist(playlistName) {
-    if (playlistName) {
-        window.location.href = `/edit_playlist/${playlistName}`;
-    } else {
-        showCustomModal("Erro", "Nome da playlist inválido.");
-    }
+function editPlaylist(playlistId, currentName) {
+    const newName = prompt('Digite o novo nome da playlist:', currentName);
+    if (!newName || newName === currentName) return;
+    fetch(`/edit_playlist/${playlistId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadPlaylists();
+        } else {
+            alert(data.error || 'Erro ao renomear playlist.');
+        }
+    })
+    .catch(err => console.error('Erro ao renomear playlist:', err));
 }
 
-// Criar nova playlist com suporte para Enter
-function addPlaylist() {
-    fetch('/get_songs')
-        .then(response => response.json())
-        .then(data => {
-            if (data.songs.length === 0) {
-                showCustomModal("Erro", "Não existem músicas disponíveis. Por favor, adicione músicas.", false);
-            } else {
-                showCustomModal("Adicionar Playlist", "Digite o nome da nova playlist:", true, function (playlistName) {
-                    if (playlistName) {
-                        window.location.href = `/edit_playlist/${playlistName}`;
-                    }
-                });
-            }
-        })
-        .catch(err => {
-            showCustomModal("Erro", "Erro ao verificar músicas disponíveis.");
-        });
-}
+
 
 
 // Função para guardar a playlist (Enter agora funciona)
@@ -314,21 +354,18 @@ function deleteSong(songId) {
     });
 }
 
-// Substituir confirm padrão ao eliminar playlists
-function deletePlaylist(playlistName) {
-    showCustomModal("Eliminar Playlist", `Tem certeza de que deseja eliminar a playlist "${playlistName}"?`, false, function () {
-        fetch(`/delete_playlist/${playlistName}`, { method: 'DELETE' })
-            .then(res => {
-                if (res.ok) {
-                    window.location.reload();
-                } else {
-                    showCustomModal("Erro", "Erro ao eliminar a playlist.");
-                }
-            })
-            .catch(err => {
-                showCustomModal("Erro", "Erro ao eliminar a playlist.");
-            });
-    });
+function deletePlaylist(playlistId) {
+    if (!confirm('Tem certeza de que deseja excluir esta playlist?')) return;
+    fetch(`/delete_playlist/${playlistId}`, { method: 'DELETE' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadPlaylists();
+            } else {
+                alert(data.error || 'Erro ao excluir playlist.');
+            }
+        })
+        .catch(err => console.error('Erro ao excluir playlist:', err));
 }
 
 // Substituir prompts padrão ao adicionar um link de streaming

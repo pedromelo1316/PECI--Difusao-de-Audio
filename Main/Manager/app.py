@@ -747,6 +747,30 @@ def delete_song(song_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# add playlist
+@app.route('/add_playlist', methods=['POST'])
+def add_playlist():
+    data = request.json
+    playlist_name = data.get('name')
+
+
+    #print("Dados recebidos:", data)
+    #print("Playlist salva no banco de dados:", new_playlist)
+    if not playlist_name:
+        print("no playlist name")
+        return jsonify({"error": "Nome da playlist é obrigatório"}), 400
+    
+    if Playlist.query.filter_by(name=playlist_name).first():
+        return jsonify({"error": "Playlist já existe"}), 400
+    try:
+        new_playlist = Playlist(name=playlist_name)
+        db.session.add(new_playlist)
+        db.session.commit()
+
+        print("playlist adiconada com sucesso")
+        return jsonify({"success": True, "id": new_playlist.id, "name": new_playlist.name}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # Função para tratar o desligamento do sistema (Ctrl+C)
