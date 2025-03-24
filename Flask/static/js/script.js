@@ -730,3 +730,30 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    const radios = document.querySelectorAll('input[name="tipo_transmissao"]');
+    const localContent = document.getElementById("localContent");
+    const streamingContent = document.getElementById("streamingContent");
+
+    function updateDisplay() {
+        const selected = document.querySelector('input[name="tipo_transmissao"]:checked');
+        if (!selected) return;
+
+        if (selected.value === "local") {
+            localContent.style.display = "block";
+            streamingContent.style.display = "none";
+        } else if (selected.value === "streaming") {
+            localContent.style.display = "none";
+            streamingContent.style.display = "block";
+        }
+    }
+
+    radios.forEach(radio => {
+        radio.addEventListener("change", updateDisplay);
+    });
+
+    // Atualizar ao carregar a página se já houver algum selecionado
+    updateDisplay();
+});
