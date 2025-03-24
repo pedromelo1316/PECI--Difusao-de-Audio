@@ -757,3 +757,112 @@ document.addEventListener("DOMContentLoaded", function () {
     // Atualizar ao carregar a página se já houver algum selecionado
     updateDisplay();
 });
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    const radios = document.querySelectorAll('input[name="tipo_transmissao"]');
+    const sectionRight = document.getElementById("sectionRightContent");
+
+    function updateSectionRight(value) {
+        if (value === "local") {
+            sectionRight.className = "inner-dual-section";  // <- Adicionado
+            sectionRight.innerHTML = `
+                <div class="inner-section-left">
+                    <h4>Lista de reprodução</h4>
+                    <p>Conteúdo da caixa da esquerda.</p>
+                </div>
+                <div class="inner-section-right">
+                    <h4>Playlists Disponíveis</h4>
+                    <p>Conteúdo da caixa da direita.</p>
+                </div>
+            `;
+        } else if (value === "streaming") {
+            sectionRight.className = "inner-dual-section";  // <- Adicionado
+            sectionRight.innerHTML = `
+                <div class="inner-section-left">
+                    <h4>Streaming em reprodução</h4>
+                    <p>Conteúdo da caixa da esquerda.</p>
+                </div>
+                <div class="inner-section-right">
+                    <h4>Streaming Disponível</h4>
+                    <p>Conteúdo da caixa da direita.</p>
+                </div>
+            `;
+        } else {
+            sectionRight.className = "inner-dual-section empty-message";
+            sectionRight.innerHTML = `<p>Selecione o tipo de reprodução que pretende</p>`;
+        }
+    }
+    
+
+    // Adiciona evento a cada rádio
+    radios.forEach(radio => {
+        radio.addEventListener("change", function () {
+            if (this.checked) {
+                updateSectionRight(this.value);
+            }
+        });
+    });
+
+    // Verifica se algum já está selecionado ao carregar
+    const checkedRadio = document.querySelector('input[name="tipo_transmissao"]:checked');
+    if (checkedRadio) {
+        updateSectionRight(checkedRadio.value);
+    } else {
+        updateSectionRight(null);
+    }
+});
+
+
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    const radios = document.querySelectorAll('input[name="tipo_transmissao"]');
+    const sectionRight = document.getElementById("sectionRightContent");
+    const saveButtonContainer = document.getElementById("saveButtonContainer");
+
+    function updateSectionRight(value) {
+        if (value === "local") {
+            sectionRight.innerHTML = `
+                <div class="inner-section-left">
+                    <h4>Lista de reprodução</h4>
+                    <p>Conteúdo da caixa da esquerda.</p>
+                </div>
+                <div class="inner-section-right">
+                    <h4>Playlists Disponíveis</h4>
+                    <p>Conteúdo da caixa da direita.</p>
+                </div>
+            `;
+            saveButtonContainer.style.display = "flex";
+
+        } else if (value === "streaming") {
+            sectionRight.innerHTML = `
+                <div class="inner-section-left">
+                    <h4>Streaming em reprodução</h4>
+                    <p>Conteúdo da caixa da esquerda.</p>
+                </div>
+                <div class="inner-section-right">
+                    <h4>Streaming Disponível</h4>
+                    <p>Conteúdo da caixa da direita.</p>
+                </div>
+            `;
+            saveButtonContainer.style.display = "flex";
+
+        } else {
+            sectionRight.className = "inner-dual-section empty-message";
+            sectionRight.innerHTML = `<p style="text-align:center;">Selecione o tipo de reprodução que pretende</p>`;
+            saveButtonContainer.style.display = "none";
+        }
+    }
+
+    radios.forEach(radio => {
+        radio.addEventListener("change", function () {
+            if (this.checked) {
+                updateSectionRight(this.value);
+            }
+        });
+    });
+
+    const checkedRadio = document.querySelector('input[name="tipo_transmissao"]:checked');
+    updateSectionRight(checkedRadio ? checkedRadio.value : null);
+});

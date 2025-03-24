@@ -364,12 +364,12 @@ def remove_column_from_zone():
         return jsonify({"error": str(e)}), 500
     
       
- 
 
 @app.route('/edit_channels', methods=['GET'])
 def edit_channels():
+    channel_id = request.args.get("channel_id", default=None, type=int)
     channels = Channels.query.order_by(Channels.id).all()
-    return render_template("edit_channels.html", channels=channels)
+    return render_template("edit_channels.html", channels=channels, channel_id=channel_id)
 
 
 

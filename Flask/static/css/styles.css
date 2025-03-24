@@ -80,6 +80,7 @@ p {
     padding: 10px;
     display: flex;
     justify-content: flex-start;
+    
 }
 
 .contentCH {
@@ -90,6 +91,7 @@ p {
 .dual-sectionCH {
     display: flex;
     gap: 20px;
+    min-height: 550px;
 }
 
 .section-leftCH {
@@ -108,6 +110,68 @@ p {
     padding: 20px;
 }
 
+
+
+.inner-section-left,
+.inner-section-right {
+    flex: 1;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.inner-dual-section {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+
+.inner-section-left h4,
+.inner-section-right h4 {
+    margin-top: 0;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+
+#sectionRightContent.empty-message {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;              /* Preenche a altura total da section */
+    min-height: 200px;         /* Garante altura mínima visível */
+    text-align: center;
+    font-size: 16px;
+    font-weight: 500;
+    color: #666;
+}
+
+
+
+.save-button-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 40px;
+}
+
+.save-button {
+    background-color: #d3d3d3;
+    color: #333;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.save-button:hover {
+    background-color: #b0b0b0;
+}
 
 /* ===== HEADER ===== */
 header {
@@ -673,8 +737,9 @@ footer {
     background: white;
     padding: 20px;
     box-shadow: 0px -2px 5px rgba(0, 0, 0, 0.1);
-    margin-top: 2px;
+    margin-top: auto;
 }
+
 
 /* ===== CHANNEL SELECTION ===== */
 .channel-selection-controls {

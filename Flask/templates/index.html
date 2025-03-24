@@ -52,10 +52,7 @@
                         <a href="http://localhost:5000/" class="settings-link">
                             <i class="fa-solid fa-gear settings-icon"></i>
                         </a>
-                        <!-- New icon linking to edit_channels.html -->
-                        <a href="{{ url_for('edit_channels') }}" class="edit-link">
-                            <i class="fa-solid fa-pen settings-icon"></i>
-                        </a>
+
                     </div>
                 </div>
                 <div class="column-box" id="channelsBox" style="display: block;">
@@ -78,9 +75,14 @@
                                                 <span class="status-text">Inactive</span>
                                             </div>
                                         </div>
-                                        <button class="toggle-transmission-btn" onclick="toggleChannelTransmission('{{ channel.id }}')">
-                                            <i class="fa-solid fa-play"></i>
-                                        </button>
+                                        <div class="toggle-transmission-btn">
+                                            <a href="{{ url_for('edit_channels', channel_id=channel.id) }}" class="edit-link">
+                                                <i class="fa-solid fa-pen settings-icon"></i>
+                                            </a>
+                                            
+                                        </div>
+                                        
+                                        
                                     </div>
                                     {% endfor %}
                                 </div>
@@ -90,23 +92,6 @@
                                 </div>
                             </div>
                         </div>
-                        <!--<div class="column-list">
-                            {% for channel in channels %}
-                            <div class="column-item channel-item" data-channel-id="{{ channel.id }}" onclick="toggleChannelOptions(this)">
-                                <span>Channel {{ channel.id }}</span>
-                                <div class="column-actions" onclick="event.stopPropagation()">
-                                    <i class="fa-solid fa-pen tooltip-icon" onclick="editChannelName(this, {{ channel.id }})">
-                                        <span class="tooltip-text">Edit Channel Name</span>
-                                    </i>
-                                    <i class="fa-solid fa-gear tooltip-icon" onclick="configureProgramming({{ channel.id }})"></i>
-                                </div>
-                                
-                                <div class="channel-options" style="display: none;">
-                                    <button onclick="interruptWithMicrophone({{ channel.id }})" class="interrupt-button">Interrupt with Microphone</button>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>-->
                     </div>
                     {% endif %}
                 </div>
