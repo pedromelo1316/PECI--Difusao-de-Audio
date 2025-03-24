@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Gestor de Áudio</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+{% endblock %}
+
+{% block body %}
+<header>
+    <div class="header-content">
+        <div class="title">
+            <h1>Gestor de Áudio</h1>
+            <h2>Hotel Montebelo</h2>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <div class="content">
+        <div class="local-box">
+
+            <!-- LOCAL box -->
+            <h3>Local</h3>
+            <div class="grid-container">
+                <!-- Playlists Section -->
+                <div class="playlists-section">
+                    <h2>Playlists</h2>
+                    <ul class="playlists-list" id="playlists-list">
+                        {% for playlist in playlists %}
+                        <li class="playlist-item">
+                            <span>{{ playlist.name }}</span>
+                            <div class="playlist-actions">
+                                <i class="fa-solid fa-pen" onclick="editPlaylist('{{ playlist.name }}')"></i>
+                                <i class="fa-solid fa-trash" onclick="deletePlaylist('{{ playlist.name }}')"></i>
+                            </div>
+                        </li>
+                        {% endfor %}
+                        <li class="playlist-item add-playlist" onclick="addPlaylist()">
+                            <span>Adicionar +</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Songs Section -->
+                <div class="songs-section">
+                    <h2>Músicas</h2>
+                    <ul class="songs-list" id="songs-list">
+                        <!-- As músicas serão carregadas dinamicamente via JavaScript -->
+                    </ul>
+                    <li class="song-item add-song" onclick="showAddSongModal()">
+                        <span>Adicionar +</span>
+                    </li>
+                </div>
+                
+                <!-- Modal para adicionar/editar música -->
+                <div id="song-modal" class="modal">
+                    <div class="modal-content">
+                        <span class="close" onclick="closeSongModal()">&times;</span>
+                        <h2 id="modal-title">Adicionar Música</h2>
+                        <input type="text" id="song-name" placeholder="Nome da música">
+                        <button onclick="saveSong()">Salvar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="container">
+    <div class="content">
+        <div class="stream-box">
+            <h3>Transmissão</h3>
+            <div class="grid-container">
+                <div class="streaming-section">
+                    {% set channel_2 = channels|selectattr("id", "equalto", 2)|first %}
+                    {% if channel_2 and channel_2.source %}
+                        <a href="{{ channel_2.source }}" target="_blank">{{ channel_2.source }}</a>
+                    {% else %}
+                    {% endif %}
+                    <form action="/save_stream_url" method="POST" style="margin-top: 20px;">
+                        <input type="hidden" name="channel_id" value="2">
+                        <label for="stream_url">Novo Link de Transmissão:</label>
+                        <input type="text" id="stream_url" name="stream_url" placeholder="Insira o link aqui" required>
+                        <button type="submit" style="margin-top: 10px;">Salvar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Modal para adicionar playlist 
+<div id="playlistModal" class="modal">
+    <div class="modal-content">
+        <h2>Nome da nova playlist:</h2>
+        <input type="text" id="playlist-name" placeholder="Digite o nome..." oninput="toggleConfirmButton()"/>
+        <div class="modal-buttons">
+            <button class="cancel" onclick="hidePlaylistModal()">Cancelar</button>
+            <button id="confirm-btn" class="confirm" onclick="confirmPlaylist()" disabled>OK</button>
+        </div>
+    </div>
+</div>
+
+-->
+
+
+<!-- Add Song Modal 
+<div id="addSongModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeAddSongModal()">&times;</span>
+        <h2>Adicionar Nova Música</h2>
+        <form id="addSongForm">
+            <div class="form-group">
+                <label for="songName">Nome da Música:</label>
+                <input type="text" id="songName" name="songName" required>
+            </div>
+            <div class="form-group">
+                <label for="songFile">Ficheiro da Música:</label>
+                <input type="file" id="songFile" name="songFile" accept="audio/*" required>
+            </div>
+            <div class="form-group">
+                <button type="submit">Adicionar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+-->
+
+<!-- Modal Personalizado -->
+<div id="customModal" class="custom-modal">
+    <div class="custom-modal-content">
+        <span class="close" onclick="closeCustomModal()">&times;</span>
+        <h2 id="modal-title">Título do Pop-up</h2>
+        <p id="modal-message">Mensagem do Pop-up</p>
+        <input type="text" id="modal-input" placeholder="Digite aqui..." style="display: none;">
+        <div class="modal-buttons">
+            <button class="cancel" onclick="closeCustomModal()">Cancelar</button>
+            <button id="modal-confirm" class="confirm" onclick="confirmCustomModal()">OK</button>
+        </div>
+    </div>
+</div>
+
+
+<div id="errorModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeErrorModal()">&times;</span>
+        <h2>Erro</h2>
+        <p>Não existem músicas disponíveis. Por favor, adicione músicas.</p>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
+{% endblock %}

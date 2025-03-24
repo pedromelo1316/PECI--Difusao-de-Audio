@@ -83,8 +83,12 @@ def start_ffmpeg_process(channel, source, _type):
         ]
     elif _type == ChannelType.STREAMING:
         # Transmissão via streaming com URL proveniente do yt-dlp
-        source = "https://www.youtube.com/live/YDvsBbKfLPA?si=TdUqXCrxJojjNDns"
         
+        ########3
+        #source = "https://www.youtube.com/live/YDvsBbKfLPA?si=TdUqXCrxJojjNDns"
+        ##############
+
+
         try:
             # Comando para obter a URL direta do stream
             ytdl_cmd = [
@@ -212,11 +216,25 @@ class ChannelType(str, Enum):
 #################################################################################
 #################################################################################
 
-# Modelo para "Playlist"
+# Tabela associativa para o relacionamento muitos-para-muitos
+playlist_songs = db.Table('playlist_songs',
+    db.Column('playlist_id', db.Integer, db.ForeignKey('playlist.id'), primary_key=True),
+    db.Column('song_id', db.Integer, db.ForeignKey('songs.id'), primary_key=True)
+)
+
+# Classe Songs
+class Songs(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+
+    def __repr__(self):
+        return f'<Song {self.id}: {self.name}>'
+
+# Classe Playlist
 class Playlist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
-    items = db.Column(db.Text, nullable=True)  
+    songs = db.relationship('Songs', secondary=playlist_songs, backref='playlist', lazy=True)
 
     def __repr__(self):
         return f'<Playlist {self.id}: {self.name}>'
@@ -230,6 +248,8 @@ class Channels(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.Enum(ChannelType), nullable=False)
     source = db.Column(db.String(200), nullable=True)
+
+    #####
 
     def __repr__(self):
         return 
@@ -267,10 +287,10 @@ def index():
     areas = Areas.query.order_by(Areas.id).all()
     channels = Channels.query.order_by(Channels.id).all()
     ####
-    playlist = db.session.query(Playlist).first()  # Substitua por lógica específica, se necessário
+    #playlist = db.session.query(Playlist).first()  # Substitua por lógica específica, se necessário
 
     ###
-    return render_template("index.html", nodes=nodes, areas=areas, channels=channels, playlist=playlist)
+    return render_template("index.html", nodes=nodes, areas=areas, channels=channels)
 # Rota para deleção de um nó específico
 @app.route('/delete/<int:id>')
 def delete(id):
@@ -626,6 +646,100 @@ def edit_stream(playlist_id):
 
     return render_template('edit_stream.html', playlist=playlist)
 
+
+@app.route('/secundaria')
+def secundaria():
+    return render_template('secundaria.html')
+
+
+
+@app.route('/save_stream_url', methods=['POST'])
+def save_stream_url():
+    channel_id = request.form.get('channel_id')
+    stream_url = request.form.get('stream_url')
+
+    if not channel_id or not stream_url:
+        return "Erro: Canal ou URL de transmissão inválido", 400
+
+    channel = Channels.query.get(channel_id)
+    if not channel:
+        return "Erro: Canal não encontrado", 404
+
+    try:
+        # Atualiza o link de streaming no banco de dados
+        channel.source = stream_url
+        db.session.commit()
+
+        # Reinicia o processo do canal
+        change_channel_process_thread = threading.Thread(
+            target=change_channel_process,
+            args=(int(channel_id), stream_url, ChannelType.STREAMING),
+            daemon=True
+        )
+        change_channel_process_thread.start()
+
+        return "Link de transmissão salvo com sucesso", 200
+    except Exception as e:
+        return f"Erro ao salvar o link de transmissão: {str(e)}", 500
+    
+
+
+
+
+################3
+# playlist
+####################
+
+# Rota para obter todas as músicas
+@app.route('/songs', methods=['GET'])
+def get_songs():
+    songs = Songs.query.order_by(Songs.id).all()
+    return jsonify([{"id": song.id, "name": song.name} for song in songs])
+
+# Rota para adicionar uma nova música
+@app.route('/add_song', methods=['POST'])
+def add_song():
+    data = request.json
+    song_name = data.get('name')
+    if not song_name:
+        return jsonify({"error": "Nome da música é obrigatório"}), 400
+    try:
+        new_song = Songs(name=song_name)
+        db.session.add(new_song)
+        db.session.commit()
+        return jsonify({"success": True, "id": new_song.id, "name": new_song.name}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Rota para editar uma música
+@app.route('/edit_song/<int:song_id>', methods=['POST'])
+def edit_song(song_id):
+    data = request.json
+    new_name = data.get('name')
+    if not new_name:
+        return jsonify({"error": "Nome da música é obrigatório"}), 400
+    song = Songs.query.get(song_id)
+    if not song:
+        return jsonify({"error": "Música não encontrada"}), 404
+    try:
+        song.name = new_name
+        db.session.commit()
+        return jsonify({"success": True, "id": song.id, "name": song.name}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Rota para excluir uma música
+@app.route('/delete_song/<int:song_id>', methods=['DELETE'])
+def delete_song(song_id):
+    song = Songs.query.get(song_id)
+    if not song:
+        return jsonify({"error": "Música não encontrada"}), 404
+    try:
+        db.session.delete(song)
+        db.session.commit()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 
