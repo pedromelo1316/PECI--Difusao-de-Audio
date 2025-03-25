@@ -3,6 +3,10 @@ from enum import Enum
 from flask import Flask, render_template, request, redirect, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
+import os
+from pydub import AudioSegment
+from flask import request, jsonify
+from werkzeug.utils import secure_filename
 import subprocess
 import threading
 import queue
@@ -30,6 +34,22 @@ CHUNCK_SIZE = 960
 AUDIO_CHANNELS = "1"  # Mono
 
 NUM_CHANNELS = 3  # Número total de canais
+
+
+
+############
+UPLOAD_FOLDER = 'Playlists/Songs'
+ALLOWED_EXTENSIONS = {'mp3', 'wav'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+
+
+########
 
 # Função para iniciar o processo do ffmpeg para um canal específico
 def start_ffmpeg_process(channel, source, _type):
@@ -684,14 +704,49 @@ def get_songs():
 # Rota para adicionar uma nova música
 @app.route('/add_song', methods=['POST'])
 def add_song():
-    data = request.json
-    song_name = data.get('name')
-    # se já tiver na base de dados nao poder adiiconar
+
+    print("Request files:", request.files)
+    print("Request form:", request.form)
+
+    
+    if 'file' not in request.files:
+        print("Arquivo de música é obrigatório")
+        return jsonify({"error": "Arquivo de música é obrigatório"}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        print("Nenhum arquivo selecionado")
+        return jsonify({"error": "Nenhum arquivo selecionado"}), 400
+
+    if not allowed_file(file.filename):
+        print("Formato de arquivo não suportado")
+        return jsonify({"error": "Formato de arquivo não suportado"}), 400
+
+    song_name = request.form.get('name')
+    if not song_name:
+        print("Nome da música é obrigatório")
+        return jsonify({"error": "Nome da música é obrigatório"}), 400
+
     if Songs.query.filter_by(name=song_name).first():
         return jsonify({"error": "Música já existe"}), 400
-    if not song_name:
-        return jsonify({"error": "Nome da música é obrigatório"}), 400
+
     try:
+        print("Dados recebidos:", request.form)
+        # Salvar o arquivo original
+        filename = secure_filename(file.filename)
+        original_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(original_path)
+
+        # Converter para .wav
+        wav_filename = f"{os.path.splitext(filename)[0]}.wav"
+        wav_path = os.path.join(app.config['UPLOAD_FOLDER'], wav_filename)
+        audio = AudioSegment.from_file(original_path)
+        audio.export(wav_path, format="wav")
+
+        # Remover o arquivo original (opcional)
+        os.remove(original_path)
+
+        # Salvar no banco de dados
         new_song = Songs(name=song_name)
         db.session.add(new_song)
         db.session.commit()

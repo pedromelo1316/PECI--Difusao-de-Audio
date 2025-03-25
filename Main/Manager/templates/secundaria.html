@@ -54,15 +54,13 @@
                 </div>
                 
                 <!-- Modal para adicionar/editar música -->
-                <div id="song-modal" class="modal">
-                    <div class="modal-content">
-                        <span class="close" onclick="closeSongModal()">&times;</span>
-                        <h2 id="modal-title">Adicionar Música</h2>
-                        <input type="text" id="song-name" placeholder="Nome da música">
-                        <button onclick="saveSong()">Salvar</button>
-                    </div>
+                <div id="song-modal" style="display: none;">
+                    <h2 id="modal-title"></h2>
+                    <input type="text" id="song-name" placeholder="Nome da música" />
+                    <input type="file" id="song-file" accept="audio/*" />
+                    <button onclick="saveSong()">Salvar</button>
+                    <button onclick="closeSongModal()">Cancelar</button>
                 </div>
-            </div>
         </div>
     </div>
 </div>

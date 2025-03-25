@@ -74,52 +74,51 @@ function loadSongs() {
         });
 }
 
-// Mostrar modal para adicionar música
-function showAddSongModal() {
-    editingSongId = null;
-    document.getElementById('modal-title').innerText = 'Adicionar Música';
-    document.getElementById('song-name').value = '';
-    document.getElementById('song-modal').style.display = 'block';
-}
 
-// Mostrar modal para editar música
-function editSong(id, name) {
-    editingSongId = id;
-    document.getElementById('modal-title').innerText = 'Editar Música';
-    document.getElementById('song-name').value = name;
-    document.getElementById('song-modal').style.display = 'block';
-}
+
+
 
 // Fechar modal
 function closeSongModal() {
     document.getElementById('song-modal').style.display = 'none';
 }
 
-// Salvar música (adicionar ou editar)
 function saveSong() {
     const songName = document.getElementById('song-name').value;
+    const songFile = document.getElementById('song-file').files[0];
+
+    console.log('Nome:', songName);
+    console.log('Arquivo:', songFile);
+
+
     if (!songName) {
         alert('O nome da música é obrigatório');
         return;
     }
 
-    const url = editingSongId ? `/edit_song/${editingSongId}` : '/add_song';
-    const method = editingSongId ? 'POST' : 'POST';
+    if (!songFile) {
+        alert('O arquivo de música é obrigatório');
+        return;
+    }
 
-    fetch(url, {
-        method: method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: songName })
+    const formData = new FormData();
+    formData.append('name', songName); // Nome da música
+    formData.append('file', songFile); // Arquivo de música
+
+    fetch('/add_song', {
+        method: 'POST',
+        body: formData // Envia o FormData diretamente
     })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                loadSongs();
-                closeSongModal();
-            } else {
-                alert(data.error || 'Erro ao salvar a música');
-            }
-        });
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadSongs();
+            closeSongModal();
+        } else {
+            alert(data.error || 'Erro ao salvar a música');
+        }
+    })
+    .catch(err => console.error('Erro ao salvar a música:', err));
 }
 
 // Excluir música
@@ -304,13 +303,12 @@ function showAddSongModal() {
             if (!songFile) return;
 
             const formData = new FormData();
-            formData.append('songName', songName);
-            formData.append('songFile', songFile);
+            formData.append('name', songName);
+            formData.append('file', songFile);
 
             fetch('/add_song', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: songName })
+                body: formData 
             })
             .then(response => {
                 if (response.ok) {
