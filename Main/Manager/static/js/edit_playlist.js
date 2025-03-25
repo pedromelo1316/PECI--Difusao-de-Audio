@@ -1,15 +1,16 @@
 function renamePlaylist(playlistName) {
     const newName = prompt('Novo nome da playlist:', playlistName);
+
     if (newName && newName !== playlistName) {
-        fetch(`/edit_playlist/${playlistName}`, {
+        fetch(`/edit_playlist_by_name`, { // Nova rota para buscar pelo nome
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ new_name: newName })
+            body: JSON.stringify({ current_name: playlistName, new_name: newName }) // Envia o nome atual e o novo nome
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Update the header title without reloading
+                // Atualiza o título do cabeçalho sem recarregar
                 document.querySelector('.title h1').textContent = "Playlist " + newName;
             } else {
                 alert('Erro ao renomear a playlist.');
@@ -20,6 +21,51 @@ function renamePlaylist(playlistName) {
         });
     }
 }
+
+function addSongToPlaylist(songName, playlistName) {
+    fetch('/add_song_to_playlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ song_name: songName, playlist_name: playlistName })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Música adicionada à playlist com sucesso!');
+            location.reload(); // Recarrega a página para atualizar a lista
+        } else {
+            alert(data.error || 'Erro ao adicionar música à playlist.');
+        }
+    })
+    .catch(err => {
+        alert('Erro ao adicionar música à playlist.');
+        console.error(err);
+    });
+}
+
+
+function removeSongFromPlaylist(songName, playlistName) {
+    fetch('/remove_song_from_playlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ song_name: songName, playlist_name: playlistName })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Música removida da playlist com sucesso!');
+            location.reload(); // Recarrega a página para atualizar a lista
+        } else {
+            alert(data.error || 'Erro ao remover música da playlist.');
+        }
+    })
+    .catch(err => {
+        alert('Erro ao remover música da playlist.');
+        console.error(err);
+    });
+}
+
+
 
 function toggleSong(icon, songName, playlistName) {
     const action = icon.classList.contains('fa-check') ? 'remove' : 'add';
@@ -58,26 +104,27 @@ function toggleSong(icon, songName, playlistName) {
 }
 
 function savePlaylistAndRedirect(playlistName) {
+    // Obter as músicas da playlist atual
     const playlistItems = document.querySelectorAll('#playlist-list .playlist-item');
-    const songOrder = Array.from(playlistItems).map(item => item.dataset.song);
-    fetch(`/save_playlist/${playlistName}`, {
+    const updatedSongs = Array.from(playlistItems).map(item => item.getAttribute('data-song'));
+
+    fetch('/save_playlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ song_order: songOrder })
+        body: JSON.stringify({ playlist_name: playlistName, songs: updatedSongs })
     })
-    .then(res => {
-        if (res.ok) {
-            window.location.href = "/";
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Playlist salva com sucesso!');
+            window.location.href = '/secundaria'; // Redireciona para a página principal ou outra página
         } else {
-            return res.json().then(data => {
-                console.error("Save playlist error:", data);
-                alert("Erro ao guardar playlist.");
-            });
+            alert(data.error || 'Erro ao salvar a playlist.');
         }
     })
     .catch(err => {
-        console.error("Fetch error:", err);
-        alert("Erro ao guardar playlist.");
+        alert('Erro ao salvar a playlist.');
+        console.error(err);
     });
 }
 

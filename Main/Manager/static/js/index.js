@@ -37,7 +37,10 @@ function addPlaylist() {
     })
     .then(response => response.json())
     .then(data => {
+        console.log("Resposta da API:", data); // Adicione este log
+
         if (data.success) {
+            console.log("Playlist adicionada com sucesso!");
             loadPlaylists(); // Atualiza a lista de playlists
         } else {
             alert(data.error || 'Erro ao adicionar playlist.');
@@ -233,24 +236,35 @@ function closeCustomModal() {
     document.onkeydown = null; // Remover evento de tecla global
 }
 
+//function editPlaylist(playlistId, currentName) {
+    // const newName = prompt('Digite o novo nome da playlist:', currentName);
+    // if (!newName || newName === currentName) return;
+    //fetch(`/edit_playlist/${playlistId}`, {
+     //   method: 'POST',
+       // headers: { 'Content-Type': 'application/json' },
+       // body: JSON.stringify({ name: newName })
+    //})
+    //.then(response => response.json())
+    //.then(data => {
+     //   if (data.success) {
+         //   loadPlaylists();
+        //} else {
+       //     alert(data.error || 'Erro ao renomear playlist.');
+      //  }
+    //})
+  //  .catch(err => console.error('Erro ao renomear playlist:', err));
+//}
 
-function editPlaylist(playlistId, currentName) {
-    const newName = prompt('Digite o novo nome da playlist:', currentName);
-    if (!newName || newName === currentName) return;
-    fetch(`/edit_playlist/${playlistId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newName })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            loadPlaylists();
-        } else {
-            alert(data.error || 'Erro ao renomear playlist.');
-        }
-    })
-    .catch(err => console.error('Erro ao renomear playlist:', err));
+function editPlaylist(playlistId) {
+    if (!playlistId) {
+        console.error("ID da playlist não fornecido.");
+        showCustomModal("Erro", "ID da playlist não foi fornecido.");
+        return;
+    }
+
+    console.log("Editando playlist com ID:", playlistId);
+    // Redireciona para a página de edição da playlist específica
+    window.location.href = `/edit_playlist/${playlistId}`;
 }
 
 

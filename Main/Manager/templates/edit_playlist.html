@@ -12,7 +12,9 @@
         <button onclick="window.history.back()" class="back-button"><i class="fas fa-arrow-left"></i></button>
         <div class="title">
             <h1>Playlist {{ playlist_name }}</h1>
-            <button onclick="renamePlaylist('{{ playlist_name }}')" class="edit-button"><i class="fas fa-pen"></i></button>
+            <button onclick="renamePlaylist('{{ playlist_name }}')" class="edit-button">
+                <i class="fas fa-pen"></i>
+            </button>
         </div>
     </div>
 </header>
@@ -31,6 +33,7 @@
                     {% for song in playlist_songs %}
                     <li class="playlist-item" draggable="true" data-song="{{ song }}">
                         <span>{{ loop.index }}. {{ song }}</span>
+                        <i class="fa-solid fa-minus" onclick="removeSongFromPlaylist('{{ song }}', '{{ playlist_name }}')"></i>
                     </li>
                     {% endfor %}
                     {% endif %}
@@ -49,7 +52,7 @@
                     {% for song in all_songs %}
                     <li class="song-item">
                         <span>{{ song }}</span>
-                        <i class="fa-solid fa-{{ 'check' if song in playlist_songs else 'square' }}" onclick="toggleSong(this, '{{ song }}', '{{ playlist_name }}')"></i>
+                        <i class="fa-solid fa-{{ 'check' if song in playlist_songs else 'square' }}" onclick="addSongToPlaylist('{{ song }}', '{{ playlist_name }}')"></i>
                     </li>
                     {% endfor %}
                 </ul>

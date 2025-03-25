@@ -30,8 +30,8 @@
                         {% for playlist in playlists %}
                         <li class="playlist-item">
                             <span>{{ playlist.name }}</span>
-                            <div class="playlist-actions">
-                                <i class="fa-solid fa-pen" onclick="editPlaylist('{{ playlist.name }}')"></i>
+                            <div class="playlist-actions">                                
+                                <i class="fa-solid fa-pen" onclick="editPlaylist('{{ playlist.id }}')"></i>
                                 <i class="fa-solid fa-trash" onclick="deletePlaylist('{{ playlist.name }}')"></i>
                             </div>
                         </li>

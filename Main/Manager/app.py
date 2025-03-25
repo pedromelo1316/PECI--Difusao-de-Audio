@@ -630,26 +630,11 @@ def update_area_channel():
 
 
 
-@app.route('/edit_playlist')
-def edit_playlist():
-    return render_template('edit_playlist.html')
-
-
-@app.route('/edit_stream/<int:playlist_id>')
-def edit_stream(playlist_id):
-    # Substitua pelo código correto para buscar a playlist no banco de dados
-    playlist = db.session.query(Playlist).filter_by(id=playlist_id).first()
-    
-    if not playlist:
-        # Retorne um erro ou redirecione se a playlist não for encontrada
-        return "Playlist não encontrada", 404
-
-    return render_template('edit_stream.html', playlist=playlist)
-
 
 @app.route('/secundaria')
 def secundaria():
-    return render_template('secundaria.html')
+    playlists = Playlist.query.all()  
+    return render_template('secundaria.html', playlists=playlists)
 
 
 
@@ -746,6 +731,12 @@ def delete_song(song_id):
         return jsonify({"success": True}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+
+@app.route('/playlists', methods=['GET'])
+def get_playlists():
+    playlists = Playlist.query.all()
+    return jsonify([{"id": playlist.id, "name": playlist.name} for playlist in playlists])
 
 # add playlist
 @app.route('/add_playlist', methods=['POST'])
@@ -754,8 +745,9 @@ def add_playlist():
     playlist_name = data.get('name')
 
 
-    #print("Dados recebidos:", data)
-    #print("Playlist salva no banco de dados:", new_playlist)
+
+    print("Dados recebidos:", data)
+    print("Playlist salva no banco de dados:", playlist_name)
     if not playlist_name:
         print("no playlist name")
         return jsonify({"error": "Nome da playlist é obrigatório"}), 400
@@ -772,6 +764,150 @@ def add_playlist():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# delete playlist
+@app.route('/delete_playlist/<int:playlist_id>', methods=['DELETE'])
+def delete_playlist(playlist_id):
+    playlist = Playlist.query.get(playlist_id)
+    if not playlist:
+        return jsonify({"error": "Playlist não encontrada"}), 404
+    try:
+        db.session.delete(playlist)
+        db.session.commit()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+#edit playlist NAME
+@app.route('/edit_playlist_by_name', methods=['POST'])
+def edit_playlist_by_name():
+    data = request.json
+    current_name = data.get('current_name')
+    new_name = data.get('new_name')
+
+    if not current_name or not new_name:
+        return jsonify({"error": "Os nomes atual e novo são obrigatórios"}), 400
+
+    # Busca a playlist pelo nome atual
+    playlist = Playlist.query.filter_by(name=current_name).first()
+    if not playlist:
+        return jsonify({"error": "Playlist não encontrada"}), 404
+
+    try:
+        # Atualiza o nome da playlist
+        playlist.name = new_name
+        db.session.commit()
+        return jsonify({"success": True, "id": playlist.id, "name": playlist.name}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# edit playlist -> html
+
+
+@app.route('/edit_playlist/<int:playlist_id>', methods=['GET'])
+def edit_playlist(playlist_id):
+    # Busca a playlist pelo ID
+    playlist = Playlist.query.get(playlist_id)
+    if not playlist:
+        return "Playlist não encontrada", 404
+
+    # Busca as músicas da playlist e todas as músicas disponíveis
+    playlist_name = playlist.name
+    playlist_songs = [song.name for song in playlist.songs]  # Músicas na playlist
+    all_songs = [song.name for song in Songs.query.all()]  # Todas as músicas disponíveis
+
+    return render_template(
+        'edit_playlist.html',
+        playlist_name=playlist_name,
+        playlist_songs=playlist_songs,
+        all_songs=all_songs
+    )
+
+@app.route('/remove_song_from_playlist', methods=['POST'])
+def remove_song_from_playlist():
+    data = request.json
+    playlist_name = data.get('playlist_name')
+    song_name = data.get('song_name')
+
+    if not playlist_name or not song_name:
+        return jsonify({"error": "Nome da playlist e da música são obrigatórios"}), 400
+
+    # Busca a playlist e a música no banco de dados
+    playlist = Playlist.query.filter_by(name=playlist_name).first()
+    song = Songs.query.filter_by(name=song_name).first()
+
+    if not playlist:
+        return jsonify({"error": "Playlist não encontrada"}), 404
+    if not song:
+        return jsonify({"error": "Música não encontrada"}), 404
+
+    try:
+        # Remove a música da playlist
+        if song in playlist.songs:
+            playlist.songs.remove(song)
+            db.session.commit()
+            return jsonify({"success": True}), 200
+        else:
+            return jsonify({"error": "Música não está na playlist"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/add_song_to_playlist', methods=['POST'])
+def add_song_to_playlist():
+    data = request.json
+    playlist_name = data.get('playlist_name')
+    song_name = data.get('song_name')
+
+    if not playlist_name or not song_name:
+        return jsonify({"error": "Nome da playlist e da música são obrigatórios"}), 400
+
+    # Busca a playlist e a música no banco de dados
+    playlist = Playlist.query.filter_by(name=playlist_name).first()
+    song = Songs.query.filter_by(name=song_name).first()
+
+    if not playlist:
+        return jsonify({"error": "Playlist não encontrada"}), 404
+    if not song:
+        return jsonify({"error": "Música não encontrada"}), 404
+
+    try:
+        # Adiciona a música à playlist
+        if song not in playlist.songs:
+            playlist.songs.append(song)
+            db.session.commit()
+            return jsonify({"success": True}), 200
+        else:
+            return jsonify({"error": "Música já está na playlist"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/save_playlist', methods=['POST'])
+def save_playlist():
+    data = request.json
+    playlist_name = data.get('playlist_name')
+    updated_songs = data.get('songs')  # Lista de músicas atualizadas
+
+    if not playlist_name or updated_songs is None:
+        return jsonify({"error": "Nome da playlist e lista de músicas são obrigatórios"}), 400
+
+    # Busca a playlist pelo nome
+    playlist = Playlist.query.filter_by(name=playlist_name).first()
+    if not playlist:
+        return jsonify({"error": "Playlist não encontrada"}), 404
+
+    try:
+        # Atualiza as músicas da playlist
+        playlist.songs = Songs.query.filter(Songs.name.in_(updated_songs)).all()
+        db.session.commit()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+
+
+#################################################################################
+#################################################################################
+#################################################################################
 
 # Função para tratar o desligamento do sistema (Ctrl+C)
 def shutdown_handler(signum, frame):
