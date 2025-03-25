@@ -1,0 +1,14 @@
+c: 1, f: 10, packet_loss: 0.00%
+c: 5, f: 10, packet_loss: 0.00%
+c: 10, f: 10, packet_loss: 0.00%
+c: 20, f: 10, packet_loss: 0.00%
+c: 50, f: 10, packet_loss: 0.00%
+c: 100, f: 10, packet_loss: 0.00%
+c: 1, f: 20, packet_loss: 0.00%
+c: 5, f: 20, packet_loss: 0.00%
+c: 10, f: 20, packet_loss: 0.00%
+c: 20, f: 20, packet_loss: 0.00%
+c: 50, f: 20, packet_loss: 0.00%
+c: 100, f: 20, packet_loss: 0.00%
+c: 1, f: 40, packet_loss: 0.00%
+c: 5, f: 40, packet_loss: 0.00%
