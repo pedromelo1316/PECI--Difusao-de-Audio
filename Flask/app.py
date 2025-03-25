@@ -396,6 +396,25 @@ def update_channel(channel_id):
         return redirect('/')
 
 
+@app.route('/update_channel_name', methods=['POST'])
+def update_channel_name():
+    channel_id = request.form.get('channel_id')
+    new_name = request.form.get('channel_name')
+
+    if not channel_id or not new_name:
+        return "Dados inválidos", 400
+
+    channel = Channels.query.get(channel_id)
+    if not channel:
+        return "Canal não encontrado", 404
+
+    try:
+        channel.name = new_name
+        db.session.commit()
+        return redirect('/')
+    except Exception as e:
+        return str(e), 500
+
 
 @app.route('/update_area_channel', methods=['POST'])
 def update_area_channel():

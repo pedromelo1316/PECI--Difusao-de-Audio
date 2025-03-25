@@ -173,6 +173,74 @@ p {
     background-color: #b0b0b0;
 }
 
+
+
+/*EDIT CHANNELS*/
+.channel-title-container {
+    text-align: left;
+    margin-top: 40px;
+    margin-bottom: 0px;
+    padding-left: 100px;
+    position: relative;
+}
+
+.channel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.channel-title h1 {
+    margin: 0;
+}
+
+.edit-icon {
+    font-size: 16px;
+    color: #555;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.edit-icon:hover {
+    color: #22cc3f;
+}
+
+/* Edição */
+.channel-edit-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.channel-edit-input {
+    font-size: 22px;
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    outline: none;
+    width: 300px;
+}
+
+.channel-edit-input:focus {
+    border-color: #22cc3f;
+    box-shadow: 0 0 5px rgba(34, 204, 63, 0.3);
+}
+
+.save-button {
+    background-color: #ccc;
+    color: black;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.save-button:hover {
+    background-color: #bbb;
+}
+
+
 /* ===== HEADER ===== */
 header {
     background: #fffcfc;

@@ -22,9 +22,25 @@
     </div>
 </header>
 
-<!-- Título "Channel" -->
+<!-- Título "Channel" 
 <div style="text-align: left; margin-top: 40px; margin-bottom: 0px; padding-left: 100px;">
     <h1>Channel {{ channel_id }}</h1>
+</div> -->
+
+<!-- Título do canal com modo de visualização e edição -->
+<div class="channel-title-container">
+    <!-- Visualização -->
+    <div id="channelTitleDisplay" class="channel-title">
+        <h1>Channel {{ channel_id }}</h1>
+        <i class="fa-solid fa-pen edit-icon" onclick="toggleChannelEdit()"></i>
+    </div>
+
+    <!-- Edição -->
+    <form id="channelEditForm" class="channel-edit-form" style="display: none;" method="POST" action="/update_channel_name">
+        <input type="hidden" name="channel_id" value="{{ channel_id }}">
+        <input type="text" name="channel_name" value="Channel {{ channel_id }}" class="channel-edit-input" required>
+        <button type="submit" class="save-button">Guardar</button>
+    </form>
 </div>
 
 

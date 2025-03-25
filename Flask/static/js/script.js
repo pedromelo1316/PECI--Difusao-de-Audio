@@ -866,3 +866,30 @@ document.addEventListener("DOMContentLoaded", function () {
     const checkedRadio = document.querySelector('input[name="tipo_transmissao"]:checked');
     updateSectionRight(checkedRadio ? checkedRadio.value : null);
 });
+
+
+
+//lapis para editar nome channel
+function editChannelName() {
+    document.getElementById('channelTitleContainer').style.display = 'none';
+    document.getElementById('channelEditContainer').style.display = 'flex';
+}
+
+function saveChannelName() {
+    const input = document.getElementById('channelNameInput');
+    const title = document.getElementById('channelTitle');
+
+    title.textContent = input.value;
+    document.getElementById('channelTitleContainer').style.display = 'flex';
+    document.getElementById('channelEditContainer').style.display = 'none';
+
+    // Aqui poderás fazer POST/AJAX se quiseres guardar no servidor
+}
+
+function toggleChannelEdit() {
+    const display = document.getElementById("channelTitleDisplay");
+    const form = document.getElementById("channelEditForm");
+
+    display.style.display = "none";
+    form.style.display = "flex";
+}
