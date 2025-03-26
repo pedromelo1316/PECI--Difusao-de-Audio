@@ -94,7 +94,7 @@ def play_audio(n, sdp_file):
         "-"
     ]
     # Inicia o processo ffmpeg com redirecionamento da saída padrão
-    ffmpeg = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
+    ffmpeg = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     player = pyaudio.PyAudio()
     # Abre um stream de áudio para saída; o formato é PCM com SAMPLE_WIDTH bytes e 2 canais
     stream = player.open(format=player.get_format_from_width(SAMPLE_WIDTH), channels=2, rate=FREQ, output=True)
@@ -243,6 +243,61 @@ def wait_for_connection(n, port=8080):
                 time.sleep(1)
         client_socket.close()
         return True
+    
+    
+def read_cpu_stats():
+    """
+    Lê as estatísticas de CPU a partir de /proc/stat.
+    Retorna um dicionário onde a chave é o rótulo de CPU (cpu, cpu0, cpu1, …)
+    e o valor é uma lista de tempos (inteiros).
+    """
+    stats = {}
+    with open('/proc/stat') as f:
+        lines = f.readlines()
+    for line in lines:
+        if line.startswith("cpu"):
+            parts = line.split()
+            label = parts[0]
+            # Converte os valores de tempo para inteiros
+            stats[label] = list(map(int, parts[1:]))
+    return stats
+
+def compute_cpu_usage(old_stats, new_stats):
+    """
+    Calcula a porcentagem de uso para cada CPU com base em duas leituras.
+    """
+    usage = {}
+    for cpu, old_values in old_stats.items():
+        new_values = new_stats.get(cpu)
+        if not new_values:
+            continue
+        # Total de tempo decorrido entre as leituras
+        total_old = sum(old_values)
+        total_new = sum(new_values)
+        total_diff = total_new - total_old
+        # Tempo ocioso: coluna 4 (idle)
+        idle_diff = new_values[3] - old_values[3]
+        if total_diff == 0:
+            usage_percent = 0
+        else:
+            usage_percent = (total_diff - idle_diff) * 100 / total_diff
+        usage[cpu] = usage_percent
+    return usage
+
+def print_all_cores_cpu_usage(stop_event):
+    """
+    Função para imprimir a porcentagem de uso de CPU de todos os núcleos.
+    """
+    old_stats = read_cpu_stats()
+    while not stop_event.is_set():
+        time.sleep(1)
+        new_stats = read_cpu_stats()
+        usage = compute_cpu_usage(old_stats, new_stats)
+        text = "CPU usage: "
+        for cpu, percent in usage.items():
+            text += f"{cpu}: {percent:.1f}% "
+        print("\r" + text, end="")
+        old_stats = new_stats
 
 def main():
     global play_thread, ffmpeg, HEADER, OP, channel, player, stream
@@ -259,6 +314,9 @@ def main():
     # Cria e inicia a thread responsável por estabelecer a conexão com o gerenciador
     t_connection = threading.Thread(target=wait_for_connection, args=(n,8080))
     t_connection.start()    
+    
+    t_print_cpu = threading.Thread(target=print_all_cores_cpu_usage, args=(stop_event,))
+    t_print_cpu.start()
     
     # Cria e inicia a thread que ficará aguardando informações para controle do stream
     t_info = threading.Thread(target=wait_for_info, args=(n,8081))
