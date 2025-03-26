@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import subprocess
@@ -9,7 +10,7 @@ BITRATE = "128k"
 SAMPLE_RATE = "48000"
 AUDIO_CHANNELS = "1"  # Will change dynamically in the loop
 FRAME_DURATIONS = [10, 20, 40, 60, 80]  # Frame durations
-NUM_CHANNELS_LIST = [20, 50, 100]  # Number of channels
+NUM_CHANNELS_LIST = [1, 5, 10, 20, 50, 100]  # Number of channels
 
 source = "default"
 BROADCAST_IP = "255.255.255.255"  # Replace with the target IP address
@@ -20,7 +21,7 @@ TIME_SLEEP = 10
 
 list_of_combinations_file = []
 
-def send_file_name_via_broadcast(file_name, ip, port, channel, frame_duration):
+def send_info_via_broadcast(info, ip, port, channel, frame_duration):
     """Send a file name via UDP broadcast."""
     if (channel, frame_duration) in list_of_combinations_file:
         return
@@ -30,15 +31,14 @@ def send_file_name_via_broadcast(file_name, ip, port, channel, frame_duration):
         
         return
     
-    file_name = os.path.basename(file_name)
-    
+    data = json.dumps(info)
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         s.settimeout(2)  # Set a timeout for receiving ACK
         while True:
             try:
-                s.sendto(f"{file_name}".encode('utf-8'), (ip, port))
-                print(f"Sent file name: {file_name}")
+                s.sendto(data.encode('utf-8'), (ip, port))
+                print(f"Sent file name: {info}")
                 # Wait for ACK
                 data, addr = s.recvfrom(1024)
                 if data.decode('utf-8') == "ACK":
@@ -60,9 +60,6 @@ def start_ffmpeg_process(channel, frame_duration):
 
     if not os.path.exists("Session_files"):
         os.makedirs("Session_files")
-
-
-    sdp_file = f"Session_files/session_c{channel}_f{frame_duration}.sdp"
     
     cmd = [
         "ffmpeg",
@@ -80,7 +77,7 @@ def start_ffmpeg_process(channel, frame_duration):
         "-ac", AUDIO_CHANNELS,
         "-f", "rtp",
         "-frame_duration", str(frame_duration),
-        "-sdp_file", sdp_file,
+        "-sdp_file", "Session_files/session",
         multicast_address
     ]
     
@@ -93,8 +90,8 @@ def start_ffmpeg_process(channel, frame_duration):
 def run_test(frame_duration, num_channels):
     processes = []
     print(f"Running test for {num_channels} channels and frame duration {frame_duration} ms")
-    sdp_file = f"Session_files/session_c{num_channels}_f{frame_duration}.sdp"
-    send_file_name_via_broadcast(sdp_file, BROADCAST_IP, PORT, num_channels, frame_duration)
+    info_dic = {"channel": str(num_channels), "frame_duration": str(frame_duration), "time": TIME_PER_COMB}
+    send_info_via_broadcast(info_dic, BROADCAST_IP, PORT, num_channels, frame_duration)
 
     time.sleep(TIME_SLEEP)
     # Start ffmpeg for each channel
@@ -106,9 +103,8 @@ def run_test(frame_duration, num_channels):
     # Wait for the test to run (1 minute)
     time.sleep(TIME_PER_COMB)
 
-    # Stop the processes and count packets
     for process in processes:
-        process.terminate()
+        process.kill()  # No waiting, no warning
 
     print(f"Test with Frame Duration {frame_duration} ms and {num_channels} channels completed\n")
 
