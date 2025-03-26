@@ -11,11 +11,34 @@ FREQ = 48000  # Audio sampling frequency
 CHUNK_SIZE = 960  # Audio chunk size
 SAMPLE_WIDTH = 2  # Bytes per sample (pcm_s16le)
 OUTPUT_CAPTURE_DIR = "Captures"
-RECEPTOR_INTERFACE = "en0"  # Network interface for packet capture
+#RECEPTOR_INTERFACE = "en0"  # Network interface for packet capture
 MULTICAST_IP = "239.255.0.1"  # Target multicast IP for filtering packets
 
 # Ensure the capture directory exists
 os.makedirs(OUTPUT_CAPTURE_DIR, exist_ok=True)
+
+def get_wifi_interface():
+    """Automatically detect the Wi-Fi network interface."""
+    try:
+        result = subprocess.run(["networksetup", "-listallhardwareports"], capture_output=True, text=True)
+        interfaces = result.stdout.split("\n")
+        print(interfaces)
+        wifi_interface = None
+        for i, line in enumerate(interfaces):
+            if "Wi-Fi" in line:
+                wifi_interface = interfaces[i + 1].split(":")[1].strip()
+                print(f"Detected Wi-Fi interface: {wifi_interface}")
+                break
+        return wifi_interface
+    except Exception as e:
+        print(f"Error detecting Wi-Fi interface: {e}")
+        return None
+
+# Auto-detect Wi-Fi interface
+RECEPTOR_INTERFACE = get_wifi_interface()
+
+
+
 
 def start_tshark_capture(test_name):
     """Start a tshark capture and enforce a 60-second limit from first packet detection."""
@@ -36,7 +59,6 @@ def start_tshark_capture(test_name):
         with open(capture_file, "w") as f:
             for line in process.stdout:
                 frame_number = line.strip()
-                #print(f"Packet received: {frame_number}")
                 f.write(frame_number + ",")
 
     threading.Thread(target=read_output, daemon=True).start()
