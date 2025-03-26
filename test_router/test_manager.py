@@ -9,7 +9,7 @@ BITRATE = "128k"
 SAMPLE_RATE = "48000"
 AUDIO_CHANNELS = "1"  # Will change dynamically in the loop
 FRAME_DURATIONS = [10, 20, 40, 60, 80]  # Frame durations
-NUM_CHANNELS_LIST = [20, 50, 100]  # Number of channels
+NUM_CHANNELS_LIST = [1, 5, 10, 20, 50, 100]  # Number of channels
 
 source = "default"
 BROADCAST_IP = "255.255.255.255"  # Replace with the target IP address
