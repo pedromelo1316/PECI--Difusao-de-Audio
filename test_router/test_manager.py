@@ -9,11 +9,11 @@ BITRATE = "128k"
 SAMPLE_RATE = "48000"
 AUDIO_CHANNELS = "1"  # Will change dynamically in the loop
 FRAME_DURATIONS = [10, 20, 40, 60, 80]  # Frame durations
-NUM_CHANNELS_LIST = [1, 5, 10, 20, 50, 100]  # Number of channels
+NUM_CHANNELS_LIST = [20, 50, 100]  # Number of channels
 
 source = "default"
-TCP_IP = "127.0.0.1"  # Replace with the target IP address
-TCP_PORT = 5000           # Replace with the target port
+BROADCAST_IP = "255.255.255.255"  # Replace with the target IP address
+PORT = 5000           # Replace with the target port
 
 TIME_PER_COMB = 60
 TIME_SLEEP = 10
@@ -84,7 +84,7 @@ def run_test(frame_duration, num_channels):
     processes = []
     print(f"Running test for {num_channels} channels and frame duration {frame_duration} ms")
     sdp_file = f"Session_files/session_c{num_channels}_f{frame_duration}.sdp"
-    send_file_name_via_broadcast(sdp_file, TCP_IP, TCP_PORT, num_channels, frame_duration)
+    send_file_name_via_broadcast(sdp_file, BROADCAST_IP, PORT, num_channels, frame_duration)
 
     time.sleep(TIME_SLEEP)
     # Start ffmpeg for each channel

@@ -22,12 +22,10 @@ def get_wifi_interface():
     try:
         result = subprocess.run(["networksetup", "-listallhardwareports"], capture_output=True, text=True)
         interfaces = result.stdout.split("\n")
-        print(interfaces)
         wifi_interface = None
         for i, line in enumerate(interfaces):
             if "Wi-Fi" in line:
                 wifi_interface = interfaces[i + 1].split(":")[1].strip()
-                print(f"Detected Wi-Fi interface: {wifi_interface}")
                 break
         return wifi_interface
     except Exception as e:
@@ -36,8 +34,6 @@ def get_wifi_interface():
 
 # Auto-detect Wi-Fi interface
 RECEPTOR_INTERFACE = get_wifi_interface()
-
-
 
 
 def start_tshark_capture(test_name):
