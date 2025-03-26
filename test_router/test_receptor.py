@@ -100,6 +100,8 @@ def receive_file_name_via_broadcast(port):
     file_name = data.decode("utf-8").strip()
     print(f"Received file name: {file_name}")
 
+    s.sendto(b"ACK", addr)
+
     return file_name
 
 def cleanup(capture_process):

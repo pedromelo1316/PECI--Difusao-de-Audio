@@ -34,8 +34,18 @@ def send_file_name_via_broadcast(file_name, ip, port, channel, frame_duration):
     
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        s.sendto(f"{file_name}".encode('utf-8'), (ip, port))
-        print(f"Sent file name: {file_name}")
+        s.settimeout(2)  # Set a timeout for receiving ACK
+        while True:
+            try:
+                s.sendto(f"{file_name}".encode('utf-8'), (ip, port))
+                print(f"Sent file name: {file_name}")
+                # Wait for ACK
+                data, addr = s.recvfrom(1024)
+                if data.decode('utf-8') == "ACK":
+                    print(f"Received ACK from {addr}")
+                    break
+            except socket.timeout:
+                print("No ACK received, resending...")
 
     
 
