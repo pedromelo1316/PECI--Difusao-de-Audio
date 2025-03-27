@@ -77,12 +77,7 @@
                         <a href="{{ channel_2.source }}" target="_blank">{{ channel_2.source }}</a>
                     {% else %}
                     {% endif %}
-                    <form action="/save_stream_url" method="POST" style="margin-top: 20px;">
-                        <input type="hidden" name="channel_id" value="2">
-                        <label for="stream_url">Novo Link de Transmissão:</label>
-                        <input type="text" id="stream_url" name="stream_url" placeholder="Insira o link aqui" required>
-                        <button type="submit" style="margin-top: 10px;">Salvar</button>
-                    </form>
+                    <button type="button" onclick="showStreamModal()" style="margin-top: 20px;">Adicionar Novo Streaming</button>
                 </div>
             </div>
         </div>
@@ -130,16 +125,25 @@
 -->
 
 <!-- Modal Personalizado -->
-<div id="customModal" class="custom-modal">
-    <div class="custom-modal-content">
-        <span class="close" onclick="closeCustomModal()">&times;</span>
-        <h2 id="modal-title">Título do Pop-up</h2>
-        <p id="modal-message">Mensagem do Pop-up</p>
-        <input type="text" id="modal-input" placeholder="Digite aqui..." style="display: none;">
-        <div class="modal-buttons">
-            <button class="cancel" onclick="closeCustomModal()">Cancelar</button>
-            <button id="modal-confirm" class="confirm" onclick="confirmCustomModal()">OK</button>
-        </div>
+<!-- Modal para adicionar streaming -->
+<div id="streamModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeStreamModal()">&times;</span>
+        <h2>Adicionar Novo Streaming</h2>
+        <form id="streamForm">
+            <div class="form-group">
+                <label for="streamName">Nome do Streaming:</label>
+                <input type="text" id="streamName" name="streamName" required>
+            </div>
+            <div class="form-group">
+                <label for="streamUrl">Link do Streaming:</label>
+                <input type="text" id="streamUrl" name="streamUrl" placeholder="Insira o link aqui" required>
+            </div>
+            <div class="form-group">
+                <button type="button" onclick="saveStream()">Salvar</button>
+                <button type="button" onclick="closeStreamModal()">Cancelar</button>
+            </div>
+        </form>
     </div>
 </div>
 

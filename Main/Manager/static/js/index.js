@@ -166,27 +166,49 @@ document.getElementById('streamForm').addEventListener('submit', function(event)
 });
 
 
-function saveStreamUrl(channelId) {
-    const streamUrl = prompt("Digite o link de transmissão:");
-    if (streamUrl) {
-        fetch('/save_stream_url', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ channel_id: channelId, stream_url: streamUrl })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert("Link de transmissão salvo com sucesso!");
-                location.reload();
-            } else {
-                alert("Erro ao salvar o link de transmissão: " + data.error);
-            }
-        })
-        .catch(error => console.error("Erro:", error));
-    }
+function showStreamModal() {
+    document.getElementById('streamModal').style.display = 'block';
 }
 
+function closeStreamModal() {
+    document.getElementById('streamModal').style.display = 'none';
+}
+
+function saveStream() {
+    const streamName = document.getElementById('streamName').value;
+    const streamUrl = document.getElementById('streamUrl').value;
+
+    if (streamName && streamUrl) {
+        // Enviar os dados para o backend
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/save_stream_url';
+
+        const nameInput = document.createElement('input');
+        nameInput.type = 'hidden';
+        nameInput.name = 'stream_name';
+        nameInput.value = streamName;
+
+        const urlInput = document.createElement('input');
+        urlInput.type = 'hidden';
+        urlInput.name = 'stream_url';
+        urlInput.value = streamUrl;
+
+        const channelInput = document.createElement('input');
+        channelInput.type = 'hidden';
+        channelInput.name = 'channel_id';
+        channelInput.value = '2';
+
+        form.appendChild(nameInput);
+        form.appendChild(urlInput);
+        form.appendChild(channelInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    } else {
+        alert('Por favor, preencha todos os campos.');
+    }
+}
 
 
 

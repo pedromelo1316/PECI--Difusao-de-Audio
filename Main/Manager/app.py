@@ -19,6 +19,7 @@ import base64
 import signal
 import sys
 import socket, fcntl, struct
+import shutil
 
 # Inicialização do app Flask, SQLAlchemy e SocketIO
 app = Flask(__name__)
@@ -38,10 +39,12 @@ NUM_CHANNELS = 3  # Número total de canais
 
 
 ############
+PLAYLISTraiz_FOLDER = 'Playlists'
 UPLOAD_FOLDER = 'Playlists/Songs'
 ALLOWED_EXTENSIONS = {'mp3', 'wav'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['PLAYLISTraiz_FOLDER'] = 'Playlists'
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -273,6 +276,18 @@ class Channels(db.Model):
 
     def __repr__(self):
         return 
+    
+
+###############3
+class Streaming(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    url = db.Column(db.String(500), nullable=False)
+
+    def __init__(self, name, url):
+        self.name = name
+        self.url = url
+        
 
 # Função para criar canais padrões caso não existam
 def create_default_channels():
@@ -657,35 +672,24 @@ def secundaria():
     return render_template('secundaria.html', playlists=playlists)
 
 
-
 @app.route('/save_stream_url', methods=['POST'])
 def save_stream_url():
-    channel_id = request.form.get('channel_id')
+    stream_name = request.form.get('stream_name')
     stream_url = request.form.get('stream_url')
 
-    if not channel_id or not stream_url:
-        return "Erro: Canal ou URL de transmissão inválido", 400
-
-    channel = Channels.query.get(channel_id)
-    if not channel:
-        return "Erro: Canal não encontrado", 404
+    if not stream_name or not stream_url:
+        return "Erro: Nome ou URL de transmissão inválido", 400
 
     try:
-        # Atualiza o link de streaming no banco de dados
-        channel.source = stream_url
+        # Cria um novo registro na tabela Streaming
+        new_stream = Streaming(name=stream_name, url=stream_url)
+        db.session.add(new_stream)
         db.session.commit()
 
-        # Reinicia o processo do canal
-        change_channel_process_thread = threading.Thread(
-            target=change_channel_process,
-            args=(int(channel_id), stream_url, ChannelType.STREAMING),
-            daemon=True
-        )
-        change_channel_process_thread.start()
+        return jsonify({"success": True, "id": new_stream.id, "name": new_stream.name}), 200
 
-        return "Link de transmissão salvo com sucesso", 200
     except Exception as e:
-        return f"Erro ao salvar o link de transmissão: {str(e)}", 500
+        return f"Erro ao salvar o streaming: {str(e)}", 500
     
 
 
@@ -794,27 +798,28 @@ def get_playlists():
     return jsonify([{"id": playlist.id, "name": playlist.name} for playlist in playlists])
 
 # add playlist
+
 @app.route('/add_playlist', methods=['POST'])
 def add_playlist():
     data = request.json
     playlist_name = data.get('name')
 
-
-
-    print("Dados recebidos:", data)
-    print("Playlist salva no banco de dados:", playlist_name)
     if not playlist_name:
-        print("no playlist name")
         return jsonify({"error": "Nome da playlist é obrigatório"}), 400
-    
+
     if Playlist.query.filter_by(name=playlist_name).first():
         return jsonify({"error": "Playlist já existe"}), 400
+
     try:
+        # Criar a playlist no banco de dados
         new_playlist = Playlist(name=playlist_name)
         db.session.add(new_playlist)
         db.session.commit()
 
-        print("playlist adiconada com sucesso")
+        # Criar a pasta da playlist
+        save_playlist_file(playlist_name)
+
+
         return jsonify({"success": True, "id": new_playlist.id, "name": new_playlist.name}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -907,6 +912,7 @@ def remove_song_from_playlist():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 @app.route('/add_song_to_playlist', methods=['POST'])
 def add_song_to_playlist():
     data = request.json
@@ -930,6 +936,13 @@ def add_song_to_playlist():
         if song not in playlist.songs:
             playlist.songs.append(song)
             db.session.commit()
+
+            # Copiar o arquivo da música para a pasta da playlist
+            song_path = os.path.join(app.config['PLAYLISTraiz_FOLDER'], f"{song.name}.wav")
+            playlist_folder = os.path.join(app.config['PLAYLISTraiz_FOLDER'], playlist_name)
+            if os.path.exists(song_path):
+                shutil.copy(song_path, playlist_folder)
+
             return jsonify({"success": True}), 200
         else:
             return jsonify({"error": "Música já está na playlist"}), 400
@@ -954,10 +967,34 @@ def save_playlist():
         # Atualiza as músicas da playlist
         playlist.songs = Songs.query.filter(Songs.name.in_(updated_songs)).all()
         db.session.commit()
+
+        save_playlist_file(playlist_name)
+
         return jsonify({"success": True}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+def save_playlist_file(playlist_name):
+    # Caminho do arquivo da playlist
+    
+    playlist_file_path = os.path.join(app.config['PLAYLISTraiz_FOLDER'], f"{playlist_name}.txt")
+
+    # Busca a playlist pelo nome
+    playlist = Playlist.query.filter_by(name=playlist_name).first()
+    if not playlist:
+        raise Exception("Playlist não encontrada")
+
+    # Gera o conteúdo do arquivo com as músicas da playlist
+    lines = []
+    for song in playlist.songs:
+        song_path = os.path.join("Songs", f"{song.name}.wav")
+        lines.append(f"file {song_path}")
+
+    # Cria o arquivo da playlist e escreve o conteúdo
+    with open(playlist_file_path, "w") as playlist_file:
+        playlist_file.write("\n".join(lines))
+
+    print(f"Arquivo da playlist {playlist_name} salvo em {playlist_file_path}")
 
 
 #################################################################################

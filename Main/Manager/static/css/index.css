@@ -469,3 +469,21 @@ button:hover {
 .custom-modal .modal-buttons .confirm:hover {
     background-color: #1a8c2b;
 }
+
+
+.streaming-item.add-streaming {
+    cursor: pointer;
+    color: #22cc3f;
+    font-weight: bold;
+    text-align: center;
+    padding: 10px;
+    border: 2px dashed #ccc; /* Diferenciação com borda tracejada */
+    border-radius: 5px;
+    background-color: #f9f9f9; /* Fundo claro */
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+.streaming-item.add-streaming:hover {
+    background-color: #e6ffe6; /* Fundo verde claro ao passar o mouse */
+    border-color: #22cc3f; /* Borda verde ao passar o mouse */
+}
