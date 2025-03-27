@@ -221,7 +221,7 @@ class Areas(db.Model):
 # Modelo para "Nós" (Nodes)
 class Nodes(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    ip = db.Column(db.String(200), nullable=False)
+    ip = db.Column(db.String(200), nullable=True)
     name = db.Column(db.String(200), nullable=False)
     mac = db.Column(db.String(200), unique=True, nullable=False)
     area_id = db.Column(db.Integer, db.ForeignKey('areas.id'), nullable=True)
@@ -449,8 +449,12 @@ def detect_new_nodes(stop_event, msg_buffer):
                     elif str(e) == "MAC already in use":
                         with app.app_context():
                             node = db.session.query(Nodes).filter(Nodes.mac == node_mac).first()
+                            node.ip = node_ip
+                            db.session.commit()
+
                         node_name = node.name
-                        msg_buffer.put(f"Node {node_name} reconnected")
+    
+                        print(f"Node {node.mac} {node.ip}")
                     else:
                         msg_buffer.put(f"Error: {e}")
                         server_socket.sendto(b"Error " + str(e).encode('utf-8'), addr)
@@ -998,6 +1002,62 @@ def save_playlist_file(playlist_name):
 
 
 #################################################################################
+
+@app.route('/export_conf', methods=['GET'])
+def export_conf():
+    nodes = Nodes.query.all()
+    areas = Areas.query.all()
+    
+    data = {
+        "nodes": [{"name": node.name, "mac": node.mac, "area": node.area.name if node.area else None} for node
+                  in nodes],
+        "areas": [{"name": area.name, "volume": area.volume, "channel": area.channel_id} for area in areas]
+    }
+
+    with open("config.json", "w") as file:
+        json.dump(data, file, indent=4)
+
+    print("Configuration exported")
+
+    return redirect('/')
+
+@app.route('/import_conf', methods=['GET'])
+def import_conf():
+    with open("config.json", "r") as file:
+        data = json.load(file)
+
+    nodes = data.get("nodes", [])
+    areas = data.get("areas", [])
+
+    for area_data in areas:
+        area = Areas.query.filter_by(name=area_data['name']).first()
+        if area:
+            area.volume = area_data['volume']
+            area.channel_id = area_data['channel']
+            db.session.commit()
+        else:
+            new_area = Areas(name=area_data['name'], volume=area_data['volume'], channel_id=area_data['channel'])
+            db.session.add(new_area)
+            db.session.commit()
+
+    for node_data in nodes:
+        node = Nodes.query.filter_by(mac=node_data['mac']).first()
+        if node:
+            node.name = node_data['name']
+            node.area_id = Areas.query.filter_by(name=node_data['area']).first().id if node_data['area'] else None
+            db.session.commit()
+        else:
+            if node_data['area']:
+                area = Areas.query.filter_by(name=node_data['area']).first()
+                new_node = Nodes(name=node_data['name'], mac=node_data['mac'], area_id=area.id)
+            else:
+                new_node = Nodes(name=node_data['name'], mac=node_data['mac']) 
+            db.session.add(new_node)
+            db.session.commit()
+
+    print("Configuration imported")
+    return redirect('/')
+
 #################################################################################
 #################################################################################
 
