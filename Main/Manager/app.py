@@ -34,7 +34,7 @@ SAMPLE_RATE = "48000"  # Taxa de amostragem
 CHUNCK_SIZE = 960
 AUDIO_CHANNELS = "1"  # Mono
 
-NUM_CHANNELS = 3  # Número total de canais
+NUM_CHANNELS = 5  # Número total de canais
 
 
 
@@ -57,23 +57,31 @@ def allowed_file(filename):
 # Função para iniciar o processo do ffmpeg para um canal específico
 def start_ffmpeg_process(channel, source, _type):
     # Define o endereço de multicast baseado no número do canal
-    multicast_address = f"rtp://239.255.0.{channel}:12345"
+    multicast_address = f"rtp://239.255.0.{channel}:12345?pkt_size=5000"
     print(f"session_{channel}.sdp")
     print("source: ", source)
     print("type: ", _type)
     
+    
+    
     # Verifica o tipo de transmissão e configura o comando do ffmpeg apropriado
     if _type == ChannelType.VOICE:
+        
+        mic = {"card": "1", "device": "0"}  #usar no terminal arecord -l  # Lista dispositivos de captura (microfones) 
+        
         # Transmissão de voz via dispositivo de áudio (alsa)
         cmd = [
             "ffmpeg",
             "-hide_banner", "-loglevel", "error",
-            "-f", "alsa", "-i", source,
+            "-f", "pulse",
+            "-i", "echo-cancel",  # Usa o cancelamento de eco do PulseAudio
+            #"-af", "afftdn=nf=-20,speechnorm=e=50",
             "-acodec", "libopus",
+            "-application", "voip",
             "-b:a", BITRATE,
             "-ar", SAMPLE_RATE,
             "-ac", AUDIO_CHANNELS,
-            #"-frame_duration", "120",  # Frames de 40 ms
+            "-frame_duration", "120",  # Frames de 120 ms
             "-f", "rtp",
             "-sdp_file", f"session_{channel}.sdp",
             f"{multicast_address}"
@@ -98,7 +106,7 @@ def start_ffmpeg_process(channel, source, _type):
             "-vn",
             "-acodec", "libopus",
             "-b:a", BITRATE,
-            #"-frame_duration", "120",  # Frames de 40 ms
+            "-frame_duration", "120",  # Frames de 40 ms
             "-ac", AUDIO_CHANNELS,
             "-f", "rtp",
             "-sdp_file", f"session_{channel}.sdp",
@@ -149,7 +157,7 @@ def start_ffmpeg_process(channel, source, _type):
             "-buffer_size", "1024",  # Aumenta o buffer de saída
             "-max_delay", "200000",  # Limita o atraso máximo
             "-f", "rtp",
-            #"-frame_duration", "120",  # Frames de 120 ms
+            "-frame_duration", "120",  # Frames de 120 ms
             "-sdp_file", f"session_{channel}.sdp",
             "-muxdelay", "0.1",  # Reduz o atraso de muxagem
             "-muxpreload", "0.1",
@@ -158,7 +166,7 @@ def start_ffmpeg_process(channel, source, _type):
     else:
         return None
     # Inicia o subprocesso do ffmpeg
-    process = subprocess.Popen(cmd)
+    process = subprocess.Popen(cmd, preexec_fn=os.setsid)
     return process
 
 # Função para trocar o processo do canal (reinicia se necessário)
@@ -170,7 +178,7 @@ def change_channel_process(channel, source, transmission_type):
     # Se já existir um processo para o canal, termina-o
     if processes[channel]:
         print("Terminating process...")
-        processes[channel].terminate()
+        os.killpg(os.getpgid(processes[channel].pid), signal.SIGTERM)
         processes[channel].wait()
         processes[channel] = None
         
@@ -1071,6 +1079,12 @@ def shutdown_handler(signum, frame):
     stop_event.set()  # Sinaliza para parar as threads
     thread.join()     # Aguarda a thread de detecção de nós terminar
     # Aqui poderia-se terminar outros subprocessos, se necessário
+    
+    for process in processes.values():
+        if process:
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+            process.wait()
+    
     print("Processes terminated")
     sys.exit(0)  # Encerra o programa de forma limpa
 
@@ -1104,7 +1118,8 @@ if __name__ == '__main__':
     thread.start()
     
     # Inicia o servidor Flask com SocketIO
-    socketio.run(app, host=get_host_ip() ,debug=False, port=5000)
-    #socketio.run(app, debug=False)
+    #socketio.run(app, host=get_host_ip() ,debug=False, port=5000)
+    print("work")
+    socketio.run(app, host="127.0.0.1", port=5000)
 
     
