@@ -1,0 +1,36 @@
+{
+    "nodes": [
+        {
+            "name": "ooll",
+            "mac": "88:a4:c2:b6:d5:03",
+            "area": null
+        },
+        {
+            "name": "davd",
+            "mac": "94:08:53:cc:7d:35",
+            "area": "piscina"
+        },
+        {
+            "name": "carne",
+            "mac": "93:08:53:cc:7d:35",
+            "area": "PISCIAN"
+        },
+        {
+            "name": "HENRIQUES-MACBOOK-AIR.LOCAL",
+            "mac": "86:7d:b6:7c:70:34",
+            "area": "PISCIAN"
+        }
+    ],
+    "areas": [
+        {
+            "name": "piscina",
+            "volume": 78,
+            "channel": 2
+        },
+        {
+            "name": "PISCIAN",
+            "volume": 50,
+            "channel": null
+        }
+    ]
+}
