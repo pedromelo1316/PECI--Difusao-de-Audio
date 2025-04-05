@@ -739,7 +739,7 @@ def add_song():
         return jsonify({"error": "Nome da música é obrigatório"}), 400
 
     if Songs.query.filter_by(name=song_name).first():
-        return jsonify({"error": "Música já existe"}), 400
+        return jsonify({"error": "Song already exists."}), 400
 
     try:
         print("Dados recebidos:", request.form)
@@ -825,7 +825,7 @@ def add_playlist():
         return jsonify({"error": "Nome da playlist é obrigatório"}), 400
 
     if Playlist.query.filter_by(name=playlist_name).first():
-        return jsonify({"error": "Playlist já existe"}), 400
+        return jsonify({"error": "Playlist already exists"}), 400
 
     try:
         # Criar a playlist no banco de dados

@@ -39,7 +39,7 @@ function addPlaylist() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert("Playlist adicionada com sucesso!");
+                alert("Playlist added successfully!");
                 window.location.reload();
             } else {
                 alert(data.error || "Erro ao adicionar a playlist.");
@@ -225,7 +225,7 @@ function saveStream() {
         document.body.appendChild(form);
         form.submit();
     } else {
-        alert('Por favor, preencha todos os campos.');
+        alert('Please fill in all fields.');
     }
 }
 
@@ -372,7 +372,7 @@ function showAddSongModal() {
 
 // Substituir prompt por modal para editar música
 function editSong(songId, currentName) {
-    showCustomModal("Editar Música", "Digite o novo nome da música:", true, function (newName) {
+    showCustomModal("Editar Música", "Enter the new song name:", true, function (newName) {
         if (!newName || newName === currentName) return;
 
         if (newName && newName !== currentName) {
@@ -397,7 +397,7 @@ function editSong(songId, currentName) {
 
 // Substituir confirm padrão ao eliminar música
 function deleteSong(songId) {
-    showCustomModal("Eliminar Música", "Tem certeza de que deseja eliminar esta música?", false, function () {
+    showCustomModal("Eliminar Música", "Are you sure you want to delete this song?", false, function () {
         fetch(`/delete_song/${songId}`, { method: 'DELETE' })
         .then(response => {
             if (response.ok) {
@@ -413,7 +413,7 @@ function deleteSong(songId) {
 }
 
 function deletePlaylist(playlistId) {
-    if (!confirm('Tem certeza de que deseja excluir esta playlist?')) return;
+    if (!confirm('Are you sure you want to delete this playlist?')) return;
     fetch(`/delete_playlist/${playlistId}`, { method: 'DELETE' })
         .then(response => response.json())
         .then(data => {
@@ -433,7 +433,7 @@ function addStreamingLink() {
         
         showCustomModal("Novo Link de Transmissão", "Insira o link de transmissão:", true, function (link) {
             if (!link || !isValidURL(link)) {
-                showCustomModal("Erro", "Por favor, insira um link válido.");
+                showCustomModal("Erro", "Please enter a valid link.");
                 return;
             }
 
@@ -460,7 +460,7 @@ function editStreamingLink(element) {
 
     showCustomModal("Editar Link", "Edite o link de transmissão:", true, function (newLink) {
         if (!newLink || !isValidURL(newLink)) {
-            showCustomModal("Erro", "Por favor, insira um link válido.");
+            showCustomModal("Erro", "Please enter a valid link.");
             return;
         }
         linkElement.href = newLink;
@@ -483,13 +483,13 @@ function deleteStreamingLink(element) {
 function showAddStreamModal() {
     showCustomModal("Adicionar Link de Transmissão", "Enter the Streaming Name: ", true, function (streamName) {
         if (!streamName) {
-            showCustomModal("Erro", "O nome da transmissão é obrigatório.");
+            showCustomModal("Erro", "Streaming name is required.");
             return;
         }
 
         showCustomModal("Adicionar Link de Transmissão", "Enter the streaming link:", true, function (streamUrl) {
             if (!streamUrl || !isValidURL(streamUrl)) {
-                showCustomModal("Erro", "Por favor, insira um link válido.");
+                showCustomModal("Erro", "Please enter a valid link.");
                 return;
             }
 
