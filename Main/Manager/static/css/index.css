@@ -12,6 +12,11 @@ body {
     flex-direction: column;
 }
 
+#modal-title {
+    visibility: visible;
+    display: block;
+}
+
 .local-box {
     background: #fff;
     padding: 20px;

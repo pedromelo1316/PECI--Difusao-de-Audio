@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block head %}
-<title>Gestor de Áudio</title>
+<title>Audio Manager</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 {% endblock %}
@@ -10,8 +10,7 @@
 <header>
     <div class="header-content">
         <div class="title">
-            <h1>Gestor de Áudio</h1>
-            <h2>Hotel Montebelo</h2>
+            <h1>Audio Manager</h1>
         </div>
     </div>
 </header>
@@ -37,30 +36,35 @@
                         </li>
                         {% endfor %}
                         <li class="playlist-item add-playlist" onclick="addPlaylist()">
-                            <span>Adicionar +</span>
+                            <span>Add +</span>
                         </li>
                     </ul>
                 </div>
 
                 <!-- Songs Section -->
                 <div class="songs-section">
-                    <h2>Músicas</h2>
+                    <h2>Songs</h2>
                     <ul class="songs-list" id="songs-list">
                         <!-- As músicas serão carregadas dinamicamente via JavaScript -->
                     </ul>
                     <li class="song-item add-song" onclick="showAddSongModal()">
-                        <span>Adicionar +</span>
+                        <span>Add +</span>
                     </li>
                 </div>
                 
                 <!-- Modal para adicionar/editar música -->
-                <div id="song-modal" style="display: none;">
-                    <h2 id="modal-title"></h2>
-                    <input type="text" id="song-name" placeholder="Nome da música" />
-                    <input type="file" id="song-file" accept="audio/*" />
-                    <button onclick="saveSong()">Salvar</button>
-                    <button onclick="closeSongModal()">Cancelar</button>
+                <div id="song-modal" class="modal">
+                    <div class="modal-content">
+                        <span class="close" onclick="closeSongModal()">&times;</span>
+                        <h2 id="modal-title">Add Song</h2>
+                        <input type="text" id="song-name" placeholder="Nome da música">
+                        <button onclick="saveSong()">Save</button>
+                    </div>
                 </div>
+
+
+                
+            </div>
         </div>
     </div>
 </div>
@@ -69,15 +73,13 @@
 <div class="container">
     <div class="content">
         <div class="stream-box">
-            <h3>Transmissão</h3>
+            <h3>Streaming</h3>
             <div class="grid-container">
                 <div class="streaming-section">
-                    {% set channel_2 = channels|selectattr("id", "equalto", 2)|first %}
-                    {% if channel_2 and channel_2.source %}
-                        <a href="{{ channel_2.source }}" target="_blank">{{ channel_2.source }}</a>
-                    {% else %}
-                    {% endif %}
-                    <button type="button" onclick="showStreamModal()" style="margin-top: 20px;">Adicionar Novo Streaming</button>
+                    <ul id="streaming-list">
+                        <!-- Links de transmissão existentes podem ser carregados aqui -->
+                    </ul>
+                    <button onclick="showAddStreamModal()">Add Streaming Link</button>
                 </div>
             </div>
         </div>
@@ -125,25 +127,15 @@
 -->
 
 <!-- Modal Personalizado -->
-<!-- Modal para adicionar streaming -->
-<div id="streamModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeStreamModal()">&times;</span>
-        <h2>Adicionar Novo Streaming</h2>
-        <form id="streamForm">
-            <div class="form-group">
-                <label for="streamName">Nome do Streaming:</label>
-                <input type="text" id="streamName" name="streamName" required>
-            </div>
-            <div class="form-group">
-                <label for="streamUrl">Link do Streaming:</label>
-                <input type="text" id="streamUrl" name="streamUrl" placeholder="Insira o link aqui" required>
-            </div>
-            <div class="form-group">
-                <button type="button" onclick="saveStream()">Salvar</button>
-                <button type="button" onclick="closeStreamModal()">Cancelar</button>
-            </div>
-        </form>
+<div id="customModal" class="custom-modal">
+    <div class="custom-modal-content">
+        <span class="close" onclick="closeCustomModal()">&times;</span>
+        <p id="modal-message">Mensagem do Pop-up</p>
+        <input type="text" id="modal-input" placeholder="Type here..." style="display: none;">
+        <div class="modal-buttons">
+            <button class="cancel" onclick="closeCustomModal()">Cancel</button>
+            <button id="modal-confirm" class="confirm" onclick="confirmCustomModal()">OK</button>
+        </div>
     </div>
 </div>
 

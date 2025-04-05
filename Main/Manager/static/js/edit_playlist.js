@@ -31,7 +31,7 @@ function addSongToPlaylist(songName, playlistName) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Música adicionada à playlist com sucesso!');
+            alert('Song successfully added to playlist!');
             location.reload(); // Recarrega a página para atualizar a lista
         } else {
             alert(data.error || 'Erro ao adicionar música à playlist.');
@@ -53,14 +53,14 @@ function removeSongFromPlaylist(songName, playlistName) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Música removida da playlist com sucesso!');
-            location.reload(); // Recarrega a página para atualizar a lista
+            alert('Song successfully removed from playlist!');
+        location.reload(); // Recarrega a página para atualizar a lista
         } else {
-            alert(data.error || 'Erro ao remover música da playlist.');
+            alert(data.error || 'Error removing song from playlist.');
         }
     })
     .catch(err => {
-        alert('Erro ao remover música da playlist.');
+        alert('Error removing song from playlist.');
         console.error(err);
     });
 }
@@ -98,7 +98,7 @@ function toggleSong(icon, songName, playlistName) {
             }
             updatePlaylistOrder();
         } else {
-            alert('Erro ao atualizar a playlist.');
+            alert('Error updating playlist.');
         }
     });
 }
@@ -116,14 +116,14 @@ function savePlaylistAndRedirect(playlistName) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Playlist salva com sucesso!');
+            alert('Playlist saved successfully!');
             window.location.href = '/secundaria'; // Redireciona para a página principal ou outra página
         } else {
-            alert(data.error || 'Erro ao salvar a playlist.');
+            alert(data.error || 'Error saving playlist.');
         }
     })
     .catch(err => {
-        alert('Erro ao salvar a playlist.');
+        alert('Error saving playlist.');
         console.error(err);
     });
 }
@@ -178,5 +178,54 @@ function updatePlaylistOrder() {
     const playlistItems = document.querySelectorAll('#playlist-list .playlist-item');
     playlistItems.forEach((item, index) => {
         item.querySelector('span').textContent = `${index + 1}. ${item.dataset.song}`;
+    });
+}
+
+// Função para fechar o modal
+function closeSongModal() {
+    const modal = document.getElementById('song-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    } else {
+        console.error('Modal com id "song-modal" não encontrado.');
+    }
+}
+
+// Função para salvar a música
+function saveSong() {
+    const songName = document.getElementById('song-name').value;
+    const songFile = document.getElementById('song-file').files[0];
+
+    if (!songName) {
+        alert("The song name is required.");
+        return;
+    }
+
+    if (!songFile) {
+        alert('O arquivo de música é obrigatório.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('name', songName);
+    formData.append('file', songFile);
+
+    fetch('/add_song', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Song saved successfully!');
+            closeSongModal();
+            window.location.reload(); // Recarrega a página para atualizar a lista de músicas
+        } else {
+            alert(data.error || 'Erro ao salvar a música.');
+        }
+    })
+    .catch(err => {
+        console.error('Erro ao salvar a música:', err);
+        alert('Erro ao salvar a música.');
     });
 }

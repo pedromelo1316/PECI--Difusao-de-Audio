@@ -674,22 +674,29 @@ def secundaria():
 
 @app.route('/save_stream_url', methods=['POST'])
 def save_stream_url():
-    stream_name = request.form.get('stream_name')
-    stream_url = request.form.get('stream_url')
-
-    if not stream_name or not stream_url:
-        return "Erro: Nome ou URL de transmissão inválido", 400
-
     try:
-        # Cria um novo registro na tabela Streaming
+        data = request.json
+        stream_name = data.get('stream_name')
+        stream_url = data.get('stream_url')
+
+        if not stream_name or not stream_url:
+            return jsonify({"error": "Nome e URL são obrigatórios"}), 400
+
+        # Validação adicional do URL
+        if not stream_url.startswith("http://") and not stream_url.startswith("https://"):
+            return jsonify({"error": "URL inválido"}), 400
+        
+        if Streaming.query.filter_by(name=stream_name).first():
+            return jsonify({"error": "Stream name already exists"}), 400
+        # Salvar no banco de dados
         new_stream = Streaming(name=stream_name, url=stream_url)
         db.session.add(new_stream)
         db.session.commit()
 
-        return jsonify({"success": True, "id": new_stream.id, "name": new_stream.name}), 200
+        return jsonify({"success": True}), 200
 
     except Exception as e:
-        return f"Erro ao salvar o streaming: {str(e)}", 500
+        return jsonify({"error": str(e)}), 500
     
 
 
@@ -762,20 +769,30 @@ def add_song():
         return jsonify({"error": str(e)}), 500
 
 # Rota para editar uma música
-@app.route('/edit_song/<int:song_id>', methods=['POST'])
-def edit_song(song_id):
-    data = request.json
-    new_name = data.get('name')
+@app.route('/update_song/<int:song_id>', methods=['POST'])
+def update_song(song_id):
+    # Recupera o novo nome da música enviado pelo frontend
+    new_name = request.json.get('new_name')
     if not new_name:
-        return jsonify({"error": "Nome da música é obrigatório"}), 400
+        return jsonify({"error": "O novo nome da música é obrigatório"}), 400
+    
+    # Verifica se o novo nome já existe
+    existing_song = Songs.query.filter_by(name=new_name).first()
+    if existing_song and existing_song.id != song_id:
+        return jsonify({"error": "Já existe uma música com esse nome"}), 400
+
+    # Verifica se a música existe no banco de dados
     song = Songs.query.get(song_id)
     if not song:
         return jsonify({"error": "Música não encontrada"}), 404
+
+    # Atualiza o nome da música
     try:
         song.name = new_name
         db.session.commit()
         return jsonify({"success": True, "id": song.id, "name": song.name}), 200
     except Exception as e:
+        db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
 # Rota para excluir uma música

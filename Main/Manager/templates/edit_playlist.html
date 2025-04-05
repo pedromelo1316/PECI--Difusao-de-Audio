@@ -28,7 +28,7 @@
                 <div class="playlist-bar"></div>
                 <ul class="playlist-list" id="playlist-list">
                     {% if playlist_songs|length == 0 %}
-                    <li class="empty-playlist-message">Adicione músicas à sua playlist</li>
+                    <li class="empty-playlist-message">Add songs to your playlist</li>
                     {% else %}
                     {% for song in playlist_songs %}
                     <li class="playlist-item" draggable="true" data-song="{{ song }}">
@@ -42,10 +42,10 @@
 
             <!-- Right Section: Músicas -->
             <div class="songs-section">
-                <h2>Músicas</h2>
+                <h2>Songs</h2>
                 {% if all_songs|length == 0 %}
                 <script>
-                    alert("Não existem músicas disponíveis. Por favor, adicione músicas.");
+                    alert("There are no songs available. Please add songs.");
                 </script>
                 {% else %}
                 <ul class="songs-list" id="songs-list">
@@ -61,10 +61,13 @@
         </div>
         <!-- New Save Playlist Button -->
         <div style="text-align: center; margin-top: 20px;">
-            <button class="save-playlist-btn" onclick="savePlaylistAndRedirect('{{ playlist_name }}')">Guardar Playlist</button>
+            <button class="save-playlist-btn" onclick="savePlaylistAndRedirect('{{ playlist_name }}')">Save Playlist</button>
         </div>
     </div>
 </div>
+
+
+
 
 
 

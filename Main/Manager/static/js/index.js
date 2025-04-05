@@ -21,34 +21,36 @@ function loadPlaylists() {
             const addPlaylistItem = document.createElement('li');
             addPlaylistItem.className = 'playlist-item add-playlist';
             addPlaylistItem.onclick = addPlaylist;
-            addPlaylistItem.innerHTML = '<span>Adicionar +</span>';
+            addPlaylistItem.innerHTML = '<span>Add +</span>';
             playlistsList.appendChild(addPlaylistItem);
         })
         .catch(err => console.error('Erro ao carregar playlists:', err));
 }
 
 function addPlaylist() {
-    const playlistName = prompt('Digite o nome da nova playlist:');
-    if (!playlistName) return;
-    fetch('/add_playlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: playlistName })
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log("Resposta da API:", data); // Adicione este log
+    showCustomModal("Add Playlist", "Enter the name of the new playlist:", true, function (playlistName) {
+        if (!playlistName) return;
 
-        if (data.success) {
-            console.log("Playlist adicionada com sucesso!");
-            loadPlaylists(); // Atualiza a lista de playlists
-        } else {
-            alert(data.error || 'Erro ao adicionar playlist.');
-        }
-    })
-    .catch(err => console.error('Erro ao adicionar playlist:', err));
+        fetch('/add_playlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: playlistName })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Playlist adicionada com sucesso!");
+                window.location.reload();
+            } else {
+                alert(data.error || "Erro ao adicionar a playlist.");
+            }
+        })
+        .catch(err => {
+            console.error("Erro ao adicionar a playlist:", err);
+            alert("Erro ao comunicar com o servidor.");
+        });
+    });
 }
-
 
 let editingSongId = null;
 
@@ -74,8 +76,10 @@ function loadSongs() {
         });
 }
 
+// Mostrar modal para adicionar música
 
 
+// Mostrar modal para editar música
 
 
 // Fechar modal
@@ -83,42 +87,31 @@ function closeSongModal() {
     document.getElementById('song-modal').style.display = 'none';
 }
 
+// Salvar música (adicionar ou editar)
 function saveSong() {
     const songName = document.getElementById('song-name').value;
-    const songFile = document.getElementById('song-file').files[0];
-
-    console.log('Nome:', songName);
-    console.log('Arquivo:', songFile);
-
-
     if (!songName) {
         alert('O nome da música é obrigatório');
         return;
     }
 
-    if (!songFile) {
-        alert('O arquivo de música é obrigatório');
-        return;
-    }
+    const url = editingSongId ? `/edit_song/${editingSongId}` : '/add_song';
+    const method = editingSongId ? 'POST' : 'POST';
 
-    const formData = new FormData();
-    formData.append('name', songName); // Nome da música
-    formData.append('file', songFile); // Arquivo de música
-
-    fetch('/add_song', {
-        method: 'POST',
-        body: formData // Envia o FormData diretamente
+    fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: songName })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            loadSongs();
-            closeSongModal();
-        } else {
-            alert(data.error || 'Erro ao salvar a música');
-        }
-    })
-    .catch(err => console.error('Erro ao salvar a música:', err));
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadSongs();
+                closeSongModal();
+            } else {
+                alert(data.error || 'Erro ao salvar a música');
+            }
+        });
 }
 
 // Excluir música
@@ -142,6 +135,32 @@ document.addEventListener('DOMContentLoaded', loadSongs);
 
 
 /////////////////////////////////////////////////
+
+
+document.getElementById('streamForm').addEventListener('submit', function(event) {
+    event.preventDefault(); // Impede o envio padrão do formulário
+    const formData = new FormData(this);
+
+    fetch(this.action, {
+        method: this.method,
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            alert('Link de transmissão salvo com sucesso!');
+        } else {
+            response.text().then(text => alert('Erro: ' + text));
+        }
+    })
+    .catch(error => {
+        alert('Erro ao salvar o link de transmissão.');
+        console.error('Erro:', error);
+    });
+});
+
+
+
+
 
 
 document.getElementById('streamForm').addEventListener('submit', function(event) {
@@ -215,7 +234,6 @@ function saveStream() {
 
 
 
-
 // Função para abrir o pop-up personalizado com suporte para Enter
 function showCustomModal(title, message, showInput = false, callback) {
     document.getElementById("modal-title").innerText = title;
@@ -250,7 +268,6 @@ function showCustomModal(title, message, showInput = false, callback) {
         }
     };
 }
-
 // Função para fechar o modal e remover evento de tecla
 function closeCustomModal() {
     document.getElementById("customModal").style.display = "none";
@@ -290,7 +307,6 @@ function editPlaylist(playlistId) {
 
 
 
-
 // Função para guardar a playlist (Enter agora funciona)
 function savePlaylist(playlistName) {
     fetch('/save_playlist', {
@@ -312,7 +328,7 @@ function savePlaylist(playlistName) {
 
 // Substituir prompt por modal para adicionar música
 function showAddSongModal() {
-    showCustomModal("Adicionar Música", "Digite o nome da música:", true, function (songName) {
+    showCustomModal("Add Music", "Enter the name of the song", true, function (songName) {
         if (!songName) return;
 
         // Criar input de ficheiro dinamicamente
@@ -322,35 +338,43 @@ function showAddSongModal() {
 
         fileInput.onchange = function () {
             const songFile = fileInput.files[0];
-            if (!songFile) return;
+            if (!songFile) {
+                alert("O arquivo de música é obrigatório.");
+                return;
+            }
 
             const formData = new FormData();
-            formData.append('name', songName);
-            formData.append('file', songFile);
+            formData.append('name', songName); // Nome da música
+            formData.append('file', songFile); // Arquivo de música
 
             fetch('/add_song', {
                 method: 'POST',
-                body: formData 
+                body: formData // Envia o FormData diretamente
             })
-            .then(response => {
-                if (response.ok) {
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Música adicionada com sucesso!');
                     window.location.reload();
                 } else {
-                    showCustomModal("Erro", "Erro ao adicionar a música.");
+                    alert(data.error || 'Erro ao adicionar a música.');
                 }
             })
             .catch(err => {
-                showCustomModal("Erro", "Erro ao comunicar com o servidor.");
+                console.error('Erro ao adicionar a música:', err);
+                alert('Erro ao comunicar com o servidor.');
             });
         };
 
-        fileInput.click(); // Simula o clique para abrir o seletor de ficheiros
+        fileInput.click(); // Simula o clique para abrir o seletor de arquivos
     });
 }
 
 // Substituir prompt por modal para editar música
 function editSong(songId, currentName) {
     showCustomModal("Editar Música", "Digite o novo nome da música:", true, function (newName) {
+        if (!newName || newName === currentName) return;
+
         if (newName && newName !== currentName) {
             fetch(`/update_song/${songId}`, {
                 method: 'POST',
@@ -453,11 +477,58 @@ function deleteStreamingLink(element) {
 }
 
 // Função para validar URLs
-function isValidURL(string) {
-    try {
-        new URL(string);
-        return true;
-    } catch (_) {
-        return false;
-    }
+
+
+
+function showAddStreamModal() {
+    showCustomModal("Adicionar Link de Transmissão", "Enter the Streaming Name: ", true, function (streamName) {
+        if (!streamName) {
+            showCustomModal("Erro", "O nome da transmissão é obrigatório.");
+            return;
+        }
+
+        showCustomModal("Adicionar Link de Transmissão", "Enter the streaming link:", true, function (streamUrl) {
+            if (!streamUrl || !isValidURL(streamUrl)) {
+                showCustomModal("Erro", "Por favor, insira um link válido.");
+                return;
+            }
+
+            fetch('/save_stream_url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ stream_name: streamName, stream_url: streamUrl, channel_id: 2 })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || "Erro desconhecido");
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    alert("Streaming link added successfully!");
+                    window.location.reload();
+                } else {
+                    showCustomModal("Erro", data.error || "Erro ao adicionar o link de transmissão.");
+                }
+            })
+            .catch(err => {
+                console.error("Erro ao adicionar o link de transmissão:", err);
+                showCustomModal("Erro", err.message || "Erro ao comunicar com o servidor.");
+            });
+        });
+    });
+}
+
+// Função para validar URLs
+function isValidURL(url) {
+    const pattern = new RegExp('^(https?:\\/\\/)?' + // protocolo
+        '((([a-zA-Z0-9\\-]+\\.)+[a-zA-Z]{2,})|' + // domínio
+        '((\\d{1,3}\\.){3}\\d{1,3}))' + // ou IP
+        '(\\:\\d+)?(\\/[-a-zA-Z0-9%_.~+]*)*' + // porta e caminho
+        '(\\?[;&a-zA-Z0-9%_.~+=-]*)?' + // query string
+        '(\\#[-a-zA-Z0-9_]*)?$', 'i'); // fragmento
+    return !!pattern.test(url);
 }
