@@ -15,6 +15,7 @@ import base64
 import signal
 import sys
 import socket, fcntl, struct
+import shutil  # Add this import to check for command availability
 
 # Inicialização do app Flask, SQLAlchemy e SocketIO
 app = Flask(__name__)
@@ -31,6 +32,43 @@ AUDIO_CHANNELS = "1"  # Mono
 
 NUM_CHANNELS = 5  # Número total de canais
 
+def parse_device_info(line):
+    parts = line.split()
+    card = None
+    device = None
+    name = None
+    for i, part in enumerate(parts):
+        if part == "card":
+            card = parts[i + 1].strip(':')  # Remove o ':' após o número do card
+        elif part == "device":
+            device = parts[i + 1].strip(':')  # Remove o ':' após o número do device
+            # Captura o nome do dispositivo após "device X:"
+            name = " ".join(parts[i + 2:]).strip()
+    return card, device, name
+
+def get_mics():
+    # Verifica se o comando 'arecord' está disponível no sistema
+    if not shutil.which("arecord"):
+        print("Error: 'arecord' command not found. Please install 'alsa-utils'.")
+        return []
+
+    # Lista os dispositivos de captura de áudio disponíveis
+    cmd = ["arecord", "-l"]
+    try:
+        output = subprocess.check_output(cmd, text=True)
+        lines = output.split('\n')
+        devices = []
+        for line in lines:
+            if "card" in line and "device" in line:
+                print(line)
+                card, device, name = parse_device_info(line)
+                print(f"Card: {card}, Device: {device}, Name: {name}")
+                devices.append((card, device, name))
+        return devices
+    except subprocess.CalledProcessError as e:
+        print(f"Error listing audio devices: {e}")
+        return []
+
 # Função para iniciar o processo do ffmpeg para um canal específico
 def start_ffmpeg_process(channel, source, _type):
     # Define o endereço de multicast baseado no número do canal
@@ -38,8 +76,6 @@ def start_ffmpeg_process(channel, source, _type):
     print(f"session_{channel}.sdp")
     print("source: ", source)
     print("type: ", _type)
-    
-    
     
     # Verifica o tipo de transmissão e configura o comando do ffmpeg apropriado
     if _type == ChannelType.VOICE:
@@ -630,6 +666,7 @@ def get_host_ip():
 if __name__ == '__main__':
     stop_event = threading.Event()  # Evento para interromper a thread
     msg_buffer = queue.Queue()  # Fila para mensagens de status
+    
 
     with app.app_context():
         db.create_all()  # Cria as tabelas no banco de dados, se ainda não existirem
@@ -648,4 +685,4 @@ if __name__ == '__main__':
     print("work")
     socketio.run(app, host="127.0.0.1", port=5000)
 
-    
+
