@@ -523,3 +523,39 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 6px rgba(34, 204, 63, 0.2);
 }
+
+/* Microphone Section */
+.microphone-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 15px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.microphone-item:hover {
+    background-color: #f9f9f9;
+}
+
+.add-item-btn {
+    background-color: #22cc3f;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s;
+}
+
+.add-item-btn:hover {
+    background-color: #1db035;
+    transform: scale(1.1);
+}

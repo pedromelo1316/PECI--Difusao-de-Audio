@@ -1,14 +1,10 @@
 function updateSectionRight(value) {
-    
     const sectionRight = document.getElementById("sectionRightContent");
     const saveButtonContainer = document.getElementById("saveButtonContainer");
-
 
     // Reset classes and display
     sectionRight.className = "inner-dual-section";
     sectionRight.style.display = 'flex';
-    
-    
 
     if (value === "local") {
         let playlistsHTML = '';
@@ -34,50 +30,6 @@ function updateSectionRight(value) {
             songsHTML += `<div class="song-item"> ${song}</div>`;
         });
     
-
-        sectionRight.innerHTML = `
-            <div class="inner-section-left">
-                <h3>Lista de reprodução</h3>
-                <div class="stats-container">
-                    <div class="stat-item">
-                        <span class="stat-value">0</span>
-                        <span class="stat-label">Playlists</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value">0</span>
-                        <span class="stat-label">Músicas</span>
-                    </div>
-                </div>
-                <div class="selected-playlist-info">
-                    <p class="section-hint">Arraste uma playlist ou música</p>
-                </div>
-            </div>
-            <div class="inner-section-right">
-                <h3>Playlists Disponíveis</h3>
-                <div class="stats-container">
-                    <div class="stat-item">
-                        <span class="stat-value">${Object.keys(playlistsData).length}</span>
-                        <span class="stat-label">Playlists</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value">${allSongs.length}</span>
-                        <span class="stat-label">Músicas</span>
-                    </div>
-                </div>
-                <div class="playlist-container">
-                    ${playlistsHTML}
-                </div>
-                <h3>Músicas Disponíveis</h3>
-                <div class="songs-container">
-                    ${songsHTML}
-                </div>
-            </div>
-        `;
-        sectionRight.style.display = 'flex';
-        saveButtonContainer.style.display = "flex";
-        enableDragAndDrop();
-        
-    } else if (value === "streaming") {
         sectionRight.innerHTML = `
             <div class="inner-section-left">
                 <h3>Lista de reprodução</h3>
@@ -148,6 +100,23 @@ function updateSectionRight(value) {
         `;
         sectionRight.style.display = 'flex';
         saveButtonContainer.style.display = "flex";
+    } else if (value === "microphone") {
+        sectionRight.innerHTML = `
+            <div class="inner-section-left">
+                <h3>Microfones Disponíveis</h3>
+                <div id="availableMicrophones">
+                    <p class="section-hint">Carregando microfones...</p>
+                </div>
+            </div>
+            <div class="inner-section-right">
+                <h3>Microfones Associados</h3>
+                <div id="associatedMicrophones">
+                    <p class="section-hint">Nenhum microfone associado.</p>
+                </div>
+            </div>
+        `;
+        saveButtonContainer.style.display = "none";
+        loadAvailableMicrophones();
     } else {
         sectionRight.className = "inner-dual-section empty-message";
         sectionRight.innerHTML = `<p style="text-align:center;">Selecione o tipo de reprodução que pretende</p>`;
@@ -258,7 +227,6 @@ function removeItemFromPlaylist(item) {
     updateLeftStats();
 }
 
-
 function removeStreamingSource(source) {
     const index = streamingSources.indexOf(source);
     if (index > -1) {
@@ -275,6 +243,47 @@ function openAddStreamingModal() {
     }
 }
 
+function loadAvailableMicrophones() {
+    const availableMicrophones = document.getElementById("availableMicrophones");
+    navigator.mediaDevices.enumerateDevices()
+        .then(devices => {
+            const microphones = devices.filter(device => device.kind === "audioinput");
+            if (microphones.length > 0) {
+                availableMicrophones.innerHTML = microphones.map(mic => `
+                    <div class="microphone-item">
+                        <span>${mic.label || "Microfone Desconhecido"}</span>
+                        <button class="add-item-btn" onclick="associateMicrophone('${mic.deviceId}', '${mic.label}')">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                `).join('');
+            } else {
+                availableMicrophones.innerHTML = '<p class="section-hint">Nenhum microfone encontrado.</p>';
+            }
+        })
+        .catch(err => {
+            console.error("Erro ao carregar microfones:", err);
+            availableMicrophones.innerHTML = '<p class="section-hint">Erro ao carregar microfones.</p>';
+        });
+}
+
+function associateMicrophone(deviceId, label) {
+    const associatedMicrophones = document.getElementById("associatedMicrophones");
+    const microphoneItem = document.createElement("div");
+    microphoneItem.className = "microphone-item";
+    microphoneItem.innerHTML = `
+        <span>${label || "Microfone Desconhecido"}</span>
+        <button class="remove-item-btn" onclick="removeMicrophone(this)">
+            <i class="fa-solid fa-trash-can"></i>
+        </button>
+    `;
+    associatedMicrophones.appendChild(microphoneItem);
+}
+
+function removeMicrophone(button) {
+    const microphoneItem = button.parentElement;
+    microphoneItem.remove();
+}
 
 // Change event listeners from radio buttons to menu items
 document.addEventListener('DOMContentLoaded', function() {
