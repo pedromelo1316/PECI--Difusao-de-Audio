@@ -85,7 +85,15 @@
             <div class="grid-container">
                 <div class="streaming-section">
                     <ul id="streaming-list">
-                        <!-- Links de transmissão existentes podem ser carregados aqui -->
+                        {% for streaming in streamings %}
+                        <li class="streaming-item">
+                            <span>{{ streaming.name }}</span>
+                            <div class="streaming-actions">
+                                <i class="fa-solid fa-pen" onclick="editStreaming('{{ streaming.id }}')"></i>
+                                <i class="fa-solid fa-trash" onclick="deleteStreaming('{{ streaming.name }}')"></i>
+                            </div>
+                        </li>
+                        {% endfor %}
                     </ul>
                     <button onclick="showAddStreamModal()">Add Streaming Link</button>
                 </div>

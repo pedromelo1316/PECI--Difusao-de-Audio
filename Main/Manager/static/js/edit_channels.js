@@ -1,14 +1,11 @@
+let streamingSources = [];
 function updateSectionRight(value) {
-    
     const sectionRight = document.getElementById("sectionRightContent");
     const saveButtonContainer = document.getElementById("saveButtonContainer");
-
 
     // Reset classes and display
     sectionRight.className = "inner-dual-section";
     sectionRight.style.display = 'flex';
-    
-    
 
     if (value === "local") {
         let playlistsHTML = '';
@@ -33,7 +30,6 @@ function updateSectionRight(value) {
         allSongs.forEach(song => {
             songsHTML += `<div class="song-item"> ${song}</div>`;
         });
-    
 
         sectionRight.innerHTML = `
             <div class="inner-section-left">
@@ -73,80 +69,39 @@ function updateSectionRight(value) {
                 </div>
             </div>
         `;
-        sectionRight.style.display = 'flex';
         saveButtonContainer.style.display = "flex";
         enableDragAndDrop();
-        
-    } else if (value === "streaming") {
-        sectionRight.innerHTML = `
-            <div class="inner-section-left">
-                <h3>Lista de reprodução</h3>
-                <div class="stats-container">
-                    <div class="stat-item">
-                        <span class="stat-value">0</span>
-                        <span class="stat-label">Playlists</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value">0</span>
-                        <span class="stat-label">Músicas</span>
-                    </div>
-                </div>
-                <div class="selected-playlist-info">
-                    <p class="section-hint">Arraste uma playlist ou música</p>
-                </div>
-            </div>
-            <div class="inner-section-right">
-                <h3>Playlists Disponíveis</h3>
-                <div class="stats-container">
-                    <div class="stat-item">
-                        <span class="stat-value">${Object.keys(playlistsData).length}</span>
-                        <span class="stat-label">Playlists</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value">${allSongs.length}</span>
-                        <span class="stat-label">Músicas</span>
-                    </div>
-                </div>
-                <div class="playlist-container">
-                    ${playlistsHTML}
-                </div>
-                <h3>Músicas Disponíveis</h3>
-                <div class="songs-container">
-                    ${songsHTML}
-                </div>
-            </div>
-        `;
-        sectionRight.style.display = 'flex';
-        saveButtonContainer.style.display = "flex";
-        enableDragAndDrop();
-        
     } else if (value === "streaming") {
         let streamingHTML = '';
-        streamingSources.forEach(source => {
+        streamingSources2.forEach(source => {
             streamingHTML += `
-                <div class="streaming-item">
-                    <span>${source}</span>
-                    <button class="remove-item-btn" onclick="removeStreamingSource('${source}')">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
+                <div class="streaming-item" onclick="selectStreamingSource(this)">
+                    <span class="streaming-name">${source}</span>
+                    <i class="fa-regular fa-square selection-icon"></i>
                 </div>
             `;
         });
 
         sectionRight.innerHTML = `
             <div class="inner-section-left">
-                <h3>Fontes de Streaming Selecionadas</h3>
-                <div class="selected-streaming-info">
-                    ${streamingHTML || '<p class="section-hint">Nenhuma fonte selecionada.</p>'}
+                <h3>Fonte de Streaming</h3>
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <span class="stat-value">${streamingSources2.length}</span>
+                        <span class="stat-label">Fontes</span>
+                    </div>
                 </div>
-                <button class="add-streaming-btn" onclick="openAddStreamingModal()">Adicionar Fonte</button>
+                <div class="selected-streaming-info">
+                    <p class="section-hint">Selecione uma fonte de streaming</p>
+                </div>
             </div>
             <div class="inner-section-right">
-                <h3>Gerenciar Fontes de Streaming</h3>
-                <p>Adicione ou remova fontes de streaming para personalizar sua experiência.</p>
+                <h3>Fontes Disponíveis</h3>
+                <div class="streaming-container">
+                    ${streamingHTML}
+                </div>
             </div>
         `;
-        sectionRight.style.display = 'flex';
         saveButtonContainer.style.display = "flex";
     } else {
         sectionRight.className = "inner-dual-section empty-message";
@@ -258,6 +213,32 @@ function removeItemFromPlaylist(item) {
     updateLeftStats();
 }
 
+function selectStreamingSource(streamingElement) {
+    // Deselect all streaming items and reset their icons to square
+    const allStreamingItems = document.querySelectorAll('.streaming-item');
+    allStreamingItems.forEach(item => {
+        item.classList.remove('selected');
+        const icon = item.querySelector('.selection-icon');
+        icon.classList.remove('fa-check');
+        icon.classList.add('fa-regular', 'fa-square');
+    });
+
+    // Select the clicked streaming item and change icon to checkmark
+    streamingElement.classList.add('selected');
+    const icon = streamingElement.querySelector('.selection-icon');
+    icon.classList.remove('fa-regular', 'fa-square');
+    icon.classList.add('fa-check');
+
+    // Update the selected streaming info with highlighted styling
+    const selectedInfo = document.querySelector('.inner-section-left .selected-streaming-info');
+    const selectedName = streamingElement.querySelector('.streaming-name').textContent;
+    selectedInfo.innerHTML = `
+        <p style="font-weight: bold; color: #22cc3f;">Fonte selecionada:</p>
+        <div class="selected-streaming-item" style="border: 2px solid #22cc3f; padding: 10px; background-color: #FFFFFF; border-radius: 4px; margin-top: 5px;">
+            <span class="streaming-name" style="font-weight: bold;">${selectedName}</span>
+        </div>
+    `;
+}
 
 function removeStreamingSource(source) {
     const index = streamingSources.indexOf(source);
@@ -274,7 +255,6 @@ function openAddStreamingModal() {
         updateSectionRight('streaming'); // Refresh the streaming section
     }
 }
-
 
 // Change event listeners from radio buttons to menu items
 document.addEventListener('DOMContentLoaded', function() {

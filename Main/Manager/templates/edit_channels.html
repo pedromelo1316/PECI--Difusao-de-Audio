@@ -107,8 +107,15 @@
     <p style="text-align: center;">© 2025 Audio Manager</p>
 </footer>
 <script>
+    console.log("Channel ID:", {{ channel_id }});
+    console.log("Channel Name:", "{{ channel.name }}");
+    console.log("Playlists Data:", {{ playlist_songs | tojson }});
+    console.log("All Songs Data:", {{ all_songs | tojson }});
+    console.log("Streaming Sources Data:", {{ streaming_sources | tojson }});
+    console.log("Streaming Sources:", {{ streaming_sources | tojson }});
     const playlistsData = {{ playlist_songs | tojson }};
     const allSongs = {{ all_songs | tojson }};
+    const streamingSources2 = {{ streaming_sources | tojson }};
 </script>
 
 <script src="{{ url_for('static', filename='js/edit_channels.js') }}"></script>

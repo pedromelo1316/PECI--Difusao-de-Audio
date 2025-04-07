@@ -196,6 +196,9 @@ function saveSong() {
     const songName = document.getElementById('song-name').value;
     const songFile = document.getElementById('song-file').files[0];
 
+    console.log("Nome da música:", songName);
+    console.log("Arquivo da música:", songFile);
+
     if (!songName) {
         alert("The song name is required.");
         return;

@@ -89,7 +89,6 @@ def allowed_file(filename):
 
 
 
-
 ########
 
 # Função para iniciar o processo do ffmpeg para um canal específico
@@ -124,6 +123,7 @@ def start_ffmpeg_process(channel, source, _type):
         ]
     elif _type == ChannelType.LOCAL:
         # Transmissão local utilizando um arquivo de playlist
+        print("source: ", source)
         playlist_path = f"Playlists/{source}.txt"
         if not os.path.exists(playlist_path):
             with open(playlist_path, 'w') as f:
@@ -693,13 +693,18 @@ def edit_channels():
         for playlist in playlists
     }
     all_songs = [song.name for song in Songs.query.all()]
+    streamings = Streaming.query.all()
+    streaming_sources = [streaming.name for streaming in streamings]
+    
     
     return render_template(
         'edit_channels.html',
         channel=channel,
         playlists=playlist_songs.keys(),
         playlist_songs=playlist_songs,
-        all_songs=all_songs
+        all_songs=all_songs,
+        streaming_sources=streaming_sources 
+        
     )
 
 @app.route('/update_channel_name/<int:channel_id>', methods=['POST'])
@@ -801,7 +806,8 @@ def update_area_channel():
 @app.route('/secundaria')
 def secundaria():
     playlists = Playlist.query.all()  
-    return render_template('secundaria.html', playlists=playlists)
+    Streamings = Streaming.query.all()
+    return render_template('secundaria.html', playlists=playlists, streamings=Streamings)
 
 
 @app.route('/save_stream_url', methods=['POST'])
@@ -847,10 +853,6 @@ def get_songs():
 # Rota para adicionar uma nova música
 @app.route('/add_song', methods=['POST'])
 def add_song():
-
-    print("Request files:", request.files)
-    print("Request form:", request.form)
-
     
     if 'file' not in request.files:
         print("Arquivo de música é obrigatório")
@@ -866,6 +868,7 @@ def add_song():
         return jsonify({"error": "Formato de arquivo não suportado"}), 400
 
     song_name = request.form.get('name')
+    print("song_name: ", song_name)
     if not song_name:
         print("Nome da música é obrigatório")
         return jsonify({"error": "Nome da música é obrigatório"}), 400
@@ -877,25 +880,32 @@ def add_song():
         print("Dados recebidos:", request.form)
         # Salvar o arquivo original
         filename = secure_filename(file.filename)
+        filename = f"{song_name}{os.path.splitext(filename)[1]}"
+        print("filename: ", filename)
         original_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(original_path)
 
-        # Converter para .wav usando ffmpeg
-        wav_filename = f"{os.path.splitext(filename)[0]}.wav"
-        wav_path = os.path.join(app.config['UPLOAD_FOLDER'], wav_filename)
-        try:
-            subprocess.run(
-                ["ffmpeg", "-i", original_path, wav_path],
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-        except subprocess.CalledProcessError as e:
-            print(f"Erro ao converter o arquivo: {e.stderr.decode()}")
-            return jsonify({"error": "Erro ao converter o arquivo para .wav"}), 500
+        # Se o arquivo não for .wav, converte para .wav usando ffmpeg
+        ext = os.path.splitext(filename)[1].lower()
+        if ext != '.wav':
+            wav_filename = f"{song_name}.wav"
+            wav_path = os.path.join(app.config['UPLOAD_FOLDER'], wav_filename)
+            print("wav_path: ", wav_path)
+            try:
+                subprocess.run(
+                    ["ffmpeg", "-y", "-i", original_path, wav_path],
+                    check=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
+                )
+            except subprocess.CalledProcessError as e:
+                print(f"Erro ao converter o arquivo: {e.stderr.decode()}")
+                return jsonify({"error": "Erro ao converter o arquivo para .wav"}), 500
 
-        # Remover o arquivo original (opcional)
-        os.remove(original_path)
+            # Remover o arquivo original (opcional)
+            os.remove(original_path)
+        else:
+            wav_path = original_path
 
         # Salvar no banco de dados
         new_song = Songs(name=song_name)

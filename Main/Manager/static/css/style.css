@@ -1,0 +1,35 @@
+.streaming-item.square {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    margin: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.streaming-item.square.selected {
+    border-color: #4caf50;
+    background-color: #e8f5e9;
+}
+
+.streaming-item.square:hover {
+    border-color: #888;
+}
+
+.streaming-item .selection-icon {
+    font-size: 24px;
+    margin-left: 10px;
+    transition: color 0.3s ease;
+}
+
+.streaming-item .selection-icon.fa-regular.fa-square {
+    color: #ccc;
+}
+
+.streaming-item .selection-icon.fa-solid.fa-check-square {
+    color: #4caf50;
+}
