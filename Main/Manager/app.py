@@ -1,6 +1,7 @@
 # Importações de módulos e bibliotecas necessárias
 from enum import Enum
-from flask import Flask, render_template, request, redirect, flash, jsonify, url_for
+from io import BytesIO
+from flask import Flask, render_template, request, redirect, flash, jsonify, send_file, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
 import os
@@ -264,7 +265,7 @@ class Areas(db.Model):
 # Modelo para "Nós" (Nodes)
 class Nodes(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    ip = db.Column(db.String(200), nullable=False)
+    ip = db.Column(db.String(200), nullable=True)
     name = db.Column(db.String(200), nullable=False)
     mac = db.Column(db.String(200), unique=True, nullable=False)
     area_id = db.Column(db.Integer, db.ForeignKey('areas.id'), nullable=True)
@@ -502,8 +503,11 @@ def detect_new_nodes(stop_event, msg_buffer):
                     elif str(e) == "MAC already in use":
                         with app.app_context():
                             node = db.session.query(Nodes).filter(Nodes.mac == node_mac).first()
-                        node_name = node.name
-                        msg_buffer.put(f"Node {node_name} reconnected")
+                            node.ip = node_ip
+                            db.session.commit()
+
+                            node_name = node.name
+                        print(f"Node {node.name} already exists, updating IP {node_ip}")
                     else:
                         msg_buffer.put(f"Error: {e}")
                         server_socket.sendto(b"Error " + str(e).encode('utf-8'), addr)
@@ -1147,6 +1151,74 @@ def save_playlist_file(playlist_name):
 
 
 #################################################################################
+
+
+@app.route('/export_conf', methods=['GET'])
+def export_conf():
+    nodes = Nodes.query.all()
+    areas = Areas.query.all()
+    
+    config_data = {
+        "nodes": [{"name": node.name, "mac": node.mac, "area": node.area.name if node.area else None} for node
+                  in nodes],
+        "areas": [{"name": area.name, "volume": area.volume, "channel": area.channel_id} for area in areas]
+    }
+
+    json_data = json.dumps(config_data)
+
+    # Create a file-like object in memory
+    memory_file = BytesIO(json_data.encode('utf-8'))
+    memory_file.seek(0)
+
+    print("Configuration exported")
+    # Send the file for download
+    return send_file(memory_file, as_attachment=True, download_name="config.json", mimetype="application/json")
+
+
+@app.route('/import_conf', methods=['POST'])
+def import_conf():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    file_content = file.read()
+    data = json.loads(file_content) 
+
+
+    nodes = data.get("nodes", [])
+    areas = data.get("areas", [])
+
+    for area_data in areas:
+        area = Areas.query.filter_by(name=area_data['name']).first()
+        if area:
+            area.volume = area_data['volume']
+            area.channel_id = area_data['channel']
+            db.session.commit()
+        else:
+            new_area = Areas(name=area_data['name'], volume=area_data['volume'], channel_id=area_data['channel'])
+            db.session.add(new_area)
+            db.session.commit()
+
+    for node_data in nodes:
+        node = Nodes.query.filter_by(mac=node_data['mac']).first()
+        if node:
+            node.name = node_data['name']
+            node.area_id = Areas.query.filter_by(name=node_data['area']).first().id if node_data['area'] else None
+            db.session.commit()
+        else:
+            if node_data['area']:
+                area = Areas.query.filter_by(name=node_data['area']).first()
+                new_node = Nodes(name=node_data['name'], mac=node_data['mac'], area_id=area.id)
+            else:
+                new_node = Nodes(name=node_data['name'], mac=node_data['mac']) 
+            db.session.add(new_node)
+            db.session.commit()
+
+    print("Configuration imported")
+    return jsonify({"success": True})
+
 #################################################################################
 #################################################################################
 
@@ -1201,6 +1273,6 @@ if __name__ == '__main__':
     thread.start()
     
     # Inicia o servidor Flask com SocketIO
-    socketio.run(app, host=get_host_ip() ,debug=True, port=5000)
+    socketio.run(app, host=get_host_ip() ,debug=False, port=5000)
     #socketio.run(app, debug=False)
 

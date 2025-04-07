@@ -1,3 +1,0 @@
-file Songs/c.wav
-file Songs/llll.wav
-file Songs/ll.wav
