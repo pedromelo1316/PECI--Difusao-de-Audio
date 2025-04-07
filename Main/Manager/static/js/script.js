@@ -138,6 +138,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     function showSelectForZone(buttonElement) {
+        console.log("Adding column to zone");
         const container = document.createElement("div");
         container.classList.add("select-container");
 
@@ -155,6 +156,13 @@ document.addEventListener("DOMContentLoaded", function () {
                     option.textContent = "No speakers available";
                     select.appendChild(option);
                 } else {
+                    const initialOption = document.createElement("option");
+                    initialOption.value = "";
+                    initialOption.textContent = "Select a speaker";
+                    initialOption.selected = true;
+                    initialOption.disabled = true;
+                    select.appendChild(initialOption);
+
                     nodes.forEach(node => {
                         const option = document.createElement("option");
                         option.value = node.name;
@@ -162,34 +170,33 @@ document.addEventListener("DOMContentLoaded", function () {
                         select.appendChild(option);
                     });
                 }
+
+                // Automatically open the dropdown to show all options
+                setTimeout(() => {
+                    select.size = nodes.length > 0 ? nodes.length + 1 : 1;
+                }, 0);
             })
             .catch(error => console.error("Error fetching nodes:", error));
 
-        const confirmButton = document.createElement("button");
-        confirmButton.textContent = "Confirm";
-        confirmButton.classList.add("confirm-button");
-        confirmButton.addEventListener("click", function (event) {
-            event.preventDefault();
-            const selectedNode = select.value;
-            if (selectedNode) {
-                addZoneColumn(select, buttonElement);
-            } else {
-                alert("Please select a node.");
-            }
-        });
-
-        const cancelButton = document.createElement("button");
-        cancelButton.textContent = "Cancel";
-        cancelButton.classList.add("cancel-button");
-        cancelButton.addEventListener("click", function (event) {
-            event.preventDefault();
-            container.replaceWith(buttonElement);
+        // When an option is selected, add the column to the zone
+        select.addEventListener("change", function () {
+            document.removeEventListener("click", handleClickOutside);
+            addZoneColumn(this, buttonElement);
         });
 
         container.appendChild(select);
-        container.appendChild(confirmButton);
-        container.appendChild(cancelButton);
         buttonElement.replaceWith(container);
+
+        // Hide dropdown when clicking outside
+        function handleClickOutside(event) {
+            if (!container.contains(event.target)) {
+                container.replaceWith(buttonElement);
+                document.removeEventListener("click", handleClickOutside);
+            }
+        }
+        setTimeout(() => {
+            document.addEventListener("click", handleClickOutside);
+        }, 0);
     }
 
     function addZoneColumn(selectElement, buttonElement) {
