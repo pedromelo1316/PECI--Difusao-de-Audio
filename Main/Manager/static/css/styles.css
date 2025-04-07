@@ -249,6 +249,52 @@ header {
 }
 
 /* ===== COLUMN BOX & ITEMS ===== */
+
+.column-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+
+.column-itemCH {
+    display: flex;
+    flex-direction: column; /* Garante empilhamento vertical */
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+    border-radius: 8px;
+    background-color: white;
+    transition: background 0.3s;
+    width: 488px;
+}
+
+.column-headerCH {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.column-detailsCH {
+    display: block; /* Bloco vertical */
+    width: 470px;
+    margin-top: 8px;
+    padding: 10px;
+    background: #f9f9f971;
+    border-radius: 8px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.column-detailsCH p {
+    display: block; /* Garante que cada linha está separada */
+    margin: 4px 0;
+    font-size: 14px;
+    color: #444;
+}
+
+
 .column-box {
     display: block;
     background: white;

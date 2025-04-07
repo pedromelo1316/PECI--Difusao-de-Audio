@@ -36,16 +36,16 @@
 <div class="channel-title-container">
     <!-- Visualização -->
     <div id="channelTitleDisplay" class="channel-title">
-        <h1 id="channelTitle">Channel {{ channel_id }}</h1>
+        <h1 id="channelTitle">{{ channel.name }}</h1>
         <i class="fa-solid fa-pen edit-icon" onclick="toggleChannelEdit()"></i>
     </div>
 
     <!-- Edição -->
-    <form id="channelEditForm" class="channel-edit-form" style="display: none;" onsubmit="event.preventDefault(); saveChannelName();">
-        <input type="hidden" name="channel_id" value="{{ channel_id }}">
-        <input type="text" id="channelNameInput" name="channel_name" value="Channel {{ channel_id }}" class="channel-edit-input" required>
+    <form id="channelEditForm" class="channel-edit-form" style="display: none;" method="POST" action="{{ url_for('update_channel_name', channel_id=channel.id) }}">
+        <input type="text" id="channelNameInput" name="channel_name" value="{{ channel.name }}" class="channel-edit-input" required>
         <button type="submit" class="save-button">Guardar</button>
     </form>
+    
 
     
 </div>

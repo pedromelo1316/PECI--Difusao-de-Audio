@@ -27,21 +27,23 @@
                     {% else %}
                     <div class="column-list">
                         {% for node in nodes %}
-                        <div class="column-item" onclick="toggleColumnDetails(this)">
-                            <span>{{ node.name }}</span>
-                            <div class="column-actions" onclick="event.stopPropagation()">
-                                <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
 
-                                <i class="fa-solid fa-pen"  onclick="event.stopPropagation(); renameNode('{{ node.id }}')"></i>
-
-
-                                <a href="/delete/{{ node.id }}"><i class="fa-solid fa-trash" style="color: black;"></i></a>
+                        <div class="column-itemCH">
+                            <div class="column-headerCH">
+                                <span>{{ node.name }}</span>
+                                <div class="column-actions" onclick="event.stopPropagation()">
+                                    <i class="fa-solid fa-chevron-down" onclick="toggleDeviceDetails(this)"></i> 
+                                    <i class="fa-solid fa-pen" onclick="event.stopPropagation(); renameNode('{{ node.id }}')"></i>
+                                    <a href="/delete/{{ node.id }}"><i class="fa-solid fa-trash" style="color: black;"></i></a>
+                                </div>
                             </div>
-                            <div class="column-details" style="display: none;">
+                            <div class="column-detailsCH" style="display: none;">
                                 <p>IP: {{ node.ip }}</p>
                                 <p>MAC: {{ node.mac }}</p>
                             </div>
                         </div>
+                        
+
                         {% endfor %}
                     </div>
                     {% endif %}
@@ -72,7 +74,7 @@
                                     {% for channel in channels %}
                                     <div class="channel-card" data-channel-id="{{ channel.id }}">
                                         <div class="card-content">
-                                            <span class="channel-name">Channel {{ channel.id }}</span>
+                                            <span class="channel-name">{{ channel.name }}</span>
                                             <div class="channel-status">
                                                 <span class="status-indicator"></span>
                                                 <span class="status-text">Inactive</span>
@@ -164,6 +166,7 @@
                         </div>
                         
                         <!-- Channel Section -->
+                        <!-- Channel Section -->
                         <div class="channel-section">
                             <h4>Channel</h4>
                             <div class="channel-options">
@@ -171,15 +174,18 @@
                                     <input type="hidden" name="name" value="{{ area.name }}">
                                     <label>
                                         <input type="radio" name="channel_id" value="1"
-                                            {% if area.channel_id == 1 %} checked {% endif %} style="accent-color: #22cc3f;"> Canal 1
+                                            {% if area.channel_id == 1 %} checked {% endif %} style="accent-color: #22cc3f;"> 
+                                        <span class="channel-name" data-channel-id="1">{{ channels[0].name }}</span>  <!-- Canal 1 nome dinâmico -->
                                     </label>
                                     <label>
                                         <input type="radio" name="channel_id" value="2"
-                                            {% if area.channel_id == 2 %} checked {% endif %} style="accent-color: #22cc3f;"> Canal 2
+                                            {% if area.channel_id == 2 %} checked {% endif %} style="accent-color: #22cc3f;"> 
+                                        <span class="channel-name" data-channel-id="2">{{ channels[1].name }}</span>  <!-- Canal 2 nome dinâmico -->
                                     </label>
                                     <label>
                                         <input type="radio" name="channel_id" value="3"
-                                            {% if area.channel_id == 3 %} checked {% endif %} style="accent-color: #22cc3f;"> Canal 3
+                                            {% if area.channel_id == 3 %} checked {% endif %} style="accent-color: #22cc3f;"> 
+                                        <span class="channel-name" data-channel-id="3">{{ channels[2].name }}</span>  <!-- Canal 3 nome dinâmico -->
                                     </label>
                                 </form>
                             </div>

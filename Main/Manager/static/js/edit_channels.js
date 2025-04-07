@@ -1,10 +1,14 @@
 function updateSectionRight(value) {
+    
     const sectionRight = document.getElementById("sectionRightContent");
     const saveButtonContainer = document.getElementById("saveButtonContainer");
+
 
     // Reset classes and display
     sectionRight.className = "inner-dual-section";
     sectionRight.style.display = 'flex';
+    
+    
 
     if (value === "local") {
         let playlistsHTML = '';
@@ -30,6 +34,50 @@ function updateSectionRight(value) {
             songsHTML += `<div class="song-item"> ${song}</div>`;
         });
     
+
+        sectionRight.innerHTML = `
+            <div class="inner-section-left">
+                <h3>Lista de reprodução</h3>
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <span class="stat-value">0</span>
+                        <span class="stat-label">Playlists</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">0</span>
+                        <span class="stat-label">Músicas</span>
+                    </div>
+                </div>
+                <div class="selected-playlist-info">
+                    <p class="section-hint">Arraste uma playlist ou música</p>
+                </div>
+            </div>
+            <div class="inner-section-right">
+                <h3>Playlists Disponíveis</h3>
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <span class="stat-value">${Object.keys(playlistsData).length}</span>
+                        <span class="stat-label">Playlists</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">${allSongs.length}</span>
+                        <span class="stat-label">Músicas</span>
+                    </div>
+                </div>
+                <div class="playlist-container">
+                    ${playlistsHTML}
+                </div>
+                <h3>Músicas Disponíveis</h3>
+                <div class="songs-container">
+                    ${songsHTML}
+                </div>
+            </div>
+        `;
+        sectionRight.style.display = 'flex';
+        saveButtonContainer.style.display = "flex";
+        enableDragAndDrop();
+        
+    } else if (value === "streaming") {
         sectionRight.innerHTML = `
             <div class="inner-section-left">
                 <h3>Lista de reprodução</h3>
@@ -210,6 +258,7 @@ function removeItemFromPlaylist(item) {
     updateLeftStats();
 }
 
+
 function removeStreamingSource(source) {
     const index = streamingSources.indexOf(source);
     if (index > -1) {
@@ -225,6 +274,7 @@ function openAddStreamingModal() {
         updateSectionRight('streaming'); // Refresh the streaming section
     }
 }
+
 
 // Change event listeners from radio buttons to menu items
 document.addEventListener('DOMContentLoaded', function() {

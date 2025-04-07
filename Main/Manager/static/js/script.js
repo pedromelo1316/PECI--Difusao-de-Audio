@@ -849,7 +849,23 @@ document.addEventListener("DOMContentLoaded", function () {
     updateSectionRight(checkedRadio ? checkedRadio.value : null);
 });
 
+window.toggleDeviceDetails = function(icon) {
+    const columnItem = icon.closest(".column-itemCH");
+    const details = columnItem.querySelector(".column-detailsCH");
 
+    if (details.style.display === "none" || !details.style.display) {
+        details.style.display = "block";
+    } else {
+        details.style.display = "none";
+    }
+};
 
-
-
+// Attach event listeners to chevron icons for devices
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".column-headerCH .fa-chevron-down").forEach(icon => {
+        icon.addEventListener("click", function (event) {
+            event.stopPropagation(); // Prevent triggering other click events
+            toggleDeviceDetails(this);
+        });
+    });
+});
