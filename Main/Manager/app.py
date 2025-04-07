@@ -1,6 +1,6 @@
 # Importações de módulos e bibliotecas necessárias
 from enum import Enum
-from flask import Flask, render_template, request, redirect, flash, jsonify
+from flask import Flask, render_template, request, redirect, flash, jsonify, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
 import os
@@ -269,14 +269,13 @@ class Playlist(db.Model):
 # Modelo para canais
 class Channels(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=True)
     type = db.Column(db.Enum(ChannelType), nullable=False)
     source = db.Column(db.String(200), nullable=True)
 
-    #####
-
     def __repr__(self):
-        return 
-    
+        return f'<Channel {self.id}: {self.name}>'
+
 
 ###############3
 class Streaming(db.Model):
@@ -299,11 +298,16 @@ def create_default_channels():
         db.session.commit()
         # Cria os canais padrão com tipo LOCAL e fonte "default"
         for i in range(1, NUM_CHANNELS+1):
-            new_channel = Channels(type=ChannelType.LOCAL, source="default")
+            new_channel = Channels(
+                name=f"Channel {i}",
+                type=ChannelType.LOCAL,
+                source="default"
+            )
             db.session.add(new_channel)
             db.session.commit()
-            processes[i] = start_ffmpeg_process(i, "default", ChannelType.LOCAL)
-            print(f"Channel {i} started")
+            processes[new_channel.id] = start_ffmpeg_process(new_channel.id, "default", ChannelType.LOCAL)
+            print(f"{new_channel.name} started")
+
     else:
         for channel in db.session.query(Channels).all():
             index = channel.id
@@ -627,9 +631,10 @@ def remove_column_from_zone():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/edit_channels', methods=['GET'])
+@app.route('/edit_channels')
 def edit_channels():
     channel_id = request.args.get('channel_id', type=int)
+    channel = Channels.query.get_or_404(channel_id)
 
     playlists = Playlist.query.all()
     playlist_songs = {
@@ -640,11 +645,36 @@ def edit_channels():
     
     return render_template(
         'edit_channels.html',
-        channel_id=channel_id,
+        channel=channel,
         playlists=playlist_songs.keys(),
         playlist_songs=playlist_songs,
         all_songs=all_songs
     )
+
+@app.route('/update_channel_name/<int:channel_id>', methods=['POST'])
+def update_channel_name(channel_id):
+    new_name = request.form.get('channel_name')
+    if not new_name:
+        return "Nome inválido", 400
+
+    # Recupera o canal
+    channel = Channels.query.get_or_404(channel_id)
+    old_name = channel.name
+    channel.name = new_name
+
+    try:
+        # Atualiza o nome no banco de dados
+        db.session.commit()
+
+        # Emite um evento para a atualização do nome na interface
+        socketio.emit('update_channel_names', {'new_name': new_name, 'old_name': old_name}, namespace='/')
+
+        return redirect(url_for('edit_channels', channel_id=channel_id))
+    
+    except Exception as e:
+        return f"Erro ao atualizar o nome do canal: {e}", 500
+
+
 
 #@app.route('/edit_channels', methods=['GET'])
 #def edit_channels():
@@ -1102,6 +1132,7 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # Cria as tabelas no banco de dados, se ainda não existirem
         create_default_channels()  # Inicializa os canais padrão
+
         
         
     # Associa o sinal SIGINT ao shutdown_handler para tratamento de Ctrl+C
@@ -1112,7 +1143,7 @@ if __name__ == '__main__':
     thread.start()
     
     # Inicia o servidor Flask com SocketIO
-    socketio.run(app, host=get_host_ip() ,debug=False, port=5000)
+    socketio.run(app, host=get_host_ip() ,debug=True, port=5000)
     #socketio.run(app, debug=False)
 
     

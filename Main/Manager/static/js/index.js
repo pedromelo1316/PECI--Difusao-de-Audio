@@ -540,3 +540,16 @@ function toggleChannelEdit() {
     display.style.display = (display.style.display === 'none') ? 'flex' : 'none';
     form.style.display = (form.style.display === 'none') ? 'flex' : 'none';
 }
+
+
+function toggleColumnDetails(element) {
+    // Garante que estamos a trabalhar com o item inteiro
+    const columnItem = element.closest('.column-itemCH');
+    const details = columnItem.querySelector('.column-details');
+
+    if (details.style.display === 'none' || details.style.display === '') {
+        details.style.display = 'block';
+    } else {
+        details.style.display = 'none';
+    }
+}
