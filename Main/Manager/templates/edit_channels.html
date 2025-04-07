@@ -7,20 +7,23 @@
 {% endblock %}
 
 {% block body %}
+
+
+
 <header>
     <div class="header-content">
-        <!-- Seta voltar -->
-        <div class="header-left">
-            <i class="fa-solid fa-backward-step" onclick="window.location.href='http://localhost:5001/'"></i>
-        </div>
-        
-        <!-- Centro com logo e título -->
-        <div class="header-center">
-            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Site Logo" class="site-logo">
-            <h1>Edit Channel</h1>
-        </div>
+      <div class="header-left">
+        <a href="{{ url_for('index') }}" class="settings-link">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+      </div>
+      <div class="header-center">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Site Logo" class="site-logo">
+        <h1>Audio Manager</h1>
+      </div>
     </div>
 </header>
+
 
 <!-- Título "Channel" 
 <div style="text-align: left; margin-top: 40px; margin-bottom: 0px; padding-left: 100px;">
