@@ -77,7 +77,7 @@ function loadSongs() {
             const addSongItem = document.createElement('li');
             addSongItem.className = 'song-item add-song';
             addSongItem.style.marginTop = '5px'; // Reduced spacing above the "+Add" button
-            addSongItem.innerHTML = '<span style="font-size: 18px;">Add +</span>'; // Increased font size
+            addSongItem.innerHTML = '<span style="font-size: 16px;">Add +</span>'; // Increased font size
             addSongItem.onclick = showAddSongModal;
             songsList.appendChild(addSongItem);
         });
