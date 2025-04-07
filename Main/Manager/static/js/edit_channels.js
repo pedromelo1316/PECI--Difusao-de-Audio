@@ -1,12 +1,19 @@
 function updateSectionRight(value) {
+    
     const sectionRight = document.getElementById("sectionRightContent");
     const saveButtonContainer = document.getElementById("saveButtonContainer");
 
+
+    // Reset classes and display
+    sectionRight.className = "inner-dual-section";
+    sectionRight.style.display = 'flex';
+    
+    
     if (value === "local") {
         let playlistsHTML = '';
         for (const [playlistName, songs] of Object.entries(playlistsData)) {
             const songCount = songs.length;
-            let songList = songs.map(song => `<div class="song-item"><i class="fa-solid fa-music"></i> ${song}</div>`).join('');
+            let songList = songs.map(song => `<div class="song-item"> ${song}</div>`).join('');
             
             playlistsHTML += `
                 <div class="playlist-item" onclick="togglePlaylistSongs(this)">
@@ -20,21 +27,53 @@ function updateSectionRight(value) {
                 </div>
             `;
         }
+
+        let songsHTML = '';
+        allSongs.forEach(song => {
+            songsHTML += `<div class="song-item"> ${song}</div>`;
+        });
     
         sectionRight.innerHTML = `
             <div class="inner-section-left">
-                <h4>Para reprodução</h4>
-                <p>Seleciona uma playlist abaixo</p>
+                <h3>Lista de reprodução</h3>
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <span class="stat-value">0</span>
+                        <span class="stat-label">Playlists</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">0</span>
+                        <span class="stat-label">Músicas</span>
+                    </div>
+                </div>
+                <div class="selected-playlist-info">
+                    <p class="section-hint">Arraste uma playlist ou música</p>
+                </div>
             </div>
             <div class="inner-section-right">
                 <h3>Playlists Disponíveis</h3>
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <span class="stat-value">${Object.keys(playlistsData).length}</span>
+                        <span class="stat-label">Playlists</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">${allSongs.length}</span>
+                        <span class="stat-label">Músicas</span>
+                    </div>
+                </div>
                 <div class="playlist-container">
                     ${playlistsHTML}
+                </div>
+                <h3>Músicas Disponíveis</h3>
+                <div class="songs-container">
+                    ${songsHTML}
                 </div>
             </div>
         `;
         sectionRight.style.display = 'flex';
         saveButtonContainer.style.display = "flex";
+        enableDragAndDrop();
         
     } else if (value === "streaming") {
         sectionRight.innerHTML = `
@@ -70,17 +109,120 @@ function togglePlaylistSongs(playlistElement) {
     }
 }
 
-document.querySelectorAll('input[name="tipo_transmissao"]').forEach(radio => {
-    radio.addEventListener('change', function () {
-        updateSectionRight(this.value);
+function updateLeftStats() {
+    const dropZone = document.querySelector('.inner-section-left .selected-playlist-info');
+    const addedPlaylists = dropZone.querySelectorAll('.playlist-item').length;
+    const addedSongs = dropZone.querySelectorAll('.song-item').length;
+
+    const statsContainer = document.querySelector('.inner-section-left .stats-container');
+    statsContainer.innerHTML = `
+        <div class="stat-item">
+            <span class="stat-value">${addedPlaylists}</span>
+            <span class="stat-label">Playlists</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">${addedSongs}</span>
+            <span class="stat-label">Músicas</span>
+        </div>
+    `;
+}
+
+function enableDragAndDrop() {
+    const draggableItems = document.querySelectorAll('.playlist-item, .song-item');
+    const dropZone = document.querySelector('.inner-section-left .selected-playlist-info');
+
+    draggableItems.forEach(item => {
+        item.setAttribute('draggable', true);
+
+        item.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', item.outerHTML);
+            e.dataTransfer.effectAllowed = 'move';
+            item.classList.add('dragging');
+        });
+
+        item.addEventListener('dragend', () => {
+            item.classList.remove('dragging');
+        });
     });
-});
 
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        dropZone.classList.add('drag-over');
+    });
 
-window.addEventListener('DOMContentLoaded', () => {
-    const selected = document.querySelector('input[name="tipo_transmissao"]:checked');
-    if (selected) {
-        updateSectionRight(selected.value);
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        const droppedHTML = e.dataTransfer.getData('text/plain');
+        const droppedElement = document.createElement('div');
+        droppedElement.innerHTML = droppedHTML;
+        const newItem = droppedElement.firstElementChild;
+
+        // Add a remove button to the item
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'remove-item-btn';
+        removeBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>'; // Changed to trash icon
+        removeBtn.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent triggering other click events (like togglePlaylistSongs)
+            removeItemFromPlaylist(this.parentElement);
+        });
+        newItem.appendChild(removeBtn);
+
+        // Avoid duplicates
+        const existingItems = Array.from(dropZone.querySelectorAll('.playlist-item, .song-item'));
+        const isDuplicate = existingItems.some(item => {
+            // Compare the content without the remove button
+            const itemContent = item.innerHTML.replace(/<button class="remove-item-btn">.*?<\/button>/g, '');
+            const newItemContent = newItem.innerHTML.replace(/<button class="remove-item-btn">.*?<\/button>/g, '');
+            return itemContent === newItemContent;
+        });
+        
+        if (!isDuplicate) {
+            // No longer auto-expanding playlists when added
+            dropZone.appendChild(newItem);
+            enableDragAndDrop(); // Re-enable drag-and-drop for the new item
+            updateLeftStats(); // Update the stats after adding a new item
+        }
+    });
+}
+
+// New function to remove items from the playlist
+function removeItemFromPlaylist(item) {
+    const dropZone = document.querySelector('.inner-section-left .selected-playlist-info');
+    dropZone.removeChild(item);
+    updateLeftStats();
+}
+
+// Change event listeners from radio buttons to menu items
+document.addEventListener('DOMContentLoaded', function() {
+    const menuItems = document.querySelectorAll('.menu-item');
+    
+    menuItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // Remove active class from all items
+            menuItems.forEach(i => i.classList.remove('active'));
+            
+            // Add active class to clicked item
+            this.classList.add('active');
+            
+            // Update content based on selected menu item
+            const value = this.getAttribute('data-value');
+            updateSectionRight(value);
+        });
+    });
+    
+    // Set default selected item (Local)
+    const defaultItem = document.querySelector('.menu-item[data-value="local"]');
+    if (defaultItem) {
+        defaultItem.classList.add('active');
+        updateSectionRight('local');
     }
+    enableDragAndDrop();
+    updateLeftStats();
 });
 

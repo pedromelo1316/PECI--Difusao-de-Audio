@@ -3,6 +3,8 @@
 {% block head %}
 <title>Edit Channels</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/edit_channels.css') }}">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endblock %}
 
@@ -59,38 +61,20 @@
             <div class="main-content">
                 <div class="dual-sectionCH">
                     <div class="section-leftCH">
-                        <h3>Tipo de transmissão</h3>
-                        <div class="column-box" id="columnBox" style="display: block;">
-                            <div class="column-list">
-                                <!-- Linha: Local -->
-                                <div class="column-item" onclick="toggleColumnDetails(this)">
-                                    <span>Local</span>
-                                    <div class="column-actions" onclick="event.stopPropagation()">
-                                        <!-- Substituir a bolinha manual por um input type="radio" -->
-                                        <input 
-                                            type="radio" 
-                                            name="tipo_transmissao" 
-                                            value="local" 
-                                            style="accent-color: #22cc3f;"
-                                        >
-                                    </div>
+                        <h3>Menu</h3>
+                        <div class="menu-box" id="menuBox">
+                            <nav class="menu-list">
+                                <div class="menu-item" data-value="local">
+                                    <i class="fa-solid fa-music"></i> 
+                                    <span>  Playlists</span>
+                                    <div class="menu-item-indicator"></div>
                                 </div>
-                                
-                                    
-                                <!-- Opção "Streaming" -->
-                                <div class="column-item" onclick="toggleColumnDetails(this)">
+                                <div class="menu-item" data-value="streaming">
+                                    <i class="fa-solid fa-podcast"></i>
                                     <span>Streaming</span>
-                                    <div class="column-actions" onclick="event.stopPropagation()">
-                                        <input 
-                                        type="radio" 
-                                        name="tipo_transmissao" 
-                                        value="streaming" 
-                                        style="accent-color: #22cc3f;"
-                                    >  
-                                       
-                                    </div>
+                                    <div class="menu-item-indicator"></div>
                                 </div>
-                            </div>
+                            </nav>
                         </div>
                     </div>
 
