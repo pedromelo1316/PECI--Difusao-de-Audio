@@ -1231,12 +1231,25 @@ def shutdown_handler(signum, frame):
     send_info(nodes, suspended=True)  # Envia mensagem de suspensão para os nós
     stop_event.set()  # Sinaliza para parar as threads
     thread.join()     # Aguarda a thread de detecção de nós terminar
-    # Aqui poderia-se terminar outros subprocessos, se necessário
     
+    print("Terminating processes...")
     for process in processes.values():
         if process:
-            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-            process.wait()
+            print(f"Terminating process {process.pid}")
+            try:
+                # Envia sinal de término para o grupo de processos
+                os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+                process.wait(timeout=5)
+            except ProcessLookupError:
+                print(f"Process {process.pid} already terminated.")
+            except subprocess.TimeoutExpired:
+                print(f"Process {process.pid} did not terminate in time. Forcing termination...")
+                try:
+                    os.killpg(os.getpgid(process.pid), signal.SIGKILL)  # Força o encerramento com SIGKILL
+                    process.wait(timeout=5)
+                    print(f"Process {process.pid} terminated.")
+                except subprocess.TimeoutExpired:
+                    print(f"Process {process.pid} could not be killed.")
     
     print("Processes terminated")
     sys.exit(0)  # Encerra o programa de forma limpa
