@@ -1,34 +1,4 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Variáveis para os botões de rádio dos canais
-    const channelRadioButtons = document.querySelectorAll('input[name="channel_id"]');
-
-    // Ouve o evento SocketIO quando o nome de um canal for alterado
-    socket.on('update_channel_names', function (data) {
-        // Atualiza a interface de seleção de canais
-        channelRadioButtons.forEach((radioButton) => {
-            // Verifica se o nome do canal corresponde ao nome antigo
-            if (radioButton.nextSibling.textContent.trim() === data.old_name) {
-                radioButton.nextSibling.textContent = data.new_name;  // Atualiza o nome
-            }
-        });
-
-        // Também é necessário atualizar os outros lugares onde o nome do canal aparece
-        const channelCards = document.querySelectorAll('.channel-card');
-        channelCards.forEach(card => {
-            const channelNameSpan = card.querySelector('.channel-name');
-            if (channelNameSpan && channelNameSpan.textContent.trim() === data.old_name) {
-                channelNameSpan.textContent = data.new_name;
-            }
-        });
-
-        // Adicionalmente, atualize a lista de zonas, se necessário
-        const zoneColumns = document.querySelectorAll('.column-item');
-        zoneColumns.forEach(column => {
-            if (column.dataset.column === data.old_name) {
-                column.querySelector("span").textContent = data.new_name;
-            }
-        });
-    });
 
     window.renameNode = function(nodeId) { // Torna a função global
         const newName = prompt("Digite o novo nome para o nó:");
@@ -41,7 +11,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 body: new URLSearchParams({ name: newName })
             })
             .then(response => {
-                if (response.owindow.toggleColumnDetailsk) {
+                if (response.ok) {
                     alert("Nó renomeado com sucesso!");
                     location.reload(); // Recarrega a página para refletir a mudança
                 } else {
@@ -55,22 +25,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const columnBox = document.getElementById("columnBox");
 
-    window.toggleColumnDetails = function(element) {
-        const columnItem = element.closest('.column-itemCH');
-        const details = columnItem.querySelector('.column-detailsCH');
-    
-        if (!details) return;
-    
-        const isHidden = details.style.display === 'none' || !details.style.display;
+    window.toggleColumnDetails = function(icon) {
+        const columnItem = icon.closest(".column-item");
+        const details = columnItem.querySelector(".column-details");
+        const isHidden = (details.style.display === 'none' || !details.style.display);
         details.style.display = isHidden ? 'block' : 'none';
     };
-    
-    //window.toggleColumnDetails = function(icon) {
-    //    const columnItem = icon.closest(".column-item");
-    //    const details = columnItem.querySelector(".column-details");
-    //    const isHidden = (details.style.display === 'none' || !details.style.display);
-    //    details.style.display = isHidden ? 'block' : 'none';
-    //};
 
     window.editColumnName = function(icon) {
         const columnItem = icon.closest(".column-item");
@@ -380,19 +340,9 @@ document.addEventListener("DOMContentLoaded", function () {
         const channelNameSpan = channelItem.querySelector("span");
         const currentName = channelNameSpan.textContent;
         const newName = prompt("Edit channel name:", currentName);
-    
+        
         if (newName && newName !== currentName) {
             channelNameSpan.textContent = newName;
-            
-            // Atualizar o nome em todas as zonas que contêm este canal
-            document.querySelectorAll(".zone-box").forEach(zone => {
-                zone.querySelectorAll(".column-item").forEach(item => {
-                    if (item.dataset.column === currentName) {
-                        item.querySelector("span").textContent = newName;
-                    }
-                });
-            });
-    
             fetch(`/update_channel_name`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -401,15 +351,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (!response.ok) {
                     console.error("Error updating channel name:", response.statusText);
                     alert("Error updating channel name.");
-                    channelNameSpan.textContent = currentName;  // Reverter se houver erro
+                    channelNameSpan.textContent = currentName;
                 }
             }).catch(error => {
                 console.error("Error updating channel name:", error);
-                channelNameSpan.textContent = currentName;  // Reverter se houver erro
+                channelNameSpan.textContent = currentName;
             });
         }
     };
-    
 
     // Recording variables
     let isRecording = false;
@@ -900,7 +849,23 @@ document.addEventListener("DOMContentLoaded", function () {
     updateSectionRight(checkedRadio ? checkedRadio.value : null);
 });
 
+window.toggleDeviceDetails = function(icon) {
+    const columnItem = icon.closest(".column-itemCH");
+    const details = columnItem.querySelector(".column-detailsCH");
 
+    if (details.style.display === "none" || !details.style.display) {
+        details.style.display = "block";
+    } else {
+        details.style.display = "none";
+    }
+};
 
-
-
+// Attach event listeners to chevron icons for devices
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".column-headerCH .fa-chevron-down").forEach(icon => {
+        icon.addEventListener("click", function (event) {
+            event.stopPropagation(); // Prevent triggering other click events
+            toggleDeviceDetails(this);
+        });
+    });
+});

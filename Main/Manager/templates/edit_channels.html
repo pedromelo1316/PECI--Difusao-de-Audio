@@ -3,6 +3,8 @@
 {% block head %}
 <title>Edit Channels</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/edit_channels.css') }}">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endblock %}
 
@@ -53,109 +55,44 @@
 
 <div class="containerCH">
     <div class="contentCH">
-        <br>
-        <br>
-        
-            <div class="dual-sectionCH">
-                <div class="section-leftCH">
-                    <h3>Tipo de transmissão</h3>
-                    <div class="column-box" id="columnBox" style="display: block;">
-                        <div class="column-list">
-                            <!-- Linha: Local -->
-                            <div class="column-item" onclick="toggleColumnDetails(this)">
-                                <span>Local</span>
-                                <div class="column-actions" onclick="event.stopPropagation()">
-                                    <!-- Substituir a bolinha manual por um input type="radio" -->
-                                    <input 
-                                        type="radio" 
-                                        name="tipo_transmissao" 
-                                        value="local" 
-                                        style="accent-color: #22cc3f;"
-                                    >
-                                </div>
-                            </div>
-                            
-                                
-                            <!-- Opção "Streaming" -->
-                            <div class="column-item" onclick="toggleColumnDetails(this)">
-                                <span>Streaming</span>
-                                <div class="column-actions" onclick="event.stopPropagation()">
-                                    <input 
-                                    type="radio" 
-                                    name="tipo_transmissao" 
-                                    value="streaming" 
-                                    style="accent-color: #22cc3f;"
-                                >  
-                                   
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            <div class="section-rightCH">
-                                <!-- NOVA estrutura interna dentro de section-right -->
-                                     <!-- Este será atualizado dinamicamente -->
+        <div class="page-layout">
 
 
-                <div id="sectionRightContent" class="inner-dual-section" style="display: none;">
-                <!-- O conteúdo será gerado dinamicamente via JS -->
-            </div>
-            
-                                    
-                
-            </div>
-            
-            
-            
-
-           <!-- <div class="section-rightCH">
-                <div class="section-header">
-                    <h3>Channels</h3>
-                    <div class="header-icons">
-                        <a href="http://localhost:5000/" class="settings-link">
-                            <i class="fa-solid fa-gear settings-icon"></i>
-                        </a>
-                        
-
-
-                        <a href="{{ url_for('edit_channels') }}" class="edit-link">
-                            <i class="fa-solid fa-pen settings-icon"></i>
-                        </a>
-                    </div>
-                </div>
-                <div class="column-box" id="channelsBox" style="display: block;">
-                    {% if channels|length < 1 %}
-                    <h1>No channels found</h1>
-                    {% else %}
-                    <div class="channels-layout">
-
-                        <div class="bottom-controls">
-                            
-                            <div class="channel-selection-panel">
-                                <h4>Audio Transmission</h4>
-                                <div class="channel-cards">
-                                    {% for channel in channels %}
-                                    <div class="channel-card" data-channel-id="{{ channel.id }}">
-                                        <div class="card-content">
-                                            <span class="channel-name">Channel {{ channel.id }}</span>
-                                            <div class="channel-status">
-                                                <span class="status-indicator"></span>
-                                                <span class="status-text">Inactive</span>
-                                            </div>
-                                        </div>
-                                        <button class="toggle-transmission-btn" onclick="toggleChannelTransmission('{{ channel.id }}')">
-                                            <i class="fa-solid fa-play"></i>
-                                        </button>
+            <div class="main-content">
+                <div class="dual-sectionCH">
+                    <div class="section-leftCH">
+                        <h3>Menu</h3>
+                        <div class="menu-box" id="menuBox">
+                            <nav class="menu-list">
+                                <div class="menu-item" data-value="local">
+                                    <div class="button-icon">
+                                        <i class="fa-solid fa-music"></i> 
                                     </div>
-                                    {% endfor %}
+                                    <div class="button-text" style="margin-left: 10px;">
+                                        <span>  Playlists</span>
+                                    </div>
+                                    <div class="menu-item-indicator"></div>
                                 </div>
-                            </div>
+                                <div class="menu-item" data-value="streaming">
+                                    <div class="button-icon">
+                                    <i class="fa-solid fa-podcast"></i>
                                 </div>
-                            </div>
+                                <div class="button-text" style="margin-left: 10px;">
+                                    <span>  Streaming</span>
+                                </div>
+                                    <div class="menu-item-indicator"></div>
+                                </div>
+                            </nav>
                         </div>
                     </div>
-                    {% endif %}-->
+
+                    <div class="section-rightCH">
+                        <!-- NOVA estrutura interna dentro de section-right -->
+                        <!-- Este será atualizado dinamicamente -->
+                        <div id="sectionRightContent" class="inner-dual-section" style="display: none;">
+                            <!-- O conteúdo será gerado dinamicamente via JS -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
