@@ -3,33 +3,38 @@ function updateSectionRight(value) {
     const saveButtonContainer = document.getElementById("saveButtonContainer");
 
     if (value === "local") {
-        if (value === "local") {
-            let playlistsHTML = '';
-            for (const [playlistName, songs] of Object.entries(playlistsData)) {
-                let songList = songs.map(song => `<li>${song}</li>`).join('');
-                playlistsHTML += `
-                    <div class="playlist-block">
-                        <h4>${playlistName}</h4>
-                        <ul>${songList}</ul>
+        let playlistsHTML = '';
+        for (const [playlistName, songs] of Object.entries(playlistsData)) {
+            const songCount = songs.length;
+            let songList = songs.map(song => `<div class="song-item"><i class="fa-solid fa-music"></i> ${song}</div>`).join('');
+            
+            playlistsHTML += `
+                <div class="playlist-item" onclick="togglePlaylistSongs(this)">
+                    <div class="playlist-name">
+                        ${playlistName} <span class="song-count">(${songCount})</span>
+                        <i class="fa-solid fa-chevron-down dropdown-icon"></i>
                     </div>
-                `;
-            }
-        
-            sectionRight.innerHTML = `
-                <div class="inner-section-left">
-                    <h4>Para reprodução</h4>
-                    <p>Seleciona uma playlist abaixo</p>
-                </div>
-                <div class="inner-section-right">
-                    <h3>Playlists Disponíveis</h3>
-                    <div class="playlist-container">
-                        ${playlistsHTML}
+                    <div class="playlist-songs" style="display: none;">
+                        ${songList}
                     </div>
                 </div>
             `;
-            sectionRight.style.display = 'flex';
-            saveButtonContainer.style.display = "flex";
         }
+    
+        sectionRight.innerHTML = `
+            <div class="inner-section-left">
+                <h4>Para reprodução</h4>
+                <p>Seleciona uma playlist abaixo</p>
+            </div>
+            <div class="inner-section-right">
+                <h3>Playlists Disponíveis</h3>
+                <div class="playlist-container">
+                    ${playlistsHTML}
+                </div>
+            </div>
+        `;
+        sectionRight.style.display = 'flex';
+        saveButtonContainer.style.display = "flex";
         
     } else if (value === "streaming") {
         sectionRight.innerHTML = `
@@ -48,6 +53,20 @@ function updateSectionRight(value) {
         sectionRight.className = "inner-dual-section empty-message";
         sectionRight.innerHTML = `<p style="text-align:center;">Selecione o tipo de reprodução que pretende</p>`;
         saveButtonContainer.style.display = "none";
+    }
+}
+
+function togglePlaylistSongs(playlistElement) {
+    const songsContainer = playlistElement.querySelector('.playlist-songs');
+    const icon = playlistElement.querySelector('.dropdown-icon');
+    if (songsContainer.style.display === 'none') {
+        songsContainer.style.display = 'block';
+        icon.classList.add('expanded');
+        playlistElement.classList.add('expanded');
+    } else {
+        songsContainer.style.display = 'none';
+        icon.classList.remove('expanded');
+        playlistElement.classList.remove('expanded');
     }
 }
 
