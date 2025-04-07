@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Edit Channels</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% endblock %}
+
+{% block body %}
+<header>
+    <div class="header-content">
+        <!-- Seta voltar -->
+        <div class="header-left">
+            <i class="fa-solid fa-backward-step" onclick="window.location.href='http://localhost:5001/'"></i>
+        </div>
+        
+        <!-- Centro com logo e título -->
+        <div class="header-center">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Site Logo" class="site-logo">
+            <h1>Edit Channel</h1>
+        </div>
+    </div>
+</header>
+
+<!-- Título "Channel" 
+<div style="text-align: left; margin-top: 40px; margin-bottom: 0px; padding-left: 100px;">
+    <h1>Channel {{ channel_id }}</h1>
+</div> -->
+
+<!-- Título do canal com modo de visualização e edição -->
+<div class="channel-title-container">
+    <!-- Visualização -->
+    <div id="channelTitleDisplay" class="channel-title">
+        <h1 id="channelTitle">Channel {{ channel_id }}</h1>
+        <i class="fa-solid fa-pen edit-icon" onclick="toggleChannelEdit()"></i>
+    </div>
+
+    <!-- Edição -->
+    <form id="channelEditForm" class="channel-edit-form" style="display: none;" onsubmit="event.preventDefault(); saveChannelName();">
+        <input type="hidden" name="channel_id" value="{{ channel_id }}">
+        <input type="text" id="channelNameInput" name="channel_name" value="Channel {{ channel_id }}" class="channel-edit-input" required>
+        <button type="submit" class="save-button">Guardar</button>
+    </form>
+
+    
+</div>
+
+
+
+
+<div class="containerCH">
+    <div class="contentCH">
+        <br>
+        <br>
+        
+            <div class="dual-sectionCH">
+                <div class="section-leftCH">
+                    <h3>Tipo de transmissão</h3>
+                    <div class="column-box" id="columnBox" style="display: block;">
+                        <div class="column-list">
+                            <!-- Linha: Local -->
+                            <div class="column-item" onclick="toggleColumnDetails(this)">
+                                <span>Local</span>
+                                <div class="column-actions" onclick="event.stopPropagation()">
+                                    <!-- Substituir a bolinha manual por um input type="radio" -->
+                                    <input 
+                                        type="radio" 
+                                        name="tipo_transmissao" 
+                                        value="local" 
+                                        style="accent-color: #22cc3f;"
+                                    >
+                                </div>
+                            </div>
+                            
+                                
+                            <!-- Opção "Streaming" -->
+                            <div class="column-item" onclick="toggleColumnDetails(this)">
+                                <span>Streaming</span>
+                                <div class="column-actions" onclick="event.stopPropagation()">
+                                    <input 
+                                    type="radio" 
+                                    name="tipo_transmissao" 
+                                    value="streaming" 
+                                    style="accent-color: #22cc3f;"
+                                >  
+                                   
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            <div class="section-rightCH">
+                                <!-- NOVA estrutura interna dentro de section-right -->
+                                     <!-- Este será atualizado dinamicamente -->
+
+
+                <div id="sectionRightContent" class="inner-dual-section" style="display: none;">
+                <!-- O conteúdo será gerado dinamicamente via JS -->
+            </div>
+            
+                                    
+                
+            </div>
+            
+            
+            
+
+           <!-- <div class="section-rightCH">
+                <div class="section-header">
+                    <h3>Channels</h3>
+                    <div class="header-icons">
+                        <a href="http://localhost:5000/" class="settings-link">
+                            <i class="fa-solid fa-gear settings-icon"></i>
+                        </a>
+                        
+
+
+                        <a href="{{ url_for('edit_channels') }}" class="edit-link">
+                            <i class="fa-solid fa-pen settings-icon"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="column-box" id="channelsBox" style="display: block;">
+                    {% if channels|length < 1 %}
+                    <h1>No channels found</h1>
+                    {% else %}
+                    <div class="channels-layout">
+
+                        <div class="bottom-controls">
+                            
+                            <div class="channel-selection-panel">
+                                <h4>Audio Transmission</h4>
+                                <div class="channel-cards">
+                                    {% for channel in channels %}
+                                    <div class="channel-card" data-channel-id="{{ channel.id }}">
+                                        <div class="card-content">
+                                            <span class="channel-name">Channel {{ channel.id }}</span>
+                                            <div class="channel-status">
+                                                <span class="status-indicator"></span>
+                                                <span class="status-text">Inactive</span>
+                                            </div>
+                                        </div>
+                                        <button class="toggle-transmission-btn" onclick="toggleChannelTransmission('{{ channel.id }}')">
+                                            <i class="fa-solid fa-play"></i>
+                                        </button>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}-->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="save-button-container" id="saveButtonContainer" style="display: none;">
+    <button type="submit" class="save-button">Save</button>
+</div>
+
+<footer>
+    <p style="text-align: center;">© 2025 Audio Manager</p>
+</footer>
+<script>
+    const playlistsData = {{ playlist_songs | tojson }};
+    const allSongs = {{ all_songs | tojson }};
+</script>
+
+<script src="{{ url_for('static', filename='js/edit_channels.js') }}"></script>
+
+{% endblock %}
+
+
+
+

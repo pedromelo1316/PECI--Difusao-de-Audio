@@ -321,6 +321,10 @@ def index():
     nodes = Nodes.query.order_by(Nodes.id).all()
     areas = Areas.query.order_by(Areas.id).all()
     channels = Channels.query.order_by(Channels.id).all()
+
+    playlists = get_playlists()  # Função que retorna as playlists
+    songs = get_songs()  # Função que retorna as músicas
+    return render_template('index.html', playlists=playlists, songs=songs)
     ####
     #playlist = db.session.query(Playlist).first()  # Substitua por lógica específica, se necessário
 
@@ -593,6 +597,9 @@ def add_column_to_zone():
     socketio.emit('reload_page', namespace='/')
     return jsonify({"success": "Coluna associada com sucesso!"}), 200
 
+
+
+
 # Rota para remover uma coluna de uma zona
 @app.route("/remove_column_from_zone", methods=["POST"])
 def remove_column_from_zone():
@@ -616,7 +623,46 @@ def remove_column_from_zone():
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/edit_channels')
+def edit_channels():
+    playlists = Playlist.query.all()
+    playlist_songs = {
+        playlist.name: [song.name for song in playlist.songs]
+        for playlist in playlists
+    }
+    all_songs = [song.name for song in Songs.query.all()]
     
+    return render_template(
+        'edit_channels.html',
+        playlists=playlist_songs.keys(),     # necessário para o Jinja
+        playlist_songs=playlist_songs,       # necessário para o JS
+        all_songs=all_songs                  # necessário para o JS
+    )
+
+#@app.route('/edit_channels', methods=['GET'])
+#def edit_channels():
+#    channel_id = request.args.get("channel_id", default=None, type=int)
+#    channels = Channels.query.order_by(Channels.id).all()
+
+#    playlists = Playlist.query.all()
+#    playlist_songs = {
+#        playlist.name: [song.name for song in playlist.songs]
+#        for playlist in playlists
+#    }
+
+#    all_songs = [song.name for song in Songs.query.all()]
+
+#    return render_template(
+#        "edit_channels.html",
+#        channels=channels,
+#        channel_id=channel_id,
+#        playlists=playlist_songs.keys(),
+#        playlist_songs=playlist_songs,
+#        all_songs=all_songs
+#    )
+
 # Rota para atualizar o tipo de canal
 @app.route('/update_channel/<int:channel_id>', methods=['POST'])
 def update_channel(channel_id):

@@ -532,3 +532,11 @@ function isValidURL(url) {
         '(\\#[-a-zA-Z0-9_]*)?$', 'i'); // fragmento
     return !!pattern.test(url);
 }
+
+
+function toggleChannelEdit() {
+    const display = document.getElementById('channelTitleDisplay');
+    const form = document.getElementById('channelEditForm');
+    display.style.display = (display.style.display === 'none') ? 'flex' : 'none';
+    form.style.display = (form.style.display === 'none') ? 'flex' : 'none';
+}

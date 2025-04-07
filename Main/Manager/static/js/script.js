@@ -754,3 +754,102 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
+
+function editChannelName() {
+    document.getElementById('channelTitleContainer').style.display = 'none';
+    document.getElementById('channelEditContainer').style.display = 'flex';
+}
+
+
+
+function toggleChannelEdit() {
+    document.getElementById("channelTitleDisplay").style.display = "none";
+    document.getElementById("channelEditForm").style.display = "flex";
+}
+
+function saveChannelName() {
+    const input = document.getElementById('channelNameInput');
+    const title = document.getElementById('channelTitle');
+    const newName = input.value.trim();
+
+    if (!newName) {
+        alert("O nome não pode estar vazio!");
+        return;
+    }
+
+    title.textContent = newName;
+    document.getElementById('channelTitleDisplay').style.display = 'flex';
+    document.getElementById('channelEditForm').style.display = 'none';
+
+    fetch(`/update_channel_name`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            channel_id: parseInt(document.querySelector('input[name="channel_id"]').value),
+            new_name: newName
+        })
+    }).then(response => {
+        if (!response.ok) {
+            alert("Erro ao atualizar o nome.");
+            input.value = title.textContent;
+        }
+    }).catch(error => {
+        alert("Erro ao contactar o servidor.");
+        console.error(error);
+    });
+}
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    const radios = document.querySelectorAll('input[name="tipo_transmissao"]');
+    const sectionRight = document.getElementById("sectionRightContent");
+    const saveButtonContainer = document.getElementById("saveButtonContainer");
+
+    function updateSectionRight(value) {
+        if (value === "local") {
+            sectionRight.innerHTML = `
+                <div class="inner-section-left">
+                    <h4>Lista de reprodução</h4>
+                    <p>Conteúdo da caixa da esquerda.</p>
+                </div>
+                <div class="inner-section-right">
+                    <h4>Playlists Disponíveis</h4>
+                    <p>Conteúdo da caixa da direita.</p>
+                </div>
+            `;
+            saveButtonContainer.style.display = "flex";
+        } else if (value === "streaming") {
+            sectionRight.innerHTML = `
+                <div class="inner-section-left">
+                    <h4>Streaming em reprodução</h4>
+                    <p>Conteúdo da caixa da esquerda.</p>
+                </div>
+                <div class="inner-section-right">
+                    <h4>Streaming Disponível</h4>
+                    <p>Conteúdo da caixa da direita.</p>
+                </div>
+            `;
+            saveButtonContainer.style.display = "flex";
+        } else {
+            sectionRight.className = "inner-dual-section empty-message";
+            sectionRight.innerHTML = `<p style="text-align:center;">Selecione o tipo de reprodução que pretende</p>`;
+            saveButtonContainer.style.display = "none";
+        }
+    }
+
+    radios.forEach(radio => {
+        radio.addEventListener("change", function () {
+            if (this.checked) {
+                updateSectionRight(this.value);
+            }
+        });
+    });
+
+    const checkedRadio = document.querySelector('input[name="tipo_transmissao"]:checked');
+    updateSectionRight(checkedRadio ? checkedRadio.value : null);
+});
+
+
+
+
+

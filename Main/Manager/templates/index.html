@@ -63,6 +63,7 @@
                     {% else %}
                     <div class="channels-layout">
 
+
                         <div class="bottom-controls">
                             <!-- Left: Audio Transmission -->
                             <div class="channel-selection-panel">
@@ -77,9 +78,14 @@
                                                 <span class="status-text">Inactive</span>
                                             </div>
                                         </div>
-                                        <button class="toggle-transmission-btn" onclick="toggleChannelTransmission({{ channel.id }})">
-                                            <i class="fa-solid fa-play"></i>
-                                        </button>
+                                        <div class="toggle-transmission-btn">
+                                            <a href="{{ url_for('edit_channels', channel_id=channel.id) }}" class="edit-link">
+                                                <i class="fa-solid fa-pen settings-icon"></i>
+                                            </a>
+                                            
+                                        </div>
+                                        
+                                        
                                     </div>
                                     {% endfor %}
                                 </div>
