@@ -267,7 +267,7 @@ header {
     border-radius: 8px;
     background-color: white;
     transition: background 0.3s;
-    width: 488px;
+    width: 100%;
 }
 
 .column-headerCH {

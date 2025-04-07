@@ -140,6 +140,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function showSelectForZone(buttonElement) {
         const container = document.createElement("div");
         container.classList.add("select-container");
+
         const select = document.createElement("select");
         select.classList.add("select-column");
 
@@ -154,33 +155,41 @@ document.addEventListener("DOMContentLoaded", function () {
                     option.textContent = "No speakers available";
                     select.appendChild(option);
                 } else {
-                    nodes.forEach((node, index) => {
+                    nodes.forEach(node => {
                         const option = document.createElement("option");
                         option.value = node.name;
                         option.textContent = node.name;
                         select.appendChild(option);
                     });
-                    setTimeout(() => {
-                        select.focus();
-                        select.click(); // Automatically open the dropdown
-                    }, 100);
                 }
             })
             .catch(error => console.error("Error fetching nodes:", error));
+
+        const confirmButton = document.createElement("button");
+        confirmButton.textContent = "Confirm";
+        confirmButton.classList.add("confirm-button");
+        confirmButton.addEventListener("click", function (event) {
+            event.preventDefault();
+            const selectedNode = select.value;
+            if (selectedNode) {
+                addZoneColumn(select, buttonElement);
+            } else {
+                alert("Please select a node.");
+            }
+        });
+
         const cancelButton = document.createElement("button");
+        cancelButton.textContent = "Cancel";
         cancelButton.classList.add("cancel-button");
-        cancelButton.textContent = "X";
         cancelButton.addEventListener("click", function (event) {
             event.preventDefault();
             container.replaceWith(buttonElement);
         });
+
         container.appendChild(select);
+        container.appendChild(confirmButton);
         container.appendChild(cancelButton);
         buttonElement.replaceWith(container);
-        select.addEventListener("change", function (event) {
-            event.preventDefault();
-            addZoneColumn(select, buttonElement);
-        });
     }
 
     function addZoneColumn(selectElement, buttonElement) {

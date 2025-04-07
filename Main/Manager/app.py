@@ -126,7 +126,9 @@ def start_ffmpeg_process(channel, source, _type):
         # Transmissão local utilizando um arquivo de playlist
         playlist_path = f"Playlists/{source}.txt"
         if not os.path.exists(playlist_path):
-            print(f"Playlist {playlist_path} not found")
+            with open(playlist_path, 'w') as f:
+                f.write("ffconcat version 1.0")
+            f.close()
             return None
         
         cmd = [
@@ -336,20 +338,22 @@ class Streaming(db.Model):
 def create_default_channels():
     global processes, NUM_CHANNELS
     processes = {}
+    
     # Verifica se o número de canais no banco é diferente do esperado
     if db.session.query(Channels).count() != NUM_CHANNELS:
         db.session.query(Channels).delete()
         db.session.commit()
         # Cria os canais padrão com tipo LOCAL e fonte "default"
         for i in range(1, NUM_CHANNELS+1):
+            source=f"source_local{i}"
             new_channel = Channels(
                 name=f"Channel {i}",
                 type=ChannelType.LOCAL,
-                source="default"
+                source=source
             )
             db.session.add(new_channel)
             db.session.commit()
-            processes[new_channel.id] = start_ffmpeg_process(new_channel.id, "default", ChannelType.LOCAL)
+            processes[new_channel.id] = start_ffmpeg_process(new_channel.id, source, ChannelType.LOCAL)
             print(f"{new_channel.name} started")
 
     else:
