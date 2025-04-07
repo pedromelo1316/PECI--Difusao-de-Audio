@@ -11,10 +11,20 @@
     <div class="header-content" style="flex-direction: column; align-items: center;">
         <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Site Logo" class="site-logo">
         <h1>Audio Manager</h1>
+        <div class="d-flex gap-2">
+            <a href="/import_conf" type="button" class="btn btn-outline-secondary rounded-pill shadow-sm px-2 py-1 text-small">
+              <i class="bi bi-upload me-1"></i>Import Config
+            </a>
+            <a href="/export_conf" type="button" class="btn btn-outline-secondary rounded-pill shadow-sm px-2 py-1 small">
+                <i class="bi bi-download me-1"></i>Export Config
+            </a>
+        </div>
+
     </div>
 </header>
 
-<div class="container">
+<div class="container"> 
+    
     <div class="content">
         <br>
         <br>
