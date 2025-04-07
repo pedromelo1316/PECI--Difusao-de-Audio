@@ -183,10 +183,52 @@ header {
 
 .header-content {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    font-size: 110%;
+    position: relative;
 }
+
+
+.header-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-left {
+    position: absolute;
+    left: 20px;
+    top: 40%;
+    transform: translateY(10%);
+}
+
+
+
+.header-left .fa-backward-step {
+    font-size: 24px;
+    color: #333;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.header-left .fa-backward-step:hover {
+    color: #22cc3f;
+}
+
+.header-left .fa-arrow-left {
+    font-size: 28px; /* Ou o tamanho que preferires */
+    color: #333;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.header-left .fa-arrow-left:hover {
+    color: #22cc3f;
+}
+
+
+
 
 .title {
     flex-grow: 1;

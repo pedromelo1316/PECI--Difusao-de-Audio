@@ -322,13 +322,15 @@ def index():
     areas = Areas.query.order_by(Areas.id).all()
     channels = Channels.query.order_by(Channels.id).all()
 
-    playlists = get_playlists()  # Função que retorna as playlists
-    songs = get_songs()  # Função que retorna as músicas
-    return render_template('index.html', playlists=playlists, songs=songs)
+    #
+    # playlists = get_playlists()  # Função que retorna as playlists
+    #songs = get_songs()  # Função que retorna as músicas
+    #return render_template('index.html', playlists=playlists, songs=songs)
     ####
     #playlist = db.session.query(Playlist).first()  # Substitua por lógica específica, se necessário
 
     ###
+    
     return render_template("index.html", nodes=nodes, areas=areas, channels=channels)
 # Rota para deleção de um nó específico
 @app.route('/delete/<int:id>')

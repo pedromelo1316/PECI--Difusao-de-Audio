@@ -9,12 +9,19 @@
 {% block body %}
 <header>
     <div class="header-content">
-        <div class="title">
-            <h1>Audio Manager</h1>
-            <button onclick="renamePlaylist('{{ playlist_name }}')" class="edit-button"><i class="fas fa-pen"></i></button>
-        </div>
+      <div class="header-left">
+        <a href="{{ url_for('index') }}" class="settings-link">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+      </div>
+      <div class="header-center">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Site Logo" class="site-logo">
+        <h1>Audio Manager</h1>
+      </div>
     </div>
 </header>
+
+
 
 <div class="container">
     <div class="content">
