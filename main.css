@@ -1,0 +1,16 @@
+body{
+    margin: 0;
+    font-family: sans-serif;
+
+    table, th, td {
+        border-collapse: collapse; 
+        border: 2px solid rgb(47, 241, 134);
+    }
+    
+}
+
+.playlist-actions {
+    display: inline-flex;
+    gap: 8px;
+    vertical-align: middle;
+}

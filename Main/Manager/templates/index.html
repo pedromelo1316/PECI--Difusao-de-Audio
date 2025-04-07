@@ -1,120 +1,182 @@
 {% extends 'base.html' %}
 
 {% block head %}
-<title>Gestor</title>
+<title>Audio Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endblock %}
 
 {% block body %}
 <header>
-    <div class="header-content">
-        <div class="title">
-            <h1>Gestor de Áudio</h1>
-        </div>
+    <div class="header-content" style="flex-direction: column; align-items: center;">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Site Logo" class="site-logo">
+        <h1>Audio Manager</h1>
     </div>
 </header>
 
 <div class="container">
     <div class="content">
-        <h2>Conexões Wi-Fi</h2>
-    </div>
-</div>
+        <br>
+        <br>
+        <div class="dual-section">
+            <div class="section-left">
+                <h3>Devices</h3>
+                <div class="column-box" id="columnBox" style="display: block;">
+                    {% if nodes|length < 1 %}
+                    <h1>No node found</h1>
+                    {% else %}
+                    <div class="column-list">
+                        {% for node in nodes %}
+                        <div class="column-item" onclick="toggleColumnDetails(this)">
+                            <span>{{ node.name }}</span>
+                            <div class="column-actions" onclick="event.stopPropagation()">
+                                <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
 
-<div class="container centered-container">
-    <div class="content">
-        <div class="column-box" id="columnBox" style="display: block;">
-            
-            {% if nodes|length < 1 %}
-            <h1>Nenhum nó encontrado</h1>
-            {% else %}
-            <div class="column-list" >
-                {% for node in nodes %}
-                <div class="column-item" onclick="toggleColumnDetails(this)">
-                    <span>{{ node.name }}</span>
-                    <div class="column-actions" onclick="event.stopPropagation()">
-                        <i class="fa-solid fa-chevron-down" onclick="toggleColumnDetails(this)"></i>
-                        <a href="/delete/{{ node.id }}"><i class="fa-solid fa-trash" style="color: black;"></i></a>
-                    </div>  
-                    <script>
-                    function toggleColumnDetails(icon) {
-                        const columnItem = icon.closest('.column-item');
-                        const details = columnItem.querySelector('.column-details');
-                        const isHidden = (details.style.display === 'none' || !details.style.display);
-                        details.style.display = isHidden ? 'block' : 'none';
-                    }
-                    document.addEventListener('DOMContentLoaded', () => {
-                      document.querySelectorAll('.column-item').forEach(item => {
-                        item.addEventListener('click', e => {
-                          if (!e.target.closest('.column-actions')) {
-                            toggleColumnDetails(item.querySelector('.fa-chevron-down'));
-                          }
-                        });
-                      });
-                    });
-                    </script>
+                                <i class="fa-solid fa-pen"  onclick="event.stopPropagation(); renameNode('{{ node.id }}')"></i>
 
-                    <div class="column-details" style="display: none;">
-                        <p>IP: {{ node.ip }}</p>
-                        <p>MAC: {{ node.mac }}</p>
+
+                                <a href="/delete/{{ node.id }}"><i class="fa-solid fa-trash" style="color: black;"></i></a>
+                            </div>
+                            <div class="column-details" style="display: none;">
+                                <p>IP: {{ node.ip }}</p>
+                                <p>MAC: {{ node.mac }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
+                    {% endif %}
                 </div>
-                {% endfor %}
             </div>
-            {% endif %}
+
+            <div class="section-right">
+                <div class="section-header">
+                    <h3>Channels</h3>
+
+                    <a href="{{ url_for('secundaria') }}" class="settings-link">
+                        <i class="fa-solid fa-gear settings-icon"></i>
+                    </a>
+                    
+                </div>
+                <div class="column-box" id="channelsBox" style="display: block;">
+                    {% if channels|length < 1 %}
+                    <h1>No channels found</h1>
+                    {% else %}
+                    <div class="channels-layout">
+
+
+                        <div class="bottom-controls">
+                            <!-- Left: Audio Transmission -->
+                            <div class="channel-selection-panel">
+                                <h4>Audio Transmission</h4>
+                                <div class="channel-cards">
+                                    {% for channel in channels %}
+                                    <div class="channel-card" data-channel-id="{{ channel.id }}">
+                                        <div class="card-content">
+                                            <span class="channel-name">Channel {{ channel.id }}</span>
+                                            <div class="channel-status">
+                                                <span class="status-indicator"></span>
+                                                <span class="status-text">Inactive</span>
+                                            </div>
+                                        </div>
+                                        <div class="toggle-transmission-btn">
+                                            <a href="{{ url_for('edit_channels', channel_id=channel.id) }}" class="edit-link">
+                                                <i class="fa-solid fa-pen settings-icon"></i>
+                                            </a>
+                                            
+                                        </div>
+                                        
+                                        
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            
+                                </div>
+                            </div>
+                        </div>
+                        <!--<div class="column-list">
+                            {% for channel in channels %}
+                            <div class="column-item channel-item" data-channel-id="{{ channel.id }}" onclick="toggleChannelOptions(this)">
+                                <span>Channel {{ channel.id }}</span>
+                                <div class="column-actions" onclick="event.stopPropagation()">
+                                    <i class="fa-solid fa-pen tooltip-icon" onclick="editChannelName(this, {{ channel.id }})">
+                                        <span class="tooltip-text">Edit Channel Name</span>
+                                    </i>
+                                    <i class="fa-solid fa-gear tooltip-icon" onclick="configureProgramming({{ channel.id }})"></i>
+                                </div>
+                                
+                                <div class="channel-options" style="display: none;">
+                                    <button onclick="interruptWithMicrophone({{ channel.id }})" class="interrupt-button">Interrupt with Microphone</button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>-->
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="container">
     <div class="content">
-        <h2>As minhas zonas</h2>
+        <br>
+        <br>
         <div class="zone-container">
             {% if areas|length < 1 %}
-            <h1>No Areas</h1>
+            <h1>Please add zones</h1>
             {% else %}
             {% for area in areas %}
             <div class="zone-box">
                 <div class="zone-header">
                     <h3>{{ area.name }}</h3>
-                    <button onclick="removeArea('{{ area.name }}')"><i class="fa-solid fa-trash delete-zone"></i></button>
+                    <button style="background-color: #f5f2f2; border: none; border-radius: 4px; padding: 12px 23px; font-size: 16px; cursor: pointer; color: black;"
+                        onclick="removeArea('{{ area.name }}')">
+                        <i class="fa-solid fa-trash delete-zone" style="size: 4px;"></i>
+                    </button>
                     <form id="remove-area-form-{{ area.name }}" action="/remove_area" method="POST" style="display: none;">
                         <input type="hidden" name="name" value="{{ area.name }}">
-                    </form>                    
+                    </form>
                 </div>
                 <div class="zone-content">
-                    <div class="column-section">
-                        <h4>Colunas</h4>
-                        <div class="column-list">
-                         
+                    <!-- Row Container to group Speakers and Channels side by side -->
+                    <div class="row-container">
+                        <!-- Speaker Section -->
+                        <div class="column-section">
+                            <h4>Speakers</h4>
                             <div class="column-list">
-                                {% for node in nodes if node.area_id == area.id %}
-                                <div class="column-item" data-column="{{ node.name }}" data-zone="{{ area.name }}">
-                                    <span>{{ node.name }}</span>
-                                    <button class="delete-column-button" onclick="removeZoneColumn(this.closest('.column-item'))">🗑️</button>
-                                </div>
-                                {% endfor %}
-                                <div class="add-column-button" onclick="showSelectForZone(this)">
-                                    <span>+ Coluna</span>
+                                <div class="column-list">
+                                    {% for node in nodes if node.area_id == area.id %}
+                                    <div class="column-item" data-column="{{ node.name }}" data-zone="{{ area.name }}">
+                                        <span>{{ node.name }}</span>
+                                        <button class="delete-column-button" onclick="removeZoneColumn(this.closest('.column-item'))">
+                                            <i class="fa-solid fa-trash" style="color: black;"></i>
+                                        </button>
+                                    </div>
+                                    {% endfor %}
+                                    <div class="add-column-button" onclick="showSelectForZone(this)">
+                                        <span>+ Speaker</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="channel-volume">
+                        
+                        <!-- Channel Section -->
                         <div class="channel-section">
-                            <h4>Canal</h4>
+                            <h4>Channel</h4>
                             <div class="channel-options">
                                 <form action="/update_area_channel" method="POST" id="channelForm">
                                     <input type="hidden" name="name" value="{{ area.name }}">
-                                    
                                     <label>
                                         <input type="radio" name="channel_id" value="1"
                                             {% if area.channel_id == 1 %} checked {% endif %} style="accent-color: #22cc3f;"> Canal 1
                                     </label>
-                                    
                                     <label>
                                         <input type="radio" name="channel_id" value="2"
                                             {% if area.channel_id == 2 %} checked {% endif %} style="accent-color: #22cc3f;"> Canal 2
                                     </label>
-                                    
                                     <label>
                                         <input type="radio" name="channel_id" value="3"
                                             {% if area.channel_id == 3 %} checked {% endif %} style="accent-color: #22cc3f;"> Canal 3
@@ -122,413 +184,37 @@
                                 </form>
                             </div>
                         </div>
-                        <!-- filepath: /home/pedro-melo/Documents/UA/3ano/PECI/PECI--Difusao-de-Audio/Main/Manager/templates/index.html -->
-                        <div class="volume-section">
-                            <h4>Volume</h4>
-                            <form action="/update_volume" method="POST" class="volume-form">
-                                <input type="hidden" name="name" value="{{ area.name }}">
-                                <input type="range" name="volume" min="0" max="100" value="{{ area.volume }}" class="volume-slider">
-                                <p class="volume-label">Volume: {{ area.volume }}%</p>
-                            </form>
-                        </div>
+                    </div>
+                    
+                    <!-- Volume Section - Full Width at Bottom -->
+                    <div class="volume-section">
+                        <h4>Volume</h4>
+                        <form action="/update_volume" method="POST" class="volume-form">
+                            <input type="hidden" name="name" value="{{ area.name }}">
+                            <input type="range" name="volume" min="0" max="100" value="{{ area.volume }}" class="volume-slider">
+                            <p class="volume-label">Volume: {{ area.volume }}%</p>
+                        </form>
                     </div>
                 </div>
             </div>
             {% endfor %}
             {% endif %}
-            <div class="zone-box add-zone" id="addAreaButton" onclick="addArea() ">
+            <div class="zone-box add-zone" id="addAreaButton" onclick="addArea()">
                 <span>+</span>
             </div>
-            
         </div>
     </div>
 </div>
-
-
-<div class="container">
-    <div class="content">
-        <h2>Os meus Canais</h2>
-    </div>
-</div>
-
-<div class="container centered-container">
-    <div class="content">
-        <div class="channels-content">
-            {% if channels|length < 1 %}
-            <h1>No Channels</h1>
-            {% else %}
-            
-            <div class="channels-container">
-                {% for channel in channels %}
-                <div class="channel-group">
-                    <label for="channel{{ channel.id }}">Canal {{ channel.id }}:</label>
-                    <div class="channel-options">
-                        <form id="form_{{ channel.id }}" action="/update_channel/{{ channel.id }}" method="POST">
-                            <label>
-                                <input type="radio" name="channel_type" value="LOCAL"
-                                    {% if channel.type.value == 'LOCAL' %} checked {% endif %}
-                                    style="accent-color: #22cc3f;"> Local
-                            </label>
-                            <label>
-                                <input type="radio" name="channel_type" value="STREAMING"
-                                    {% if channel.type.value == 'STREAMING' %} checked {% endif %}
-                                    style="accent-color: #22cc3f;"> Transmissão
-                            </label>
-                            <label>
-                                <input type="radio" name="channel_type" value="VOICE"
-                                    {% if channel.type.value == 'VOICE' %} checked {% endif %}
-                                    style="accent-color: #22cc3f;"> Voz
-                            </label>
-                        </form>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            
-            {% endif %}
-        </div>
-    </div>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-<script>
-
-    const socket = io.connect('http://' + document.domain + ':' + location.port);
-        
-    // Escuta o sinal para recarregar
-    socket.on('reload_page', function() {
-        console.log('Recarregando página...');
-        location.reload();  // Recarrega a página
-    });
-    //to change the volume of the area
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('.volume-form').forEach(form => {
-            const slider = form.querySelector('.volume-slider');
-            const label = form.querySelector('.volume-label');
-    
-            // Atualiza o label em tempo real
-            slider.addEventListener('input', function() {
-                label.textContent = `Volume: ${this.value}%`;
-            });
-    
-            // Envia a atualização para o servidor quando o valor muda
-            slider.addEventListener('change', function() {
-                const volume = this.value;
-                const areaName = form.querySelector('input[name="name"]').value;
-    
-                fetch('/update_volume', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `name=${encodeURIComponent(areaName)}&volume=${encodeURIComponent(volume)}`
-                })
-                .then(response => console.log(`Volume updated to ${volume}`))
-                .catch(error => console.error('Erro ao atualizar volume:', error));
-            });
-        });
-    });
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    //to change the channel type
-    document.querySelectorAll('input[type="radio"]').forEach((radio) => {
-        radio.addEventListener('change', function() {
-            const channelId = this.closest('form').id.split('_')[1]; // Extract channel ID from form ID
-            const form = document.getElementById(`form_${channelId}`);
-            
-            // Auto-submit the form
-            form.submit();
-        });
-    });
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //to change the channel of the area
-    document.querySelectorAll('input[type="radio"]').forEach((radio) => {
-        radio.addEventListener('change', function() {
-            // Get the closest form and submit it
-            const form = this.closest('form');
-            form.submit();
-        });
-    });
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-function addArea() {
-    const areaName = prompt("Nome da nova área:");
-
-    if (!areaName) {
-        alert("O nome da área é obrigatório!");
-        return;
-    }
-
-    fetch('/add_area', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name: areaName }) 
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(data => { throw new Error(data.error); });
-        }
-        return response.json();
-    })
-    .then(data => {
-        alert("Área adicionada com sucesso!");
-        location.reload();
-    })
-    .catch(error => {
-        alert("Erro: " + error.message);
-    });
-}
-
-
-document.addEventListener("DOMContentLoaded", function () {
-    // Lista de colunas já associadas a zonas
-    let usedZoneColumns = [];
-
-    // Adicionar funcionalidade ao botão "+ Coluna"
-    document.querySelectorAll(".add-column-button").forEach(button => {
-        button.addEventListener("click", function () {
-            showSelectForZone(this);
-        });
-    });
-
-    // Adicionar funcionalidade de remoção às colunas existentes
-    document.querySelectorAll(".delete-column-button").forEach(btn => {
-        btn.addEventListener("click", function (event) {
-            event.stopPropagation(); // Evita ativação da seleção ao clicar no ícone de remoção
-            const columnItem = this.closest(".column-item");
-            removeZoneColumn(columnItem);
-        });
-    });
-
-    // Controle de volume
-    document.querySelectorAll("input[type='range']").forEach(slider => {
-        slider.addEventListener("input", function () {
-            this.nextElementSibling.textContent = `Volume: ${this.value}%`;
-        });
-    });
-
-    
-    // Função para exibir o seletor de colunas Wi-Fi ao clicar em "+ Coluna"
-    function showSelectForZone(buttonElement) {
-        const container = document.createElement("div");
-        container.classList.add("select-container");
-
-        const select = document.createElement("select");
-        select.classList.add("select-column");
-
-        const defaultOption = document.createElement("option");
-        defaultOption.value = "";
-        defaultOption.disabled = true;
-        defaultOption.selected = true;
-        defaultOption.textContent = "Selecione uma coluna";
-        select.appendChild(defaultOption);
-
-        // Fetch available nodes from Flask API
-        fetch("/get_free_nodes")
-            .then(response => response.json())
-            .then(nodes => {
-                nodes.forEach(node => {
-                    const option = document.createElement("option");
-                    option.value = node.name;
-                    option.textContent = node.name;
-                    select.appendChild(option);
-                });
-            })
-            .catch(error => console.error("Error fetching nodes:", error));
-
-        // Criar botão de cancelamento
-        const cancelButton = document.createElement("button");
-        cancelButton.classList.add("cancel-button");
-        cancelButton.textContent = "X";
-        cancelButton.addEventListener("click", function () {
-            container.replaceWith(buttonElement); // Reverte ao botão original
-        });
-
-        // Adicionar elementos ao container
-        container.appendChild(select);
-        container.appendChild(cancelButton);
-
-        // Substituir o botão "+" pelo dropdown
-        buttonElement.replaceWith(container);
-
-        // Ao selecionar uma coluna, adicioná-la à zona
-        select.addEventListener("change", function () {
-            addZoneColumn(select, buttonElement);
-        });
-    }
-
-    // Função para adicionar coluna à zona
-    function addZoneColumn(selectElement, buttonElement) {
-        const selectedColumn = selectElement.value;
-        if (!selectedColumn) return;
-
-        const zoneName = selectElement.closest(".zone-box").querySelector("h3").textContent.trim();
-
-        // Criar elemento visual da coluna na zona
-        const columnItem = document.createElement("div");
-        columnItem.classList.add("column-item");
-        columnItem.innerHTML = `
-            <span>${selectedColumn}</span>
-            <button class="delete-column-button">🗑️</button>
-        `;
-
-        columnItem.dataset.column = selectedColumn;
-        columnItem.dataset.zone = zoneName;
-
-        // Adicionar evento para remover coluna
-        columnItem.querySelector(".delete-column-button").addEventListener("click", function () {
-            removeZoneColumn(columnItem);
-        });
-
-        // Adicionar a nova coluna ao container e restaurar botão "+"
-        const zoneContainer = selectElement.closest(".column-list");
-        zoneContainer.insertBefore(columnItem, selectElement.parentElement);
-        selectElement.parentElement.replaceWith(buttonElement);
-
-        // Marcar coluna como usada
-        usedZoneColumns.push(selectedColumn);
-
-        // Enviar para o backend
-        fetch("/add_column_to_zone", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ zone_name: zoneName, column_name: selectedColumn })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                alert("Erro: " + data.error);
-                columnItem.remove(); // Se falhar, remove do frontend também
-                usedZoneColumns = usedZoneColumns.filter(name => name !== selectedColumn);
-            }
-        })
-        .catch(error => console.error("Erro ao adicionar coluna:", error));
-    }
-
-
-     // Função para remover uma coluna da zona
-     function removeZoneColumn(columnElement) {
-        const columnName = columnElement.dataset.column;
-        const zoneName = columnElement.dataset.zone;
-
-        console.log("Removendo coluna:", columnName, "da zona:", zoneName);  // Log para verificar os dados
-
-        fetch("/remove_column_from_zone", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ zone_name: zoneName, column_name: columnName })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                console.log("Coluna removida com sucesso!");
-                columnElement.remove();  // Remover do frontend
-            } else {
-                console.error("Erro ao remover coluna:", data.error);
-                alert("Erro: " + data.error);
-            }
-        })
-        .catch(error => console.error("Erro ao remover coluna:", error));
-    }
-
-
-
-});
-
-
-
-
-document.getElementById("addAreaButton").addEventListener("click", addArea);
-
-
-    document.addEventListener("DOMContentLoaded", function () {
-        const columnBox = document.getElementById("columnBox");
-    
-        window.toggleColumnDetails = function(icon) {
-            const columnItem = icon.closest(".column-item");
-            const details = columnItem.querySelector(".column-details");
-            const isHidden = (details.style.display === 'none' || !details.style.display);
-            details.style.display = isHidden ? 'block' : 'none';
-        };
-    
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.column-item').forEach(item => {
-              item.addEventListener('click', e => {
-                if (!e.target.closest('.column-actions')) {
-                  toggleColumnDetails(item.querySelector('.fa-chevron-down'));
-                }
-              });
-            });
-        });
-    
-        // Ensure only one channel can be selected per zone
-        window.selectSingleChannel = function(checkbox) {
-            const checkboxes = document.querySelectorAll(`input[name="${checkbox.name}"]`);
-            checkboxes.forEach((cb) => {
-                if (cb !== checkbox) cb.checked = false;
-            });
-        };
-    
-        // Função para remover uma área
-        window.removeArea = function(areaName) {
-            const form = document.getElementById(`remove-area-form-${areaName}`);
-            form.submit();
-        };
-    
-        // Função para mostrar o modal de adição de área
-        window.showAddAreaModal = function() {
-            document.getElementById("addAreaModal").style.display = "block";
-        };
-    
-        // Função para fechar o modal de adição de área
-        window.closeAddAreaModal = function() {
-            document.getElementById("addAreaModal").style.display = "none";
-        };
-    
-        // Função para adicionar uma nova área
-        window.addArea = function() {
-            const areaName = document.getElementById("area_name").value;
-            const channelId = document.getElementById("channel_id").value;
-            const volume = document.getElementById("volume").value;
-            const nodeIds = Array.from(document.getElementById("node_ids").selectedOptions).map(option => option.value);
-    
-            if (!areaName || !channelId || !volume) {
-                alert("All fields are required!");
-                return;
-            }
-    
-            fetch('/add_area', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ name: areaName, channel_id: channelId, volume: volume, node_ids: nodeIds })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert("Área adicionada com sucesso!");
-                    location.reload(); // Atualiza a página para mostrar a nova área
-                } else {
-                    alert("Erro: " + data.error);
-                }
-            })
-            .catch(error => console.error("Erro ao adicionar área:", error));
-        };
-    });
-    </script>
+<br>
+<br>
+<footer>
+    <p style="text-align: center;">© 2025 Audio Manager</p>
+</footer>
 {% endblock %}
+
+
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+{% endblock %}
+

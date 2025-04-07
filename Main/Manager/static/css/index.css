@@ -1,0 +1,494 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #fff;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+#modal-title {
+    visibility: visible;
+    display: block;
+}
+
+.local-box {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 800px;
+    margin-top: 20px;
+}
+
+.stream-box {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 800px;
+    margin-top: 20px;
+}
+
+.voice-box {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 800px;
+    margin-top: 20px;
+}
+
+.grid-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.playlists-section, .songs-section {
+    width: 45%;
+}
+
+.streaming-section {
+    width: 100%;
+}
+
+
+
+
+
+.playlists-list, .songs-list, .streaming-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.playlist-item, .song-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    background-color: #fff;
+    transition: background-color 0.3s;
+}
+
+.song-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    background-color: #fff;
+    transition: background-color 0.3s;
+}
+
+.streaming-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    transition: background-color 0.3s;
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+    height: 65px;
+    margin-bottom: 10px;
+}
+
+.streaming-item a {
+    flex-grow: 1;
+    text-align: center;
+    word-break: break-word;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 90%;
+    height: 100%;
+    box-sizing: border-box;
+    color: #504f44; /* Cor do link alterada */
+    text-decoration: none; /* Remove o sublinhado */
+    margin-right: 15px; /* Afasta mais dos ícones */
+    margin-left: -10px; /* Move mais para a esquerda */
+}
+
+.streaming-item strong {
+    flex-shrink: 0;
+    width: 180px;
+    text-align: left;
+    padding-left: 10px;
+}
+
+.streaming-item .actions {
+    display: flex;
+    gap: 5px; /* Reduz o espaço entre os ícones */
+    align-items: center;
+}
+
+.streaming-item .actions i {
+    cursor: pointer;
+    font-size: 18px;
+    color: #666;
+}
+
+.streaming-item .actions i:hover {
+    color: #333;
+}
+
+.add-streaming {
+    cursor: pointer;
+    color: #22cc3f;
+    font-weight: bold;
+    width: 100%;
+    text-align: center;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+    height: 40px;
+    
+}
+
+.add-streaming:hover, .streaming-item:hover {
+    background-color: #f0f0f0;
+}
+
+.playlist-item:hover, .song-item:hover {
+    background-color: #f9f9f9;
+}
+
+.add-playlist, .add-song, .add-streaming {
+    cursor: pointer;
+    color: #22cc3f;
+    font-weight: bold;
+    justify-content: center;
+    align-items: center;
+
+}
+
+.fa-pen, .fa-trash {
+    cursor: pointer;
+}
+
+header {
+    background: white;
+    padding: 20px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.title {
+    text-align: center;
+}
+
+h1 {
+    margin: 0;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: normal;
+    color: #555;
+}
+
+h3 {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    max-width: 90%;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    color: black;
+    text-align: center;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Efeito de fundo escuro ao abrir o modal */
+.modal::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: -1;
+}
+
+/* Animação de fade-in */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, -55%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+/* Input dentro do modal */
+.modal input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: #f9f9f9;
+    color: black;
+    outline: none;
+    transition: border 0.3s;
+}
+
+.modal input:focus {
+    border-color: #00aaff;
+}
+
+/* Botões */
+.modal-buttons {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.modal-buttons button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.modal-buttons .cancel {
+    background-color: #ddd;
+    color: black;
+}
+
+.modal-buttons .confirm {
+    background-color: #22cc3f;
+    color: white;
+}
+
+.modal-buttons .cancel:hover {
+    background-color: #bbb;
+}
+
+.modal-buttons .confirm:hover {
+    background-color: #1a8c2b;
+}
+
+.modal-buttons .confirm:disabled {
+    background-color: #888;
+    cursor: not-allowed;
+}
+
+
+.close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover, .close:focus {
+    color: black;
+    text-decoration: none;
+}
+
+
+button {
+    background-color: #22cc3f;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #1e9e31;
+}
+
+.modal-ok-btn {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input[type="text"], .form-group input[type="file"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.song-actions {
+    display: inline-flex;
+    gap: 8px;
+    vertical-align: middle;
+}
+
+
+.custom-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    max-width: 90%;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    color: black;
+    text-align: center;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.custom-modal .close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.custom-modal .close:hover {
+    color: black;
+}
+
+.custom-modal-content {
+    position: relative;
+    padding: 20px;
+}
+
+.custom-modal input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: #f9f9f9;
+    color: black;
+    outline: none;
+    transition: border 0.3s;
+    display: block;
+    margin-top: 10px;
+}
+
+.custom-modal input:focus {
+    border-color: #00aaff;
+}
+
+.custom-modal .modal-buttons {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.custom-modal .modal-buttons button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.custom-modal .modal-buttons .cancel {
+    background-color: #ddd;
+    color: black;
+}
+
+.custom-modal .modal-buttons .confirm {
+    background-color: #22cc3f;
+    color: white;
+}
+
+.custom-modal .modal-buttons .cancel:hover {
+    background-color: #bbb;
+}
+
+.custom-modal .modal-buttons .confirm:hover {
+    background-color: #1a8c2b;
+}
+
+
+.streaming-item.add-streaming {
+    cursor: pointer;
+    color: #22cc3f;
+    font-weight: bold;
+    text-align: center;
+    padding: 10px;
+    border: 2px dashed #ccc; /* Diferenciação com borda tracejada */
+    border-radius: 5px;
+    background-color: #f9f9f9; /* Fundo claro */
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+.streaming-item.add-streaming:hover {
+    background-color: #e6ffe6; /* Fundo verde claro ao passar o mouse */
+    border-color: #22cc3f; /* Borda verde ao passar o mouse */
+}

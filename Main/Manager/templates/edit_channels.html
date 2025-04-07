@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Edit Channels</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/edit_channels.css') }}">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% endblock %}
+
+{% block body %}
+
+
+
+<header>
+    <div class="header-content">
+      <div class="header-left">
+        <a href="{{ url_for('index') }}" class="settings-link">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+      </div>
+      <div class="header-center">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Site Logo" class="site-logo">
+        <h1>Audio Manager</h1>
+      </div>
+    </div>
+</header>
+
+
+<!-- Título "Channel" 
+<div style="text-align: left; margin-top: 40px; margin-bottom: 0px; padding-left: 100px;">
+    <h1>Channel {{ channel_id }}</h1>
+</div> -->
+
+<!-- Título do canal com modo de visualização e edição -->
+<div class="channel-title-container">
+    <!-- Visualização -->
+    <div id="channelTitleDisplay" class="channel-title">
+        <h1 id="channelTitle">Channel {{ channel_id }}</h1>
+        <i class="fa-solid fa-pen edit-icon" onclick="toggleChannelEdit()"></i>
+    </div>
+
+    <!-- Edição -->
+    <form id="channelEditForm" class="channel-edit-form" style="display: none;" onsubmit="event.preventDefault(); saveChannelName();">
+        <input type="hidden" name="channel_id" value="{{ channel_id }}">
+        <input type="text" id="channelNameInput" name="channel_name" value="Channel {{ channel_id }}" class="channel-edit-input" required>
+        <button type="submit" class="save-button">Guardar</button>
+    </form>
+
+    
+</div>
+
+
+
+
+<div class="containerCH">
+    <div class="contentCH">
+        <div class="page-layout">
+
+
+            <div class="main-content">
+                <div class="dual-sectionCH">
+                    <div class="section-leftCH">
+                        <h3>Menu</h3>
+                        <div class="menu-box" id="menuBox">
+                            <nav class="menu-list">
+                                <div class="menu-item" data-value="local">
+                                    <div class="button-icon">
+                                        <i class="fa-solid fa-music"></i> 
+                                    </div>
+                                    <div class="button-text" style="margin-left: 10px;">
+                                        <span>  Playlists</span>
+                                    </div>
+                                    <div class="menu-item-indicator"></div>
+                                </div>
+                                <div class="menu-item" data-value="streaming">
+                                    <div class="button-icon">
+                                    <i class="fa-solid fa-podcast"></i>
+                                </div>
+                                <div class="button-text" style="margin-left: 10px;">
+                                    <span>  Streaming</span>
+                                </div>
+                                    <div class="menu-item-indicator"></div>
+                                </div>
+                            </nav>
+                        </div>
+                    </div>
+
+                    <div class="section-rightCH">
+                        <!-- NOVA estrutura interna dentro de section-right -->
+                        <!-- Este será atualizado dinamicamente -->
+                        <div id="sectionRightContent" class="inner-dual-section" style="display: none;">
+                            <!-- O conteúdo será gerado dinamicamente via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="save-button-container" id="saveButtonContainer" style="display: none;">
+    <button type="submit" class="save-button">Save</button>
+</div>
+
+<footer>
+    <p style="text-align: center;">© 2025 Audio Manager</p>
+</footer>
+<script>
+    const playlistsData = {{ playlist_songs | tojson }};
+    const allSongs = {{ all_songs | tojson }};
+</script>
+
+<script src="{{ url_for('static', filename='js/edit_channels.js') }}"></script>
+
+{% endblock %}
+
+
+
+

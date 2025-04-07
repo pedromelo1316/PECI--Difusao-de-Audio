@@ -3,6 +3,9 @@ from enum import Enum
 from flask import Flask, render_template, request, redirect, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
+import os
+from flask import request, jsonify
+from werkzeug.utils import secure_filename
 import subprocess
 import threading
 import queue
@@ -15,7 +18,8 @@ import base64
 import signal
 import sys
 import socket, fcntl, struct
-import shutil  # Add this import to check for command availability
+import shutil
+
 
 # Inicialização do app Flask, SQLAlchemy e SocketIO
 app = Flask(__name__)
@@ -30,7 +34,7 @@ SAMPLE_RATE = "48000"  # Taxa de amostragem
 CHUNCK_SIZE = 960
 AUDIO_CHANNELS = "1"  # Mono
 
-NUM_CHANNELS = 5  # Número total de canais
+NUM_CHANNELS = 3  # Número total de canais
 
 def parse_device_info(line):
     parts = line.split()
@@ -68,6 +72,24 @@ def get_mics():
     except subprocess.CalledProcessError as e:
         print(f"Error listing audio devices: {e}")
         return []
+
+
+
+############
+PLAYLISTraiz_FOLDER = 'Playlists'
+UPLOAD_FOLDER = 'Playlists/Songs'
+ALLOWED_EXTENSIONS = {'mp3', 'wav'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['PLAYLISTraiz_FOLDER'] = 'Playlists'
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+
+
+########
 
 # Função para iniciar o processo do ffmpeg para um canal específico
 def start_ffmpeg_process(channel, source, _type):
@@ -127,8 +149,12 @@ def start_ffmpeg_process(channel, source, _type):
         ]
     elif _type == ChannelType.STREAMING:
         # Transmissão via streaming com URL proveniente do yt-dlp
-        source = "https://www.youtube.com/live/YDvsBbKfLPA?si=TdUqXCrxJojjNDns"
         
+        ########3
+        #source = "https://www.youtube.com/live/YDvsBbKfLPA?si=TdUqXCrxJojjNDns"
+        ##############
+
+
         try:
             # Comando para obter a URL direta do stream
             ytdl_cmd = [
@@ -252,14 +278,59 @@ class ChannelType(str, Enum):
     STREAMING = "STREAMING"
     VOICE = "VOICE"
 
+
+#################################################################################
+#################################################################################
+
+# Tabela associativa para o relacionamento muitos-para-muitos
+playlist_songs = db.Table('playlist_songs',
+    db.Column('playlist_id', db.Integer, db.ForeignKey('playlist.id'), primary_key=True),
+    db.Column('song_id', db.Integer, db.ForeignKey('songs.id'), primary_key=True)
+)
+
+# Classe Songs
+class Songs(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False,unique=True)
+
+    def __repr__(self):
+        return f'<Song {self.id}: {self.name}>'
+
+# Classe Playlist
+class Playlist(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    songs = db.relationship('Songs', secondary=playlist_songs, backref='playlist', lazy=True)
+
+    def __repr__(self):
+        return f'<Playlist {self.id}: {self.name}>'
+
+#################################################################################
+#################################################################################
+
+
 # Modelo para canais
 class Channels(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.Enum(ChannelType), nullable=False)
     source = db.Column(db.String(200), nullable=True)
 
+    #####
+
     def __repr__(self):
         return 
+    
+
+###############3
+class Streaming(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    url = db.Column(db.String(500), nullable=False)
+
+    def __init__(self, name, url):
+        self.name = name
+        self.url = url
+        
 
 # Função para criar canais padrões caso não existam
 def create_default_channels():
@@ -293,8 +364,17 @@ def index():
     nodes = Nodes.query.order_by(Nodes.id).all()
     areas = Areas.query.order_by(Areas.id).all()
     channels = Channels.query.order_by(Channels.id).all()
-    return render_template("index.html", nodes=nodes, areas=areas, channels=channels)
 
+    #
+    # playlists = get_playlists()  # Função que retorna as playlists
+    #songs = get_songs()  # Função que retorna as músicas
+    #return render_template('index.html', playlists=playlists, songs=songs)
+    ####
+    #playlist = db.session.query(Playlist).first()  # Substitua por lógica específica, se necessário
+
+    ###
+
+    return render_template("index.html", nodes=nodes, areas=areas, channels=channels)
 # Rota para deleção de um nó específico
 @app.route('/delete/<int:id>')
 def delete(id):
@@ -562,6 +642,9 @@ def add_column_to_zone():
     socketio.emit('reload_page', namespace='/')
     return jsonify({"success": "Coluna associada com sucesso!"}), 200
 
+
+
+
 # Rota para remover uma coluna de uma zona
 @app.route("/remove_column_from_zone", methods=["POST"])
 def remove_column_from_zone():
@@ -585,7 +668,49 @@ def remove_column_from_zone():
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/edit_channels', methods=['GET'])
+def edit_channels():
+    channel_id = request.args.get('channel_id', type=int)
+
+    playlists = Playlist.query.all()
+    playlist_songs = {
+        playlist.name: [song.name for song in playlist.songs]
+        for playlist in playlists
+    }
+    all_songs = [song.name for song in Songs.query.all()]
     
+    return render_template(
+        'edit_channels.html',
+        channel_id=channel_id,
+        playlists=playlist_songs.keys(),
+        playlist_songs=playlist_songs,
+        all_songs=all_songs
+    )
+
+#@app.route('/edit_channels', methods=['GET'])
+#def edit_channels():
+#    channel_id = request.args.get("channel_id", default=None, type=int)
+#    channels = Channels.query.order_by(Channels.id).all()
+
+#    playlists = Playlist.query.all()
+#    playlist_songs = {
+#        playlist.name: [song.name for song in playlist.songs]
+#        for playlist in playlists
+#    }
+
+#    all_songs = [song.name for song in Songs.query.all()]
+
+#    return render_template(
+#        "edit_channels.html",
+#        channels=channels,
+#        channel_id=channel_id,
+#        playlists=playlist_songs.keys(),
+#        playlist_songs=playlist_songs,
+#        all_songs=all_songs
+#    )
+
 # Rota para atualizar o tipo de canal
 @app.route('/update_channel/<int:channel_id>', methods=['POST'])
 def update_channel(channel_id):
@@ -630,6 +755,370 @@ def update_area_channel():
         flash(str(e), "error")
         socketio.emit('reload_page', namespace='/')
         return redirect('/')
+
+
+
+
+
+@app.route('/secundaria')
+def secundaria():
+    playlists = Playlist.query.all()  
+    return render_template('secundaria.html', playlists=playlists)
+
+
+@app.route('/save_stream_url', methods=['POST'])
+def save_stream_url():
+    try:
+        data = request.json
+        stream_name = data.get('stream_name')
+        stream_url = data.get('stream_url')
+
+        if not stream_name or not stream_url:
+            return jsonify({"error": "Nome e URL são obrigatórios"}), 400
+
+        # Validação adicional do URL
+        if not stream_url.startswith("http://") and not stream_url.startswith("https://"):
+            return jsonify({"error": "URL inválido"}), 400
+        
+        if Streaming.query.filter_by(name=stream_name).first():
+            return jsonify({"error": "Stream name already exists"}), 400
+        # Salvar no banco de dados
+        new_stream = Streaming(name=stream_name, url=stream_url)
+        db.session.add(new_stream)
+        db.session.commit()
+
+        return jsonify({"success": True}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+
+
+
+
+################3
+# playlist
+####################
+
+# Rota para obter todas as músicas
+@app.route('/songs', methods=['GET'])
+def get_songs():
+    songs = Songs.query.order_by(Songs.id).all()
+    return jsonify([{"id": song.id, "name": song.name} for song in songs])
+
+# Rota para adicionar uma nova música
+@app.route('/add_song', methods=['POST'])
+def add_song():
+
+    print("Request files:", request.files)
+    print("Request form:", request.form)
+
+    
+    if 'file' not in request.files:
+        print("Arquivo de música é obrigatório")
+        return jsonify({"error": "Arquivo de música é obrigatório"}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        print("Nenhum arquivo selecionado")
+        return jsonify({"error": "Nenhum arquivo selecionado"}), 400
+
+    if not allowed_file(file.filename):
+        print("Formato de arquivo não suportado")
+        return jsonify({"error": "Formato de arquivo não suportado"}), 400
+
+    song_name = request.form.get('name')
+    if not song_name:
+        print("Nome da música é obrigatório")
+        return jsonify({"error": "Nome da música é obrigatório"}), 400
+
+    if Songs.query.filter_by(name=song_name).first():
+        return jsonify({"error": "Song already exists."}), 400
+
+    try:
+        print("Dados recebidos:", request.form)
+        # Salvar o arquivo original
+        filename = secure_filename(file.filename)
+        original_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(original_path)
+
+        # Converter para .wav usando ffmpeg
+        wav_filename = f"{os.path.splitext(filename)[0]}.wav"
+        wav_path = os.path.join(app.config['UPLOAD_FOLDER'], wav_filename)
+        try:
+            subprocess.run(
+                ["ffmpeg", "-i", original_path, wav_path],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        except subprocess.CalledProcessError as e:
+            print(f"Erro ao converter o arquivo: {e.stderr.decode()}")
+            return jsonify({"error": "Erro ao converter o arquivo para .wav"}), 500
+
+        # Remover o arquivo original (opcional)
+        os.remove(original_path)
+
+        # Salvar no banco de dados
+        new_song = Songs(name=song_name)
+        db.session.add(new_song)
+        db.session.commit()
+
+        print("Nova música adicionada:", new_song.name)
+
+        return jsonify({"success": True, "id": new_song.id, "name": new_song.name}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Rota para editar uma música
+@app.route('/update_song/<int:song_id>', methods=['POST'])
+def update_song(song_id):
+    # Recupera o novo nome da música enviado pelo frontend
+    new_name = request.json.get('new_name')
+    if not new_name:
+        return jsonify({"error": "O novo nome da música é obrigatório"}), 400
+    
+    # Verifica se o novo nome já existe
+    existing_song = Songs.query.filter_by(name=new_name).first()
+    if existing_song and existing_song.id != song_id:
+        return jsonify({"error": "Já existe uma música com esse nome"}), 400
+
+    # Verifica se a música existe no banco de dados
+    song = Songs.query.get(song_id)
+    if not song:
+        return jsonify({"error": "Música não encontrada"}), 404
+
+    # Atualiza o nome da música
+    try:
+        song.name = new_name
+        db.session.commit()
+        return jsonify({"success": True, "id": song.id, "name": song.name}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+# Rota para excluir uma música
+@app.route('/delete_song/<int:song_id>', methods=['DELETE'])
+def delete_song(song_id):
+    song = Songs.query.get(song_id)
+    if not song:
+        return jsonify({"error": "Música não encontrada"}), 404
+    try:
+        db.session.delete(song)
+        db.session.commit()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+
+@app.route('/playlists', methods=['GET'])
+def get_playlists():
+    playlists = Playlist.query.all()
+    return jsonify([{"id": playlist.id, "name": playlist.name} for playlist in playlists])
+
+# add playlist
+
+@app.route('/add_playlist', methods=['POST'])
+def add_playlist():
+    data = request.json
+    playlist_name = data.get('name')
+
+    if not playlist_name:
+        return jsonify({"error": "Nome da playlist é obrigatório"}), 400
+
+    if Playlist.query.filter_by(name=playlist_name).first():
+        return jsonify({"error": "Playlist already exists"}), 400
+
+    try:
+        # Criar a playlist no banco de dados
+        new_playlist = Playlist(name=playlist_name)
+        db.session.add(new_playlist)
+        db.session.commit()
+
+        # Criar a pasta da playlist
+        save_playlist_file(playlist_name)
+
+
+        return jsonify({"success": True, "id": new_playlist.id, "name": new_playlist.name}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# delete playlist
+@app.route('/delete_playlist/<int:playlist_id>', methods=['DELETE'])
+def delete_playlist(playlist_id):
+    playlist = Playlist.query.get(playlist_id)
+    if not playlist:
+        return jsonify({"error": "Playlist não encontrada"}), 404
+    try:
+        db.session.delete(playlist)
+        db.session.commit()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+#edit playlist NAME
+@app.route('/edit_playlist_by_name', methods=['POST'])
+def edit_playlist_by_name():
+    data = request.json
+    current_name = data.get('current_name')
+    new_name = data.get('new_name')
+
+    if not current_name or not new_name:
+        return jsonify({"error": "Os nomes atual e novo são obrigatórios"}), 400
+
+    # Busca a playlist pelo nome atual
+    playlist = Playlist.query.filter_by(name=current_name).first()
+    if not playlist:
+        return jsonify({"error": "Playlist não encontrada"}), 404
+
+    try:
+        # Atualiza o nome da playlist
+        playlist.name = new_name
+        db.session.commit()
+        return jsonify({"success": True, "id": playlist.id, "name": playlist.name}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# edit playlist -> html
+
+
+@app.route('/edit_playlist/<int:playlist_id>', methods=['GET'])
+def edit_playlist(playlist_id):
+    # Busca a playlist pelo ID
+    playlist = Playlist.query.get(playlist_id)
+    if not playlist:
+        return "Playlist não encontrada", 404
+
+    # Busca as músicas da playlist e todas as músicas disponíveis
+    playlist_name = playlist.name
+    playlist_songs = [song.name for song in playlist.songs]  # Músicas na playlist
+    all_songs = [song.name for song in Songs.query.all()]  # Todas as músicas disponíveis
+
+    return render_template(
+        'edit_playlist.html',
+        playlist_name=playlist_name,
+        playlist_songs=playlist_songs,
+        all_songs=all_songs
+    )
+
+@app.route('/remove_song_from_playlist', methods=['POST'])
+def remove_song_from_playlist():
+    data = request.json
+    playlist_name = data.get('playlist_name')
+    song_name = data.get('song_name')
+
+    if not playlist_name or not song_name:
+        return jsonify({"error": "Nome da playlist e da música são obrigatórios"}), 400
+
+    # Busca a playlist e a música no banco de dados
+    playlist = Playlist.query.filter_by(name=playlist_name).first()
+    song = Songs.query.filter_by(name=song_name).first()
+
+    if not playlist:
+        return jsonify({"error": "Playlist não encontrada"}), 404
+    if not song:
+        return jsonify({"error": "Música não encontrada"}), 404
+
+    try:
+        # Remove a música da playlist
+        if song in playlist.songs:
+            playlist.songs.remove(song)
+            db.session.commit()
+            return jsonify({"success": True}), 200
+        else:
+            return jsonify({"error": "Música não está na playlist"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/add_song_to_playlist', methods=['POST'])
+def add_song_to_playlist():
+    data = request.json
+    playlist_name = data.get('playlist_name')
+    song_name = data.get('song_name')
+
+    if not playlist_name or not song_name:
+        return jsonify({"error": "Nome da playlist e da música são obrigatórios"}), 400
+
+    # Busca a playlist e a música no banco de dados
+    playlist = Playlist.query.filter_by(name=playlist_name).first()
+    song = Songs.query.filter_by(name=song_name).first()
+
+    if not playlist:
+        return jsonify({"error": "Playlist não encontrada"}), 404
+    if not song:
+        return jsonify({"error": "Música não encontrada"}), 404
+
+    try:
+        # Adiciona a música à playlist
+        if song not in playlist.songs:
+            playlist.songs.append(song)
+            db.session.commit()
+
+            # Copiar o arquivo da música para a pasta da playlist
+            song_path = os.path.join(app.config['PLAYLISTraiz_FOLDER'], f"{song.name}.wav")
+            playlist_folder = os.path.join(app.config['PLAYLISTraiz_FOLDER'], playlist_name)
+            if os.path.exists(song_path):
+                shutil.copy(song_path, playlist_folder)
+
+            return jsonify({"success": True}), 200
+        else:
+            return jsonify({"error": "Música já está na playlist"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/save_playlist', methods=['POST'])
+def save_playlist():
+    data = request.json
+    playlist_name = data.get('playlist_name')
+    updated_songs = data.get('songs')  # Lista de músicas atualizadas
+
+    if not playlist_name or updated_songs is None:
+        return jsonify({"error": "Nome da playlist e lista de músicas são obrigatórios"}), 400
+
+    # Busca a playlist pelo nome
+    playlist = Playlist.query.filter_by(name=playlist_name).first()
+    if not playlist:
+        return jsonify({"error": "Playlist não encontrada"}), 404
+
+    try:
+        # Atualiza as músicas da playlist
+        playlist.songs = Songs.query.filter(Songs.name.in_(updated_songs)).all()
+        db.session.commit()
+
+        save_playlist_file(playlist_name)
+
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+def save_playlist_file(playlist_name):
+    # Caminho do arquivo da playlist
+    
+    playlist_file_path = os.path.join(app.config['PLAYLISTraiz_FOLDER'], f"{playlist_name}.txt")
+
+    # Busca a playlist pelo nome
+    playlist = Playlist.query.filter_by(name=playlist_name).first()
+    if not playlist:
+        raise Exception("Playlist não encontrada")
+
+    # Gera o conteúdo do arquivo com as músicas da playlist
+    lines = []
+    for song in playlist.songs:
+        song_path = os.path.join("Songs", f"{song.name}.wav")
+        lines.append(f"file {song_path}")
+
+    # Cria o arquivo da playlist e escreve o conteúdo
+    with open(playlist_file_path, "w") as playlist_file:
+        playlist_file.write("\n".join(lines))
+
+    print(f"Arquivo da playlist {playlist_name} salvo em {playlist_file_path}")
+
+
+#################################################################################
+#################################################################################
+#################################################################################
 
 # Função para tratar o desligamento do sistema (Ctrl+C)
 def shutdown_handler(signum, frame):

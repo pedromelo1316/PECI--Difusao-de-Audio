@@ -6,7 +6,10 @@
     <link rel="stylesheet" href="{{url_for('static',filename='css/main.css')}}">
     <link rel="stylesheet" href="{{url_for('static',filename='css/styles.css')}}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
+    {% if not exclude_script_js %}
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% endif %}
+
     <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     
     {% block head %}
