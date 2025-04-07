@@ -1,6 +1,7 @@
 # Importações de módulos e bibliotecas necessárias
 from enum import Enum
-from flask import Flask, render_template, request, redirect, flash, jsonify
+from io import BytesIO
+from flask import Flask, render_template, request, redirect, flash, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
 import os
@@ -1070,28 +1071,40 @@ def save_playlist_file(playlist_name):
 
 #################################################################################
 
+
 @app.route('/export_conf', methods=['GET'])
 def export_conf():
     nodes = Nodes.query.all()
     areas = Areas.query.all()
     
-    data = {
+    config_data = {
         "nodes": [{"name": node.name, "mac": node.mac, "area": node.area.name if node.area else None} for node
                   in nodes],
         "areas": [{"name": area.name, "volume": area.volume, "channel": area.channel_id} for area in areas]
     }
 
-    with open("config.json", "w") as file:
-        json.dump(data, file, indent=4)
+    json_data = json.dumps(config_data)
+
+    # Create a file-like object in memory
+    memory_file = BytesIO(json_data.encode('utf-8'))
+    memory_file.seek(0)
 
     print("Configuration exported")
+    # Send the file for download
+    return send_file(memory_file, as_attachment=True, download_name="config.json", mimetype="application/json")
 
-    return redirect('/')
 
-@app.route('/import_conf', methods=['GET'])
+@app.route('/import_conf', methods=['POST'])
 def import_conf():
-    with open("config.json", "r") as file:
-        data = json.load(file)
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    file_content = file.read()
+    data = json.loads(file_content) 
+
 
     nodes = data.get("nodes", [])
     areas = data.get("areas", [])
@@ -1123,7 +1136,7 @@ def import_conf():
             db.session.commit()
 
     print("Configuration imported")
-    return redirect('/')
+    return jsonify({"success": True})
 
 #################################################################################
 #################################################################################
