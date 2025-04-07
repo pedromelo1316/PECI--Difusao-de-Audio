@@ -70,7 +70,7 @@ body {
     padding: 0;
 }
 
-.playlist-item, .song-item {
+.playlist-item2, .song-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -80,6 +80,14 @@ body {
     border-radius: 5px;
     background-color: #fff;
     transition: background-color 0.3s;
+}
+
+.playlist-item2 .playlist-actions {
+    margin-left: auto;
+}
+
+.playlist-item2.add-playlist {
+    width: 100%;
 }
 
 .song-item {
@@ -174,7 +182,7 @@ body {
     background-color: #f0f0f0;
 }
 
-.playlist-item:hover, .song-item:hover {
+.playlist-item2:hover, .song-item:hover {
     background-color: #f9f9f9;
 }
 
@@ -209,11 +217,7 @@ header {
     text-align: center;
 }
 
-h1 {
-    margin: 0;
-    font-size: 25px;
-    font-weight: bold;
-}
+
 
 h2 {
     margin: 0;

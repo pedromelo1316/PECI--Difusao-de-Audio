@@ -101,11 +101,7 @@ header {
     flex-grow: 1;
 }
 
-h1 {
-    margin: 0;
-    font-size: 25px;
-    font-weight: bold;
-}
+
 
 h2 {
     font-size: 22px;
