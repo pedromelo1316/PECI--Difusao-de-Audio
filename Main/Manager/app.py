@@ -330,7 +330,7 @@ def index():
     #playlist = db.session.query(Playlist).first()  # Substitua por lógica específica, se necessário
 
     ###
-    
+
     return render_template("index.html", nodes=nodes, areas=areas, channels=channels)
 # Rota para deleção de um nó específico
 @app.route('/delete/<int:id>')
@@ -627,8 +627,10 @@ def remove_column_from_zone():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/edit_channels')
+@app.route('/edit_channels', methods=['GET'])
 def edit_channels():
+    channel_id = request.args.get('channel_id', type=int)
+
     playlists = Playlist.query.all()
     playlist_songs = {
         playlist.name: [song.name for song in playlist.songs]
@@ -638,9 +640,10 @@ def edit_channels():
     
     return render_template(
         'edit_channels.html',
-        playlists=playlist_songs.keys(),     # necessário para o Jinja
-        playlist_songs=playlist_songs,       # necessário para o JS
-        all_songs=all_songs                  # necessário para o JS
+        channel_id=channel_id,
+        playlists=playlist_songs.keys(),
+        playlist_songs=playlist_songs,
+        all_songs=all_songs
     )
 
 #@app.route('/edit_channels', methods=['GET'])
