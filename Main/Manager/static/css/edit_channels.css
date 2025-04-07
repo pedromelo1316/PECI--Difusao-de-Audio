@@ -487,3 +487,39 @@
     position: relative;
     padding-right: 30px; /* Add some space for the remove button */
 }
+
+/* Streaming Section */
+.streaming-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 15px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.streaming-item:hover {
+    background-color: #f9f9f9;
+}
+
+.add-streaming-btn {
+    background-color: #22cc3f;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 15px;
+}
+
+.add-streaming-btn:hover {
+    background-color: #1db035;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(34, 204, 63, 0.2);
+}

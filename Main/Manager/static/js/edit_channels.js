@@ -1,14 +1,11 @@
 function updateSectionRight(value) {
-    
     const sectionRight = document.getElementById("sectionRightContent");
     const saveButtonContainer = document.getElementById("saveButtonContainer");
-
 
     // Reset classes and display
     sectionRight.className = "inner-dual-section";
     sectionRight.style.display = 'flex';
-    
-    
+
     if (value === "local") {
         let playlistsHTML = '';
         for (const [playlistName, songs] of Object.entries(playlistsData)) {
@@ -76,14 +73,29 @@ function updateSectionRight(value) {
         enableDragAndDrop();
         
     } else if (value === "streaming") {
+        let streamingHTML = '';
+        streamingSources.forEach(source => {
+            streamingHTML += `
+                <div class="streaming-item">
+                    <span>${source}</span>
+                    <button class="remove-item-btn" onclick="removeStreamingSource('${source}')">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            `;
+        });
+
         sectionRight.innerHTML = `
             <div class="inner-section-left">
-                <h4>Streaming em reprodução</h4>
-                <p>Em breve: integração com fontes de streaming.</p>
+                <h3>Fontes de Streaming Selecionadas</h3>
+                <div class="selected-streaming-info">
+                    ${streamingHTML || '<p class="section-hint">Nenhuma fonte selecionada.</p>'}
+                </div>
+                <button class="add-streaming-btn" onclick="openAddStreamingModal()">Adicionar Fonte</button>
             </div>
             <div class="inner-section-right">
-                <h4>Streaming Disponível</h4>
-                <p>Lista de fontes ainda não implementada.</p>
+                <h3>Gerenciar Fontes de Streaming</h3>
+                <p>Adicione ou remova fontes de streaming para personalizar sua experiência.</p>
             </div>
         `;
         sectionRight.style.display = 'flex';
@@ -196,6 +208,22 @@ function removeItemFromPlaylist(item) {
     const dropZone = document.querySelector('.inner-section-left .selected-playlist-info');
     dropZone.removeChild(item);
     updateLeftStats();
+}
+
+function removeStreamingSource(source) {
+    const index = streamingSources.indexOf(source);
+    if (index > -1) {
+        streamingSources.splice(index, 1);
+        updateSectionRight('streaming'); // Refresh the streaming section
+    }
+}
+
+function openAddStreamingModal() {
+    const newSource = prompt("Digite o nome da nova fonte de streaming:");
+    if (newSource) {
+        streamingSources.push(newSource);
+        updateSectionRight('streaming'); // Refresh the streaming section
+    }
 }
 
 // Change event listeners from radio buttons to menu items
