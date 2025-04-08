@@ -200,10 +200,10 @@
             <div class="zone-box">
                 <div class="zone-header">
                     <h3>{{ area.name }}</h3>
-                    <button style=" border: none; border-radius: 4px; padding: 12px 23px; font-size: 16px; cursor: pointer; color: black;"
+                    <i style=" border: none; border-radius: 4px; padding: 15px 26px; font-size: 20px; cursor: pointer; color: black;"
                         onclick="removeArea('{{ area.name }}')">
                         <i class="fa-solid fa-trash delete-zone" style="size: 4px;"></i>
-                    </button>
+                </i>
                     <form id="remove-area-form-{{ area.name }}" action="/remove_area" method="POST" style="display: none;">
                         <input type="hidden" name="name" value="{{ area.name }}">
                     </form>
@@ -213,7 +213,7 @@
                     <div class="row-container">
                         <!-- Speaker Section -->
                         <div class="column-section">
-                            <h4>Speakers</h4>
+                            <h5>Speakers</h5>
                             <div class="column-list">
                                 {% for node in nodes if node.area_id == area.id %}
                                 <div class="column-item" data-column="{{ node.name }}" data-zone="{{ area.name }}">
@@ -233,7 +233,7 @@
                         <!-- Channel Section -->
                         <!-- Channel Section -->
                         <div class="channel-section">
-                            <h4>Channel</h4>
+                            <h5>Channel</h5>
                             <div class="channel-options">
                                 <form action="/update_area_channel" method="POST" id="channelForm">
                                     <input type="hidden" name="name" value="{{ area.name }}">
