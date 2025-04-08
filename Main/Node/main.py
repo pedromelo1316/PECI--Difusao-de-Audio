@@ -11,6 +11,7 @@ import signal
 import sys
 import numpy as np
 import signal
+import os
 
 # Configurações básicas de áudio e transmissão
 FREQ = 48000  # Frequência de amostragem do áudio
@@ -33,40 +34,59 @@ player_stop_event = threading.Event()
 def terminate_routine():
     global stop_event, player_stop_event, play_thread, ffmpeg, stream, player, channel, HEADER
     
+    print("Terminating processes...")
+    
     try:
         if play_thread is not None:
+            print("Stopping play_thread...")
             player_stop_event.set()
+            stop_event.set()
             play_thread.join(timeout=1)
             play_thread = None
     except Exception as e:
         print("Error stopping play_thread:", e)
+    
     try:
         if ffmpeg is not None:
-            ffmpeg.terminate()
+            print(f"Terminating ffmpeg process {ffmpeg.pid}...")
             try:
-                ffmpeg.wait(timeout=1)
+                # Envia sinal de término para o grupo de processos
+                os.killpg(os.getpgid(ffmpeg.pid), signal.SIGTERM)
+                ffmpeg.wait(timeout=5)
+            except ProcessLookupError:
+                print(f"Process {ffmpeg.pid} already terminated.")
             except subprocess.TimeoutExpired:
-                print("ffmpeg did not terminate in time, killing it.")
-                ffmpeg.kill()
+                print(f"Process {ffmpeg.pid} did not terminate in time. Forcing termination...")
+                try:
+                    os.killpg(os.getpgid(ffmpeg.pid), signal.SIGKILL)  # Força o encerramento com SIGKILL
+                    ffmpeg.wait(timeout=5)
+                    print(f"Process {ffmpeg.pid} terminated.")
+                except subprocess.TimeoutExpired:
+                    print(f"Process {ffmpeg.pid} could not be killed.")
             ffmpeg = None
     except Exception as e:
         print("Error terminating ffmpeg:", e)
+    
     try:
         if stream is not None:
+            print("Closing audio stream...")
             stream.stop_stream()
             stream.close()
             stream = None
     except Exception as e:
         print("Error closing stream:", e)
+    
     try:
         if player is not None:
+            print("Terminating audio player...")
             player.terminate()
             player = None
     except Exception as e:
         print("Error terminating player:", e)
-        
+    
     HEADER = None
     channel = None
+    print("Processes terminated.")
 
 
 def shutdown_handler(sig, frame):
@@ -86,7 +106,7 @@ def play_audio(n, sdp_file):
     ffmpeg_cmd = [
         "ffmpeg",
         "-hide_banner",
-        "-loglevel", "error",
+        "-loglevel", "quiet",
         "-protocol_whitelist", "file,rtp,udp",
         "-i", sdp_file,
         "-f", "s16le",
