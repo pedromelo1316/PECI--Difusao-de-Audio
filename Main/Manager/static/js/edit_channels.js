@@ -110,19 +110,20 @@ function selectStreamingSource(source) {
         hintMessage.style.display = "none";
     }
 
-    // Update the selected streaming source display
-    selectedDisplay.innerHTML = `
-        <div class="streaming-selected-box">
-            <span class="streaming-label">Fonte Selecionada:</span>
-            <span class="streaming-name-selected">${source}</span>
-        </div>
-    `;
+    // Update the selected streaming source display dynamically
+    const selectedItem = document.querySelector(`#streaming-${source}`).closest('.streaming-item');
+    if (selectedItem) {
+        selectedDisplay.innerHTML = `
+            <div class="streaming-selected-box" style="padding: ${selectedItem.style.padding}; font-size: ${selectedItem.style.fontSize}; border-radius: ${selectedItem.style.borderRadius};">
+                <span>${source}</span>
+            </div>
+        `;
+    }
 
     // Highlight the selected streaming item
     const allItems = document.querySelectorAll('.streaming-item');
     allItems.forEach(item => item.classList.remove('selected'));
 
-    const selectedItem = document.querySelector(`#streaming-${source}`).closest('.streaming-item');
     if (selectedItem) {
         selectedItem.classList.add('selected');
     }

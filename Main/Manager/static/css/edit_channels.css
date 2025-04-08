@@ -7,12 +7,20 @@
 .streaming-selected-box {
     display: flex;
     align-items: center;
-    gap: 8px;
-    background: #f8f9fa;
-    padding: 12px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    font-size: 1.2em;
+    justify-content: space-between;
+    padding: 16px 20px; /* Match padding of .streaming-item */
+    background-color: white;
+    border-radius: 6px; /* Match border radius of .streaming-item */
+    border-left: 4px solid #4caf50; /* Match border thickness */
+    font-size: 16px; /* Match font size of .streaming-item */
+    color: #555;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.streaming-selected-box span {
+    flex-grow: 1;
+    font-weight: 500;
+    color: #333;
 }
 
 /* Estilização do rótulo */
@@ -593,11 +601,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 10px;
+    padding: 16px 20px; /* Increased padding for larger size */
     background-color: white;
-    border-radius: 4px;
-    border-left: 3px solid #ccc;
-    font-size: 14px;
+    border-radius: 6px; /* Slightly larger border radius */
+    border-left: 4px solid #ccc; /* Slightly thicker border */
+    font-size: 16px; /* Increased font size */
     color: #555;
     transition: background-color 0.2s, border-color 0.2s;
     cursor: pointer;
