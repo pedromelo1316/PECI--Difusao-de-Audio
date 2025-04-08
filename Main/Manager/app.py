@@ -93,10 +93,24 @@ app.config['PLAYLISTraiz_FOLDER'] = 'Playlists'
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-
 ########
+
+
+
+@app.route('/save_channel_configs', methods=['POST'])
+def save_channel_configs():
+    data = request.json
+    channel_type = data.get('channel_type')
+    channel_reproduction = data.get('channel_reproduction')
+    channel_microfone = data.get('channel_microfone')
+
+    # Processa os dados recebidos
+    print(f"Tipo de transmissão: {channel_type}")
+    print(f"Reprodução: {channel_reproduction}")
+    print(f"Microfone: {channel_microfone}")
+
+    # Salve as configurações no banco de dados ou tome outras ações necessárias
+    return jsonify({"success": True}), 200
 
 # Função para iniciar o processo do ffmpeg para um canal específico
 def start_ffmpeg_process(channel, source, _type):
@@ -325,6 +339,7 @@ class Channels(db.Model):
     name = db.Column(db.String(200), nullable=True)
     type = db.Column(db.Enum(ChannelType), nullable=False)
     source = db.Column(db.String(200), nullable=True)
+    microphone = db.Column(db.String(200),nullable=True)
 
     def __repr__(self):
         return f'<Channel {self.id}: {self.name}>'

@@ -277,7 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const defaultItem = document.querySelector('.menu-item[data-value="local"]');
     if (defaultItem) {
         defaultItem.classList.add('active');
-        updateSectionRight('local');
+        updateSectionRight(defaultItem.getAttribute('data-value'));
     }
     enableDragAndDrop();
     updateLeftStats();
@@ -300,6 +300,67 @@ function loadMicrophones() {
         .catch(error => {
             console.error('Error fetching microphones:', error);
         });
+}
+
+function saveChanges() {
+    // Obtém o tipo de transmissão selecionado no menu-list
+    const selectedMenuItem = document.querySelector('.menu-item.active');
+    const transmissionType = selectedMenuItem ? selectedMenuItem.getAttribute('data-value') : null;
+
+    // Obtém a lista de reprodução ou o streaming selecionado em section-rightCH
+    let selectedSource = null;
+    if (transmissionType === "local") {
+        const selectedPlaylist = document.querySelector('.playlist-container input[type="checkbox"]:checked');
+        selectedSource = selectedPlaylist ? selectedPlaylist.id.replace('playlist-', '') : null;
+    } else if (transmissionType === "streaming") {
+        const selectedStreaming = document.querySelector('.streaming-container input[type="radio"]:checked');
+        selectedSource = selectedStreaming ? selectedStreaming.id.replace('streaming-', '') : null;
+    }
+
+    // Obtém o microfone selecionado
+    const microphoneSelect = document.getElementById("microphoneSelect");
+    const selectedMicrophone = microphoneSelect ? microphoneSelect.value : null;
+
+    // Verifica se todos os dados necessários foram preenchidos
+    if (!transmissionType) {
+        alert("Por favor, selecione o tipo de transmissão.");
+        return;
+    }
+    if (!selectedSource) {
+        alert("Por favor, selecione uma lista de reprodução ou uma fonte de streaming.");
+        return;
+    }
+    if (!selectedMicrophone) {
+        alert("Por favor, selecione um microfone.");
+        return;
+    }
+
+    // Dados a serem enviados para o backend
+    const data = {
+        channel_type: transmissionType,
+        channel_reproduction: selectedSource,
+        channel_microfone: selectedMicrophone
+    };
+
+    // Envia os dados para o backend usando fetch
+    fetch('/save_channel_configs', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (response.ok) {
+            alert("Configurações salvas com sucesso!");
+        } else {
+            alert("Erro ao salvar as configurações.");
+        }
+    })
+    .catch(error => {
+        console.error("Erro ao salvar as configurações:", error);
+        alert("Erro ao salvar as configurações.");
+    });
 }
 
 // Call the function when the page loads
