@@ -16,7 +16,7 @@
       </div>
       <div class="header-center">
         <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Site Logo" class="site-logo">
-        <h3>Audio Manager</h3>
+        <h1>Audio Manager</h1>
       </div>
     </div>
 </header>
@@ -33,13 +33,14 @@
                 <!-- Playlists Section -->
                 <div class="playlists-section">
                     <h2>Playlists</h2>
+                    <br>
                     <ul class="playlists-list" id="playlists-list">
                         {% for playlist in playlists %}
                         <li class="playlist-item2">
                             <span>{{ playlist.name }}</span>
                             <div class="playlist-actions">                                
-                                <i class="fa-solid fa-pen" onclick="editPlaylist('{{ playlist.id }}')"></i>
-                                <i class="fa-solid fa-trash" onclick="deletePlaylist('{{ playlist.name }}')"></i>
+                                <i class="fa-solid fa-pen style="font-size: 16px; color: gray;" onclick="editPlaylist('{{ playlist.id }}')"></i>
+                                <i class="fa-solid fa-trash style="font-size: 16px; color: gray;" onclick="deletePlaylist('{{ playlist.name }}')"></i>
                             </div>
                         </li>
                         {% endfor %}
@@ -52,12 +53,11 @@
                 <!-- Songs Section -->
                 <div class="songs-section">
                     <h2>Songs</h2>
+                    <br>
                     <ul class="songs-list" id="songs-list">
                         <!-- As músicas serão carregadas dinamicamente via JavaScript -->
                     </ul>
-                    <li class="song-item add-song" onclick="showAddSongModal()">
-                        <span>Add +</span>
-                    </li>
+                    <!-- Removed the hardcoded "+Add" button -->
                 </div>
                 
                 <!-- Modal para adicionar/editar música -->
@@ -89,7 +89,7 @@
                         <li class="streaming-item">
                             <span>{{ streaming.name }}</span>
                             <div class="streaming-actions">
-                                <i class="fa-solid fa-pen" onclick="editStreaming('{{ streaming.id }}')"></i>
+                                <i class="fa-solid fa-pen " onclick="editStreaming('{{ streaming.id }}')"></i>
                                 <i class="fa-solid fa-trash" onclick="deleteStreaming('{{ streaming.name }}')"></i>
                             </div>
                         </li>

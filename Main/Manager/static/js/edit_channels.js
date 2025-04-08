@@ -69,9 +69,9 @@ function updateSectionRight(value) {
         let streamingHTML = '';
         streamingSources2.forEach(source => {
             streamingHTML += `
-                <div class="streaming-item" style="display: flex; justify-content: space-between; align-items: center; border: 1px solid #ccc; margin-bottom: 10px; padding: 5px;">
+                <div class="streaming-item">
                     <label for="streaming-${source}" style="flex-grow: 1;">
-                        <span class="streaming-">${source}</span>
+                        <span>${source}</span>
                     </label>
                     <input type="radio" name="streaming-source" id="streaming-${source}" onchange="selectStreamingSource('${source}')">
                 </div>
@@ -105,20 +105,28 @@ function selectStreamingSource(source) {
     const selectedDisplay = document.getElementById("selectedStreamingDisplay");
     const hintMessage = document.querySelector(".section-hint");
 
-    // Oculta a mensagem de dica
+    // Hide the hint message
     if (hintMessage) {
         hintMessage.style.display = "none";
     }
 
-    // Atualiza a exibição da fonte selecionada com um novo estilo
+    // Update the selected streaming source display
     selectedDisplay.innerHTML = `
         <div class="streaming-selected-box">
             <span class="streaming-label">Fonte Selecionada:</span>
             <span class="streaming-name-selected">${source}</span>
         </div>
     `;
-}
 
+    // Highlight the selected streaming item
+    const allItems = document.querySelectorAll('.streaming-item');
+    allItems.forEach(item => item.classList.remove('selected'));
+
+    const selectedItem = document.querySelector(`#streaming-${source}`).closest('.streaming-item');
+    if (selectedItem) {
+        selectedItem.classList.add('selected');
+    }
+}
 
 function toggleSongsVisibility(button) {
     const songsList = button.parentElement.nextElementSibling; // A lista de músicas está logo após o cabeçalho
@@ -304,3 +312,31 @@ function loadMicrophones() {
 
 // Call the function when the page loads
 document.addEventListener('DOMContentLoaded', loadMicrophones);
+
+function toggleStreamingSelection(item) {
+    const allItems = document.querySelectorAll('.streaming-item');
+
+    // Deselect all items
+    allItems.forEach(i => {
+        i.querySelector('.selection-icon').classList.remove('selected');
+    });
+
+    // Select the clicked item
+    const icon = item.querySelector('.selection-icon');
+    icon.classList.add('selected');
+
+    // Update the selected streaming source display
+    const selectedDisplay = document.getElementById("selectedStreamingDisplay");
+    const hintMessage = document.querySelector(".section-hint");
+
+    if (hintMessage) {
+        hintMessage.style.display = "none";
+    }
+
+    selectedDisplay.innerHTML = `
+        <div class="streaming-selected-box">
+            <span class="streaming-label">Fonte Selecionada:</span>
+            <span class="streaming-name-selected">${item.textContent.trim()}</span>
+        </div>
+    `;
+}

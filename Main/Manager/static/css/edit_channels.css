@@ -90,6 +90,7 @@
     align-self: flex-start;
     max-height: calc(100vh - 240px);
     overflow-y: auto;
+    border:#3b3b3b solid 1px;
 }
 
 .section-options {
@@ -103,6 +104,7 @@
     align-self: flex-start;
     max-height: calc(100vh - 240px);
     overflow-y: auto;
+    border:#3b3b3b solid 1px;
 }
 
 .section-rightCH {
@@ -113,6 +115,7 @@
     box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.06);
     padding: 25px;
     overflow: visible;
+    border:#3b3b3b solid 1px;
 }
 
 /* Channel Title Container */
@@ -178,6 +181,7 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     padding: 22px;
     transition: transform 0.3s ease;
+    border:#3b3b3b solid 1px;
 }
 
 .inner-section-right {
@@ -189,6 +193,7 @@
     padding: 22px;
     transition: transform 0.3s ease;
     overflow: hidden;
+    border:#3b3b3b solid 1px;
 }
 
 .inner-section-left:hover,
@@ -277,7 +282,7 @@
 .playlist-container {
     display: flex;
     flex-direction: column; /* Change to vertical list */
-    gap: 15px; /* Add spacing between items */
+    gap: 9px; /* Add spacing between items */
     padding: 15px;
     background: #ffffff;
     border-radius: 12px;
@@ -358,11 +363,11 @@
 .songs-container {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 9px;
     padding: 15px;
     background: #ffffff;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+ 
     margin-top: 20px;
 }
 
@@ -570,20 +575,79 @@
 }
 
 /* Streaming Section */
+
+
+
+.streaming-container {
+    display: flex;
+    flex-direction: column; /* Change to vertical list */
+    gap: 9px; /* Add spacing between items */
+    padding: 15px;
+    background: #ffffff;
+    border-radius: 12px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
 .streaming-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 15px;
-    background: white;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    margin-bottom: 10px;
-    transition: background-color 0.3s ease;
+    padding: 8px 10px;
+    background-color: white;
+    border-radius: 4px;
+    border-left: 3px solid #ccc;
+    font-size: 14px;
+    color: #555;
+    transition: background-color 0.2s, border-color 0.2s;
+    cursor: pointer;
 }
 
 .streaming-item:hover {
     background-color: #f9f9f9;
+    border-left-color: #22cc3f;
+}
+
+.streaming-item.selected {
+    background-color: #f8fffa;
+    border-left-color: #4caf50;
+}
+
+.streaming-item span {
+    flex-grow: 1;
+    font-weight: 500;
+    color: #333;
+}
+
+.streaming-item input[type="radio"] {
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+.streaming-item .selection-icon {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ccc;
+    border-radius: 4px; /* Square shape */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.streaming-item .selection-icon i {
+    font-size: 14px;
+    color: white;
+    display: none; /* Hidden by default */
+}
+
+.streaming-item .selection-icon.selected {
+    border-color: #4caf50;
+    background-color: #4caf50;
+}
+
+.streaming-item .selection-icon.selected i {
+    display: block; /* Show check icon only when selected */
 }
 
 .add-streaming-btn {
@@ -604,6 +668,45 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 6px rgba(34, 204, 63, 0.2);
 }
+
+.streaming-item.square {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    margin: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.streaming-item.square.selected {
+    border-color: #4caf50;
+    background-color: #e8f5e9;
+}
+
+.streaming-item.square:hover {
+    border-color: #888;
+}
+
+.streaming-item .selection-icon {
+    font-size: 24px;
+    margin-left: 10px;
+    transition: color 0.3s ease;
+}
+
+.streaming-item .selection-icon.fa-regular.fa-square {
+    color: #ccc;
+}
+
+.streaming-item .selection-icon.fa-solid.fa-check-square {
+    color: #4caf50;
+}
+
+
+
 
 /* Microphone Section */
 .microphone-item {
@@ -640,3 +743,4 @@
     background-color: #1db035;
     transform: scale(1.1);
 }
+

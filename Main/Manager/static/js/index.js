@@ -12,8 +12,8 @@ function loadPlaylists() {
                 li.innerHTML = `
                     <span>${playlist.name}</span>
                     <div class="playlist-actions">
-                        <i class="fa-solid fa-pen" onclick="editPlaylist(${playlist.id}, '${playlist.name}')"></i>
-                        <i class="fa-solid fa-trash" onclick="deletePlaylist(${playlist.id})"></i>
+                        <i class="fa-solid fa-pen" style="font-size: 16px; color: gray;" onclick="editPlaylist(${playlist.id}, '${playlist.name}')"></i>
+                        <i class="fa-solid fa-trash" style="font-size: 16px; color: gray; onclick="deletePlaylist(${playlist.id})"></i>
                     </div>
                 `;
                 playlistsList.appendChild(li);
@@ -64,15 +64,22 @@ function loadSongs() {
             data.forEach(song => {
                 const li = document.createElement('li');
                 li.className = 'song-item';
+                li.style.marginBottom = '7px'; // Reduced spacing between songs
                 li.innerHTML = `
-                    <span>${song.name}</span>
+                    <span style="font-size: 16px; color: black;">${song.name}</span>
                     <div class="song-actions">
-                        <i class="fa-solid fa-pen" onclick="editSong(${song.id}, '${song.name}')"></i>
-                        <i class="fa-solid fa-trash" onclick="deleteSong(${song.id})"></i>
+                        <i class="fa-solid fa-pen" style="font-size: 16px; color: gray;" onclick="editSong(${song.id}, '${song.name}')"></i>
+                        <i class="fa-solid fa-trash" style="font-size: 16px; color: gray;" onclick="deleteSong(${song.id})"></i>
                     </div>
                 `;
                 songsList.appendChild(li);
             });
+            const addSongItem = document.createElement('li');
+            addSongItem.className = 'song-item add-song';
+            addSongItem.style.marginTop = '5px'; // Reduced spacing above the "+Add" button
+            addSongItem.innerHTML = '<span style="font-size: 16px;">Add +</span>'; // Increased font size
+            addSongItem.onclick = showAddSongModal;
+            songsList.appendChild(addSongItem);
         });
 }
 
@@ -444,8 +451,8 @@ function addStreamingLink() {
                 <strong>${name}</strong>
                 <a href="${link}" target="_blank">${link}</a>
                 <div class="actions">
-                    <i class="fa fa-pen" onclick="editStreamingLink(this)"></i>
-                    <i class="fa fa-trash" onclick="deleteStreamingLink(this)"></i>
+                    <i class="fa fa-pen style="font-size: 16px; color: gray;" onclick="editStreamingLink(this)"></i>
+                    <i class="fa fa-trash style="font-size: 16px; color: gray;" onclick="deleteStreamingLink(this)"></i>
                 </div>
             `;
             list.appendChild(listItem);
@@ -553,3 +560,54 @@ function toggleColumnDetails(element) {
         details.style.display = 'none';
     }
 }
+
+function loadStreamingLinks() {
+    fetch('/streamings')
+        .then(response => response.json())
+        .then(data => {
+            const streamingList = document.getElementById('streaming-list');
+            streamingList.innerHTML = '';
+            data.forEach(streaming => {
+                const li = document.createElement('li');
+                li.className = 'streaming-item';
+                li.innerHTML = `
+                    <span>${streaming.name}</span>
+                    <div class="streaming-actions">
+                        <i class="fa-solid fa-pen" style="color: gray;" onclick="editStreaming(${streaming.id})"></i>
+                        <i class="fa-solid fa-trash" style="color: gray;" onclick="deleteStreaming(${streaming.id})"></i>
+                    </div>
+                `;
+                streamingList.appendChild(li);
+            });
+        })
+        .catch(err => console.error('Erro ao carregar links de streaming:', err));
+}
+
+function editStreaming(streamingId) {
+    if (!streamingId) {
+        console.error("ID do streaming não fornecido.");
+        showCustomModal("Erro", "ID do streaming não foi fornecido.");
+        return;
+    }
+
+    console.log("Editando streaming com ID:", streamingId);
+    // Redireciona para a página de edição do streaming específico
+    window.location.href = `/edit_streaming/${streamingId}`;
+}
+
+function deleteStreaming(streamingId) {
+    if (!confirm('Tem certeza que deseja excluir este link de streaming?')) return;
+
+    fetch(`/delete_streaming/${streamingId}`, { method: 'DELETE' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadStreamingLinks();
+            } else {
+                alert(data.error || 'Erro ao excluir o link de streaming.');
+            }
+        })
+        .catch(err => console.error('Erro ao excluir o link de streaming:', err));
+}
+
+document.addEventListener('DOMContentLoaded', loadStreamingLinks);
