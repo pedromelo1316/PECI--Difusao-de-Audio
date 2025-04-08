@@ -100,14 +100,65 @@ def allowed_file(filename):
 @app.route('/save_channel_configs', methods=['POST'])
 def save_channel_configs():
     data = request.json
-    channel_type = data.get('channel_type')
+    channel_id = data.get('channel_id')
+    channel_type = data.get('channel_type').upper()
     channel_reproduction = data.get('channel_reproduction')
     channel_microfone = data.get('channel_microfone')
 
     # Processa os dados recebidos
+    print(f"ID do canal: {channel_id}")
     print(f"Tipo de transmissão: {channel_type}")
-    print(f"Reprodução: {channel_reproduction}")
     print(f"Microfone: {channel_microfone}")
+    print(f"Reprodução: {channel_reproduction}")
+    #alterar na base de dados o tipo de transmissão do canal e o respetivo microfone e reiniciar o processo
+    channel = db.session.query(Channels).filter(Channels.id == channel_id).first()
+    if not channel:
+        return jsonify({"error": "Canal não encontrado"}), 404
+    channel.type = channel_type
+    channel.microphone = channel_microfone
+    
+    # Reinicia o processo do canal com as novas configurações
+    if channel_type == "STREAMING":
+        channel.source = channel_reproduction
+        db.session.commit()
+        stream = db.session.query(Streaming).filter(Streaming.name == channel_reproduction).first()
+        if not stream:
+            return jsonify({"error": "Streaming não encontrado"}), 404
+        url = stream.url
+        # Reinicia o processo do canal
+        change_channel_process(channel.id, url, ChannelType.STREAMING)
+    elif channel_type == "LOCAL":
+        #percorrer conteudo de channel_reproduction que está do genero "PLAYLIST:playlist1 SONG:musica1 PLAYLIST:playlist2 PLAYLIST:playlist3 SONG:musica2"
+        #se for uma musica adicionar a musicas se for uma playlist ir á base de dados obter as musicas
+        
+        
+        musicas = []
+        for item in channel_reproduction.split():
+            if item.startswith("PLAYLIST:"):
+                playlist_name = item.split(":")[1]
+                playlist = db.session.query(Playlist).filter(Playlist.name == playlist_name).first()
+                if playlist:
+                    for song in playlist.songs:
+                        musicas.append(song.name)
+                    
+
+
+            elif item.startswith("SONG:"):
+                song_name = item.split(":")[1]
+                musicas.append(song_name)
+
+
+        for song in musicas:
+
+            print(song)
+
+    else:
+        print("Tipo de canal inválido")    
+    
+    
+        return jsonify({"error": "Tipo de canal inválido"}), 400
+    
+    
 
     # Salve as configurações no banco de dados ou tome outras ações necessárias
     return jsonify({"success": True}), 200
@@ -120,6 +171,10 @@ def start_ffmpeg_process(channel, source, _type):
     print("source: ", source)
     print("type: ", _type)
     
+    if not source:
+        print("Source is empty")
+        return None
+    
     # Verifica o tipo de transmissão e configura o comando do ffmpeg apropriado
     if _type == ChannelType.VOICE:
         
@@ -130,7 +185,7 @@ def start_ffmpeg_process(channel, source, _type):
             "ffmpeg",
             "-hide_banner", "-loglevel", "error",
             "-f", "pulse",
-            "-i", "echo-cancel",  # Usa o cancelamento de eco do PulseAudio
+            "-i", "default",  # Usa o cancelamento de eco do PulseAudio
             #"-af", "afftdn=nf=-20,speechnorm=e=50",
             "-acodec", "libopus",
             "-application", "voip",
@@ -367,15 +422,13 @@ def create_default_channels():
         db.session.commit()
         # Cria os canais padrão com tipo LOCAL e fonte "default"
         for i in range(1, NUM_CHANNELS+1):
-            source=f"source_local{i}"
             new_channel = Channels(
                 name=f"Channel {i}",
                 type=ChannelType.LOCAL,
-                source=source
             )
             db.session.add(new_channel)
             db.session.commit()
-            processes[new_channel.id] = start_ffmpeg_process(new_channel.id, source, ChannelType.LOCAL)
+            processes[new_channel.id] = start_ffmpeg_process(new_channel.id, new_channel.source, ChannelType.LOCAL)
             print(f"{new_channel.name} started")
 
     else:
@@ -775,29 +828,6 @@ def update_channel_name(channel_id):
 #        playlist_songs=playlist_songs,
 #        all_songs=all_songs
 #    )
-
-# Rota para atualizar o tipo de canal
-@app.route('/update_channel/<int:channel_id>', methods=['POST'])
-def update_channel(channel_id):
-    # Recupera o novo tipo de canal enviado pelo formulário
-    new_type = request.form.get('channel_type')
-    if new_type not in [channel.value for channel in ChannelType]:
-        return redirect('/')
-    channel = db.session.get(Channels, channel_id)
-    if not channel:
-        return redirect('/')
-    try:
-        # Atualiza o tipo do canal e reinicia o processo correspondente
-        channel.type = ChannelType[new_type]
-        print(f"Channel {channel_id} updated to {new_type}")
-        db.session.commit()
-        change_channel_process_thread = threading.Thread(target=change_channel_process, args=(channel.id, channel.source, channel.type), daemon=True)
-        change_channel_process_thread.start()
-        socketio.emit('reload_page', namespace='/')
-        return redirect('/')
-    except Exception as e:
-        socketio.emit('reload_page', namespace='/')
-        return redirect('/')
 
 # Rota para atualizar o canal associado a uma área
 @app.route('/update_area_channel', methods=['POST'])

@@ -306,12 +306,26 @@ function saveChanges() {
     // Obtém o tipo de transmissão selecionado no menu-list
     const selectedMenuItem = document.querySelector('.menu-item.active');
     const transmissionType = selectedMenuItem ? selectedMenuItem.getAttribute('data-value') : null;
+    //ir buscar id ao url "http://192.168.59.33:5000/edit_channels?channel_id=1"
+    const urlParams = new URLSearchParams(window.location.search);
+    const channel_id = urlParams.get('channel_id');
+    // Verifica se o channel_id foi obtido corretamente
+    if (!channel_id) {
+        alert("Erro ao obter o ID do canal.");
+        return;
+    }
 
     // Obtém a lista de reprodução ou o streaming selecionado em section-rightCH
     let selectedSource = null;
     if (transmissionType === "local") {
-        const selectedPlaylist = document.querySelector('.playlist-container input[type="checkbox"]:checked');
-        selectedSource = selectedPlaylist ? selectedPlaylist.id.replace('playlist-', '') : null;
+        const selectedItems = document.querySelectorAll('.playlist-container input[type="checkbox"]:checked, .songs-container input[type="checkbox"]:checked');
+        selectedSource = Array.from(selectedItems).map(item => {
+            if (item.id.startsWith('playlist-')) {
+                return `PLAYLIST:${item.id.replace('playlist-', '')}`;
+            } else if (item.id.startsWith('song-')) {
+                return `SONG:${item.id.replace('song-', '')}`;
+            }
+        }).join(' ');
     } else if (transmissionType === "streaming") {
         const selectedStreaming = document.querySelector('.streaming-container input[type="radio"]:checked');
         selectedSource = selectedStreaming ? selectedStreaming.id.replace('streaming-', '') : null;
@@ -330,16 +344,14 @@ function saveChanges() {
         alert("Por favor, selecione uma lista de reprodução ou uma fonte de streaming.");
         return;
     }
-    if (!selectedMicrophone) {
-        alert("Por favor, selecione um microfone.");
-        return;
-    }
 
     // Dados a serem enviados para o backend
     const data = {
         channel_type: transmissionType,
         channel_reproduction: selectedSource,
-        channel_microfone: selectedMicrophone
+        channel_microfone: selectedMicrophone,
+        channel_id: channel_id
+        
     };
 
     // Envia os dados para o backend usando fetch
