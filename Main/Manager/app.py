@@ -119,12 +119,12 @@ def save_channel_configs():
     
     # Reinicia o processo do canal com as novas configurações
     if channel_type == "STREAMING":
-        channel.source = channel_reproduction
-        db.session.commit()
         stream = db.session.query(Streaming).filter(Streaming.name == channel_reproduction).first()
         if not stream:
             return jsonify({"error": "Streaming não encontrado"}), 404
         url = stream.url
+        channel.source = url
+        db.session.commit()
         # Reinicia o processo do canal
         change_channel_process(channel.id, url, ChannelType.STREAMING)
     elif channel_type == "LOCAL":
@@ -146,12 +146,13 @@ def save_channel_configs():
             elif item.startswith("SONG:"):
                 song_name = item.split(":")[1]
                 musicas.append(song_name)
+                
+        channel_source = ", ".join(musicas)
+        channel.source = channel_source
+        db.session.commit()
+        
 
-
-        for song in musicas:
-
-            print(song)
-
+        change_channel_process(channel.id, channel_source, ChannelType.LOCAL)
     else:
         print("Tipo de canal inválido")    
     
@@ -198,34 +199,41 @@ def start_ffmpeg_process(channel, source, _type):
             f"{multicast_address}"
         ]
     elif _type == ChannelType.LOCAL:
-        # Transmissão local utilizando um arquivo de playlist
-        print("source: ", source)
-        playlist_path = f"Playlists/{source}.txt"
-        if not os.path.exists(playlist_path):
-            with open(playlist_path, 'w') as f:
-                f.write("ffconcat version 1.0")
-            f.close()
-            return None
         
+        # Transmissão local utilizando uma lista de músicas
+        print("source: ", source)
+
+        # Divide o source em uma lista de músicas
+        musicas = [musica.strip() for musica in source.split(",")]
+
+        # Cria um arquivo de playlist temporário para o FFmpeg
+        playlist_file_path = f"Playlists/temp_playlist_{channel}.txt"
+        with open(playlist_file_path, "w") as playlist_file:
+            for musica in musicas:
+                playlist_file.write(f"file 'Songs/{musica}.wav'\n")
+
+        # Comando do FFmpeg para reproduzir a playlist
         cmd = [
             "ffmpeg",
             "-hide_banner", "-loglevel", "error",
-            "-stream_loop", "-1",
-            "-f", "concat",
-            "-safe", "0",
-            "-re",
-            "-i", f"Playlists/{source}.txt",
-            "-af", "apad",
+            "-stream_loop", "-1",  # Loop infinito
+            "-f", "concat",  # Formato de entrada como concatenação
+            "-safe", "0",  # Permite caminhos relativos
+            "-re",  # Tempo real
+            "-i", playlist_file_path,  # Arquivo de playlist
+            "-af", "apad",  # Adiciona silêncio no final
             "-ar", SAMPLE_RATE,
-            "-vn",
+            "-vn",  # Sem vídeo
             "-acodec", "libopus",
             "-b:a", BITRATE,
-            "-frame_duration", "120",  # Frames de 40 ms
+            "-frame_duration", "120",  # Frames de 120 ms
             "-ac", AUDIO_CHANNELS,
             "-f", "rtp",
             "-sdp_file", f"session_{channel}.sdp",
             f"{multicast_address}"
         ]
+        
+        
     elif _type == ChannelType.STREAMING:
         # Transmissão via streaming com URL proveniente do yt-dlp
         
@@ -288,44 +296,53 @@ def change_channel_process(channel, source, transmission_type):
     global processes
 
     print("Changing channel...")
-    
-    # Se já existir um processo para o canal, termina-o
-    if processes[channel]:
-        print("Terminating process...")
-        os.killpg(os.getpgid(processes[channel].pid), signal.SIGTERM)
-        processes[channel].wait()
-        processes[channel] = None
-        
-    print("channel: ", channel)
-    print("transmission_type: ", transmission_type)
-    
-     # Após a mudança, envia informações atualizadas para os nós
-    with app.app_context():
-        areas = db.session.query(Areas).filter(Areas.channel_id == channel).all()
-        nodes = []
-        for area in areas:
-            nodes += area.nodes
-        send_info(nodes)
-    
-    
-        
+
+    # Verifica se já existe um processo para o canal e tenta encerrá-lo
+    if processes.get(channel):
+        print(f"Terminating existing process for channel {channel}...")
+        process = processes[channel]
+        try:
+            # Envia sinal de término para o grupo de processos
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+            process.wait(timeout=10)  # Aguarda até 10 segundos para o processo terminar
+            print(f"Process for channel {channel} terminated.")
+        except ProcessLookupError:
+            print(f"Process {process.pid} already terminated.")
+        except subprocess.TimeoutExpired:
+            print(f"Process {process.pid} did not terminate in time. Forcing termination...")
+            try:
+                os.killpg(os.getpgid(process.pid), signal.SIGKILL)  # Força o encerramento com SIGKILL
+                process.wait(timeout=5)
+                print(f"Process {process.pid} terminated.")
+            except subprocess.TimeoutExpired:
+                print(f"Process {process.pid} could not be killed.")
+        except Exception as e:
+            print(f"Error terminating process for channel {channel}: {e}")
+        finally:
+            processes[channel] = None  # Remove o processo do dicionário
+    else:
+        print(f"No existing process found for channel {channel}.")
+
+    print(f"Starting new process for channel {channel} with source: {source} and type: {transmission_type}")
+
     # Inicia o novo processo para o canal com os parâmetros fornecidos
     process = start_ffmpeg_process(channel, source, transmission_type)
     if process:
         processes[channel] = process
-        print(f"Channel {channel} started")
+        print(f"Channel {channel} started with PID {process.pid}")
     else:
         processes[channel] = None
-        
+        print(f"Failed to start process for channel {channel}.")
+
     # Após a mudança, envia informações atualizadas para os nós
     with app.app_context():
         areas = db.session.query(Areas).filter(Areas.channel_id == channel).all()
         nodes = []
         for area in areas:
             nodes += area.nodes
-        send_info(nodes)
-    
-    print(processes)
+        send_info(nodes, restart=True)
+
+    print("Processes:", processes)
 
 # Definição dos modelos de dados com SQLAlchemy
 
@@ -438,7 +455,7 @@ def create_default_channels():
             print(f"Channel {channel.id} started")
             
             
-    send_info(Nodes.query.all())  # Envia informações iniciais para os nós
+    send_info(Nodes.query.all(), restart=True)  # Envia informações iniciais para os nós
             
     return processes
 
@@ -493,7 +510,7 @@ def update(id):
         return render_template('update.html', node=node)
 
 # Função para enviar informações atualizadas para os nós via broadcast UDP
-def send_info(nodes, removed=False, suspended=False):
+def send_info(nodes, removed=False, suspended=False, restart=False):
     if not removed and not suspended:
         dic = {}
         for node in nodes:
@@ -526,6 +543,12 @@ def send_info(nodes, removed=False, suspended=False):
         for node in nodes:
             mac = node.mac
             dic[mac] = {"suspended": True}
+            
+    if restart:
+        for node in nodes:
+            mac = node.mac
+            dic[mac].update({"restart": True})
+            
 
             
     msg = json.dumps(dic)
@@ -593,7 +616,7 @@ def detect_new_nodes(stop_event, msg_buffer):
 
                 with app.app_context():
                     node = db.session.query(Nodes).filter(Nodes.mac == node_mac).first()
-                    send_info([node])
+                    send_info([node], restart=True)
                     socketio.emit('reload_page', namespace='/')  # Envia comando para recarregar a página
 
 # Rota para renomear um nó
