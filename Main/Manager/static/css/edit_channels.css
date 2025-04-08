@@ -8,7 +8,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 20px; /* Match padding of .streaming-item */
+    padding: 10px 15px; /* Match padding of .streaming-item */
     background-color: white;
     border-radius: 6px; /* Match border radius of .streaming-item */
     border-left: 4px solid #4caf50; /* Match border thickness */
