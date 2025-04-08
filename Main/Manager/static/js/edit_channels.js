@@ -69,24 +69,21 @@ function updateSectionRight(value) {
         let streamingHTML = '';
         streamingSources2.forEach(source => {
             streamingHTML += `
-                <div class="streaming-item" onclick="selectStreamingSource(this)">
-                    <span class="streaming-name">${source}</span>
-                    <i class="fa-regular fa-square selection-icon"></i>
+                <div class="streaming-item" style="display: flex; justify-content: space-between; align-items: center; border: 1px solid #ccc; margin-bottom: 10px; padding: 5px;">
+                    <label for="streaming-${source}" style="flex-grow: 1;">
+                        <span class="streaming-">${source}</span>
+                    </label>
+                    <input type="radio" name="streaming-source" id="streaming-${source}" onchange="selectStreamingSource('${source}')">
                 </div>
             `;
         });
-
+    
         sectionRight.innerHTML = `
             <div class="inner-section-left">
-                <h3>Fonte de Streaming</h3>
-                <div class="stats-container">
-                    <div class="stat-item">
-                        <span class="stat-value">${streamingSources2.length}</span>
-                        <span class="stat-label">Fontes</span>
-                    </div>
-                </div>
+                <h3 id="Streaming_Source_Message">Fonte de Streaming:</h3>
                 <div class="selected-streaming-info">
                     <p class="section-hint">Selecione uma fonte de streaming</p>
+                    <div id="selectedStreamingDisplay" style="margin-top: 10px; font-weight: bold;"></div>
                 </div>
             </div>
             <div class="inner-section-right">
@@ -103,6 +100,25 @@ function updateSectionRight(value) {
         saveButtonContainer.style.display = "none";
     }
 }
+
+function selectStreamingSource(source) {
+    const selectedDisplay = document.getElementById("selectedStreamingDisplay");
+    const hintMessage = document.querySelector(".section-hint");
+
+    // Oculta a mensagem de dica
+    if (hintMessage) {
+        hintMessage.style.display = "none";
+    }
+
+    // Atualiza a exibição da fonte selecionada com um novo estilo
+    selectedDisplay.innerHTML = `
+        <div class="streaming-selected-box">
+            <span class="streaming-label">Fonte Selecionada:</span>
+            <span class="streaming-name-selected">${source}</span>
+        </div>
+    `;
+}
+
 
 function toggleSongsVisibility(button) {
     const songsList = button.parentElement.nextElementSibling; // A lista de músicas está logo após o cabeçalho

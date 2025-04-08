@@ -2,6 +2,32 @@
 
 /* Estilo para o dropdown de microfones */
 
+
+/* Estilização do bloco de fonte selecionada */
+.streaming-selected-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    font-size: 1.2em;
+}
+
+/* Estilização do rótulo */
+.streaming-label {
+    font-weight: bold;
+    color: #333;
+}
+
+/* Estilização do nome da fonte */
+.streaming-name-selected {
+    color: #1890ff;
+    font-weight: bold;
+}
+
+
 .microphone-select {
     width: 300px; /* Define uma largura fixa */
     padding: 10px 15px;
