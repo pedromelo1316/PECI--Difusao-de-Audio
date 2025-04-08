@@ -59,6 +59,7 @@ p {
     border-radius: 12px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
     padding: 40px;
+    border:#3b3b3b solid 2px;
 }
 
 /* Row Container for Speakers and Channels */
@@ -302,6 +303,7 @@ header {
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
     padding: 10px;
     margin-top: 10px;
+    border:#9c9c9c solid 1px;
 }
 
 .column-list {
@@ -320,7 +322,7 @@ header {
     justify-content: space-between;
     align-items: center;
     padding: 8px;
-    border-bottom: 1px solid #ddd;
+    border: 1px solid #cfcdcd;
     cursor: pointer;
     border-radius: 8px;
     transition: background 0.3s;
@@ -457,6 +459,25 @@ header {
     padding: 12px;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05);
     flex: 2;
+    align-self: center;
+}
+
+.column-section .column-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.add-column-button {
+    padding: 8px;
+    text-align: center;
+    color: #22cc3f;
+    font-weight: bold;
+    cursor: pointer;
+    border: #000 dashed 1px;
+    border-radius: 8px;
+    width: 50%;
+    margin: 0 auto; /* Centers the button horizontally */
 }
 
 /* ===== ZONE STYLES ===== */
@@ -471,6 +492,7 @@ header {
     gap: 40px;
     flex-direction: column;
     align-items: center;
+    border: #5e5e5e solid 2px
 }
 
 .zone-box {
@@ -482,6 +504,7 @@ header {
     min-height: 300px;
     transition: transform 0.2s ease-in-out;
     margin-left: 0;
+    border: #9c9c9c solid 1px
 }
 
 .zone-box:hover {
@@ -630,12 +653,12 @@ header {
 }
 
 /* ===== BUTTONS & INPUTS ===== */
-.add-column-button {
-    padding: 8px;
-    text-align: center;
-    color: #22cc3f;
-    font-weight: bold;
-    cursor: pointer;
+
+
+.channel-cards{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .delete-column-button {
@@ -876,7 +899,7 @@ footer {
     background: white;
     padding: 12px 15px; /* Mais espaçado no original */
     border-radius: 8px;
-    border: 1px solid #eee;
+    border: 1px solid #cfcdcd;
     transition: all 0.2s ease;
     box-shadow: 0 2px 4px rgba(0,0,0,0.03);
     max-width: 460px; /* No teu atual está muito pequeno (180px), volta ao original */

@@ -215,20 +215,19 @@
                         <div class="column-section">
                             <h4>Speakers</h4>
                             <div class="column-list">
-                                <div class="column-list">
-                                    {% for node in nodes if node.area_id == area.id %}
-                                    <div class="column-item" data-column="{{ node.name }}" data-zone="{{ area.name }}">
-                                        <span>{{ node.name }}</span>
-                                        <button class="delete-column-button" onclick="removeZoneColumn(this.closest('.column-item'))">
-                                            <i class="fa-solid fa-trash" style="color: black;"></i>
-                                        </button>
-                                    </div>
-                                    {% endfor %}
-                                    <div class="add-column-button" onclick="showSelectForZone(this)">
-                                        <span>+ Speaker</span>
-                                    </div>
+                                {% for node in nodes if node.area_id == area.id %}
+                                <div class="column-item" data-column="{{ node.name }}" data-zone="{{ area.name }}">
+                                    <span>{{ node.name }}</span>
+                                    <button class="delete-column-button" onclick="removeZoneColumn(this.closest('.column-item'))">
+                                        <i class="fa-solid fa-trash" style="color: black;"></i>
+                                    </button>
                                 </div>
+                                {% endfor %}
                             </div>
+                            <div class="add-column-button" onclick="showSelectForZone(this)">
+                                <span>+ Speaker</span>
+                            </div>
+                            
                         </div>
                         
                         <!-- Channel Section -->
