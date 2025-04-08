@@ -37,6 +37,13 @@ AUDIO_CHANNELS = "1"  # Mono
 
 NUM_CHANNELS = 3  # Número total de canais
 
+@app.route('/get_microphones', methods=['GET'])
+def get_microphones():
+    microphones = get_mics()  # Chama a função que lista os microfones
+    return jsonify([
+        {"card": mic[0], "device": mic[1], "name": mic[2]} for mic in microphones
+    ])
+
 def parse_device_info(line):
     parts = line.split()
     card = None

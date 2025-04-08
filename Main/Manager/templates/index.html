@@ -89,7 +89,7 @@
                 <h3>Devices</h3>
                 <div class="column-box" id="columnBox" style="display: block;">
                     {% if nodes|length < 1 %}
-                    <h1>No node found</h1>
+                    <h5>No node found</h5>
                     {% else %}
                     <div class="column-list">
                         {% for node in nodes %}
@@ -127,7 +127,7 @@
                 </div>
                 <div class="column-box" id="channelsBox" style="display: block;">
                     {% if channels|length < 1 %}
-                    <h1>No channels found</h1>
+                    <h4>No channels found</h4>
                     {% else %}
                     <div class="channels-layout">
 
@@ -135,7 +135,7 @@
                         <div class="bottom-controls">
                             <!-- Left: Audio Transmission -->
                             <div class="channel-selection-panel">
-                                <h4>Audio Transmission</h4>
+                              
                                 <div class="channel-cards">
                                     {% for channel in channels %}
                                     <div class="channel-card" data-channel-id="{{ channel.id }}">
@@ -194,7 +194,7 @@
         <br>
         <div class="zone-container">
             {% if areas|length < 1 %}
-            <h1>Please add zones</h1>
+            <h3>Please add zones</h3>
             {% else %}
             {% for area in areas %}
             <div class="zone-box">

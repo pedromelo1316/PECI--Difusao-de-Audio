@@ -35,7 +35,7 @@
                     <h2>Playlists</h2>
                     <ul class="playlists-list" id="playlists-list">
                         {% for playlist in playlists %}
-                        <li class="playlist-item">
+                        <li class="playlist-item2">
                             <span>{{ playlist.name }}</span>
                             <div class="playlist-actions">                                
                                 <i class="fa-solid fa-pen" onclick="editPlaylist('{{ playlist.id }}')"></i>
@@ -43,7 +43,7 @@
                             </div>
                         </li>
                         {% endfor %}
-                        <li class="playlist-item add-playlist" onclick="addPlaylist()">
+                        <li class="playlist-item2 add-playlist" onclick="addPlaylist()">
                             <span>Add +</span>
                         </li>
                     </ul>

@@ -10,56 +10,49 @@ function updateSectionRight(value) {
     if (value === "local") {
         let playlistsHTML = '';
         for (const [playlistName, songs] of Object.entries(playlistsData)) {
-            const songCount = songs.length;
-            let songList = songs.map(song => `<div class="song-item"> ${song}</div>`).join('');
-            
             playlistsHTML += `
-                <div class="playlist-item" onclick="togglePlaylistSongs(this)">
-                    <div class="playlist-name">
-                        ${playlistName} <span class="song-count">(${songCount})</span>
-                        <i class="fa-solid fa-chevron-down dropdown-icon"></i>
+                <div class="playlist-item" style="display: flex; flex-direction: column; border: 1px solid #ccc; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <button class="toggle-songs-btn" onclick="toggleSongsVisibility(this)" style="background: none; border: none; cursor: pointer; margin-right: 10px;">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <label for="playlist-${playlistName}" style="flex-grow: 1;">
+                            <span class="playlist-name">${playlistName}</span>
+                        </label>
+                        <input type="checkbox" id="playlist-${playlistName}" onchange="addToPlaylist('${playlistName}', 'playlist', this.checked)">
                     </div>
-                    <div class="playlist-songs" style="display: none;">
-                        ${songList}
+                    <div class="songs-list" style="display: none; padding-left: 20px; margin-top: 5px;">
+                        ${songs.map(song => `
+                            <div class="song-item" style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>${song}</span>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
             `;
         }
-
+    
         let songsHTML = '';
         allSongs.forEach(song => {
-            songsHTML += `<div class="song-item"> ${song}</div>`;
+            songsHTML += `
+                <div class="song-item" style="display: flex; justify-content: space-between; align-items: center;">
+                    <label for="song-${song}" style="flex-grow: 1;">
+                        <span class="song-name">${song}</span>
+                    </label>
+                    <input type="checkbox" id="song-${song}" onchange="addToPlaylist('${song}', 'song', this.checked)">
+                </div>
+            `;
         });
-
+    
         sectionRight.innerHTML = `
             <div class="inner-section-left">
                 <h3>Lista de reprodução</h3>
-                <div class="stats-container">
-                    <div class="stat-item">
-                        <span class="stat-value">0</span>
-                        <span class="stat-label">Playlists</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value">0</span>
-                        <span class="stat-label">Músicas</span>
-                    </div>
-                </div>
                 <div class="selected-playlist-info">
-                    <p class="section-hint">Arraste uma playlist ou música</p>
+                    <div class="playlist-dropzone"></div>
                 </div>
             </div>
             <div class="inner-section-right">
                 <h3>Playlists Disponíveis</h3>
-                <div class="stats-container">
-                    <div class="stat-item">
-                        <span class="stat-value">${Object.keys(playlistsData).length}</span>
-                        <span class="stat-label">Playlists</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value">${allSongs.length}</span>
-                        <span class="stat-label">Músicas</span>
-                    </div>
-                </div>
                 <div class="playlist-container">
                     ${playlistsHTML}
                 </div>
@@ -70,7 +63,8 @@ function updateSectionRight(value) {
             </div>
         `;
         saveButtonContainer.style.display = "flex";
-        enableDragAndDrop();
+        enablePlaylistReordering(); // Enable drag-and-drop reordering
+    
     } else if (value === "streaming") {
         let streamingHTML = '';
         streamingSources2.forEach(source => {
@@ -110,48 +104,58 @@ function updateSectionRight(value) {
     }
 }
 
-function togglePlaylistSongs(playlistElement) {
-    const songsContainer = playlistElement.querySelector('.playlist-songs');
-    const icon = playlistElement.querySelector('.dropdown-icon');
-    if (songsContainer.style.display === 'none') {
-        songsContainer.style.display = 'block';
-        icon.classList.add('expanded');
-        playlistElement.classList.add('expanded');
+function toggleSongsVisibility(button) {
+    const songsList = button.parentElement.nextElementSibling; // A lista de músicas está logo após o cabeçalho
+    const isVisible = songsList.style.display === 'block';
+
+    // Alterna a visibilidade
+    songsList.style.display = isVisible ? 'none' : 'block';
+
+    // Alterna o ícone da seta
+    const icon = button.querySelector('i');
+    icon.classList.toggle('fa-chevron-down', !isVisible);
+    icon.classList.toggle('fa-chevron-up', isVisible);
+}
+
+function addToPlaylist(itemName, itemType, isChecked) {
+    const dropZone = document.querySelector('.playlist-dropzone');
+
+    if (isChecked) {
+        // Avoid duplicates
+        const existingItems = Array.from(dropZone.querySelectorAll('.playlist-item, .song-item'));
+        const isDuplicate = existingItems.some(item => item.dataset.name === itemName);
+
+        if (!isDuplicate) {
+            const newItem = document.createElement('div');
+            newItem.className = itemType === 'playlist' ? 'playlist-item' : 'song-item';
+            newItem.dataset.name = itemName;
+            newItem.innerHTML = `
+                <span>${itemName}</span>
+                <button class="remove-item-btn" onclick="removeItemFromPlaylist(this)">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            `;
+            dropZone.appendChild(newItem);
+            enablePlaylistReordering(); // Re-enable drag-and-drop for the new item
+        }
     } else {
-        songsContainer.style.display = 'none';
-        icon.classList.remove('expanded');
-        playlistElement.classList.remove('expanded');
+        // Remove the item if unchecked
+        const itemToRemove = dropZone.querySelector(`[data-name="${itemName}"]`);
+        if (itemToRemove) {
+            itemToRemove.remove();
+        }
     }
 }
 
-function updateLeftStats() {
-    const dropZone = document.querySelector('.inner-section-left .selected-playlist-info');
-    const addedPlaylists = dropZone.querySelectorAll('.playlist-item').length;
-    const addedSongs = dropZone.querySelectorAll('.song-item').length;
+function enablePlaylistReordering() {
+    const dropZone = document.querySelector('.playlist-dropzone');
+    const items = dropZone.querySelectorAll('.playlist-item, .song-item');
 
-    const statsContainer = document.querySelector('.inner-section-left .stats-container');
-    statsContainer.innerHTML = `
-        <div class="stat-item">
-            <span class="stat-value">${addedPlaylists}</span>
-            <span class="stat-label">Playlists</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-value">${addedSongs}</span>
-            <span class="stat-label">Músicas</span>
-        </div>
-    `;
-}
-
-function enableDragAndDrop() {
-    const draggableItems = document.querySelectorAll('.playlist-item, .song-item');
-    const dropZone = document.querySelector('.inner-section-left .selected-playlist-info');
-
-    draggableItems.forEach(item => {
+    items.forEach(item => {
         item.setAttribute('draggable', true);
 
         item.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('text/plain', item.outerHTML);
-            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', item.dataset.name);
             item.classList.add('dragging');
         });
 
@@ -162,82 +166,43 @@ function enableDragAndDrop() {
 
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        dropZone.classList.add('drag-over');
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('drag-over');
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('drag-over');
-        const droppedHTML = e.dataTransfer.getData('text/plain');
-        const droppedElement = document.createElement('div');
-        droppedElement.innerHTML = droppedHTML;
-        const newItem = droppedElement.firstElementChild;
-
-        // Add a remove button to the item
-        const removeBtn = document.createElement('button');
-        removeBtn.className = 'remove-item-btn';
-        removeBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>'; // Changed to trash icon
-        removeBtn.addEventListener('click', function(e) {
-            e.stopPropagation(); // Prevent triggering other click events (like togglePlaylistSongs)
-            removeItemFromPlaylist(this.parentElement);
-        });
-        newItem.appendChild(removeBtn);
-
-        // Avoid duplicates
-        const existingItems = Array.from(dropZone.querySelectorAll('.playlist-item, .song-item'));
-        const isDuplicate = existingItems.some(item => {
-            // Compare the content without the remove button
-            const itemContent = item.innerHTML.replace(/<button class="remove-item-btn">.*?<\/button>/g, '');
-            const newItemContent = newItem.innerHTML.replace(/<button class="remove-item-btn">.*?<\/button>/g, '');
-            return itemContent === newItemContent;
-        });
-        
-        if (!isDuplicate) {
-            // No longer auto-expanding playlists when added
-            dropZone.appendChild(newItem);
-            enableDragAndDrop(); // Re-enable drag-and-drop for the new item
-            updateLeftStats(); // Update the stats after adding a new item
+        const draggingItem = document.querySelector('.dragging');
+        const afterElement = getDragAfterElement(dropZone, e.clientY);
+        if (afterElement == null) {
+            dropZone.appendChild(draggingItem);
+        } else {
+            dropZone.insertBefore(draggingItem, afterElement);
         }
     });
 }
 
-// New function to remove items from the playlist
-function removeItemFromPlaylist(item) {
-    const dropZone = document.querySelector('.inner-section-left .selected-playlist-info');
-    dropZone.removeChild(item);
-    updateLeftStats();
+function removeItemFromPlaylist(button) {
+    const item = button.parentElement; // O botão está dentro do item a ser removido
+    const dropZone = document.querySelector('.playlist-dropzone');
+
+    if (dropZone.contains(item)) {
+        const itemName = item.dataset.name; // Obtém o nome do item
+        const checkbox = document.getElementById(`playlist-${itemName}`) || document.getElementById(`song-${itemName}`);
+        
+        if (checkbox) {
+            checkbox.checked = false; // Desmarca o checkbox correspondente
+        }
+
+        item.remove(); // Remove o item da lista de reprodução
+    }
 }
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.playlist-item:not(.dragging), .song-item:not(.dragging)')];
 
-function selectStreamingSource(streamingElement) {
-    // Deselect all streaming items and reset their icons to square
-    const allStreamingItems = document.querySelectorAll('.streaming-item');
-    allStreamingItems.forEach(item => {
-        item.classList.remove('selected');
-        const icon = item.querySelector('.selection-icon');
-        icon.classList.remove('fa-check');
-        icon.classList.add('fa-regular', 'fa-square');
-    });
-
-    // Select the clicked streaming item and change icon to checkmark
-    streamingElement.classList.add('selected');
-    const icon = streamingElement.querySelector('.selection-icon');
-    icon.classList.remove('fa-regular', 'fa-square');
-    icon.classList.add('fa-check');
-
-    // Update the selected streaming info with highlighted styling
-    const selectedInfo = document.querySelector('.inner-section-left .selected-streaming-info');
-    const selectedName = streamingElement.querySelector('.streaming-name').textContent;
-    selectedInfo.innerHTML = `
-        <p style="font-weight: bold; color: #22cc3f;">Fonte selecionada:</p>
-        <div class="selected-streaming-item" style="border: 2px solid #22cc3f; padding: 10px; background-color: #FFFFFF; border-radius: 4px; margin-top: 5px;">
-            <span class="streaming-name" style="font-weight: bold;">${selectedName}</span>
-        </div>
-    `;
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
 function removeStreamingSource(source) {
@@ -254,6 +219,24 @@ function openAddStreamingModal() {
         streamingSources.push(newSource);
         updateSectionRight('streaming'); // Refresh the streaming section
     }
+}
+
+function associateMicrophone(deviceId, label) {
+    const associatedMicrophones = document.getElementById("associatedMicrophones");
+    const microphoneItem = document.createElement("div");
+    microphoneItem.className = "microphone-item";
+    microphoneItem.innerHTML = `
+        <span>${label || "Microfone Desconhecido"}</span>
+        <button class="remove-item-btn" onclick="removeMicrophone(this)">
+            <i class="fa-solid fa-trash-can"></i>
+        </button>
+    `;
+    associatedMicrophones.appendChild(microphoneItem);
+}
+
+function removeMicrophone(button) {
+    const microphoneItem = button.parentElement;
+    microphoneItem.remove();
 }
 
 // Change event listeners from radio buttons to menu items
@@ -284,3 +267,24 @@ document.addEventListener('DOMContentLoaded', function() {
     updateLeftStats();
 });
 
+function loadMicrophones() {
+    fetch('/get_microphones')
+        .then(response => response.json())
+        .then(microphones => {
+            const microphoneSelect = document.getElementById('microphoneSelect');
+            microphoneSelect.innerHTML = '<option value="">Select a microphone</option>'; // Reset options
+
+            microphones.forEach(mic => {
+                const option = document.createElement('option');
+                option.value = `${mic.card}:${mic.device}`;
+                option.textContent = mic.name || `Card ${mic.card}, Device ${mic.device}`;
+                microphoneSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching microphones:', error);
+        });
+}
+
+// Call the function when the page loads
+document.addEventListener('DOMContentLoaded', loadMicrophones);

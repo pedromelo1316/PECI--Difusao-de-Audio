@@ -1,5 +1,49 @@
 /* Edit Channels Page Styles */
 
+/* Estilo para o dropdown de microfones */
+
+.microphone-select {
+    width: 300px; /* Define uma largura fixa */
+    padding: 10px 15px;
+    font-size: 16px;
+    color: #333;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    appearance: none; /* Remove o estilo padrão do navegador */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+}
+
+.microphone-select:hover {
+    background-color: #f0f0f0;
+    border-color: #bbb;
+}
+
+.microphone-select:focus {
+    outline: none;
+    border-color: #22cc3f;
+    box-shadow: 0 0 5px rgba(34, 204, 63, 0.3);
+}
+
+/* Estilo para as opções do dropdown */
+.microphone-select option {
+    padding: 10px;
+    font-size: 16px;
+    color: #333;
+    background-color: #fff;
+    white-space: normal; /* Permite quebra de linha */
+    line-height: 1.4; /* Ajusta o espaçamento entre linhas */
+    max-height: 3.2em; /* Permite até 2 linhas de altura */
+    overflow: hidden; /* Esconde o texto extra */
+    text-overflow: ellipsis; /* Adiciona "..." para texto muito longo */
+}
+
 /* Layout & Container Adaptations */
 .dual-sectionCH {
     display: flex;
@@ -8,7 +52,21 @@
     align-items: flex-start;
 }
 
-.section-leftCH {
+.section-microphone{
+    margin-top: 5%;
+    flex: 0 0 280px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.06);
+    padding: 25px;
+    position: sticky;
+    top: 20px;
+    align-self: flex-start;
+    max-height: calc(100vh - 240px);
+    overflow-y: auto;
+}
+
+.section-options {
     flex: 0 0 280px;
     background: white;
     border-radius: 16px;
@@ -283,7 +341,6 @@
 }
 
 .song-item {
-    display: flex;
     align-items: center;
     padding: 10px 15px;
     background: white;
@@ -370,8 +427,6 @@
 .save-button-container {
     display: flex;
     justify-content: center;
-    margin-top: 30px;
-    margin-bottom: 40px;
 }
 
 .save-button {
@@ -522,4 +577,40 @@
     background-color: #1db035;
     transform: translateY(-2px);
     box-shadow: 0 4px 6px rgba(34, 204, 63, 0.2);
+}
+
+/* Microphone Section */
+.microphone-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 15px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.microphone-item:hover {
+    background-color: #f9f9f9;
+}
+
+.add-item-btn {
+    background-color: #22cc3f;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s;
+}
+
+.add-item-btn:hover {
+    background-color: #1db035;
+    transform: scale(1.1);
 }

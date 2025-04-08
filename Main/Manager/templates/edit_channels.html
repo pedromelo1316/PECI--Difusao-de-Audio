@@ -55,34 +55,41 @@
 
 <div class="containerCH">
     <div class="contentCH">
-        <div class="page-layout">
-
-
+        <div class="page-layout" style="min-height: 0px;">
             <div class="main-content">
                 <div class="dual-sectionCH">
-                    <div class="section-leftCH">
-                        <h3>Menu</h3>
-                        <div class="menu-box" id="menuBox">
-                            <nav class="menu-list">
-                                <div class="menu-item" data-value="local">
-                                    <div class="button-icon">
-                                        <i class="fa-solid fa-music"></i> 
+                    <div class="">
+                        <div class="section-options">
+                            <h3>Audio Options:</h3>
+                            <div class="menu-box" id="menuBox">
+                                <nav class="menu-list">
+                                    <div class="menu-item" data-value="local">
+                                        <div class="button-icon">
+                                            <i class="fa-solid fa-music"></i> 
+                                        </div>
+                                        <div class="button-text" style="margin-left: 10px;">
+                                            <span>  Playlists</span>
+                                        </div>
+                                        <div class="menu-item-indicator"></div>
                                     </div>
-                                    <div class="button-text" style="margin-left: 10px;">
-                                        <span>  Playlists</span>
+                                    <div class="menu-item" data-value="streaming">
+                                        <div class="button-icon">
+                                            <i class="fa-solid fa-podcast"></i>
+                                        </div>
+                                        <div class="button-text" style="margin-left: 10px;">
+                                            <span>  Streaming</span>
+                                        </div>
+                                        <div class="menu-item-indicator"></div>
                                     </div>
-                                    <div class="menu-item-indicator"></div>
-                                </div>
-                                <div class="menu-item" data-value="streaming">
-                                    <div class="button-icon">
-                                    <i class="fa-solid fa-podcast"></i>
-                                </div>
-                                <div class="button-text" style="margin-left: 10px;">
-                                    <span>  Streaming</span>
-                                </div>
-                                    <div class="menu-item-indicator"></div>
-                                </div>
-                            </nav>
+                                </nav>
+                            </div>
+                        </div>
+
+                        <div class="section-microphone">
+                            <h3>Microphone:</h3>
+                            <select id="microphoneSelect" class="microphone-select">
+                                <option value="">Loading microphones...</option>
+                            </select>
                         </div>
                     </div>
 

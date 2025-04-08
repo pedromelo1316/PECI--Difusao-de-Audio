@@ -8,7 +8,7 @@ function loadPlaylists() {
             playlistsList.innerHTML = '';
             data.forEach(playlist => {
                 const li = document.createElement('li');
-                li.className = 'playlist-item';
+                li.className = 'playlist-item2';
                 li.innerHTML = `
                     <span>${playlist.name}</span>
                     <div class="playlist-actions">
@@ -19,7 +19,7 @@ function loadPlaylists() {
                 playlistsList.appendChild(li);
             });
             const addPlaylistItem = document.createElement('li');
-            addPlaylistItem.className = 'playlist-item add-playlist';
+            addPlaylistItem.className = 'playlist-item2 add-playlist';
             addPlaylistItem.onclick = addPlaylist;
             addPlaylistItem.innerHTML = '<span>Add +</span>';
             playlistsList.appendChild(addPlaylistItem);
