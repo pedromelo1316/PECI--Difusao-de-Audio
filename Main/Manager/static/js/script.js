@@ -893,28 +893,26 @@ function toggleChannelDropdown(dropdownElement) {
 
 function selectChannel(channelId, channelName, areaName, optionElement) {
     // Atualiza o nome do canal selecionado no dropdown
-    document.getElementById('selectedChannel-' + areaName).textContent = channelName;
+    const selectedChannelSpan = document.getElementById('selectedChannel-' + areaName);
+    selectedChannelSpan.textContent = channelName;
 
     // Oculta o dropdown
     optionElement.parentElement.style.display = 'none';
 
     // Envia o canal selecionado para o backend
-    const form = document.createElement('form');
-    form.action = '/update_area_channel';
-    form.method = 'POST';
-
-    const areaInput = document.createElement('input');
-    areaInput.type = 'hidden';
-    areaInput.name = 'name';
-    areaInput.value = areaName;
-    form.appendChild(areaInput);
-
-    const channelInput = document.createElement('input');
-    channelInput.type = 'hidden';
-    channelInput.name = 'channel_id';
-    channelInput.value = channelId;
-    form.appendChild(channelInput);
-
-    document.body.appendChild(form);
-    form.submit();
+    fetch('/update_area_channel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `name=${encodeURIComponent(areaName)}&channel_id=${encodeURIComponent(channelId)}`
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to update channel');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating channel:', error);
+        // Reverte o texto para "Select Channel" em caso de erro
+        selectedChannelSpan.textContent = 'Select Channel';
+    });
 }
