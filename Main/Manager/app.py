@@ -20,6 +20,7 @@ import signal
 import sys
 import socket, fcntl, struct
 import shutil
+from collections import defaultdict
 
 
 # Inicialização do app Flask, SQLAlchemy e SocketIO
@@ -28,6 +29,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SECRET_KEY'] = 'your_secret_key'
 db = SQLAlchemy(app)
 socketio = SocketIO(app)
+processes = defaultdict(dict)
 
 # Configurações de áudio
 BITRATE = "128k"  # Taxa de bits máxima
@@ -96,6 +98,94 @@ def allowed_file(filename):
 ########
 
 
+@app.route('/toggle_transmission', methods=['POST'])
+def toggle_transmission():
+    data = request.json
+    channel_id = data.get('channel_id')
+    state = data.get('state')
+    """
+    Função para iniciar ou parar a transmissão de um canal.
+    :param channel_id: ID do canal a ser controlado.
+    :param action: Ação a ser realizada ("start" ou "stop").
+    """
+    
+    if channel_id not in processes:
+        return jsonify({'status': 'error', 'message': 'Canal não existe'})
+    
+        # Para reprodução atual
+    if processes[channel_id]['process']:
+        processes[channel_id]['process'].terminate()
+        processes[channel_id]['process'].wait()
+        processes[channel_id]['process'] = None
+    if os.path.exists(f"session_{channel_id}.sdp"):
+        os.remove(f"session_{channel_id}.sdp")
+        
+    while os.path.exists(f"session_{channel_id}.sdp"):
+        time.sleep(0.1)
+    
+    if state == 'play':
+        # Comando FFmpeg para RTP multicast
+        cmd = [
+            'ffmpeg',
+            '-re',
+            '-vn',
+            '-i', "Playlists/Songs/musica1.wav",  # Substitua pelo caminho do arquivo de áudio
+            '-c:a', 'libopus',
+            '-f', 'rtp',
+            '-sdp_file', f'session_{channel_id}.sdp',  # Arquivo SDP para o receptor
+            f"rtp://239.255.0.{channel_id}:12345?pkt_size=5000"
+        ]
+        
+        processes[channel_id]['process'] = subprocess.Popen(cmd)
+        
+        print(f"Canal {channel_id} iniciado")
+        
+        while not os.path.exists(f"session_{channel_id}.sdp"):
+            time.sleep(0.1)
+        
+        
+    areas = db.session.query(Areas).filter(Areas.channel_id == channel_id).all()
+    nodes = []
+    for area in areas:
+        nodes += area.nodes
+    
+    
+    send_info(nodes, restart=True)
+    return jsonify({"success": True}), 200
+
+
+
+def create_default_channels():
+    
+    # Verifica se o número de canais no banco é diferente do esperado
+    if db.session.query(Channels).count() != NUM_CHANNELS:
+        db.session.query(Channels).delete()
+        db.session.commit()
+        # Cria os canais padrão com tipo LOCAL e fonte "default"
+        for i in range(1, NUM_CHANNELS+1):
+            if os.path.exists(f"session_{i}.sdp"):
+                os.remove(f"session_{i}.sdp")
+            new_channel = Channels(
+                name=f"Channel {i}",
+                type=ChannelType.LOCAL,
+            )
+            db.session.add(new_channel)
+            db.session.commit()
+            processes[new_channel.id] = {"process": None}
+            print(f"{new_channel.name} started")
+
+    else:
+        for channel in db.session.query(Channels).all():
+            if os.path.exists(f"session_{channel.id}.sdp"):
+                os.remove(f"session_{channel.id}.sdp")
+            index = channel.id
+            processes[index] = {"process": None}  # Uncommented to start the process
+            print(f"Channel {channel.id} started")
+            
+            
+    send_info(Nodes.query.all(), restart=True)  # Envia informações iniciais para os nós
+            
+    return processes
 
 @app.route('/save_channel_configs', methods=['POST'])
 def save_channel_configs():
@@ -126,7 +216,7 @@ def save_channel_configs():
         channel.source = url
         db.session.commit()
         # Reinicia o processo do canal
-        change_channel_process(channel.id, url, ChannelType.STREAMING)
+        #change_channel_process(channel.id, url, ChannelType.STREAMING)
     elif channel_type == "LOCAL":
         #percorrer conteudo de channel_reproduction que está do genero "PLAYLIST:playlist1 SONG:musica1 PLAYLIST:playlist2 PLAYLIST:playlist3 SONG:musica2"
         #se for uma musica adicionar a musicas se for uma playlist ir á base de dados obter as musicas
@@ -152,7 +242,7 @@ def save_channel_configs():
         db.session.commit()
         
 
-        change_channel_process(channel.id, channel_source, ChannelType.LOCAL)
+        #change_channel_process(channel.id, channel_source, ChannelType.LOCAL)
     else:
         print("Tipo de canal inválido")    
     
@@ -164,185 +254,8 @@ def save_channel_configs():
     # Salve as configurações no banco de dados ou tome outras ações necessárias
     return jsonify({"success": True}), 200
 
-# Função para iniciar o processo do ffmpeg para um canal específico
-def start_ffmpeg_process(channel, source, _type):
-    # Define o endereço de multicast baseado no número do canal
-    multicast_address = f"rtp://239.255.0.{channel}:12345?pkt_size=5000"
-    print(f"session_{channel}.sdp")
-    print("source: ", source)
-    print("type: ", _type)
-    
-    if not source:
-        print("Source is empty")
-        return None
-    
-    # Verifica o tipo de transmissão e configura o comando do ffmpeg apropriado
-    if _type == ChannelType.VOICE:
-        
-        mic = {"card": "1", "device": "0"}  #usar no terminal arecord -l  # Lista dispositivos de captura (microfones) 
-        
-        # Transmissão de voz via dispositivo de áudio (alsa)
-        cmd = [
-            "ffmpeg",
-            "-hide_banner", "-loglevel", "error",
-            "-f", "pulse",
-            "-i", "default",  # Usa o cancelamento de eco do PulseAudio
-            #"-af", "afftdn=nf=-20,speechnorm=e=50",
-            "-acodec", "libopus",
-            "-application", "voip",
-            "-b:a", BITRATE,
-            "-ar", SAMPLE_RATE,
-            "-ac", AUDIO_CHANNELS,
-            "-frame_duration", "120",  # Frames de 120 ms
-            "-f", "rtp",
-            "-sdp_file", f"session_{channel}.sdp",
-            f"{multicast_address}"
-        ]
-    elif _type == ChannelType.LOCAL:
-        
-        # Transmissão local utilizando uma lista de músicas
-        print("source: ", source)
-
-        # Divide o source em uma lista de músicas
-        musicas = [musica.strip() for musica in source.split(",")]
-
-        # Cria um arquivo de playlist temporário para o FFmpeg
-        playlist_file_path = f"Playlists/temp_playlist_{channel}.txt"
-        with open(playlist_file_path, "w") as playlist_file:
-            for musica in musicas:
-                playlist_file.write(f"file 'Songs/{musica}.wav'\n")
-
-        # Comando do FFmpeg para reproduzir a playlist
-        cmd = [
-            "ffmpeg",
-            "-hide_banner", "-loglevel", "error",
-            "-stream_loop", "-1",  # Loop infinito
-            "-f", "concat",  # Formato de entrada como concatenação
-            "-safe", "0",  # Permite caminhos relativos
-            "-re",  # Tempo real
-            "-i", playlist_file_path,  # Arquivo de playlist
-            "-af", "apad",  # Adiciona silêncio no final
-            "-ar", SAMPLE_RATE,
-            "-vn",  # Sem vídeo
-            "-acodec", "libopus",
-            "-b:a", BITRATE,
-            "-frame_duration", "120",  # Frames de 120 ms
-            "-ac", AUDIO_CHANNELS,
-            "-f", "rtp",
-            "-sdp_file", f"session_{channel}.sdp",
-            f"{multicast_address}"
-        ]
-        
-        
-    elif _type == ChannelType.STREAMING:
-        # Transmissão via streaming com URL proveniente do yt-dlp
-        
-        ########3
-        #source = "https://www.youtube.com/live/YDvsBbKfLPA?si=TdUqXCrxJojjNDns"
-        ##############
 
 
-        try:
-            # Comando para obter a URL direta do stream
-            ytdl_cmd = [
-            "yt-dlp",
-            "-g",
-            "-f", "bestaudio[protocol!=m3u8_native]/bestaudio",
-            "--no-check-certificates", 
-            "--socket-timeout", "15", 
-            source
-            ]
-            direct_url = subprocess.check_output(ytdl_cmd, text=True).strip()
-        except subprocess.TimeoutExpired:
-            print("Timeout ao obter URL.")
-            return None
-        except Exception as e:
-            print(f"Erro ao obter URL: {e}")
-            return None
-        
-
-        # Comando do ffmpeg utilizando a URL obtida
-        cmd = [
-            "ffmpeg",
-            "-hide_banner",
-            "-loglevel", "fatal",  # Modo silencioso (altere para 'error' para testar)
-            "-re",  # Força a leitura no tempo real para streams
-            "-analyzeduration", "10M",  # Reduz o tempo de análise inicial
-            "-probesize", "10M",
-            #"-rw_timeout", "5000000",  # Timeout de leitura
-            "-vn",
-            "-i", direct_url,
-            "-acodec", "libopus",
-            "-b:a", BITRATE,
-            "-ar", SAMPLE_RATE,
-            "-ac", AUDIO_CHANNELS,
-            "-buffer_size", "1024",  # Aumenta o buffer de saída
-            "-max_delay", "200000",  # Limita o atraso máximo
-            "-f", "rtp",
-            "-frame_duration", "120",  # Frames de 120 ms
-            "-sdp_file", f"session_{channel}.sdp",
-            "-muxdelay", "0.1",  # Reduz o atraso de muxagem
-            "-muxpreload", "0.1",
-            f"{multicast_address}"
-        ]
-    else:
-        return None
-    # Inicia o subprocesso do ffmpeg
-    process = subprocess.Popen(cmd, preexec_fn=os.setsid)
-    return process
-
-# Função para trocar o processo do canal (reinicia se necessário)
-def change_channel_process(channel, source, transmission_type):
-    global processes
-
-    print("Changing channel...")
-
-    # Verifica se já existe um processo para o canal e tenta encerrá-lo
-    if processes.get(channel):
-        print(f"Terminating existing process for channel {channel}...")
-        process = processes[channel]
-        try:
-            # Envia sinal de término para o grupo de processos
-            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-            process.wait(timeout=10)  # Aguarda até 10 segundos para o processo terminar
-            print(f"Process for channel {channel} terminated.")
-        except ProcessLookupError:
-            print(f"Process {process.pid} already terminated.")
-        except subprocess.TimeoutExpired:
-            print(f"Process {process.pid} did not terminate in time. Forcing termination...")
-            try:
-                os.killpg(os.getpgid(process.pid), signal.SIGKILL)  # Força o encerramento com SIGKILL
-                process.wait(timeout=5)
-                print(f"Process {process.pid} terminated.")
-            except subprocess.TimeoutExpired:
-                print(f"Process {process.pid} could not be killed.")
-        except Exception as e:
-            print(f"Error terminating process for channel {channel}: {e}")
-        finally:
-            processes[channel] = None  # Remove o processo do dicionário
-    else:
-        print(f"No existing process found for channel {channel}.")
-
-    print(f"Starting new process for channel {channel} with source: {source} and type: {transmission_type}")
-
-    # Inicia o novo processo para o canal com os parâmetros fornecidos
-    process = start_ffmpeg_process(channel, source, transmission_type)
-    if process:
-        processes[channel] = process
-        print(f"Channel {channel} started with PID {process.pid}")
-    else:
-        processes[channel] = None
-        print(f"Failed to start process for channel {channel}.")
-
-    # Após a mudança, envia informações atualizadas para os nós
-    with app.app_context():
-        areas = db.session.query(Areas).filter(Areas.channel_id == channel).all()
-        nodes = []
-        for area in areas:
-            nodes += area.nodes
-        send_info(nodes, restart=True)
-
-    print("Processes:", processes)
 
 # Definição dos modelos de dados com SQLAlchemy
 
@@ -428,37 +341,6 @@ class Streaming(db.Model):
         self.url = url
         
 
-# Função para criar canais padrões caso não existam
-def create_default_channels():
-    global processes, NUM_CHANNELS
-    processes = {}
-    
-    # Verifica se o número de canais no banco é diferente do esperado
-    if db.session.query(Channels).count() != NUM_CHANNELS:
-        db.session.query(Channels).delete()
-        db.session.commit()
-        # Cria os canais padrão com tipo LOCAL e fonte "default"
-        for i in range(1, NUM_CHANNELS+1):
-            new_channel = Channels(
-                name=f"Channel {i}",
-                type=ChannelType.LOCAL,
-            )
-            db.session.add(new_channel)
-            db.session.commit()
-            processes[new_channel.id] = start_ffmpeg_process(new_channel.id, new_channel.source, ChannelType.LOCAL)
-            print(f"{new_channel.name} started")
-
-    else:
-        for channel in db.session.query(Channels).all():
-            index = channel.id
-            processes[index] = start_ffmpeg_process(index, channel.source, channel.type)
-            print(f"Channel {channel.id} started")
-            
-            
-    send_info(Nodes.query.all(), restart=True)  # Envia informações iniciais para os nós
-            
-    return processes
-
 # Rota principal (index) que renderiza a página inicial com os nós, áreas e canais
 @app.route('/', methods=['GET'])
 def index():
@@ -521,13 +403,14 @@ def send_info(nodes, removed=False, suspended=False, restart=False):
             channel = area.channel_id if area else None
             header = None
             
+            print("Channel ID:", channel)
+            
             # Se existir canal, lê o arquivo SDP gerado
             #if processes[channel] != None:
             if channel is not None and processes.get(channel) is not None:
                 try:
-                    file = open(f"session_{channel}.sdp", "r")
-                    header = file.read()
-                    file.close()
+                    with open(f"session_{channel}.sdp", "r") as file:
+                        header = file.read()
                 except:
                     pass
             
@@ -694,7 +577,7 @@ def update_volume():
         area.volume = new_volume
         print(f"Volume updated to {new_volume} for area {area_name}")
         db.session.commit()
-        send_info(Nodes.query.filter_by(area_id=area.id).all())
+        send_info(Nodes.query.filter_by(area_id=area.id).all(), restart=True)
         return redirect('/')
     except Exception as e:
         return redirect('/')
@@ -830,27 +713,6 @@ def update_channel_name(channel_id):
 
 
 
-#@app.route('/edit_channels', methods=['GET'])
-#def edit_channels():
-#    channel_id = request.args.get("channel_id", default=None, type=int)
-#    channels = Channels.query.order_by(Channels.id).all()
-
-#    playlists = Playlist.query.all()
-#    playlist_songs = {
-#        playlist.name: [song.name for song in playlist.songs]
-#        for playlist in playlists
-#    }
-
-#    all_songs = [song.name for song in Songs.query.all()]
-
-#    return render_template(
-#        "edit_channels.html",
-#        channels=channels,
-#        channel_id=channel_id,
-#        playlists=playlist_songs.keys(),
-#        playlist_songs=playlist_songs,
-#        all_songs=all_songs
-#    )
 
 # Rota para atualizar o canal associado a uma área
 @app.route('/update_area_channel', methods=['POST'])
@@ -1311,37 +1173,10 @@ def import_conf():
 #################################################################################
 #################################################################################
 
-# Função para tratar o desligamento do sistema (Ctrl+C)
-def shutdown_handler(signum, frame):
-    """Trata o SIGINT (Ctrl+C) e garante o desligamento limpo."""
-    print("\nShutting down gracefully...")
-    with app.app_context():
-        nodes = Nodes.query.all()
-    send_info(nodes, suspended=True)  # Envia mensagem de suspensão para os nós
-    stop_event.set()  # Sinaliza para parar as threads
-    thread.join()     # Aguarda a thread de detecção de nós terminar
-    
-    print("Terminating processes...")
-    for process in processes.values():
-        if process:
-            print(f"Terminating process {process.pid}")
-            try:
-                # Envia sinal de término para o grupo de processos
-                os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-                process.wait(timeout=5)
-            except ProcessLookupError:
-                print(f"Process {process.pid} already terminated.")
-            except subprocess.TimeoutExpired:
-                print(f"Process {process.pid} did not terminate in time. Forcing termination...")
-                try:
-                    os.killpg(os.getpgid(process.pid), signal.SIGKILL)  # Força o encerramento com SIGKILL
-                    process.wait(timeout=5)
-                    print(f"Process {process.pid} terminated.")
-                except subprocess.TimeoutExpired:
-                    print(f"Process {process.pid} could not be killed.")
-    
-    print("Processes terminated")
-    sys.exit(0)  # Encerra o programa de forma limpa
+
+def shutdown_handler(stop_event):
+    stop_event.set()
+    sys.exit(0)
 
 
 # Função para obter o IP local do host
@@ -1368,7 +1203,7 @@ if __name__ == '__main__':
         
         
     # Associa o sinal SIGINT ao shutdown_handler para tratamento de Ctrl+C
-    signal.signal(signal.SIGINT, shutdown_handler)
+    signal.signal(signal.SIGINT, lambda signum, frame: shutdown_handler(stop_event))
 
     # Inicia a thread para detectar novos nós
     thread = threading.Thread(target=detect_new_nodes, args=(stop_event, msg_buffer), daemon=True)
