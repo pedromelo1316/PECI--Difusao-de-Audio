@@ -885,3 +885,36 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 });
+
+function toggleChannelDropdown(dropdownElement) {
+    const optionsDiv = dropdownElement.nextElementSibling;
+    optionsDiv.style.display = (optionsDiv.style.display === 'none' || optionsDiv.style.display === '') ? 'block' : 'none';
+}
+
+function selectChannel(channelId, channelName, areaName, optionElement) {
+    // Atualiza o nome do canal selecionado no dropdown
+    document.getElementById('selectedChannel-' + areaName).textContent = channelName;
+
+    // Oculta o dropdown
+    optionElement.parentElement.style.display = 'none';
+
+    // Envia o canal selecionado para o backend
+    const form = document.createElement('form');
+    form.action = '/update_area_channel';
+    form.method = 'POST';
+
+    const areaInput = document.createElement('input');
+    areaInput.type = 'hidden';
+    areaInput.name = 'name';
+    areaInput.value = areaName;
+    form.appendChild(areaInput);
+
+    const channelInput = document.createElement('input');
+    channelInput.type = 'hidden';
+    channelInput.name = 'channel_id';
+    channelInput.value = channelId;
+    form.appendChild(channelInput);
+
+    document.body.appendChild(form);
+    form.submit();
+}

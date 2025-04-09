@@ -320,8 +320,8 @@ header {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    align-items: center;
-    padding: 8px;
+   
+    padding: 6px;
     border: 1px solid #cfcdcd;
     cursor: pointer;
     border-radius: 8px;
@@ -440,10 +440,10 @@ header {
     width: 50%;
     background: white;
     border-radius: 8px;
-    padding: 12px;
+    padding: 32px;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05);
-    flex: 1;
-    align-self: center;
+    flex: 2; /* Ajustado para ser igual ao .column-section */
+    position: relative; /* Necessário para que o dropdown seja posicionado corretamente */
 }
 
 .channel-item.selected {
@@ -454,9 +454,10 @@ header {
 /* Column & Speaker Section */
 .column-section {
     width: 50%;
+    min-height: 120px;
     background: white;
     border-radius: 8px;
-    padding: 12px;
+    padding: 32px;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05);
     flex: 2;
     align-self: center;
@@ -469,7 +470,7 @@ header {
 }
 
 .add-column-button {
-    padding: 8px;
+    padding: 4px;
     text-align: center;
     color: #22cc3f;
     font-weight: bold;
@@ -489,7 +490,7 @@ header {
     width: 235%;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 40px;
+    gap: 20px;
     flex-direction: column;
     align-items: center;
     border: #5e5e5e solid 2px
@@ -497,9 +498,9 @@ header {
 
 .zone-box {
     background: white;
-    border-radius: 12px;
+    border-radius: 16px;
     box-shadow: 0px 4px 5px rgba(0, 0, 0, 0.1);
-    padding: 8px;
+    padding: 12px;
     width: 100%;
     min-height: 300px;
     transition: transform 0.2s ease-in-out;
@@ -531,13 +532,13 @@ header {
 }
 
 .zone-content {
-    display: flex;
+    
     flex-direction: column;
-    gap: 20px;
-    padding: 10px;
+    gap: 10px;
+    padding: 15px;
     background: white;
     border-radius: 8px;
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05);
+    
 }
 
 .add-zone {
@@ -1459,4 +1460,40 @@ footer {
 
 .song-item:hover {
     background-color: #f9f9f9;
+}
+
+/* Dropdown styles for channels */
+.channel-dropdown {
+    cursor: pointer;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 4px;
+    background: #f9f9f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.channel-options-dropdown {
+    position: absolute; /* Permite que o dropdown saia do container pai */
+    z-index: 1000; /* Garante que o dropdown fique acima de outros elementos */
+    display: none;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-top: 4px;
+    background: white;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    width: 70%; /* Garante que a largura seja igual ao dropdown */
+    box-sizing: border-box; /* Inclui padding e borda na largura total */
+}
+
+.channel-option {
+    padding: 2px 3px; /* Reduzido para ocupar menos espaço */
+    font-size: 12px; /* Diminuído o tamanho da fonte */
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+.channel-option:hover {
+    background: #f0f0f0;
 }
