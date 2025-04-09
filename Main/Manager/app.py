@@ -112,48 +112,154 @@ def toggle_transmission():
     if channel_id not in processes:
         return jsonify({'status': 'error', 'message': 'Canal não existe'})
     
-        # Para reprodução atual
+
+
     if processes[channel_id]['process']:
         processes[channel_id]['process'].terminate()
         processes[channel_id]['process'].wait()
         processes[channel_id]['process'] = None
+        
     if os.path.exists(f"session_{channel_id}.sdp"):
         os.remove(f"session_{channel_id}.sdp")
+    
         
     while os.path.exists(f"session_{channel_id}.sdp"):
         time.sleep(0.1)
     
     if state == 'play':
         # Comando FFmpeg para RTP multicast
-        cmd = [
-            'ffmpeg',
-            '-re',
-            '-vn',
-            '-i', "Playlists/Songs/musica1.wav",  # Substitua pelo caminho do arquivo de áudio
-            '-c:a', 'libopus',
-            '-f', 'rtp',
-            '-sdp_file', f'session_{channel_id}.sdp',  # Arquivo SDP para o receptor
-            f"rtp://239.255.0.{channel_id}:12345?pkt_size=5000"
-        ]
-        
-        processes[channel_id]['process'] = subprocess.Popen(cmd)
+        channel = db.session.query(Channels).filter(Channels.id == channel_id).first()
+        if not channel:
+            return jsonify({'status': 'error', 'message': 'Canal não encontrado'})
+        source = channel.source
+        _type = channel.type
+
+
+        # Inicia o processo FFmpeg
+        processes[channel_id]['process'] = start_ffmpeg_process(channel_id, source, _type)
         
         print(f"Canal {channel_id} iniciado")
         
         while not os.path.exists(f"session_{channel_id}.sdp"):
             time.sleep(0.1)
         
+
+        print(f"Transmissão do canal {channel_id} iniciada com sucesso.")
         
     areas = db.session.query(Areas).filter(Areas.channel_id == channel_id).all()
     nodes = []
     for area in areas:
         nodes += area.nodes
     
-    
     send_info(nodes, restart=True)
     return jsonify({"success": True}), 200
 
+def start_ffmpeg_process(channel, source, _type):
+    # Define o endereço de multicast baseado no número do canal
+    multicast_address = f"rtp://239.255.0.{channel}:12345"
+    print(f"session_{channel}.sdp")
+    print("source: ", source)
+    print("type: ", _type)
+    
+    if not source:
+        print("Source is empty")
+        return None
+    
+    if processes[channel]['process']:
+        processes[channel]['process'].terminate()
+        processes[channel]['process'].wait()
+        processes[channel]['process'] = None
+        
+    if os.path.exists(f"session_{channel}.sdp"):
+        os.remove(f"session_{channel}.sdp")
+    
+    # Verifica o tipo de transmissão e configura o comando do ffmpeg apropriado
+    if _type == ChannelType.VOICE:
+        
+        mic = {"card": "1", "device": "0"}  #usar no terminal arecord -l  # Lista dispositivos de captura (microfones) 
+        
+        # Comando do FFmpeg para transmissão de microfone
+        pass
 
+    elif _type == ChannelType.LOCAL:
+        
+        # Transmissão local utilizando uma lista de músicas
+        print("source: ", source)
+
+        # Divide o source em uma lista de músicas
+        musicas = [musica.strip() for musica in source.split(",")]
+
+        # Cria um arquivo de playlist temporário para o FFmpeg
+        playlist_file_path = f"Playlists/temp_playlist_{channel}.txt"
+        with open(playlist_file_path, "w") as playlist_file:
+            for musica in musicas:
+                playlist_file.write(f"file 'Songs/{musica}.wav'\n")
+
+        # Comando do FFmpeg para reproduzir a playlist
+        cmd = [
+            "ffmpeg",
+            "-stream_loop", "-1",  # Loop infinito
+            "-f", "concat",  # Formato de entrada como concatenação
+            "-re",  # Tempo real
+            "-i", playlist_file_path,  # Arquivo de playlist
+            "-ar", SAMPLE_RATE,
+            "-vn",  # Sem vídeo
+            "-acodec", "libopus",
+            "-b:a", BITRATE,
+            "-ac", AUDIO_CHANNELS,
+            "-f", "rtp",
+            "-sdp_file", f"session_{channel}.sdp",
+            f"{multicast_address}"
+        ]
+        
+        
+    elif _type == ChannelType.STREAMING:
+        # Transmissão via streaming com URL proveniente do yt-dlp
+        
+        ########3
+        #source = "https://www.youtube.com/live/YDvsBbKfLPA?si=TdUqXCrxJojjNDns"
+        ##############
+
+
+        try:
+            # Comando para obter a URL direta do stream
+            ytdl_cmd = [
+            "yt-dlp",
+            "-g",
+            "-f", "bestaudio[protocol!=m3u8_native]/bestaudio",
+            "--no-check-certificates", 
+            "--socket-timeout", "15", 
+            source
+            ]
+            direct_url = subprocess.check_output(ytdl_cmd, text=True).strip()
+        except subprocess.TimeoutExpired:
+            print("Timeout ao obter URL.")
+            return None
+        except Exception as e:
+            print(f"Erro ao obter URL: {e}")
+            return None
+        
+
+        # Comando do FFmpeg para streaming
+        
+        cmd = [
+            "ffmpeg",
+            "-i", direct_url,
+            "-vn",  # Sem vídeo
+            "-ar", SAMPLE_RATE,
+            "-acodec", "libopus",
+            "-b:a", BITRATE,
+            "-ac", AUDIO_CHANNELS,
+            "-f", "rtp",
+            "-sdp_file", f"session_{channel}.sdp",
+            f"{multicast_address}"
+        ]
+        
+    else:
+        return None
+    # Inicia o subprocesso do ffmpeg
+    process = subprocess.Popen(cmd)
+    return process
 
 def create_default_channels():
     
