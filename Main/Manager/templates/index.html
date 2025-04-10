@@ -123,8 +123,8 @@
                             <div class="column-headerCH">
                                 <span>{{ node.name }}</span>
                                 <div class="column-actions" onclick="event.stopPropagation()">
-                                    <i class="fa-solid fa-chevron-down" onclick="toggleDeviceDetails(this)"></i> 
-                                    <i class="fa-solid fa-pen" onclick="event.stopPropagation(); renameNode('{{ node.id }}')"></i>
+                                    <i class="fa-solid fa-chevron-down" onclick="toggleDeviceDetails(this);" style="margin-top:4px;"></i> 
+                                    <i class="fa-solid fa-pen" onclick="event.stopPropagation(); renameNode('{{ node.id }}');" style="margin-top:4px;"></i>
                                     <a href="/delete/{{ node.id }}"><i class="fa-solid fa-trash" style="color: black;"></i></a>
                                 </div>
                             </div>
