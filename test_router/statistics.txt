@@ -1,0 +1,8 @@
+c: 1, f: 10, total_packets: 6058, lost_packets: 0, packet_loss: 20%
+c: 5, f: 10, total_packets: 6058, lost_packets: 0, packet_loss: 10%
+c: 10, f: 10, total_packets: 6058, lost_packets: 0, packet_loss: 40%
+c: 20, f: 10, total_packets: 6058, lost_packets: 0, packet_loss: 18%
+c: 50, f: 10, total_packets: 6058, lost_packets: 0, packet_loss: 12%
+c: 100, f: 10, total_packets: 6058, lost_packets: 0, packet_loss: 65%
+c: 1, f: 20, total_packets: 3029, lost_packets: 0, packet_loss: 41%
+
