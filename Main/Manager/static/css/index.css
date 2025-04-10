@@ -1,8 +1,16 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #fff;
+    background: linear-gradient(to bottom, #fffcfc, #ffffff);
+}
+
+.p{
+    color: black;
+    font-size: 300px;
+    margin: 0;
+
+
 }
 
 .container {
@@ -61,10 +69,6 @@ body {
     width: 100%;
 }
 
-
-
-
-
 .playlists-list, .songs-list, .streaming-list {
     list-style-type: none;
     padding: 0;
@@ -89,6 +93,13 @@ body {
 .playlist-item2.add-playlist {
     width: 100%;
 }
+.songs-list .song-item {
+    margin-bottom: 5px; /* Reduced spacing between songs */
+}
+
+.songs-section .add-song {
+    margin-top: 5px; /* Reduced spacing above the "+Add" button */
+}
 
 .song-item {
     display: flex;
@@ -100,6 +111,10 @@ body {
     border-radius: 5px;
     background-color: #fff;
     transition: background-color 0.3s;
+}
+
+.song-item:hover {
+    background-color: #f9f9f9;
 }
 
 .streaming-item {
@@ -149,12 +164,13 @@ body {
     display: flex;
     gap: 5px; /* Reduz o espaço entre os ícones */
     align-items: center;
+    color: gray;
 }
 
 .streaming-item .actions i {
     cursor: pointer;
     font-size: 18px;
-    color: #666;
+    color:gray;
 }
 
 .streaming-item .actions i:hover {
@@ -231,6 +247,8 @@ h3 {
     font-weight: bold;
     margin-bottom: 20px;
 }
+
+
 
 /* Modal */
 .modal {
@@ -383,11 +401,7 @@ button:hover {
     box-sizing: border-box;
 }
 
-.song-actions {
-    display: inline-flex;
-    gap: 8px;
-    vertical-align: middle;
-}
+
 
 
 .custom-modal {
@@ -496,3 +510,28 @@ button:hover {
     background-color: #e6ffe6; /* Fundo verde claro ao passar o mouse */
     border-color: #22cc3f; /* Borda verde ao passar o mouse */
 }
+
+.song-actions i {
+    font-size: 20px; /* Increased icon size */
+    color: gray; /* Changed icon color to black */
+}
+
+.song-actions i, .playlist-actions i, .streaming-actions i {
+    color: gray; /* Set all actions to gray */
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.song-actions i:hover, .playlist-actions i:hover, .streaming-actions i:hover {
+    color: #333; /* Darker gray on hover */
+}
+
+.edit-streaming-input {
+    width: 100%;
+    padding: 5px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
