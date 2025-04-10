@@ -208,6 +208,7 @@ def start_ffmpeg_process(channel, source, _type):
         cmd = [
             "ffmpeg",
             "-stream_loop", "-1",  # Loop infinito
+            "-hide_banner",  # Oculta informações de inicialização
             "-f", "concat",  # Formato de entrada como concatenação
             "-re",  # Tempo real
             "-i", playlist_file_path,  # Arquivo de playlist
@@ -230,58 +231,23 @@ def start_ffmpeg_process(channel, source, _type):
         ##############
 
 
-        try:
-            # Comando para obter a URL direta do stream
-            ytdl_cmd = [
-            "yt-dlp",
-            "-g",
-            "-f", "bestaudio[protocol!=m3u8_native]/bestaudio",
-            "--no-check-certificates", 
-            "--socket-timeout", "15", 
-            source
-            ]
-            direct_url = subprocess.check_output(ytdl_cmd, text=True).strip()
-        except subprocess.TimeoutExpired:
-            print("Timeout ao obter URL.")
-            return None
-        except Exception as e:
-            print(f"Erro ao obter URL: {e}")
-            return None
-        
 
-        # Comando do FFmpeg para streaming
+        
         cmd = [
             "ffmpeg",
-            "-re",  # Força a leitura no tempo real para streams
-            "-analyzeduration", "10M",  # Reduz o tempo de análise inicial
-            "-probesize", "10M",
-            #"-rw_timeout", "5000000",  # Timeout de leitura
-            "-vn",
-            "-i", direct_url,
+            "-i", source,
+            "-vn",  # Sem vídeo
+            "-hide_banner", # Oculta informações de inicialização
+            #"-re",
+            "-buffer_size", "4096",
+            "-ar", SAMPLE_RATE,
             "-acodec", "libopus",
             "-b:a", BITRATE,
-            "-ar", SAMPLE_RATE,
             "-ac", AUDIO_CHANNELS,
-            "-buffer_size", "1024",  # Aumenta o buffer de saída
-            "-max_delay", "200000",  # Limita o atraso máximo
             "-f", "rtp",
             "-sdp_file", f"session_{channel}.sdp",
-            "-muxdelay", "0.1",  # Reduz o atraso de muxagem
-            "-muxpreload", "0.1",
             f"{multicast_address}"
         ]
-        '''cmd = [
-            "ffmpeg",
-            "-i", direct_url,
-            "-vn",  # Sem vídeo
-            "-ar", SAMPLE_RATE,
-            "-acodec", "libopus",
-            "-b:a", BITRATE,
-            "-ac", AUDIO_CHANNELS,
-            "-f", "rtp",
-            "-sdp_file", f"session_{channel}.sdp",
-            f"{multicast_address}"
-        ]'''
         
     else:
         return None
@@ -356,7 +322,6 @@ def save_channel_configs():
         channel.source = channel_source
         db.session.commit()
         # Reinicia o processo do canal
-        #change_channel_process(channel.id, url, ChannelType.STREAMING)
     elif channel_type == "LOCAL":
         #percorrer conteudo de channel_reproduction que está do genero "PLAYLIST:playlist1 SONG:musica1 PLAYLIST:playlist2 PLAYLIST:playlist3 SONG:musica2"
         #se for uma musica adicionar a musicas se for uma playlist ir á base de dados obter as musicas
@@ -400,6 +365,16 @@ def save_channel_configs():
         nodes = []
         for area in areas:
             nodes += area.nodes
+            
+        if processes[channel.id]['process'] is None:
+            return jsonify({'status': 'error', 'message': 'Erro ao iniciar o processo FFmpeg'})
+        
+        while not os.path.exists(f"session_{channel.id}.sdp"):
+            time.sleep(0.1)
+            
+            
+        print("sending info to nodes")
+        print(nodes)
         
         send_info(nodes, restart=True)
     
@@ -918,8 +893,29 @@ def save_stream_url():
         
         if Streaming.query.filter_by(name=stream_name).first():
             return jsonify({"error": "Stream name already exists"}), 400
+        
+        try:
+            # Comando para obter a URL direta do stream
+            
+            ytdl_cmd = [
+            "yt-dlp",
+            "-g",
+            "-f", "bestaudio",
+            "-o",
+            "--no-check-certificates", 
+            "--socket-timeout", "15", 
+            stream_url
+            ]
+            direct_url = subprocess.check_output(ytdl_cmd, text=True).strip()
+        except subprocess.TimeoutExpired:
+            print("Timeout ao obter URL.")
+            return None
+        except Exception as e:
+            print(f"Erro ao obter URL: {e}")
+            return None
+        
         # Salvar no banco de dados
-        new_stream = Streaming(name=stream_name, url=stream_url)
+        new_stream = Streaming(name=stream_name, url=direct_url)
         db.session.add(new_stream)
         db.session.commit()
 
