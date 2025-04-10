@@ -536,3 +536,38 @@ function deleteStreaming(streamingId) {
 }
 
 document.addEventListener('DOMContentLoaded', loadStreamingLinks);
+
+
+
+function fetchMicrophones() {
+    fetch('/update_microphones')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Microphones fetched successfully:', data.microphones);
+                const microphoneSection = document.querySelector('.microfone-section');
+                microphoneSection.innerHTML = `
+                    <ul id="microphone-list">
+                        ${data.microphones.map(mic => `
+                            <li class="microfone-item">
+                                <span>${mic.name}</span>
+                                <div class="microfone-actions">
+                                    <i class="fa-solid fa-pen" onclick="editMicrofone('${mic.id}')"></i>
+                                    <i class="fa-solid fa-trash" onclick="deleteMicrofone('${mic.name}')"></i>
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                    <div style="text-align: center;">
+                        <button onclick="fetchMicrophones()">Get Microfones</button>
+                    </div>
+                `;
+            } else if (data.error) {
+                console.error('Failed to fetch microphones:', data.error);
+                alert('Failed to fetch microphones: ' + data.error);
+            } else {
+                console.error('Failed to fetch microphones:', data.error || 'Unknown error');
+            }
+        })
+        .catch(error => console.error('Error fetching microphones:', error));
+}

@@ -39,11 +39,22 @@ AUDIO_CHANNELS = "1"  # Mono
 
 NUM_CHANNELS = 3  # Número total de canais
 
+@app.route('/update_microphones', methods=['GET'])
+def update_microphones():
+    get_mics()
+    microphones = Microphone.query.all()
+    microphones_list = [
+        {"id": mic.id, "name": mic.name, "device": mic.device, "card": mic.card, "short_cut": mic.short_cut}
+        for mic in microphones
+    ]
+    return jsonify({"success": True, "microphones": microphones_list})
+
+
 @app.route('/get_microphones', methods=['GET'])
 def get_microphones():
-    microphones = get_mics()  # Chama a função que lista os microfones
+    microphones = Microphone.query.all()
     return jsonify([
-        {"card": mic[0], "device": mic[1], "name": mic[2]} for mic in microphones
+        {"card": mic.card, "device": mic.device, "name": mic.name} for mic in microphones
     ])
 
 def parse_device_info(line):
@@ -71,14 +82,17 @@ def get_mics():
     try:
         output = subprocess.check_output(cmd, text=True)
         lines = output.split('\n')
-        devices = []
+        devices = Microphone.query.all()  # Dispositivos já no banco de dados
         for line in lines:
             if "card" in line and "device" in line:
-                print(line)
                 card, device, name = parse_device_info(line)
                 print(f"Card: {card}, Device: {device}, Name: {name}")
-                devices.append((card, device, name))
-        return devices
+                # Verifica se o dispositivo já existe no banco de dados
+                if not any(d.card == card and d.device == device for d in devices):
+                    new_device = Microphone(card=card, device=device, name=name)
+                    db.session.add(new_device)
+                    db.session.commit()
+                    devices.append(new_device)  # Atualiza a lista local de dispositivos
     except subprocess.CalledProcessError as e:
         print(f"Error listing audio devices: {e}")
         return []
@@ -409,6 +423,17 @@ class Nodes(db.Model):
 
     def __repr__(self):
         return f'<Node {self.id}: {self.name}>'
+    
+    
+class Microphone(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    device = db.Column(db.String(200), nullable=False)
+    card = db.Column(db.String(200), nullable=False)
+    short_cut = db.Column(db.String(200), nullable=True)
+
+    def __repr__(self):
+        return f'<Microphone {self.id}: {self.name}>'
 
 # Enum para definir os tipos de canais permitidos
 class ChannelType(str, Enum):
@@ -870,12 +895,15 @@ def update_area_channel():
 
 
 
+
+
 @app.route('/secundaria')
 def secundaria():
     playlists = Playlist.query.all()  
     Streamings = Streaming.query.all()
     songs = Songs.query.all()
-    return render_template('secundaria.html', playlists=playlists, streamings=Streamings, songs=songs)
+    Microphones = Microphone.query.all()
+    return render_template('secundaria.html', playlists=playlists, streamings=Streamings, songs=songs, microfones=Microphones)
 
 
 @app.route('/save_stream_url', methods=['POST'])
@@ -1352,6 +1380,7 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # Cria as tabelas no banco de dados, se ainda não existirem
         create_default_channels()  # Inicializa os canais padrão
+        get_mics()
 
         
         

@@ -117,6 +117,31 @@
 
 
 
+<div class="container">
+    <div class="content">
+        <div class="microfone-box">
+            <h3>Microfones</h3>
+            <div class="microfone-section">
+                <ul id="microphone-list">
+                    {% for microfone in microfones %}
+                    <li class="microfone-item">
+                        <span>{{ microfone.name }}</span>
+                        <div class="microfone-actions">
+                            <i class="fa-solid fa-pen" onclick="editMicrofone('{{ microfone.id }}')"></i>
+                            <i class="fa-solid fa-trash" onclick="deleteMicrofone('{{ microfone.name }}')"></i>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div style="text-align: center;">
+                    <button onclick="fetchMicrophones()">Get Microfones</button>
+                </div>
+                    
+            </div> <!-- Closing the microfone-section div -->
+        </div>
+    </div>
+
+
 <!-- Modal para adicionar playlist 
 <div id="playlistModal" class="modal">
     <div class="modal-content">
