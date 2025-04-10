@@ -203,25 +203,42 @@ document.addEventListener("DOMContentLoaded", function () {
         const selectedColumn = selectElement.value;
         if (!selectedColumn) return;
         const zoneName = selectElement.closest(".zone-box").querySelector("h3").textContent.trim();
+        const columnList = selectElement.closest(".column-section").querySelector(".column-list");
+
         const columnItem = document.createElement("div");
         columnItem.classList.add("column-item");
+        columnItem.dataset.column = selectedColumn;
+        columnItem.dataset.zone = zoneName;
         columnItem.innerHTML = `
             <span>${selectedColumn}</span>
             <button class="delete-column-button">
                 <i class="fa-solid fa-trash" style="color: black;"></i>
             </button>
         `;
-        columnItem.dataset.column = selectedColumn;
-        columnItem.dataset.zone = zoneName;
+
         columnItem.querySelector(".delete-column-button").addEventListener("click", function (event) {
             event.preventDefault();
             event.stopPropagation();
             removeZoneColumn(columnItem);
         });
-        const zoneContainer = selectElement.closest(".column-list");
-        zoneContainer.insertBefore(columnItem, selectElement.parentElement);
-        selectElement.parentElement.replaceWith(buttonElement);
-        usedZoneColumns.push(selectedColumn);
+
+        columnList.appendChild(columnItem);
+        selectElement.parentElement.remove();
+
+        // Check if there are still speakers available to add
+        fetch("/get_free_nodes")
+            .then(response => response.json())
+            .then(nodes => {
+                if (nodes.length > 0) {
+                    const addColumnButton = document.createElement("div");
+                    addColumnButton.classList.add("add-column-button");
+                    addColumnButton.innerHTML = '<span>+ Speaker</span>';
+                    addColumnButton.onclick = function() { showSelectForZone(this); };
+                    selectElement.closest(".column-section").appendChild(addColumnButton);
+                }
+            })
+            .catch(error => console.error("Error checking available speakers:", error));
+
         fetch("/add_column_to_zone", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
