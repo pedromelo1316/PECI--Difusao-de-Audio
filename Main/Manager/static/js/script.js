@@ -926,10 +926,7 @@ function selectChannel(channelId, channelName, areaName, optionElement) {
         if (!response.ok) {
             throw new Error('Failed to update channel');
         }
+
     })
-    .catch(error => {
-        console.error('Error updating channel:', error);
-        // Reverte o texto para "Select Channel" em caso de erro
-        selectedChannelSpan.textContent = 'Select Channel';
-    });
+«
 }

@@ -502,6 +502,8 @@ def index():
     nodes = Nodes.query.order_by(Nodes.id).all()
     areas = Areas.query.order_by(Areas.id).all()
     channels = Channels.query.order_by(Channels.id).all()
+    for area in areas:
+        area.current_channel = next((channel.name for channel in channels if channel.id == area.channel_id), None)
 
     #
     # playlists = get_playlists()  # Função que retorna as playlists

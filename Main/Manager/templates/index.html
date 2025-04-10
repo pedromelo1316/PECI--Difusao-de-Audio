@@ -275,13 +275,7 @@
                             <h4>Channels</h4>
                             <div class="channel-dropdown" onclick="toggleChannelDropdown(this)" style="cursor: pointer; border: 1px solid #ddd; border-radius: 8px; padding: 4px; background: #fff; display: flex; justify-content: space-between; align-items: center;">
                                 <span id="selectedChannel-{{ area.name }}">
-                                    {% set currentChannel = None %}
-                                    {% for channel in channels %}
-                                        {% if area.channel_id == channel.id %}
-                                            {% set currentChannel = channel %}
-                                        {% endif %}
-                                    {% endfor %}
-                                    {{ currentChannel.name if currentChannel else 'Select Channel' }}
+                                    {{ area.current_channel if area.current_channel else "Select Channel" }}
                                 </span>
                                 <i class="fa-solid fa-chevron-down"></i>
                             </div>
