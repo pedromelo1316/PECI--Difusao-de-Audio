@@ -125,10 +125,14 @@ def toggle_transmission():
         
     while os.path.exists(f"session_{channel_id}.sdp"):
         time.sleep(0.1)
+        
+    channel = db.session.query(Channels).filter(Channels.id == channel_id).first()
+    if channel.state == 'playing':
+        channel.state = 'stopped'
     
-    if state == 'play':
+    elif channel.state == 'stopped':
         # Comando FFmpeg para RTP multicast
-        channel = db.session.query(Channels).filter(Channels.id == channel_id).first()
+        
         if not channel:
             return jsonify({'status': 'error', 'message': 'Canal não encontrado'})
         source = channel.source
@@ -138,13 +142,18 @@ def toggle_transmission():
         # Inicia o processo FFmpeg
         processes[channel_id]['process'] = start_ffmpeg_process(channel_id, source, _type)
         
+        if processes[channel_id]['process'] is None:
+            return jsonify({'status': 'error', 'message': 'Erro ao iniciar o processo FFmpeg'})
+        
         print(f"Canal {channel_id} iniciado")
         
         while not os.path.exists(f"session_{channel_id}.sdp"):
             time.sleep(0.1)
         
+        channel.state = 'playing'
 
         print(f"Transmissão do canal {channel_id} iniciada com sucesso.")
+    db.session.commit()
         
     areas = db.session.query(Areas).filter(Areas.channel_id == channel_id).all()
     nodes = []
@@ -152,7 +161,7 @@ def toggle_transmission():
         nodes += area.nodes
     
     send_info(nodes, restart=True)
-    return jsonify({"success": True}), 200
+    return jsonify({'success': True})
 
 def start_ffmpeg_process(channel, source, _type):
     # Define o endereço de multicast baseado no número do canal
@@ -241,8 +250,27 @@ def start_ffmpeg_process(channel, source, _type):
         
 
         # Comando do FFmpeg para streaming
-        
         cmd = [
+            "ffmpeg",
+            "-re",  # Força a leitura no tempo real para streams
+            "-analyzeduration", "10M",  # Reduz o tempo de análise inicial
+            "-probesize", "10M",
+            #"-rw_timeout", "5000000",  # Timeout de leitura
+            "-vn",
+            "-i", direct_url,
+            "-acodec", "libopus",
+            "-b:a", BITRATE,
+            "-ar", SAMPLE_RATE,
+            "-ac", AUDIO_CHANNELS,
+            "-buffer_size", "1024",  # Aumenta o buffer de saída
+            "-max_delay", "200000",  # Limita o atraso máximo
+            "-f", "rtp",
+            "-sdp_file", f"session_{channel}.sdp",
+            "-muxdelay", "0.1",  # Reduz o atraso de muxagem
+            "-muxpreload", "0.1",
+            f"{multicast_address}"
+        ]
+        '''cmd = [
             "ffmpeg",
             "-i", direct_url,
             "-vn",  # Sem vídeo
@@ -253,7 +281,7 @@ def start_ffmpeg_process(channel, source, _type):
             "-f", "rtp",
             "-sdp_file", f"session_{channel}.sdp",
             f"{multicast_address}"
-        ]
+        ]'''
         
     else:
         return None
@@ -274,6 +302,7 @@ def create_default_channels():
             new_channel = Channels(
                 name=f"Channel {i}",
                 type=ChannelType.LOCAL,
+                state="stopped",
             )
             db.session.add(new_channel)
             db.session.commit()
@@ -289,6 +318,11 @@ def create_default_channels():
             print(f"Channel {channel.id} started")
             
             
+
+    for channel in db.session.query(Channels).all():
+        channel.state = "stopped"
+    db.session.commit()
+    
     send_info(Nodes.query.all(), restart=True)  # Envia informações iniciais para os nós
             
     return processes
@@ -318,8 +352,8 @@ def save_channel_configs():
         stream = db.session.query(Streaming).filter(Streaming.name == channel_reproduction).first()
         if not stream:
             return jsonify({"error": "Streaming não encontrado"}), 404
-        url = stream.url
-        channel.source = url
+        channel_source = stream.url
+        channel.source = channel_source
         db.session.commit()
         # Reinicia o processo do canal
         #change_channel_process(channel.id, url, ChannelType.STREAMING)
@@ -354,6 +388,20 @@ def save_channel_configs():
     
     
         return jsonify({"error": "Tipo de canal inválido"}), 400
+    
+    
+    if processes[channel.id]['process'] is not None:
+        processes[channel.id]['process'].terminate()
+        processes[channel.id]['process'].wait()
+        processes[channel.id]['process'] = None
+        processes[channel.id]['process'] = start_ffmpeg_process(channel.id, channel_source, channel_type)
+        
+        areas = db.session.query(Areas).filter(Areas.channel_id == channel_id).all()
+        nodes = []
+        for area in areas:
+            nodes += area.nodes
+        
+        send_info(nodes, restart=True)
     
     
 
@@ -431,6 +479,7 @@ class Channels(db.Model):
     type = db.Column(db.Enum(ChannelType), nullable=False)
     source = db.Column(db.String(200), nullable=True)
     microphone = db.Column(db.String(200),nullable=True)
+    state = db.Column(db.String(200), nullable=False, default="stopped")
 
     def __repr__(self):
         return f'<Channel {self.id}: {self.name}>'
@@ -575,7 +624,7 @@ def detect_new_nodes(stop_event, msg_buffer):
                         if db.session.query(Nodes).filter(Nodes.mac == node_mac).first():
                             raise Exception("MAC already in use")
                         node_name = node_name.upper()
-                        node = Nodes(name=node_name, mac=node_mac, ip=node_ip)
+                        node = Nodes(name=node_name, mac=node_mac, ip=node_ip, area_id=1)  #remover este area_id = 1
                         db.session.add(node)
                         db.session.commit()
                     

@@ -80,17 +80,6 @@
 
     // Toggle transmission state and call the Python endpoint
     function toggleTransmission(button, channelId) {
-        const isPlaying = button.classList.contains('playing');
-        const desiredState = isPlaying ? 'stop' : 'play';
-
-        // Update button icon and state
-        if (isPlaying) {
-            button.classList.remove('playing');
-            button.innerHTML = '<i class="fa-solid fa-play"></i>';
-        } else {
-            button.classList.add('playing');
-            button.innerHTML = '<i class="fa-solid fa-stop"></i>';
-        }
 
         // Send the channel ID and desired state to the Python endpoint
         fetch(`/toggle_transmission`, {
@@ -98,11 +87,14 @@
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ channel_id: channelId, state: desiredState }),
+            body: JSON.stringify({ channel_id: channelId }),
         })
         .then(response => response.json())
         .then(data => {
-            if (!data.success) {
+            if (data.success) {
+                console.log("sucess");
+                window.location.reload(); // Reload the page if successful
+            } else {
                 console.error("Error toggling transmission:", data.error);
             }
         })
@@ -181,7 +173,11 @@
                                         </div>
                                         <div class="channel_state">
                                             <button class="start-button" onclick="toggleTransmission(this, {{ channel.id }})">
-                                                <i class="fa-solid fa-play"></i>
+                                                {% if channel.state == "stopped" %}
+                                                    <i class="fa-solid fa-play"></i>
+                                                {% elif channel.state == "playing" %}
+                                                    <i class="fa-solid fa-stop"></i>
+                                                {% endif %}
                                             </button>
                                         </div>
                                         <div class="toggle-transmission-btn">
