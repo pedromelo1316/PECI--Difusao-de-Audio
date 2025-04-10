@@ -262,36 +262,35 @@
                                     </button>
                                 </div>
                                 {% endfor %}
-                            </div>
                             <div class="add-column-button" onclick="showSelectForZone(this)">
                                 <span>+ Speaker</span>
                             </div>
+                            </div>
+                            
                             
                         </div>
                         
                         <!-- Channel Section -->
-                        <!-- Channel Section -->
                         <div class="channel-section">
-                            <h5>Channel</h5>
-                            <div class="channel-options">
-                                <form action="/update_area_channel" method="POST" id="channelForm">
-                                    <input type="hidden" name="name" value="{{ area.name }}">
-                                    <label>
-                                        <input type="radio" name="channel_id" value="1"
-                                            {% if area.channel_id == 1 %} checked {% endif %} style="accent-color: #22cc3f;"> 
-                                        <span class="channel-name" data-channel-id="1">{{ channels[0].name }}</span>  <!-- Canal 1 nome dinâmico -->
-                                    </label>
-                                    <label>
-                                        <input type="radio" name="channel_id" value="2"
-                                            {% if area.channel_id == 2 %} checked {% endif %} style="accent-color: #22cc3f;"> 
-                                        <span class="channel-name" data-channel-id="2">{{ channels[1].name }}</span>  <!-- Canal 2 nome dinâmico -->
-                                    </label>
-                                    <label>
-                                        <input type="radio" name="channel_id" value="3"
-                                            {% if area.channel_id == 3 %} checked {% endif %} style="accent-color: #22cc3f;"> 
-                                        <span class="channel-name" data-channel-id="3">{{ channels[2].name }}</span>  <!-- Canal 3 nome dinâmico -->
-                                    </label>
-                                </form>
+                            <h4>Channels</h4>
+                            <div class="channel-dropdown" onclick="toggleChannelDropdown(this)" style="cursor: pointer; border: 1px solid #ddd; border-radius: 8px; padding: 4px; background: #fff; display: flex; justify-content: space-between; align-items: center;">
+                                <span id="selectedChannel-{{ area.name }}">
+                                    {% set currentChannel = None %}
+                                    {% for channel in channels %}
+                                        {% if area.channel_id == channel.id %}
+                                            {% set currentChannel = channel %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {{ currentChannel.name if currentChannel else 'Select Channel' }}
+                                </span>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                            <div class="channel-options-dropdown" style="display: none; border: 1px solid #ddd; border-radius: 8px; margin-top: 4px; background: white; box-shadow: 0px 2px 5px rgba(0,0,0,0.1);">
+                                {% for channel in channels %}
+                                    <div class="channel-option" style="padding: 8px; border-bottom: 1px solid #ddd; cursor: pointer;" onclick="selectChannel('{{ channel.id }}', '{{ channel.name }}', '{{ area.name }}', this)">
+                                        {{ channel.name }}
+                                    </div>
+                                {% endfor %}
                             </div>
                         </div>
                     </div>

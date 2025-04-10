@@ -902,3 +902,34 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 });
+
+function toggleChannelDropdown(dropdownElement) {
+    const optionsDiv = dropdownElement.nextElementSibling;
+    optionsDiv.style.display = (optionsDiv.style.display === 'none' || optionsDiv.style.display === '') ? 'block' : 'none';
+}
+
+function selectChannel(channelId, channelName, areaName, optionElement) {
+    // Atualiza o nome do canal selecionado no dropdown
+    const selectedChannelSpan = document.getElementById('selectedChannel-' + areaName);
+    selectedChannelSpan.textContent = channelName;
+
+    // Oculta o dropdown
+    optionElement.parentElement.style.display = 'none';
+
+    // Envia o canal selecionado para o backend
+    fetch('/update_area_channel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `name=${encodeURIComponent(areaName)}&channel_id=${encodeURIComponent(channelId)}`
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to update channel');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating channel:', error);
+        // Reverte o texto para "Select Channel" em caso de erro
+        selectedChannelSpan.textContent = 'Select Channel';
+    });
+}
