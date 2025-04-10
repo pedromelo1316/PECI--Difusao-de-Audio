@@ -95,18 +95,20 @@
             <h3>Streaming</h3>
             <div class="grid-container">
                 <div class="streaming-section">
-                    <div id="streaming-list">
+                    <ul id="streaming-list">
                         {% for streaming in streamings %}
-                        <div class="streaming-item">
+                        <li class="streaming-item">
                             <span>{{ streaming.name }}</span>
                             <div class="streaming-actions">
                                 <i class="fa-solid fa-pen " onclick="editStreaming('{{ streaming.id }}')"></i>
                                 <i class="fa-solid fa-trash" onclick="deleteStreaming('{{ streaming.name }}')"></i>
                             </div>
-                        </div>
+                        </li>
                         {% endfor %}
+                    </ul>
+                    <div style="text-align: center;">
+                        <button onclick="showAddStreamModal()">Add Streaming Link</button>
                     </div>
-                    <button onclick="showAddStreamModal()">Add Streaming Link</button>
                 </div>
             </div>
         </div>
