@@ -928,5 +928,4 @@ function selectChannel(channelId, channelName, areaName, optionElement) {
         }
 
     })
-«
 }
