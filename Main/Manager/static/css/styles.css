@@ -937,7 +937,6 @@ footer {
     width: 8px; /* Original, atualmente 7px */
     height: 8px; /* Original, atualmente 7px */
     border-radius: 50%;
-    background-color: #ccc;
     display: inline-block;
 }
 

@@ -167,8 +167,13 @@
                                         <div class="card-content">
                                             <span class="channel-name">{{ channel.name }}</span>
                                             <div class="channel-status">
-                                                <span class="status-indicator"></span>
-                                                <span class="status-text">Inactive</span>
+                                                {% if channel.state == "stopped" %}
+                                                    <span class="status-indicator" style="background: #ccc;"></span>
+                                                    <span class="status-text">Inactive</span>
+                                                {% elif channel.state == "playing" %}
+                                                    <span class="status-indicator" style="background: #22cc3f;"></span>
+                                                    <span class="status-text">Active</span>
+                                                {% endif %}
                                             </div>
                                         </div>
                                         <div class="channel_state">
