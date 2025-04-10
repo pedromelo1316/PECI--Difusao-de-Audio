@@ -1,9 +1,4 @@
-body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    margin: 0;
-    padding: 0;
-    background: linear-gradient(to bottom, #fffcfc, #ffffff);
-}
+
 
 .p{
     color: black;
@@ -33,6 +28,7 @@ body {
     width: 100%;
     max-width: 800px;
     margin-top: 20px;
+    border:#3b3b3b solid 1px;
 }
 
 .stream-box {
@@ -43,6 +39,7 @@ body {
     width: 100%;
     max-width: 800px;
     margin-top: 20px;
+    border:#3b3b3b solid 1px;
 }
 
 .voice-box {
@@ -72,7 +69,16 @@ body {
 .playlists-list, .songs-list, .streaming-list {
     list-style-type: none;
     padding: 0;
+    justify-content: center; /* Centers the content horizontally */
 }
+
+
+.streaming-list {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centers the inner divs horizontally */
+}  
+
 
 .playlist-item2, .song-item {
     display: flex;
@@ -86,12 +92,12 @@ body {
     transition: background-color 0.3s;
 }
 
-.playlist-item2 .playlist-actions {
-    margin-left: auto;
+.songs-list .song-item {
+    margin-bottom: 5px; /* Reduced spacing between songs */
 }
 
-.playlist-item2.add-playlist {
-    width: 100%;
+.songs-section .add-song {
+    margin-top: 5px; /* Reduced spacing above the "+Add" button */
 }
 .songs-list .song-item {
     margin-bottom: 5px; /* Reduced spacing between songs */
@@ -126,10 +132,9 @@ body {
     border-radius: 5px;
     background-color: #fff;
     transition: background-color 0.3s;
-    width: 100%;
+    width: 90%;
     text-align: center;
     box-sizing: border-box;
-    height: 65px;
     margin-bottom: 10px;
 }
 
@@ -233,7 +238,11 @@ header {
     text-align: center;
 }
 
-
+h1 {
+    margin: 0;
+    font-size: 25px;
+    font-weight: bold;
+}
 
 h2 {
     margin: 0;

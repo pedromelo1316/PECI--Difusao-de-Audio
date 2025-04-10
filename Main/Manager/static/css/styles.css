@@ -3,7 +3,8 @@ body {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     margin: 0;
     padding: 0;
-    background: linear-gradient(to bottom, #fffcfc, #ffffff);
+    background: #fff;
+
 }
 
 h1 {
@@ -59,7 +60,7 @@ p {
     border-radius: 12px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
     padding: 40px;
-    border:#3b3b3b solid 2px;
+    border:#3b3b3b solid 1px;
 }
 
 /* Row Container for Speakers and Channels */
@@ -174,12 +175,15 @@ p {
 }
 
 
+
+
 /* ===== HEADER ===== */
 header {
-    background: #fffcfc;
+    background: #fff;
     padding: 20px;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
     margin-bottom: 2px;
+    border-bottom:#3b3b3b solid 1px;
 }
 
 .header-content {
@@ -492,7 +496,8 @@ header {
     gap: 40px;
     flex-direction: column;
     align-items: center;
-    border: #5e5e5e solid 2px
+    border:#3b3b3b solid 1px;
+    
 }
 
 .zone-box {
@@ -879,7 +884,7 @@ footer {
     flex: 1;
     background: #fff;
     padding: 20px; /* No original é maior */
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05);
+
     max-width: 500px; /* No teu atual tens 200px, mudar para 500px */
 }
 
@@ -1153,6 +1158,9 @@ footer {
 .mic-dropdown-icon:hover {
     color: #333;
     background-color: rgba(0, 0, 0, 0.05);
+
+
+
     border-radius: 50%;
 }
 
