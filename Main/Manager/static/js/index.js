@@ -64,6 +64,7 @@ function loadSongs() {
             data.forEach(song => {
                 const li = document.createElement('li');
                 li.className = 'song-item';
+                li.style.marginTop = '0px'; // Reduced spacing above each song
                 li.style.marginBottom = '7px'; // Reduced spacing between songs
                 li.innerHTML = `
                     <span style="font-size: 16px; color: black;">${song.name}</span>
@@ -76,7 +77,7 @@ function loadSongs() {
             });
             const addSongItem = document.createElement('li');
             addSongItem.className = 'song-item add-song';
-            addSongItem.style.marginTop = '5px'; // Reduced spacing above the "+Add" button
+            addSongItem.style.marginTop = '0px'; // Reduced spacing above the "+Add" button
             addSongItem.innerHTML = '<span style="font-size: 16px;">Add +</span>'; // Increased font size
             addSongItem.onclick = showAddSongModal;
             songsList.appendChild(addSongItem);
