@@ -13,7 +13,7 @@ for line in raw_data.strip().split("\n"):
     parts = {p.split(": ")[0]: p.split(": ")[1] for p in line.split(", ")}
     c = int(parts["c"])
     f = int(parts["f"])
-    packet_loss = int(parts["packet_loss"].strip('%'))  # Convert to int
+    packet_loss = float(parts["packet_loss"].strip('%')) # Convert to float
     
     if f not in data:
         data[f] = []

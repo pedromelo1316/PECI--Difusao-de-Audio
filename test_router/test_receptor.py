@@ -64,16 +64,16 @@ def analyse_packet_loss(dic):
 
     frame_numbers.sort()
 
-    total_frames = len(frame_numbers)
+    received_frames = len(frame_numbers)
     lost_frames = 0
 
-    for i in range(1, total_frames):
+    for i in range(1, received_frames):
         diff = frame_numbers[i] - frame_numbers[i - 1]
         if diff > 1:  # There's a gap
             lost_frames += diff - 1
 
-    packet_loss = (lost_frames / total_frames) * 100
-    print(f"Total frames: {total_frames}, Lost frames: {lost_frames}, Packet loss: {packet_loss:.2f}%")
+    packet_loss = (lost_frames / (received_frames+lost_frames)) * 100
+    print(f"Received frames: {received_frames}, Lost frames: {lost_frames}, Packet loss: {packet_loss:.2f}%")
 
     # Write on a file without deleting the previous content
 
@@ -81,7 +81,7 @@ def analyse_packet_loss(dic):
     frame_duration = dic["frame_duration"]
 
     with open("statistics.txt", "a") as f:
-        f.write(f"c: {channel}, f: {frame_duration}, total_packets: {total_frames}, lost_packets: {lost_frames}, packet_loss: {packet_loss:.2f}%\n")
+        f.write(f"c: {channel}, f: {frame_duration}, Received_packets: {received_frames}, lost_packets: {lost_frames}, packet_loss: {packet_loss:.2f}%\n")
     
     return packet_loss
 
