@@ -874,7 +874,8 @@ def update_area_channel():
 def secundaria():
     playlists = Playlist.query.all()  
     Streamings = Streaming.query.all()
-    return render_template('secundaria.html', playlists=playlists, streamings=Streamings)
+    songs = Songs.query.all()
+    return render_template('secundaria.html', playlists=playlists, streamings=Streamings, songs=songs)
 
 
 @app.route('/save_stream_url', methods=['POST'])
@@ -1034,9 +1035,10 @@ def update_song(song_id):
         return jsonify({"error": str(e)}), 500
 
 # Rota para excluir uma música
-@app.route('/delete_song/<int:song_id>', methods=['DELETE'])
-def delete_song(song_id):
-    song = Songs.query.get(song_id)
+@app.route('/delete_song/<string:song_name>', methods=['DELETE'])
+def delete_song(song_name):
+    print(f"Eleminar musica {song_name}")
+    song = Songs.query.filter_by(name=song_name).first()
     if not song:
         return jsonify({"error": "Música não encontrada"}), 404
     try:

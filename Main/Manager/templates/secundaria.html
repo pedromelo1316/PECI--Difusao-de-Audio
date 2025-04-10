@@ -54,10 +54,21 @@
                 <div class="songs-section">
                     <h2>Songs</h2>
                     <br>
-                    <ul class="songs-list" id="songs-list">
-                        <!-- As músicas serão carregadas dinamicamente via JavaScript -->
+                    <ul class="playlists-list" id="song-list">
+                        {% for song in songs %}
+                        <li class="playlist-item2">
+                            <span>{{ song.name }}</span>
+                            <div class="song-actions">
+                                <i class="fa-solid fa-pen" onclick="editSong('{{ song.id }}')"></i>
+                                <i class="fa-solid fa-trash" onclick="deleteSong('{{ song.name }}')"></i>
+                            </div>
+                        </li>
+                        {% endfor %}
+                        <li class="playlist-item2 add-playlist" onclick="showAddSongModal()">
+                            <span>Add +</span>
+                        </li>
                     </ul>
-                    <!-- Removed the hardcoded "+Add" button -->
+
                 </div>
                 
                 <!-- Modal para adicionar/editar música -->
@@ -84,17 +95,17 @@
             <h3>Streaming</h3>
             <div class="grid-container">
                 <div class="streaming-section">
-                    <ul id="streaming-list">
+                    <div id="streaming-list">
                         {% for streaming in streamings %}
-                        <li class="streaming-item">
+                        <div class="streaming-item">
                             <span>{{ streaming.name }}</span>
                             <div class="streaming-actions">
                                 <i class="fa-solid fa-pen " onclick="editStreaming('{{ streaming.id }}')"></i>
                                 <i class="fa-solid fa-trash" onclick="deleteStreaming('{{ streaming.name }}')"></i>
                             </div>
-                        </li>
+                        </div>
                         {% endfor %}
-                    </ul>
+                    </div>
                     <button onclick="showAddStreamModal()">Add Streaming Link</button>
                 </div>
             </div>

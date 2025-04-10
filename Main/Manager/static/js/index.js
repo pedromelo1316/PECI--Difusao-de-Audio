@@ -54,35 +54,6 @@ function addPlaylist() {
 
 let editingSongId = null;
 
-// Carregar músicas
-function loadSongs() {
-    fetch('/songs')
-        .then(response => response.json())
-        .then(data => {
-            const songsList = document.getElementById('songs-list');
-            songsList.innerHTML = '';
-            data.forEach(song => {
-                const li = document.createElement('li');
-                li.className = 'song-item';
-                li.style.marginTop = '0px'; // Reduced spacing above each song
-                li.style.marginBottom = '7px'; // Reduced spacing between songs
-                li.innerHTML = `
-                    <span style="font-size: 16px; color: black;">${song.name}</span>
-                    <div class="song-actions">
-                        <i class="fa-solid fa-pen" style="font-size: 16px; color: gray;" onclick="editSong(${song.id}, '${song.name}')"></i>
-                        <i class="fa-solid fa-trash" style="font-size: 16px; color: gray;" onclick="deleteSong(${song.id})"></i>
-                    </div>
-                `;
-                songsList.appendChild(li);
-            });
-            const addSongItem = document.createElement('li');
-            addSongItem.className = 'song-item add-song';
-            addSongItem.style.marginTop = '0px'; // Reduced spacing above the "+Add" button
-            addSongItem.innerHTML = '<span style="font-size: 16px;">Add +</span>'; // Increased font size
-            addSongItem.onclick = showAddSongModal;
-            songsList.appendChild(addSongItem);
-        });
-}
 
 // Mostrar modal para adicionar música
 
@@ -404,9 +375,10 @@ function editSong(songId, currentName) {
 }
 
 // Substituir confirm padrão ao eliminar música
-function deleteSong(songId) {
+function deleteSong(songname) {
     showCustomModal("Eliminar Música", "Are you sure you want to delete this song?", false, function () {
-        fetch(`/delete_song/${songId}`, { method: 'DELETE' })
+        console.log("Deleting song:", songname);
+        fetch(`/delete_song/${songname}`, { method: 'DELETE' })
         .then(response => {
             if (response.ok) {
                 window.location.reload();
@@ -434,32 +406,6 @@ function deletePlaylist(playlistId) {
         .catch(err => console.error('Erro ao excluir playlist:', err));
 }
 
-// Substituir prompts padrão ao adicionar um link de streaming
-function addStreamingLink() {
-    showCustomModal("Novo Link de Transmissão", "Insira o nome da transmissão:", true, function (name) {
-        if (!name) return;
-        
-        showCustomModal("Novo Link de Transmissão", "Insira o link de transmissão:", true, function (link) {
-            if (!link || !isValidURL(link)) {
-                showCustomModal("Erro", "Please enter a valid link.");
-                return;
-            }
-
-            const list = document.getElementById("streaming-list");
-            const listItem = document.createElement("div");
-            listItem.className = "streaming-item";
-            listItem.innerHTML = `
-                <strong>${name}</strong>
-                <a href="${link}" target="_blank">${link}</a>
-                <div class="actions">
-                    <i class="fa fa-pen" style="font-size: 16px; color: gray;" onclick="editStreamingLink(this)"></i>
-                    <i class="fa fa-trash" style="font-size: 16px; color: gray;" onclick="deleteStreamingLink(this)"></i>
-                </div>
-            `;
-            list.appendChild(listItem);
-        });
-    });
-}
 
 // Editar link de streaming
 function editStreamingLink(element) {
@@ -560,28 +506,6 @@ function toggleColumnDetails(element) {
     } else {
         details.style.display = 'none';
     }
-}
-
-function loadStreamingLinks() {
-    fetch('/streamings')
-        .then(response => response.json())
-        .then(data => {
-            const streamingList = document.getElementById('streaming-list');
-            streamingList.innerHTML = '';
-            data.forEach(streaming => {
-                const li = document.createElement('li');
-                li.className = 'streaming-item';
-                li.innerHTML = `
-                    <span>${streaming.name}</span>
-                    <div class="streaming-actions">
-                        <i class="fa-solid fa-pen" style="color: gray;" onclick="editStreaming(${streaming.id})"></i>
-                        <i class="fa-solid fa-trash" style="color: gray;" onclick="deleteStreaming(${streaming.id})"></i>
-                    </div>
-                `;
-                streamingList.appendChild(li);
-            });
-        })
-        .catch(err => console.error('Erro ao carregar links de streaming:', err));
 }
 
 function editStreaming(streamingId) {

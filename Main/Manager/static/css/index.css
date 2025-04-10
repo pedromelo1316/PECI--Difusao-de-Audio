@@ -98,7 +98,7 @@ body {
 }
 
 .songs-section .add-song {
-    margin-top: 5px; /* Reduced spacing above the "+Add" button */
+    margin-top: 0px; /* Reduced spacing above the "+Add" button */
 }
 
 .song-item {
