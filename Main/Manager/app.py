@@ -57,6 +57,28 @@ def get_microphones():
         {"card": mic.card, "device": mic.device, "name": mic.name} for mic in microphones
     ])
 
+@app.route('/update_microphone/<int:mic_id>', methods=['POST'])
+def update_microphone(mic_id):
+    data = request.json
+    new_name = data.get('name')
+    new_shortcut = data.get('short_cut')
+
+    if not new_name or new_shortcut is None or not (0 <= int(new_shortcut) <= 9):
+        return jsonify({"error": "Invalid name or shortcut"}), 400
+
+    microphone = Microphone.query.get(mic_id)
+    if not microphone:
+        return jsonify({"error": "Microphone not found"}), 404
+
+    try:
+        microphone.name = new_name
+        microphone.short_cut = new_shortcut
+        db.session.commit()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
 def parse_device_info(line):
     parts = line.split()
     card = None
@@ -1396,4 +1418,5 @@ if __name__ == '__main__':
     # Inicia o servidor Flask com SocketIO
     socketio.run(app, host=get_host_ip() ,debug=False, port=5000)
     #socketio.run(app, debug=False)
+
 

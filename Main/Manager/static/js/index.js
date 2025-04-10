@@ -550,9 +550,9 @@ function fetchMicrophones() {
                     <ul id="microphone-list">
                         ${data.microphones.map(mic => `
                             <li class="microfone-item">
-                                <span>${mic.name}</span>
+                                <span>${mic.name} (Shortcut: ${mic.short_cut})</span>
                                 <div class="microfone-actions">
-                                    <i class="fa-solid fa-pen" onclick="editMicrofone('${mic.id}')"></i>
+                                    <i class="fa-solid fa-pen" onclick="editMicrofone('${mic.id}', '${mic.name}', '${mic.short_cut}')"></i>
                                     <i class="fa-solid fa-trash" onclick="deleteMicrofone('${mic.name}')"></i>
                                 </div>
                             </li>
@@ -570,4 +570,37 @@ function fetchMicrophones() {
             }
         })
         .catch(error => console.error('Error fetching microphones:', error));
+}
+
+function editMicrofone(micId, currentName, currentShortcut) {
+    showCustomModal("Edit Microphone", "Update the microphone Name (leave empty to skip):", true, function (newName) {
+        if (newName === "") newName = currentName;
+
+        showCustomModal("Edit Shortcut", "Enter a shortcut (0-9, leave empty to skip):", true, function (newShortcut) {
+            if (newShortcut === "") newShortcut = currentShortcut;
+            if (isNaN(newShortcut) || newShortcut < 0 || newShortcut > 9) {
+                alert("Invalid shortcut. Please enter a number between 0 and 9.");
+                return;
+            }
+
+            fetch(`/update_microphone/${micId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName, short_cut: newShortcut })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Microphone updated successfully!");
+                    fetchMicrophones();
+                } else {
+                    alert(data.error || "Error updating microphone.");
+                }
+            })
+            .catch(err => {
+                console.error("Error updating microphone:", err);
+                alert("Error communicating with the server.");
+            });
+        });
+    });
 }
