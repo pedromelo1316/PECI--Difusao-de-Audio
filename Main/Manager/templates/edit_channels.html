@@ -88,7 +88,9 @@
                         <div class="section-microphone">
                             <h3>Microphone:</h3>
                             <select id="microphoneSelect" class="microphone-select">
-                                <option value="">Loading microphones...</option>
+                                {% for microphone in microphones %}
+                                    <option value="{{ microphone.id }}">{{ microphone.name }}</option>
+                                {% endfor %}
                             </select>
                         </div>
                     </div>
@@ -122,6 +124,8 @@
     const playlistsData = {{ playlist_songs | tojson }};
     const allSongs = {{ all_songs | tojson }};
     const streamingSources2 = {{ streaming_sources | tojson }};
+    const associatedSongs = {{ associated_songs | tojson }};
+    
 </script>
 
 <script src="{{ url_for('static', filename='js/edit_channels.js') }}"></script>

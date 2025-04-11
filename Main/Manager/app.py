@@ -221,10 +221,23 @@ def start_ffmpeg_process(channel, source, _type):
     # Verifica o tipo de transmissão e configura o comando do ffmpeg apropriado
     if _type == ChannelType.VOICE:
         
-        mic = {"card": "1", "device": "0"}  #usar no terminal arecord -l  # Lista dispositivos de captura (microfones) 
-        
+        mic = db.session.query(Microphone).filter(Microphone.id == source).first()        
         # Comando do FFmpeg para transmissão de microfone
-        pass
+        cmd = [
+            "ffmpeg",
+            "-f", "alsa",
+            "-i", f"hw:{mic.card},{mic.device}",  # Dispositivo de captura
+            "-vn",  # Sem vídeo
+            "-hide_banner",  # Oculta informações de inicialização
+            "-ar", SAMPLE_RATE,
+            "-acodec", "libopus",
+            "-b:a", BITRATE,
+            "-ac", AUDIO_CHANNELS,
+            "-f", "rtp",
+            "-sdp_file", f"mic_{channel}.sdp",
+            f"{multicast_address}"
+        ]
+        
 
     elif _type == ChannelType.LOCAL:
         
@@ -862,16 +875,21 @@ def edit_channels():
     all_songs = [song.name for song in Songs.query.all()]
     streamings = Streaming.query.all()
     streaming_sources = [streaming.name for streaming in streamings]
-    
-    
+
+    # Adiciona as músicas associadas ao canal
+    associated_songs = channel.source.split(", ") if channel.source else []
+
     return render_template(
         'edit_channels.html',
         channel=channel,
         playlists=playlist_songs.keys(),
         playlist_songs=playlist_songs,
         all_songs=all_songs,
-        streaming_sources=streaming_sources 
-        
+        streaming_sources=streaming_sources,
+        associated_songs=associated_songs,  # Passa as músicas associadas ao canal
+        channel_type=channel.type,
+        microphones=Microphone.query.all(),
+        channel_source=channel.source
     )
 
 @app.route('/update_channel_name/<int:channel_id>', methods=['POST'])

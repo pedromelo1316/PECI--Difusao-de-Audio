@@ -34,21 +34,37 @@ function updateSectionRight(value) {
     
         let songsHTML = '';
         allSongs.forEach(song => {
+            const isChecked = associatedSongs.includes(song); // Verifica se a música está associada
             songsHTML += `
                 <div class="song-item" style="display: flex; justify-content: space-between; align-items: center;">
                     <label for="song-${song}" style="flex-grow: 1;">
                         <span class="song-name">${song}</span>
                     </label>
-                    <input type="checkbox" id="song-${song}" onchange="addToPlaylist('${song}', 'song', this.checked)">
+                    <input type="checkbox" id="song-${song}" onchange="addToPlaylist('${song}', 'song', this.checked)" ${isChecked ? 'checked' : ''}>
                 </div>
             `;
         });
-    
+
+        // Adiciona as músicas associadas ao canal na dropzone
+        let associatedSongsHTML = '';
+        associatedSongs.forEach(song => {
+            associatedSongsHTML += `
+                <div class="song-item" data-name="${song}" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>${song}</span>
+                    <button class="remove-item-btn" onclick="removeItemFromPlaylist(this)">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            `;
+        });
+
         sectionRight.innerHTML = `
             <div class="inner-section-left">
                 <h3>Lista de reprodução</h3>
                 <div class="selected-playlist-info">
-                    <div class="playlist-dropzone"></div>
+                    <div class="playlist-dropzone">
+                        ${associatedSongsHTML} <!-- Músicas associadas -->
+                    </div>
                 </div>
             </div>
             <div class="inner-section-right">
@@ -292,24 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateLeftStats();
 });
 
-function loadMicrophones() {
-    fetch('/get_microphones')
-        .then(response => response.json())
-        .then(microphones => {
-            const microphoneSelect = document.getElementById('microphoneSelect');
-            microphoneSelect.innerHTML = '<option value="">Select a microphone</option>'; // Reset options
 
-            microphones.forEach(mic => {
-                const option = document.createElement('option');
-                option.value = `${mic.card}:${mic.device}`;
-                option.textContent = mic.name || `Card ${mic.card}, Device ${mic.device}`;
-                microphoneSelect.appendChild(option);
-            });
-        })
-        .catch(error => {
-            console.error('Error fetching microphones:', error);
-        });
-}
 
 function saveChanges() {
     // Obtém o tipo de transmissão selecionado no menu-list
@@ -344,15 +343,6 @@ function saveChanges() {
     const microphoneSelect = document.getElementById("microphoneSelect");
     const selectedMicrophone = microphoneSelect ? microphoneSelect.value : null;
 
-    // Verifica se todos os dados necessários foram preenchidos
-    if (!transmissionType) {
-        alert("Por favor, selecione o tipo de transmissão.");
-        return;
-    }
-    if (!selectedSource) {
-        alert("Por favor, selecione uma lista de reprodução ou uma fonte de streaming.");
-        return;
-    }
 
     // Dados a serem enviados para o backend
     const data = {
@@ -414,3 +404,4 @@ function toggleStreamingSelection(item) {
         </div>
     `;
 }
+
