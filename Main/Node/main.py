@@ -28,8 +28,9 @@ stop_event = threading.Event()
 
 
 def shutdown_handler(sig, frame):
-    ffmpeg.terminate()
-    ffmpeg.wait()
+    if ffmpeg:
+        ffmpeg.terminate()
+        ffmpeg.wait()
     stop_event.set()
     print("Exiting...")
     sys.exit(0)
@@ -70,7 +71,8 @@ def wait_for_info(n, port=8081):
                     # Atualiza as configurações de canal, volume e header a partir da mensagem
                     new_channel = info["channel"] if "channel" in info.keys() else None
                     volume = info["volume"] if "volume" in info.keys() else None
-                    new_HEADER = info["header"] if "header" in info.keys() else None
+                    new_HEADER = info["header_normal"] if "header_normal" in info.keys() else None
+                    new_mic_HEADER = info["header_mic"] if "header_mic" in info.keys() else None
                     restart = info["restart"] if "restart" in info.keys() else False
                     
                     # Se volume recebido for diferente do atual, atualiza
@@ -82,8 +84,19 @@ def wait_for_info(n, port=8081):
                         HEADER = new_HEADER
                         channel = new_channel
                         n.setChannel(new_channel)
-                        with open('session_received.sdp', 'w') as f:
-                            f.write(new_HEADER)
+                        if new_HEADER is not None:
+                            with open('session_received.sdp', 'w') as f:
+                                f.write(new_HEADER)
+                        else:
+                            if os.path.exists('session_received.sdp'):
+                                os.remove('session_received.sdp')
+                                
+                        if new_mic_HEADER is not None:
+                            with open('session_received_mic.sdp', 'w') as f:
+                                f.write(new_mic_HEADER)
+                        else:
+                            if os.path.exists('session_received_mic.sdp'):
+                                os.remove('session_received_mic.sdp')
                         n.setVolume(float(volume))
                         print("Updated channel and header")
                         
@@ -95,7 +108,15 @@ def wait_for_info(n, port=8081):
                             
                             
                         #se ficheiro SDP já existe 
-                        if os.path.exists('session_received.sdp'):
+                        if os.path.exists('session_received_mic.sdp'):
+                            cmd = [
+                                'ffplay',
+                                '-protocol_whitelist', 'file,rtp,udp',
+                                '-nodisp',
+                                '-i', 'session_received_mic.sdp',  # Arquivo SDP gerado pelo emissor
+                                '-af', f'volume={volume}'  # Aplica o volume dinamicamente
+                            ]
+                        elif os.path.exists('session_received.sdp'):
                             cmd = [
                                 'ffplay',
                                 '-protocol_whitelist', 'file,rtp,udp',
@@ -103,6 +124,9 @@ def wait_for_info(n, port=8081):
                                 '-i', 'session_received.sdp',  # Arquivo SDP gerado pelo emissor
                                 '-af', f'volume={volume}'  # Aplica o volume dinamicamente
                             ]
+                        else:
+                            print("SDP file not found")
+                            continue
                         
                         ffmpeg = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                         print("Restarting ffmpeg with new header, channel, and volume")

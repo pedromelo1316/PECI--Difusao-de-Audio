@@ -201,7 +201,7 @@ def toggle_transmission():
 
 def start_ffmpeg_process(channel, source, _type):
     # Define o endereço de multicast baseado no número do canal
-    multicast_address = f"rtp://239.255.0.{channel}:12345"
+    multicast_address = f"rtp://239.255.{'1' if _type == ChannelType.VOICE else '0'}.{channel}:12345"
     print(f"session_{channel}.sdp")
     print("source: ", source)
     print("type: ", _type)
@@ -581,6 +581,7 @@ def send_info(nodes, removed=False, suspended=False, restart=False):
             volume = (area.volume/50) if area else 1
             channel = area.channel_id if area else None
             header = None
+            header_mic = None
             
             print("Channel ID:", channel)
             
@@ -592,8 +593,14 @@ def send_info(nodes, removed=False, suspended=False, restart=False):
                         header = file.read()
                 except:
                     pass
+                
+                try:
+                    with open(f"mic_{channel}.sdp", "r") as file:
+                        header_mic = file.read()
+                except:
+                    pass
             
-            dic[mac] = {"volume": volume, "channel": channel, "header": header}
+            dic[mac] = {"volume": volume, "channel": channel, "header_normal": header, "header_mic": header_mic}
     elif removed:
         dic = {}
         for node in nodes:
