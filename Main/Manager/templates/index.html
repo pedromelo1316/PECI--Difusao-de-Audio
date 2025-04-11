@@ -176,21 +176,18 @@
                                                 {% endif %}
                                             </div>
                                         </div>
-                                        <div class="channel_state">
-                                            <button class="start-button" onclick="toggleTransmission(this, {{ channel.id }})">
-                                                {% if channel.state == "stopped" %}
-                                                    <i class="fa-solid fa-play"></i>
-                                                {% elif channel.state == "playing" %}
-                                                    <i class="fa-solid fa-stop"></i>
-                                                {% endif %}
-                                            </button>
+                                        <div style="display: flex; gap: 6px; align-items: center;">
+                                            <div class="toggle-transmission-btn">
+                                                <i class="fa-solid {% if channel.state == 'stopped' %}fa-play{% else %}fa-stop{% endif %} settings-icon"
+                                                   onclick="toggleTransmission(this, {{ channel.id }})"></i>
+                                            </div>
+                                            <div class="toggle-transmission-btn">
+                                                <a href="{{ url_for('edit_channels', channel_id=channel.id) }}" class="edit-link">
+                                                    <i class="fa-solid fa-pen settings-icon"></i>
+                                                </a>
+                                            </div>
                                         </div>
-                                        <div class="toggle-transmission-btn">
-                                            <a href="{{ url_for('edit_channels', channel_id=channel.id) }}" class="edit-link">
-                                                <i class="fa-solid fa-pen settings-icon"></i>
-                                            </a>
-                                            
-                                        </div>
+                                        
                                         
                                         
                                     </div>
