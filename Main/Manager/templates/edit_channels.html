@@ -60,19 +60,16 @@
                             <h3>Audio Options:</h3>
                             <div class="menu-box" id="menuBox">
                                 <nav class="menu-list">
-                                    <div class="menu-item" data-value="local">
+                                    <div class="menu-item" data-value="LOCAL">
                                         <div class="button-icon">
                                             <i class="fa-solid fa-music"></i> 
                                         </div>
                                         <div class="button-text" style="margin-left: 10px;">
                                             <span>  Playlists</span>
-
-
-
                                         </div>
                                         <div class="menu-item-indicator"></div>
                                     </div>
-                                    <div class="menu-item" data-value="streaming">
+                                    <div class="menu-item" data-value="STREAMING">
                                         <div class="button-icon">
                                             <i class="fa-solid fa-podcast"></i>
                                         </div>
@@ -125,6 +122,8 @@
     const allSongs = {{ all_songs | tojson }};
     const streamingSources2 = {{ streaming_sources | tojson }};
     const associatedSongs = {{ associated_songs | tojson }};
+    const channelType = {{ channel_type | tojson }};
+
     
 </script>
 

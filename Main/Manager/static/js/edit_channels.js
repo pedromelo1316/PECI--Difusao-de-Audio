@@ -7,7 +7,7 @@ function updateSectionRight(value) {
     sectionRight.className = "inner-dual-section";
     sectionRight.style.display = 'flex';
 
-    if (value === "local") {
+    if (value === "LOCAL") {
         let playlistsHTML = '';
         for (const [playlistName, songs] of Object.entries(playlistsData)) {
             playlistsHTML += `
@@ -81,7 +81,7 @@ function updateSectionRight(value) {
         saveButtonContainer.style.display = "flex";
         enablePlaylistReordering(); // Enable drag-and-drop reordering
     
-    } else if (value === "streaming") {
+    } else if (value === "STREAMING") {
         let streamingHTML = '';
         streamingSources2.forEach(source => {
             streamingHTML += `
@@ -250,7 +250,7 @@ function removeStreamingSource(source) {
     const index = streamingSources.indexOf(source);
     if (index > -1) {
         streamingSources.splice(index, 1);
-        updateSectionRight('streaming'); // Refresh the streaming section
+        updateSectionRight('STREAMING'); // Refresh the streaming section
     }
 }
 
@@ -258,7 +258,7 @@ function openAddStreamingModal() {
     const newSource = prompt("Digite o nome da nova fonte de streaming:");
     if (newSource) {
         streamingSources.push(newSource);
-        updateSectionRight('streaming'); // Refresh the streaming section
+        updateSectionRight('STREAMING'); // Refresh the streaming section
     }
 }
 
@@ -298,8 +298,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Set default selected item (Local)
-    const defaultItem = document.querySelector('.menu-item[data-value="local"]');
+    console.log("Channel type:", channelType);
+
+    // Set default selected item
+    const defaultItem = document.querySelector('.menu-item[data-value="' + channelType + '"]');
     if (defaultItem) {
         defaultItem.classList.add('active');
         updateSectionRight(defaultItem.getAttribute('data-value'));
@@ -325,7 +327,7 @@ function saveChanges() {
 
     // Obtém a lista de reprodução ou o streaming selecionado em section-rightCH
     let selectedSource = null;
-    if (transmissionType === "local") {
+    if (transmissionType === "LOCAL") {
         const selectedItems = document.querySelectorAll('.playlist-container input[type="checkbox"]:checked, .songs-container input[type="checkbox"]:checked');
         selectedSource = Array.from(selectedItems).map(item => {
             if (item.id.startsWith('playlist-')) {
@@ -334,7 +336,7 @@ function saveChanges() {
                 return `SONG:${item.id.replace('song-', '')}`;
             }
         }).join(' ');
-    } else if (transmissionType === "streaming") {
+    } else if (transmissionType === "STREAMING") {
         const selectedStreaming = document.querySelector('.streaming-container input[type="radio"]:checked');
         selectedSource = selectedStreaming ? selectedStreaming.id.replace('streaming-', '') : null;
     }

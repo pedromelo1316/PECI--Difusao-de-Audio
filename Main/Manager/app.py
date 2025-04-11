@@ -355,6 +355,10 @@ def save_channel_configs():
     print(f"Tipo de transmissão: {channel_type}")
     print(f"Microfone: {channel_microfone}")
     print(f"Reprodução: {channel_reproduction}")
+    
+    if channel_reproduction is None:
+        channel_reproduction = ""
+    
     #alterar na base de dados o tipo de transmissão do canal e o respetivo microfone e reiniciar o processo
     channel = db.session.query(Channels).filter(Channels.id == channel_id).first()
     if not channel:
