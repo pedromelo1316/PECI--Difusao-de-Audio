@@ -85,9 +85,33 @@
                         <div class="section-microphone">
                             <h3>Microphone:</h3>
                             <select id="microphoneSelect" class="microphone-select">
+                                {% set ordered_microphones = [] %}
+                            
+                                
                                 {% for microphone in microphones %}
-                                    <option value="{{ microphone.id }}">{{ microphone.name }}</option>
+                                    {% if microphone.id == channel.microphone%}
+                                        {% set _ = ordered_microphones.append(microphone) %}
+                                    {% endif %}
                                 {% endfor %}
+
+
+                                {% set none_microphone = {
+                                    'id': 'none',
+                                    'name': 'None'
+                                } %}
+                                {% set _ = ordered_microphones.append(none_microphone) %}
+
+                                {% for microphone in microphones %}
+                                    {% if microphone.id != channel.microphone %}
+                                        {% set _ = ordered_microphones.append(microphone) %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% for microphone in ordered_microphones %}
+                                    <option value="{{ microphone.id }}" {% if microphone.id == associated_microphone %}selected{% endif %}>{{ microphone.name }}</option>
+                                {% endfor %}
+
+                                
                             </select>
                         </div>
                     </div>
@@ -122,6 +146,7 @@
     const allSongs = {{ all_songs | tojson }};
     const streamingSources2 = {{ streaming_sources | tojson }};
     const associatedSongs = {{ associated_songs | tojson }};
+    const associatedStreaming = {{ associated_stream | tojson }};
     const channelType = {{ channel_type | tojson }};
 
     

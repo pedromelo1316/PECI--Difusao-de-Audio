@@ -47,23 +47,27 @@ function updateSectionRight(value) {
 
         // Adiciona as músicas associadas ao canal na dropzone
         let associatedSongsHTML = '';
-        associatedSongs.forEach(song => {
-            associatedSongsHTML += `
-                <div class="song-item" data-name="${song}" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>${song}</span>
-                    <button class="remove-item-btn" onclick="removeItemFromPlaylist(this)">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                </div>
-            `;
-        });
+        if (associatedSongs.length > 0) {
+            associatedSongs.forEach(song => {
+                associatedSongsHTML += `
+                    <div class="song-item" data-name="${song}" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>${song}</span>
+                        <button class="remove-item-btn" onclick="removeItemFromPlaylist(this)">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+            });
+        } else {
+            associatedSongsHTML = `<p class="no-songs-message">Nenhuma música associada ao canal.</p>`;
+        }
 
         sectionRight.innerHTML = `
             <div class="inner-section-left">
                 <h3>Lista de reprodução</h3>
                 <div class="selected-playlist-info">
                     <div class="playlist-dropzone">
-                        ${associatedSongsHTML} <!-- Músicas associadas -->
+                        ${associatedSongsHTML} <!-- Músicas associadas ou mensagem -->
                     </div>
                 </div>
             </div>
@@ -89,16 +93,26 @@ function updateSectionRight(value) {
                     <label for="streaming-${source}" style="flex-grow: 1;">
                         <span>${source}</span>
                     </label>
-                    <input type="radio" name="streaming-source" id="streaming-${source}" onchange="selectStreamingSource('${source}')">
+                    <input type="radio" name="streaming-source" id="streaming-${source}" onchange="selectStreamingSource('${source}')" ${associatedStreaming === source ? 'checked' : ''}>
                 </div>
             `;
         });
-    
+
+        const selectedStreamingHTML = associatedStreaming
+            ? `
+               <div class="streaming-selected-box">
+                    <span class="streaming-name-selected">${associatedStreaming}</span>
+                    <button onclick="removeStreamingSource('${associatedStreaming}')" style="margin-top: 10px; background: none; border: none; cursor: pointer;, colot: red;">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>`
+            : `<p class="section-hint">Selecione uma fonte de streaming</p>`;
+
         sectionRight.innerHTML = `
             <div class="inner-section-left">
                 <h3 id="Streaming_Source_Message">Fonte de Streaming:</h3>
                 <div class="selected-streaming-info">
-                    <p class="section-hint">Selecione uma fonte de streaming</p>
+                    ${selectedStreamingHTML}
                     <div id="selectedStreamingDisplay" style="margin-top: 10px; font-weight: bold;"></div>
                 </div>
             </div>
@@ -132,7 +146,11 @@ function selectStreamingSource(source) {
         selectedDisplay.innerHTML = `
             <div class="streaming-selected-box" style="padding: ${selectedItem.style.padding}; font-size: ${selectedItem.style.fontSize}; border-radius: ${selectedItem.style.borderRadius};">
                 <span>${source}</span>
+                <button onclick="removeStreamingSource('${source}')" style="margin-top: 10px; background: none; border: none; cursor: pointer;, colot: red;">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
             </div>
+
         `;
     }
 
@@ -247,11 +265,36 @@ function getDragAfterElement(container, y) {
 }
 
 function removeStreamingSource(source) {
-    const index = streamingSources.indexOf(source);
-    if (index > -1) {
-        streamingSources.splice(index, 1);
-        updateSectionRight('STREAMING'); // Refresh the streaming section
-    }
+    console.log("Removing streaming source:", source);
+
+    // Atualiza o HTML para exibir a mensagem de seleção e redefinir o estado
+    const sectionRight = document.getElementById("sectionRightContent");
+    const saveButtonContainer = document.getElementById("saveButtonContainer");
+
+    const selectedStreamingHTML = `<p class="section-hint">Selecione uma fonte de streaming</p>`;
+
+    sectionRight.innerHTML = `
+        <div class="inner-section-left">
+            <h3 id="Streaming_Source_Message">Fonte de Streaming:</h3>
+            <div class="selected-streaming-info">
+                ${selectedStreamingHTML}
+                <div id="selectedStreamingDisplay" style="margin-top: 10px; font-weight: bold;"></div>
+            </div>
+        </div>
+        <div class="inner-section-right">
+            <h3>Fontes Disponíveis</h3>
+            <div class="streaming-container">
+                ${streamingSources2.map(source => `
+                    <div class="streaming-item">
+                        <label for="streaming-${source}" style="flex-grow: 1;">
+                            <span>${source}</span>
+                        </label>
+                        <input type="radio" name="streaming-source" id="streaming-${source}" onchange="selectStreamingSource('${source}')">
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
 }
 
 function openAddStreamingModal() {
@@ -329,13 +372,16 @@ function saveChanges() {
     let selectedSource = null;
     if (transmissionType === "LOCAL") {
         const selectedItems = document.querySelectorAll('.playlist-container input[type="checkbox"]:checked, .songs-container input[type="checkbox"]:checked');
-        selectedSource = Array.from(selectedItems).map(item => {
+        const sources = Array.from(selectedItems).map(item => {
             if (item.id.startsWith('playlist-')) {
                 return `PLAYLIST:${item.id.replace('playlist-', '')}`;
             } else if (item.id.startsWith('song-')) {
                 return `SONG:${item.id.replace('song-', '')}`;
             }
-        }).join(' ');
+        }).filter(source => source !== null); // Filter out null values
+
+        selectedSource = sources.length > 0 ? sources.join(' ') : null;
+    
     } else if (transmissionType === "STREAMING") {
         const selectedStreaming = document.querySelector('.streaming-container input[type="radio"]:checked');
         selectedSource = selectedStreaming ? selectedStreaming.id.replace('streaming-', '') : null;
@@ -366,7 +412,10 @@ function saveChanges() {
     .then(response => {
         if (response.ok) {
             alert("Configurações salvas com sucesso!");
+            // refresh page
+            location.reload();
         } else {
+            console.error("Erro ao salvar as configurações:", response.statusText);
             alert("Erro ao salvar as configurações.");
         }
     })

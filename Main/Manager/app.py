@@ -206,6 +206,9 @@ def start_ffmpeg_process(channel, source, _type):
     print("source: ", source)
     print("type: ", _type)
     
+    
+    source = get_source_from_id(_type, source)
+    
     if not source:
         print("Source is empty")
         return None
@@ -279,8 +282,6 @@ def start_ffmpeg_process(channel, source, _type):
         #source = "https://www.youtube.com/live/YDvsBbKfLPA?si=TdUqXCrxJojjNDns"
         ##############
 
-
-
         
         cmd = [
             "ffmpeg",
@@ -318,6 +319,8 @@ def create_default_channels():
                 name=f"Channel {i}",
                 type=ChannelType.LOCAL,
                 state="stopped",
+                microphone=None,
+                source=None,
             )
             db.session.add(new_channel)
             db.session.commit()
@@ -342,6 +345,69 @@ def create_default_channels():
             
     return processes
 
+
+def convert_id_source(_type, id):
+    if _type==ChannelType.STREAMING:
+        stream = db.session.query(Streaming).filter(Streaming.id == id).first()
+        if not stream:
+            return None
+        source = stream.url
+        
+    elif _type == ChannelType.LOCAL:
+        song = db.session.query(Songs).filter(Songs.id == id).first()
+        if not song:
+            return None
+        source = song.name
+    else:
+        return None
+    
+    return source
+
+
+def get_source_from_id(_type, list_ids):
+    
+
+    ids = list_ids.split(",")
+    sources = list(map(lambda id: convert_id_source(_type, id), ids))
+    sources = list(filter(lambda source: source is not None, sources))
+    if len(sources) == 0:
+        return None
+    
+    if _type == ChannelType.LOCAL:
+        sources = list(map(lambda source: source.replace(" ", "_"), sources))
+        sources = ",".join(sources)
+    elif _type == ChannelType.STREAMING:
+        try:
+            # Comando para obter a URL direta do stream
+            ytdl_cmd = [
+            "yt-dlp",
+            "-g",
+            "-f", "bestaudio",
+            "-o",
+            "--no-check-certificates", 
+            "--socket-timeout", "15", 
+            sources[0]
+            ]
+            direct_url = subprocess.check_output(ytdl_cmd, text=True).strip()
+        except subprocess.TimeoutExpired:
+            print("Timeout ao obter URL.")
+            return None
+        except Exception as e:
+            print(f"Erro ao obter URL: {e}")
+            return None
+        sources = direct_url
+    else:
+        return None
+    
+    print("sources: ", sources)
+    
+    
+    return sources
+        
+        
+
+
+    
 @app.route('/save_channel_configs', methods=['POST'])
 def save_channel_configs():
     data = request.json
@@ -355,81 +421,101 @@ def save_channel_configs():
     print(f"Tipo de transmissão: {channel_type}")
     print(f"Microfone: {channel_microfone}")
     print(f"Reprodução: {channel_reproduction}")
-    
-    if channel_reproduction is None:
-        channel_reproduction = ""
+        
     
     #alterar na base de dados o tipo de transmissão do canal e o respetivo microfone e reiniciar o processo
     channel = db.session.query(Channels).filter(Channels.id == channel_id).first()
     if not channel:
         return jsonify({"error": "Canal não encontrado"}), 404
     channel.type = channel_type
-    channel.microphone = channel_microfone
+    channel.microphone = channel_microfone if channel_microfone != "none" else None
     
-    # Reinicia o processo do canal com as novas configurações
-    if channel_type == "STREAMING":
-        stream = db.session.query(Streaming).filter(Streaming.name == channel_reproduction).first()
-        if not stream:
-            return jsonify({"error": "Streaming não encontrado"}), 404
-        channel_source = stream.url
-        channel.source = channel_source
-        db.session.commit()
-        # Reinicia o processo do canal
-    elif channel_type == "LOCAL":
-        #percorrer conteudo de channel_reproduction que está do genero "PLAYLIST:playlist1 SONG:musica1 PLAYLIST:playlist2 PLAYLIST:playlist3 SONG:musica2"
-        #se for uma musica adicionar a musicas se for uma playlist ir á base de dados obter as musicas
-        
-        
-        musicas = []
-        for item in channel_reproduction.split():
-            if item.startswith("PLAYLIST:"):
-                playlist_name = item.split(":")[1]
-                playlist = db.session.query(Playlist).filter(Playlist.name == playlist_name).first()
-                if playlist:
-                    for song in playlist.songs:
-                        musicas.append(song.name)
-                    
-
-
-            elif item.startswith("SONG:"):
-                song_name = item.split(":")[1]
-                musicas.append(song_name)
-                
-        channel_source = ", ".join(musicas)
-        channel.source = channel_source
+    if channel_reproduction == None:
+        channel.source = None
         db.session.commit()
         
-
-        #change_channel_process(channel.id, channel_source, ChannelType.LOCAL)
+        if processes[channel.id]['process'] is not None:
+            processes[channel.id]['process'].terminate()
+            processes[channel.id]['process'].wait()
+            processes[channel.id]['process'] = None
+            
+        if os.path.exists(f"session_{channel_id}.sdp"):
+            os.remove(f"session_{channel_id}.sdp")
+    
+            
+        while os.path.exists(f"session_{channel_id}.sdp"):
+            time.sleep(0.1) 
+            
+        channel = db.session.query(Channels).filter(Channels.id == channel_id).first()
+        channel.state = 'stopped'
+        db.session.commit()
+        print("Canal parado")
     else:
-        print("Tipo de canal inválido")    
     
-    
-        return jsonify({"error": "Tipo de canal inválido"}), 400
-    
-    
-    if processes[channel.id]['process'] is not None:
-        processes[channel.id]['process'].terminate()
-        processes[channel.id]['process'].wait()
-        processes[channel.id]['process'] = None
-        processes[channel.id]['process'] = start_ffmpeg_process(channel.id, channel_source, channel_type)
-        
-        areas = db.session.query(Areas).filter(Areas.channel_id == channel_id).all()
-        nodes = []
-        for area in areas:
-            nodes += area.nodes
-            
-        if processes[channel.id]['process'] is None:
-            return jsonify({'status': 'error', 'message': 'Erro ao iniciar o processo FFmpeg'})
-        
-        while not os.path.exists(f"session_{channel.id}.sdp"):
-            time.sleep(0.1)
+        # Reinicia o processo do canal com as novas configurações
+        if channel_type == "STREAMING":
+            stream = db.session.query(Streaming).filter(Streaming.name == channel_reproduction).first()
+            if not stream:
+                return jsonify({"error": "Streaming não encontrado"}), 404
+            channel_source = stream.id
+            channel.source = channel_source
+            db.session.commit()
+            # Reinicia o processo do canal
+        elif channel_type == "LOCAL":
+            #percorrer conteudo de channel_reproduction que está do genero "PLAYLIST:playlist1 SONG:musica1 PLAYLIST:playlist2 PLAYLIST:playlist3 SONG:musica2"
+            #se for uma musica adicionar a musicas se for uma playlist ir á base de dados obter as musicas
             
             
-        print("sending info to nodes")
-        print(nodes)
-        
-        send_info(nodes, restart=True)
+            musicas = []
+            for item in channel_reproduction.split():
+                if item.startswith("PLAYLIST:"):
+                    playlist_name = item.split(":")[1]
+                    playlist = db.session.query(Playlist).filter(Playlist.name == playlist_name).first()
+                    if playlist:
+                        for song in playlist.songs:
+                            musicas.append(str(song.id))
+                        
+
+
+                elif item.startswith("SONG:"):
+                    song_name = item.split(":")[1]
+                    song = db.session.query(Songs).filter(Songs.name == song_name).first()
+                    if song:
+                        musicas.append(str(song.id))
+                    
+            channel_source = ", ".join(musicas)
+            channel.source = channel_source
+            db.session.commit()
+            
+        else:
+            print("Tipo de canal inválido")    
+            return jsonify({"error": "Tipo de canal inválido"}), 400
+    
+
+    
+        if processes[channel.id]['process'] is not None:
+            processes[channel.id]['process'].terminate()
+            processes[channel.id]['process'].wait()
+            processes[channel.id]['process'] = None
+            processes[channel.id]['process'] = start_ffmpeg_process(channel.id, channel_source, channel_type)
+            
+                
+            if processes[channel.id]['process'] is None:
+                return jsonify({'status': 'error', 'message': 'Erro ao iniciar o processo FFmpeg'})
+            
+            while not os.path.exists(f"session_{channel.id}.sdp"):
+                time.sleep(0.1)
+                
+    areas = db.session.query(Areas).filter(Areas.channel_id == channel_id).all()
+    nodes = []
+    for area in areas:
+        nodes += area.nodes
+            
+            
+    print("sending info to nodes")
+    print(nodes)
+    
+    send_info(nodes, restart=True)
     
     
 
@@ -880,8 +966,14 @@ def edit_channels():
     streamings = Streaming.query.all()
     streaming_sources = [streaming.name for streaming in streamings]
 
-    # Adiciona as músicas associadas ao canal
-    associated_songs = channel.source.split(", ") if channel.source else []
+    if channel.type == ChannelType.LOCAL:
+        associated_songs = get_source_from_id(channel.type, channel.source).split(",") if channel.source else []
+        associated_songs = [song.replace("_", " ") for song in associated_songs]
+        associated_stream = None
+    elif channel.type == ChannelType.STREAMING:
+        associated_stream_id = channel.source
+        associated_stream = Streaming.query.get(associated_stream_id).name if associated_stream_id else None
+        associated_songs = []
 
     return render_template(
         'edit_channels.html',
@@ -891,6 +983,7 @@ def edit_channels():
         all_songs=all_songs,
         streaming_sources=streaming_sources,
         associated_songs=associated_songs,  # Passa as músicas associadas ao canal
+        associated_stream=associated_stream,  # Passa o streaming associado ao canal
         channel_type=channel.type,
         microphones=Microphone.query.all(),
         channel_source=channel.source
@@ -976,28 +1069,10 @@ def save_stream_url():
         if Streaming.query.filter_by(name=stream_name).first():
             return jsonify({"error": "Stream name already exists"}), 400
         
-        try:
-            # Comando para obter a URL direta do stream
-            
-            ytdl_cmd = [
-            "yt-dlp",
-            "-g",
-            "-f", "bestaudio",
-            "-o",
-            "--no-check-certificates", 
-            "--socket-timeout", "15", 
-            stream_url
-            ]
-            direct_url = subprocess.check_output(ytdl_cmd, text=True).strip()
-        except subprocess.TimeoutExpired:
-            print("Timeout ao obter URL.")
-            return None
-        except Exception as e:
-            print(f"Erro ao obter URL: {e}")
-            return None
+
         
         # Salvar no banco de dados
-        new_stream = Streaming(name=stream_name, url=direct_url)
+        new_stream = Streaming(name=stream_name, url=stream_url)
         db.session.add(new_stream)
         db.session.commit()
 
@@ -1306,33 +1381,10 @@ def save_playlist():
         playlist.songs = Songs.query.filter(Songs.name.in_(updated_songs)).all()
         db.session.commit()
 
-        save_playlist_file(playlist_name)
-
         return jsonify({"success": True}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-def save_playlist_file(playlist_name):
-    # Caminho do arquivo da playlist
-    
-    playlist_file_path = os.path.join(app.config['PLAYLISTraiz_FOLDER'], f"{playlist_name}.txt")
 
-    # Busca a playlist pelo nome
-    playlist = Playlist.query.filter_by(name=playlist_name).first()
-    if not playlist:
-        raise Exception("Playlist não encontrada")
-
-    # Gera o conteúdo do arquivo com as músicas da playlist
-    lines = []
-    for song in playlist.songs:
-        song_path = os.path.join("Songs", f"{song.name}.wav")
-        lines.append(f"file {song_path}")
-
-    # Cria o arquivo da playlist e escreve o conteúdo
-    with open(playlist_file_path, "w") as playlist_file:
-        playlist_file.write("\n".join(lines))
-
-    print(f"Arquivo da playlist {playlist_name} salvo em {playlist_file_path}")
 
 
 #################################################################################
