@@ -39,7 +39,6 @@ function addPlaylist() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert("Playlist added successfully!");
                 window.location.reload();
             } else {
                 alert(data.error || "Erro ao adicionar a playlist.");
@@ -126,7 +125,6 @@ document.getElementById('streamForm').addEventListener('submit', function(event)
     })
     .then(response => {
         if (response.ok) {
-            alert('Link de transmissão salvo com sucesso!');
         } else {
             response.text().then(text => alert('Erro: ' + text));
         }
@@ -152,7 +150,6 @@ document.getElementById('streamForm').addEventListener('submit', function(event)
     })
     .then(response => {
         if (response.ok) {
-            alert('Link de transmissão salvo com sucesso!');
         } else {
             response.text().then(text => alert('Erro: ' + text));
         }
@@ -333,7 +330,6 @@ function showAddSongModal() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Música adicionada com sucesso!');
                     window.location.reload();
                 } else {
                     alert(data.error || 'Erro ao adicionar a música.');
@@ -462,7 +458,6 @@ function showAddStreamModal() {
             })
             .then(data => {
                 if (data.success) {
-                    alert("Streaming link added successfully!");
                     window.location.reload();
                 } else {
                     showCustomModal("Erro", data.error || "Erro ao adicionar o link de transmissão.");
@@ -591,7 +586,6 @@ function editMicrofone(micId, currentName, currentShortcut) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert("Microphone updated successfully!");
                     fetchMicrophones();
                 } else {
                     alert(data.error || "Error updating microphone.");
