@@ -199,6 +199,83 @@ def toggle_transmission():
     send_info(nodes, restart=True)
     return jsonify({'success': True})
 
+@app.route('/start_microphone', methods=['POST'])
+def start_microphone():
+    data = request.json
+    channel_id = data.get('channel_id')
+    microphone_id = data.get('microphone_id')
+    
+    print(channel_id)
+    print(microphone_id)
+
+    if not channel_id or not microphone_id:
+        return jsonify({"error": "Channel ID and Microphone ID are required"}), 400
+
+    channel = db.session.query(Channels).filter(Channels.id == channel_id).first()
+    microphone = db.session.query(Microphone).filter(Microphone.id == microphone_id).first()
+
+    if not channel:
+        return jsonify({"error": "Channel not found"}), 404
+
+    if not microphone:
+        return jsonify({"error": "Microphone not found"}), 404
+
+    # Stop any existing process for this channel
+    if processes[channel_id].get('microphone_process'):
+        processes[channel_id]['microphone_process'].terminate()
+        processes[channel_id]['microphone_process'].wait()
+        processes[channel_id]['microphone_process'] = None
+
+    # Start the microphone process
+    process = start_ffmpeg_process(channel_id, f"{microphone.card},{microphone.device}", ChannelType.VOICE)
+
+    if not process:
+        return jsonify({"error": "Failed to start microphone process"}), 500
+
+    processes[channel_id]['microphone_process'] = process
+    
+    channel.microphone_state = "playing"
+    db.session.commit()
+
+    return jsonify({"success": True}), 200
+
+
+
+@app.route("/stop_microphone", methods=["POST"])
+def stop_microphone():
+    data = request.json
+    channel_id = data.get("channel_id")
+    
+    channel = db.session.query(Channels).filter(Channels.id == channel_id).first()
+
+    if not channel_id:
+        return jsonify({"error": "Channel ID is required"}), 400
+
+    # Stop any existing process for this channel
+    if processes[channel_id].get('microphone_process'):
+        processes[channel_id]['microphone_process'].terminate()
+        processes[channel_id]['microphone_process'].wait()
+        processes[channel_id]['microphone_process'] = None
+
+    # Remove the SDP file if it exists
+    if os.path.exists(f"mic_{channel_id}.sdp"):
+        os.remove(f"mic_{channel_id}.sdp")
+
+
+    channel.microphone_state = "stopped"
+    db.session.commit()
+
+    return jsonify({"success": True}), 200
+
+
+@app.route('/get_microphone_channel_state/<int:channel_id>', methods=['GET'])
+def get_channel_state(channel_id):
+    channel = Channels.query.get(channel_id)
+    if not channel:
+        return jsonify({"error": "Channel not found"}), 404
+
+    return jsonify({"microphone_state": channel.microphone_state}), 200
+
 def start_ffmpeg_process(channel, source, _type):
     # Define o endereço de multicast baseado no número do canal
     multicast_address = f"rtp://239.255.{'1' if _type == ChannelType.VOICE else '0'}.{channel}:12345"
@@ -207,29 +284,30 @@ def start_ffmpeg_process(channel, source, _type):
     print("type: ", _type)
     
     
-    source = get_source_from_id(_type, source)
-    
-    if not source:
-        print("Source is empty")
-        return None
-    
-    if processes[channel]['process']:
-        processes[channel]['process'].terminate()
-        processes[channel]['process'].wait()
-        processes[channel]['process'] = None
+    if _type != ChannelType.VOICE:
+        source = get_source_from_id(_type, source)
         
-    if os.path.exists(f"session_{channel}.sdp"):
-        os.remove(f"session_{channel}.sdp")
+        if not source:
+            print("Source is empty")
+            return None
+        
+        if processes[channel]['process']:
+            processes[channel]['process'].terminate()
+            processes[channel]['process'].wait()
+            processes[channel]['process'] = None
+            
+        if os.path.exists(f"session_{channel}.sdp"):
+            os.remove(f"session_{channel}.sdp")
     
     # Verifica o tipo de transmissão e configura o comando do ffmpeg apropriado
     if _type == ChannelType.VOICE:
         
-        mic = db.session.query(Microphone).filter(Microphone.id == source).first()        
-        # Comando do FFmpeg para transmissão de microfone
+        source = source.split(",")
+        
         cmd = [
             "ffmpeg",
             "-f", "alsa",
-            "-i", f"hw:{mic.card},{mic.device}",  # Dispositivo de captura
+            "-i", f"hw:{source[0]},{source[1]}",  # Dispositivo de captura
             "-vn",  # Sem vídeo
             "-hide_banner",  # Oculta informações de inicialização
             "-ar", SAMPLE_RATE,
@@ -605,6 +683,7 @@ class Channels(db.Model):
     source = db.Column(db.String(200), nullable=True)
     microphone = db.Column(db.String(200),nullable=True)
     state = db.Column(db.String(200), nullable=False, default="stopped")
+    microphone_state = db.Column(db.String(200), nullable=False, default="stopped")
 
     def __repr__(self):
         return f'<Channel {self.id}: {self.name}>'
@@ -627,6 +706,7 @@ def index():
     nodes = Nodes.query.order_by(Nodes.id).all()
     areas = Areas.query.order_by(Areas.id).all()
     channels = Channels.query.order_by(Channels.id).all()
+    microphones = Microphone.query.all()
     for area in areas:
         area.current_channel = next((channel.name for channel in channels if channel.id == area.channel_id), None)
 
@@ -639,7 +719,7 @@ def index():
 
     ###
 
-    return render_template("index.html", nodes=nodes, areas=areas, channels=channels)
+    return render_template("index.html", nodes=nodes, areas=areas, channels=channels, microphones=microphones)
 # Rota para deleção de um nó específico
 @app.route('/delete/<int:id>')
 def delete(id):

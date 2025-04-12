@@ -393,135 +393,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     };
 
-    // Recording variables
-    let isRecording = false;
-    let recordingStartTime;
-    let recordingTimerInterval;
-    let recordingDuration = 0;
-    
-    window.toggleRecording = function() {
-        const micButton = document.getElementById('microphoneButton');
-        const recordingStatus = document.getElementById('recordingStatus');
-        const recordingTimer = document.getElementById('recordingTimer');
-        const micSelect = document.getElementById('mic-device-select');
-        
-        // Get selected microphone deviceId
-        const selectedMicId = micSelect ? micSelect.value : null;
-        
-        if (!selectedMicId && !isRecording) {
-            alert('Please select a microphone device');
-            return;
-        }
-        
-        // Get selected channels for microphone broadcast
-        const selectedChannels = [];
-        document.querySelectorAll('.mic-channel-checkbox:checked').forEach(checkbox => {
-            selectedChannels.push(parseInt(checkbox.dataset.channelId));
-        });
-        
-        if (!isRecording) {
-            // Check if at least one channel is selected
-            if (selectedChannels.length === 0) {
-                alert('Please select at least one channel for microphone broadcast');
-                return;
-            }
-            
-            // Start recording
-            isRecording = true;
-            micButton.classList.add('recording');
-            recordingStatus.textContent = 'Recording...';
-            recordingStatus.classList.add('active');
-            
-            // Start the timer
-            recordingStartTime = Date.now() - recordingDuration;
-            recordingTimerInterval = setInterval(() => {
-                recordingDuration = Date.now() - recordingStartTime;
-                recordingTimer.textContent = formatTime(recordingDuration);
-            }, 1000);
-            
-            // Start broadcasting to selected channels with selected microphone
-            startMicrophoneBroadcast(selectedChannels, selectedMicId);
-            
-        } else {
-            // Stop recording
-            isRecording = false;
-            micButton.classList.remove('recording');
-            recordingStatus.textContent = 'Recording stopped';
-            
-            // Stop the timer
-            clearInterval(recordingTimerInterval);
-            
-            // Stop microphone broadcast
-            stopMicrophoneBroadcast();
-            
-            // Reset after 3 seconds
-            setTimeout(() => {
-                recordingStatus.textContent = 'Click to record';
-                recordingStatus.classList.remove('active');
-                recordingDuration = 0;
-                recordingTimer.textContent = '00:00';
-            }, 3000);
-        }
-    };
-
-    function startMicrophoneBroadcast(channelIds, microphoneId) {
-        console.log('Starting microphone broadcast to channels:', channelIds, 'with microphone:', microphoneId);
-        
-        // Send request to server to start broadcasting microphone to selected channels
-        fetch('/start_microphone_broadcast', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-                channels: channelIds,
-                microphone_id: microphoneId 
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (!data.success) {
-                alert('Error: ' + data.error);
-                // Stop recording if broadcast failed
-                toggleRecording();
-            }
-        })
-        .catch(error => {
-            console.error('Error starting microphone broadcast:', error);
-            alert('Failed to start microphone broadcast. Please try again.');
-            // Stop recording if broadcast failed
-            toggleRecording();
-        });
-    }
-
-    function stopMicrophoneBroadcast() {
-        console.log('Stopping microphone broadcast');
-        
-        // Send request to server to stop broadcasting microphone
-        fetch('/stop_microphone_broadcast', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (!data.success) {
-                console.error('Error stopping microphone broadcast:', data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error stopping microphone broadcast:', error);
-        });
-    }
-
-    function formatTime(milliseconds) {
-        const totalSeconds = Math.floor(milliseconds / 1000);
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = totalSeconds % 60;
-        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
 });
+
+
 
 // Channel transmission functionality
 document.addEventListener("DOMContentLoaded", function() {
@@ -928,4 +802,63 @@ function selectChannel(channelId, channelName, areaName, optionElement) {
         }
 
     })
+}
+
+
+// Abre o pop-up de microfone
+function openMicrophonePopup(channelId) {
+    document.getElementById("microphonePopup").style.display = "flex";
+    document.getElementById("microphonePopup").dataset.channelId = channelId;
+
+    // Faz uma requisição para obter o estado atual do microfone
+    fetch(`/get_microphone_channel_state/${channelId}`)
+        .then(response => response.json())
+        .then(data => {
+            const actionButton = document.getElementById("microphoneActionButton");
+            if (data.microphone_state === "playing") {
+                actionButton.textContent = "Stop";
+                actionButton.dataset.state = "started";
+            } else {
+                actionButton.textContent = "Start";
+                actionButton.dataset.state = "stopped";
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching microphone state:", error);
+        });
+}
+// Fecha o pop-up de microfone
+function closeMicrophonePopup() {
+    document.getElementById("microphonePopup").style.display = "none";
+}
+
+// Inicia ou para o processo de microfone
+function toggleMicrophoneProcess() {
+    const channelId = document.getElementById("microphonePopup").dataset.channelId;
+    const microphoneId = document.getElementById("microphoneSelect").value;
+    const actionButton = document.getElementById("microphoneActionButton");
+
+    if (!microphoneId) {
+        alert("Please select a microphone.");
+        return;
+    }
+
+    const isStarting = actionButton.dataset.state === "stopped";
+    const endpoint = isStarting ? "/start_microphone" : "/stop_microphone";
+
+    fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channel_id: channelId, microphone_id: microphoneId }),
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.success) {
+                actionButton.textContent = isStarting ? "Stop" : "Start";
+                actionButton.dataset.state = isStarting ? "started" : "stopped";
+            } else {
+                alert(data.error || "An error occurred.");
+            }
+        })
+        .catch((error) => console.error("Error:", error));
 }

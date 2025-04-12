@@ -102,6 +102,8 @@
             console.error("Error during transmission toggle:", error);
         });
     }
+
+
 </script>
 
 <div class="container"> 
@@ -186,10 +188,11 @@
                                                     <i class="fa-solid fa-pen settings-icon"></i>
                                                 </a>
                                             </div>
+                                            <!-- Microphone Icon -->
+                                            <div class="toggle-microphone-btn">
+                                                <i class="fa-solid fa-microphone settings-icon" onclick="openMicrophonePopup({{ channel.id }})"></i>
+                                            </div>
                                         </div>
-                                        
-                                        
-                                        
                                     </div>
                                     {% endfor %}
                                 </div>
@@ -223,6 +226,22 @@
         </div>
     </div>
 </div>
+
+<!-- Pop-up para seleção de microfone -->
+<div id="microphonePopup" class="popup" style="display: none;">
+    <div class="popup-content">
+        <span class="close" onclick="closeMicrophonePopup()">&times;</span>
+        <h3>Select Microphone</h3>
+        <select id="microphoneSelect" class="form-select">
+            <option value="" disabled selected>Select a microphone</option>
+            {% for mic in microphones %}
+            <option value="{{ mic.id }}">{{ mic.name }}</option>
+            {% endfor %}
+        </select>
+        <button id="microphoneActionButton" class="btn btn-primary mt-3" onclick="toggleMicrophoneProcess()">Start</button>
+    </div>
+</div>
+
 
 <div class="container">
     <div class="content">
