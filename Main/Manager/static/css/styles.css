@@ -1503,3 +1503,17 @@ footer {
 .channel-option:hover {
     background: #f0f0f0;
 }
+
+
+/*Botão de play*/
+
+
+/* Apenas o ícone do lápis gira ao passar o rato */
+.edit-link .settings-icon:hover {
+    transform: rotate(30deg);
+}
+
+/* O botão de play/stop NÃO gira */
+.toggle-transmission-btn .settings-icon:hover {
+    transform: none;
+}
