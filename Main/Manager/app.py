@@ -758,7 +758,7 @@ def detect_new_nodes(stop_event, msg_buffer):
                         if db.session.query(Nodes).filter(Nodes.mac == node_mac).first():
                             raise Exception("MAC already in use")
                         node_name = node_name.upper()
-                        node = Nodes(name=node_name, mac=node_mac, ip=node_ip, area_id=1)  #remover este area_id = 1
+                        node = Nodes(name=node_name, mac=node_mac, ip=node_ip)  #remover este area_id = 1
                         db.session.add(node)
                         db.session.commit()
                     
