@@ -1,3 +1,6 @@
 **/venv/
 **/__pycache__/
 *.db
+*.wav
+*.sdp
+*.txt
