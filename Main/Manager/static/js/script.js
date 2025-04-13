@@ -825,3 +825,46 @@ function deleteInterrupt(interruptId) {
 }
 
 
+function startInterrupt(interruptId) {
+    if (confirm("Are you sure you want to start this interrupt?")) {
+        fetch(`/start_interruption/${interruptId}`, {
+            method: 'POST',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Interrupt started successfully.");
+                window.location.reload(); // Reload the page to update the list
+            } else {
+                alert("Error starting interrupt: " + data.error);
+            }
+        })
+        .catch(error => {
+            console.error("Error during interrupt start:", error);
+        });
+    }
+}
+
+
+
+function stopInterrupt(interruptId){
+    if (confirm("Are you sure you want to stop this interrupt?")) {
+        fetch(`/stop_interruption/${interruptId}`, {
+            method: 'POST',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Interrupt stopped successfully.");
+                window.location.reload(); // Reload the page to update the list
+            } else {
+                alert("Error stopping interrupt: " + data.error);
+            }
+        })
+        .catch(error => {
+            console.error("Error during interrupt stop:", error);
+        });
+    }
+}
+
+

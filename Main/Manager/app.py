@@ -40,6 +40,39 @@ AUDIO_CHANNELS = "1"  # Mono
 NUM_CHANNELS = 3  # Número total de canais
 
 
+@app.route('/start_interruption/<int:interruption_id>', methods=['POST'])
+def start_interruption(interruption_id):
+    interruption = Interruptions.query.get(interruption_id)
+    if not interruption:
+        return jsonify({"error": "Interrupção não encontrada"}), 404
+
+    # Verifica se alguma área associada à interrupção já tem uma interrupção ativa com outro microfone
+    for area in interruption.areas:
+        for active_interruption in area.interruptions:
+            if active_interruption.state == "on" and active_interruption.microphone_id != interruption.microphone_id:
+                return jsonify({"error": f"A área '{area.name}' já possui uma interrupção ativa com outro microfone"}), 400
+
+    # Inicia a interrupção
+    interruption.state = "on"
+    db.session.commit()
+    
+    return jsonify({"success": True})
+
+
+@app.route('/stop_interruption/<int:interruption_id>', methods=['POST'])
+def stop_interruption(interruption_id):   
+
+    interruption = Interruptions.query.get(interruption_id)
+    if not interruption:
+        return jsonify({"error": "Interrupção não encontrada"}), 404
+
+    # Para a interrupção (a lógica de parada da interrupção deve ser implementada aqui)
+    interruption.state = "off"
+    db.session.commit()
+    
+    return jsonify({"success": True})
+
+
 @app.route('/delete_interruption/<int:interruption_id>', methods=['DELETE'])
 def delete_interruption(interruption_id):
     interruption = Interruptions.query.get(interruption_id)
