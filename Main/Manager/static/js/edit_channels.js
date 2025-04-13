@@ -305,23 +305,8 @@ function openAddStreamingModal() {
     }
 }
 
-function associateMicrophone(deviceId, label) {
-    const associatedMicrophones = document.getElementById("associatedMicrophones");
-    const microphoneItem = document.createElement("div");
-    microphoneItem.className = "microphone-item";
-    microphoneItem.innerHTML = `
-        <span>${label || "Microfone Desconhecido"}</span>
-        <button class="remove-item-btn" onclick="removeMicrophone(this)">
-            <i class="fa-solid fa-trash-can"></i>
-        </button>
-    `;
-    associatedMicrophones.appendChild(microphoneItem);
-}
 
-function removeMicrophone(button) {
-    const microphoneItem = button.parentElement;
-    microphoneItem.remove();
-}
+
 
 // Change event listeners from radio buttons to menu items
 document.addEventListener('DOMContentLoaded', function() {
@@ -387,16 +372,11 @@ function saveChanges() {
         selectedSource = selectedStreaming ? selectedStreaming.id.replace('streaming-', '') : null;
     }
 
-    // Obtém o microfone selecionado
-    const microphoneSelect = document.getElementById("microphoneSelect");
-    const selectedMicrophone = microphoneSelect ? microphoneSelect.value : null;
-
 
     // Dados a serem enviados para o backend
     const data = {
         channel_type: transmissionType,
         channel_reproduction: selectedSource,
-        channel_microfone: selectedMicrophone,
         channel_id: channel_id
         
     };
@@ -425,8 +405,6 @@ function saveChanges() {
     });
 }
 
-// Call the function when the page loads
-document.addEventListener('DOMContentLoaded', loadMicrophones);
 
 function toggleStreamingSelection(item) {
     const allItems = document.querySelectorAll('.streaming-item');

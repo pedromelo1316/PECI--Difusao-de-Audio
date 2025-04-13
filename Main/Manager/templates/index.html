@@ -22,6 +22,7 @@
             <button type="button" class="btn btn-outline-secondary rounded-pill shadow-sm px-2 py-1 small" onclick="triggerExport()">
                 <i class="bi bi-download me-1"></i>Export Config
             </button>
+
         </div>
 
     </div>
@@ -188,10 +189,6 @@
                                                     <i class="fa-solid fa-pen settings-icon"></i>
                                                 </a>
                                             </div>
-                                            <!-- Microphone Icon -->
-                                            <div class="toggle-microphone-btn">
-                                                <i class="fa-solid fa-microphone settings-icon" onclick="openMicrophonePopup({{ channel.id }})"></i>
-                                            </div>
                                         </div>
                                     </div>
                                     {% endfor %}
@@ -226,22 +223,6 @@
         </div>
     </div>
 </div>
-
-<!-- Pop-up para seleção de microfone -->
-<div id="microphonePopup" class="popup" style="display: none;">
-    <div class="popup-content">
-        <span class="close" onclick="closeMicrophonePopup()">&times;</span>
-        <h3>Select Microphone</h3>
-        <select id="microphoneSelect" class="form-select">
-            <option value="" disabled selected>Select a microphone</option>
-            {% for mic in microphones %}
-            <option value="{{ mic.id }}">{{ mic.name }}</option>
-            {% endfor %}
-        </select>
-        <button id="microphoneActionButton" class="btn btn-primary mt-3" onclick="toggleMicrophoneProcess()">Start</button>
-    </div>
-</div>
-
 
 <div class="container">
     <div class="content">
@@ -324,6 +305,42 @@
         </div>
     </div>
 </div>
+
+<!-- MIC-INTERRUPTIONS-->
+<div class="container">
+    <div class="microfones-container">
+        <div class="interrupt-header">
+            <h2>MIC INTERRUPTS</h2>
+            <button class="add-btn" onclick="window.location.href='{{ url_for('add_interruption') }}'"><i class="fas fa-plus"></i></button>
+        </div>
+
+        <div class="interrupt-list">
+
+            {% for interrupt in interruptions %}
+                <div class="interrupt-item">
+                    <div class="interrupt-info">
+                        <strong>{{ interrupt.name }}</strong><br>
+                        Areas: {% for area in interrupt.areas %}{{ area.name }}{% if not loop.last %}; {% endif %}{% endfor %}<br>
+                        Channels: {% for channel in interrupt.channels %}{{ channel.name }}{% if not loop.last %}; {% endif %}{% endfor %}<br>
+                        Microphone: {{ interrupt.microphone }}<br>
+                    </div>
+                    <div class="interrupt-actions">
+                        {% if interrupt.state == "off" %}
+                            <button class="icon-btn" onclick="startInterrupt('{{ interrupt.id }}')"><i class="fas fa-play"></i></button>
+                        {% else %}
+                            <button class="icon-btn" onclick="stopInterrupt('{{ interrupt.id }}')"><i class="fas fa-stop"></i></button>
+                        {% endif %}
+                        <button class="icon-btn" onclick="deleteInterrupt('{{ interrupt.id }}')"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            {% endfor %}
+
+
+        </div>    
+    </div>
+</div>
+
+
 <br>
 <br>
 <footer>

@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block head %}
+  <title>Adicionar Interrupção</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/add_interrupt.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% endblock %}
+{% block body %}
+    <header>
+        <div class="header-content">
+            <div class="header-left">
+            <a href="{{ url_for('index') }}" class="settings-link">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            </div>
+            <div class="header-center">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Site Logo" class="site-logo">
+            <h3>Audio Manager</h3>
+            </div>
+        </div>
+    </header>
+  <div class="form-container">
+    <h2>Adicionar Interrupção</h2>
+    <form>
+      <!-- Nome da interrupção -->
+      <label for="interruptName">Nome da Interrupção:</label>
+      <input type="text" id="interruptName" name="interruptName" required>
+
+      <!-- Microfone -->
+      <label for="microphone">Selecionar Microfone:</label>
+      <select id="microphone" name="microphone" required>
+        <option value="">-- Escolher Microfone --</option>
+        {% for mic in microphones %}
+          <option value="{{ mic.id }}">{{ mic.name }}</option>
+        {% endfor %}
+      </select>
+
+      <div class="checkbox-group">
+        <!-- Áreas -->
+        <div class="checkbox-container">
+            <h3>Áreas</h3>
+            <fieldset>
+                <label><input type="checkbox" id="selectAllAreas"> Selecionar Todas</label><br>
+                <label><input type="checkbox" name="areas" value="Zona A"> Zona A</label><br>
+                <label><input type="checkbox" name="areas" value="Zona B"> Zona B</label><br>
+                <label><input type="checkbox" name="areas" value="Zona T"> Zona T</label><br>
+                <label><input type="checkbox" name="areas" value="Zona Y"> Zona Y</label>
+            </fieldset>
+        </div>
+
+        <!-- Canais -->
+        <div class="checkbox-container">
+            <h3>Canais</h3>
+            <fieldset>
+                <label><input type="checkbox" id="selectAllChannels"> Selecionar Todos</label><br>
+                <label><input type="checkbox" name="channels" value="Canal 1"> Canal 1</label><br>
+                <label><input type="checkbox" name="channels" value="Canal 2"> Canal 2</label><br>
+                <label><input type="checkbox" name="channels" value="Canal 3"> Canal 3</label>
+            </fieldset>
+        </div>
+      </div>
+
+      <!-- Botão de guardar -->
+      <button type="submit" class="save-btn">Guardar Interrupção</button>
+    </form>
+  </div>
+
+  <script>
+    // Selecionar todas as áreas
+    document.getElementById('selectAllAreas').addEventListener('change', function () {
+      const checkboxes = document.querySelectorAll('input[name="areas"]');
+      checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+
+    // Selecionar todos os canais
+    document.getElementById('selectAllChannels').addEventListener('change', function () {
+      const checkboxes = document.querySelectorAll('input[name="channels"]');
+      checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+  </script>
+{% endblock %}
+{% block footer %}
+  <footer>
+    <p>&copy; 2023 Audio Manager. Todos os direitos reservados.</p>
+  </footer>
+{% endblock %}

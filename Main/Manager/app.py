@@ -39,12 +39,22 @@ AUDIO_CHANNELS = "1"  # Mono
 
 NUM_CHANNELS = 3  # Número total de canais
 
+
+
+@app.route('/add_interruption', methods=['GET'])
+def add_interruption():
+    microphones = Microphone.query.all()
+    channels = Channels.query.all()
+    areas = Areas.query.all()
+    return render_template('add_interrupt.html', microphones=microphones, channels=channels, areas=areas)
+
+
 @app.route('/update_microphones', methods=['GET'])
 def update_microphones():
     get_mics()
     microphones = Microphone.query.all()
     microphones_list = [
-        {"id": mic.id, "name": mic.name, "device": mic.device, "card": mic.card, "short_cut": mic.short_cut}
+        {"id": mic.id, "name": mic.name, "device": mic.device, "card": mic.card}
         for mic in microphones
     ]
     return jsonify({"success": True, "microphones": microphones_list})
@@ -56,28 +66,6 @@ def get_microphones():
     return jsonify([
         {"card": mic.card, "device": mic.device, "name": mic.name} for mic in microphones
     ])
-
-@app.route('/update_microphone/<int:mic_id>', methods=['POST'])
-def update_microphone(mic_id):
-    data = request.json
-    new_name = data.get('name')
-    new_shortcut = data.get('short_cut')
-
-    if not new_name or new_shortcut is None or not (0 <= int(new_shortcut) <= 9):
-        return jsonify({"error": "Invalid name or shortcut"}), 400
-
-    microphone = Microphone.query.get(mic_id)
-    if not microphone:
-        return jsonify({"error": "Microphone not found"}), 404
-
-    try:
-        microphone.name = new_name
-        microphone.short_cut = new_shortcut
-        db.session.commit()
-        return jsonify({"success": True}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
 
 def parse_device_info(line):
     parts = line.split()
@@ -199,82 +187,12 @@ def toggle_transmission():
     send_info(nodes, restart=True)
     return jsonify({'success': True})
 
-@app.route('/start_microphone', methods=['POST'])
-def start_microphone():
-    data = request.json
-    channel_id = data.get('channel_id')
-    microphone_id = data.get('microphone_id')
-    
-    print(channel_id)
-    print(microphone_id)
-
-    if not channel_id or not microphone_id:
-        return jsonify({"error": "Channel ID and Microphone ID are required"}), 400
-
-    channel = db.session.query(Channels).filter(Channels.id == channel_id).first()
-    microphone = db.session.query(Microphone).filter(Microphone.id == microphone_id).first()
-
-    if not channel:
-        return jsonify({"error": "Channel not found"}), 404
-
-    if not microphone:
-        return jsonify({"error": "Microphone not found"}), 404
-
-    # Stop any existing process for this channel
-    if processes[channel_id].get('microphone_process'):
-        processes[channel_id]['microphone_process'].terminate()
-        processes[channel_id]['microphone_process'].wait()
-        processes[channel_id]['microphone_process'] = None
-
-    # Start the microphone process
-    process = start_ffmpeg_process(channel_id, f"{microphone.card},{microphone.device}", ChannelType.VOICE)
-
-    if not process:
-        return jsonify({"error": "Failed to start microphone process"}), 500
-
-    processes[channel_id]['microphone_process'] = process
-    
-    channel.microphone_state = "playing"
-    db.session.commit()
-
-    return jsonify({"success": True}), 200
 
 
 
-@app.route("/stop_microphone", methods=["POST"])
-def stop_microphone():
-    data = request.json
-    channel_id = data.get("channel_id")
-    
-    channel = db.session.query(Channels).filter(Channels.id == channel_id).first()
-
-    if not channel_id:
-        return jsonify({"error": "Channel ID is required"}), 400
-
-    # Stop any existing process for this channel
-    if processes[channel_id].get('microphone_process'):
-        processes[channel_id]['microphone_process'].terminate()
-        processes[channel_id]['microphone_process'].wait()
-        processes[channel_id]['microphone_process'] = None
-
-    # Remove the SDP file if it exists
-    if os.path.exists(f"mic_{channel_id}.sdp"):
-        os.remove(f"mic_{channel_id}.sdp")
 
 
-    channel.microphone_state = "stopped"
-    db.session.commit()
 
-    return jsonify({"success": True}), 200
-
-
-@app.route('/get_microphone_channel_state/<int:channel_id>', methods=['GET'])
-def get_channel_state(channel_id):
-    channel = Channels.query.get(channel_id)
-    if not channel:
-        return jsonify({"error": "Channel not found"}), 404
-
-    return jsonify({"microphone_state": channel.microphone_state}), 200
 
 def start_ffmpeg_process(channel, source, _type):
     # Define o endereço de multicast baseado no número do canal
@@ -397,7 +315,6 @@ def create_default_channels():
                 name=f"Channel {i}",
                 type=ChannelType.LOCAL,
                 state="stopped",
-                microphone=None,
                 source=None,
             )
             db.session.add(new_channel)
@@ -492,12 +409,10 @@ def save_channel_configs():
     channel_id = data.get('channel_id')
     channel_type = data.get('channel_type').upper()
     channel_reproduction = data.get('channel_reproduction')
-    channel_microfone = data.get('channel_microfone')
 
     # Processa os dados recebidos
     print(f"ID do canal: {channel_id}")
     print(f"Tipo de transmissão: {channel_type}")
-    print(f"Microfone: {channel_microfone}")
     print(f"Reprodução: {channel_reproduction}")
         
     
@@ -506,7 +421,6 @@ def save_channel_configs():
     if not channel:
         return jsonify({"error": "Canal não encontrado"}), 404
     channel.type = channel_type
-    channel.microphone = channel_microfone if channel_microfone != "none" else None
     
     if channel_reproduction == None:
         channel.source = None
@@ -633,7 +547,7 @@ class Microphone(db.Model):
     name = db.Column(db.String(200), nullable=False)
     device = db.Column(db.String(200), nullable=False)
     card = db.Column(db.String(200), nullable=False)
-    short_cut = db.Column(db.String(200), nullable=True)
+    state = db.Column(db.String(200), nullable=True)
 
     def __repr__(self):
         return f'<Microphone {self.id}: {self.name}>'
@@ -681,12 +595,41 @@ class Channels(db.Model):
     name = db.Column(db.String(200), nullable=True)
     type = db.Column(db.Enum(ChannelType), nullable=False)
     source = db.Column(db.String(200), nullable=True)
-    microphone = db.Column(db.String(200),nullable=True)
-    state = db.Column(db.String(200), nullable=False, default="stopped")
-    microphone_state = db.Column(db.String(200), nullable=False, default="stopped")
+    state = db.Column(db.String(200), nullable=True)
 
     def __repr__(self):
         return f'<Channel {self.id}: {self.name}>'
+    
+    
+# Tabela associativa para Interruptions e Areas
+interruption_areas = db.Table('interruption_areas',
+    db.Column('interruption_id', db.Integer, db.ForeignKey('interruptions.id'), primary_key=True),
+    db.Column('area_id', db.Integer, db.ForeignKey('areas.id'), primary_key=True)
+)
+
+# Tabela associativa para Interruptions e Channels
+interruption_channels = db.Table('interruption_channels',
+    db.Column('interruption_id', db.Integer, db.ForeignKey('interruptions.id'), primary_key=True),
+    db.Column('channel_id', db.Integer, db.ForeignKey('channels.id'), primary_key=True)
+)
+    
+class Interruptions(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    microphone_id = db.Column(db.Integer, db.ForeignKey('microphone.id'), nullable=False)  # Foreign key para Microphone
+    state = db.Column(db.String(200), nullable=False)
+
+    # Relacionamento com a tabela Microphone
+    microphone = db.relationship('Microphone', backref='interruptions', lazy=True)
+
+    # Relacionamento com Areas (muitos-para-muitos)
+    areas = db.relationship('Areas', secondary=interruption_areas, backref='interruptions')
+
+    # Relacionamento com Channels (muitos-para-muitos)
+    channels = db.relationship('Channels', secondary=interruption_channels, backref='interruptions')
+
+    def __repr__(self):
+        return f'<Interruption {self.id}: {self.name}>'
 
 
 ###############3
@@ -707,6 +650,9 @@ def index():
     areas = Areas.query.order_by(Areas.id).all()
     channels = Channels.query.order_by(Channels.id).all()
     microphones = Microphone.query.all()
+    interruptions = Interruptions.query.all()
+    interruptions_areas = db.session.query(interruption_areas).all()
+    interruptions_channels = db.session.query(interruption_channels).all()
     for area in areas:
         area.current_channel = next((channel.name for channel in channels if channel.id == area.channel_id), None)
 
@@ -719,7 +665,7 @@ def index():
 
     ###
 
-    return render_template("index.html", nodes=nodes, areas=areas, channels=channels, microphones=microphones)
+    return render_template("index.html", nodes=nodes, areas=areas, channels=channels, microphones=microphones, interruptions=interruptions, interruptions_areas=interruptions_areas, interruptions_channels=interruptions_channels)
 # Rota para deleção de um nó específico
 @app.route('/delete/<int:id>')
 def delete(id):
@@ -1065,7 +1011,6 @@ def edit_channels():
         associated_songs=associated_songs,  # Passa as músicas associadas ao canal
         associated_stream=associated_stream,  # Passa o streaming associado ao canal
         channel_type=channel.type,
-        microphones=Microphone.query.all(),
         channel_source=channel.source
     )
 
