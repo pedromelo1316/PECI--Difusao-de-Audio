@@ -1174,6 +1174,23 @@ def remove_column_from_zone():
         return jsonify({"error": str(e)}), 500
 
 
+def get_names_from_ids(channel_type, source):
+    if channel_type == ChannelType.LOCAL:
+        song_ids = source.split(",")
+        songs = db.session.query(Songs).filter(Songs.id.in_(song_ids)).all()
+        return [song.name for song in songs]
+    elif channel_type == ChannelType.STREAMING:
+        stream = db.session.query(Streaming).filter(Streaming.id == source).first()
+        return [stream.name] if stream else []
+    elif channel_type == ChannelType.VOICE:
+        mic = db.session.query(Microphone).filter(Microphone.id == source).first()
+        return [mic.name] if mic else []
+    else:
+        return []
+
+
+
+
 @app.route('/edit_channels')
 def edit_channels():
     channel_id = request.args.get('channel_id', type=int)
@@ -1189,7 +1206,7 @@ def edit_channels():
     streaming_sources = [streaming.name for streaming in streamings]
 
     if channel.type == ChannelType.LOCAL:
-        associated_songs = get_source_from_id(channel.type, channel.source).split(",") if channel.source else []
+        associated_songs = get_names_from_ids(channel.type, channel.source)
         associated_songs = [song.replace("_", " ") for song in associated_songs]
         associated_stream = None
     elif channel.type == ChannelType.STREAMING:
