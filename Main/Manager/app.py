@@ -41,6 +41,45 @@ NUM_CHANNELS = 3  # Número total de canais
 
 
 
+@app.route('/save_interruption', methods=['POST'])
+def save_interruption():
+    print("Saving interruption")
+    data = request.json
+    interruption_name = data.get('name')
+    microphone_id = data.get('microphone_id')
+    areas_ids = data.get('areas_ids')
+    channels_ids = data.get('channels_ids')
+
+    if not interruption_name or not microphone_id:
+        return jsonify({"error": "Nome da interrupção e ID do microfone são obrigatórios"}), 400
+
+    # Verifica se a interrupção já existe
+    existing_interruption = Interruptions.query.filter_by(name=interruption_name).first()
+    if existing_interruption:
+        return jsonify({"error": "Interrupção já existe"}), 400
+
+    new_interruption = Interruptions(name=interruption_name, microphone_id=microphone_id, state="off")
+    
+    # Adiciona as áreas associadas à interrupção
+    if areas_ids:
+        for area_id in areas_ids:
+            area = Areas.query.get(area_id)
+            if area:
+                new_interruption.areas.append(area)
+
+    # Adiciona os canais associados à interrupção
+    if channels_ids:
+        for channel_id in channels_ids:
+            channel = Channels.query.get(channel_id)
+            if channel:
+                new_interruption.channels.append(channel)
+
+    db.session.add(new_interruption)
+    db.session.commit()
+    
+    return jsonify({"success": True, "id": new_interruption.id})
+
+
 @app.route('/add_interruption', methods=['GET'])
 def add_interruption():
     microphones = Microphone.query.all()

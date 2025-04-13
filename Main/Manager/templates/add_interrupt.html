@@ -23,48 +23,47 @@
     </header>
   <div class="form-container">
     <h2>Adicionar Interrupção</h2>
-    <form>
-      <!-- Nome da interrupção -->
-      <label for="interruptName">Nome da Interrupção:</label>
-      <input type="text" id="interruptName" name="interruptName" required>
-
-      <!-- Microfone -->
-      <label for="microphone">Selecionar Microfone:</label>
-      <select id="microphone" name="microphone" required>
-        <option value="">-- Escolher Microfone --</option>
-        {% for mic in microphones %}
-          <option value="{{ mic.id }}">{{ mic.name }}</option>
-        {% endfor %}
-      </select>
-
-      <div class="checkbox-group">
-        <!-- Áreas -->
-        <div class="checkbox-container">
+    <form id="interruptForm">
+        <!-- Nome da interrupção -->
+        <label for="interruptName">Nome da Interrupção:</label>
+        <input type="text" id="interruptName" name="interruptName" required>
+      
+        <!-- Microfone -->
+        <label for="microphone">Selecionar Microfone:</label>
+        <select id="microphone" name="microphone" required>
+          <option value="">-- Escolher Microfone --</option>
+          {% for mic in microphones %}
+            <option value="{{ mic.id }}">{{ mic.name }}</option>
+          {% endfor %}
+        </select>
+      
+        <div class="checkbox-group">
+          <!-- Áreas -->
+          <div class="checkbox-container">
             <h3>Áreas</h3>
             <fieldset>
-                <label><input type="checkbox" id="selectAllAreas"> Selecionar Todas</label><br>
-                <label><input type="checkbox" name="areas" value="Zona A"> Zona A</label><br>
-                <label><input type="checkbox" name="areas" value="Zona B"> Zona B</label><br>
-                <label><input type="checkbox" name="areas" value="Zona T"> Zona T</label><br>
-                <label><input type="checkbox" name="areas" value="Zona Y"> Zona Y</label>
+              <label><input type="checkbox" id="selectAllAreas"> Selecionar Todas</label><br>
+              {% for area in areas %}
+                <label><input type="checkbox" name="areas" value="{{ area.id }}"> {{ area.name }}</label><br>
+              {% endfor %}
             </fieldset>
-        </div>
-
-        <!-- Canais -->
-        <div class="checkbox-container">
+          </div>
+      
+          <!-- Canais -->
+          <div class="checkbox-container">
             <h3>Canais</h3>
             <fieldset>
-                <label><input type="checkbox" id="selectAllChannels"> Selecionar Todos</label><br>
-                <label><input type="checkbox" name="channels" value="Canal 1"> Canal 1</label><br>
-                <label><input type="checkbox" name="channels" value="Canal 2"> Canal 2</label><br>
-                <label><input type="checkbox" name="channels" value="Canal 3"> Canal 3</label>
+              <label><input type="checkbox" id="selectAllChannels"> Selecionar Todos</label><br>
+              {% for channel in channels %}
+                <label><input type="checkbox" name="channels" value="{{ channel.id }}"> {{ channel.name }}</label><br>
+              {% endfor %}
             </fieldset>
+          </div>
         </div>
-      </div>
-
-      <!-- Botão de guardar -->
-      <button type="submit" class="save-btn">Guardar Interrupção</button>
-    </form>
+      
+        <!-- Botão de guardar -->
+        <button type="submit" class="save-btn">Guardar Interrupção</button>
+      </form>
   </div>
 
   <script>
@@ -73,12 +72,42 @@
       const checkboxes = document.querySelectorAll('input[name="areas"]');
       checkboxes.forEach(cb => cb.checked = this.checked);
     });
-
+  
     // Selecionar todos os canais
     document.getElementById('selectAllChannels').addEventListener('change', function () {
       const checkboxes = document.querySelectorAll('input[name="channels"]');
       checkboxes.forEach(cb => cb.checked = this.checked);
     });
+  
+    document.getElementById('interruptForm').addEventListener('submit', function (event) {
+        event.preventDefault(); // Impede o comportamento padrão do formulário
+      
+        const formData = new FormData(this);
+        const data = {
+          name: formData.get('interruptName'),
+          microphone_id: formData.get('microphone'),
+          areas_ids: Array.from(formData.getAll('areas')),
+          channels_ids: Array.from(formData.getAll('channels'))
+        };
+      
+        fetch('{{ url_for("save_interruption") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        })
+          .then(response => {
+            if (response.ok) {
+              alert('Interrupção salva com sucesso!');
+              this.reset(); // Limpa o formulário
+              window.location.href = '{{ url_for("index") }}'; // Redireciona para a página inicial
+            } else {
+              response.text().then(text => alert('Erro: ' + text));
+            }
+          })
+          .catch(error => console.error('Erro:', error));
+      });
   </script>
 {% endblock %}
 {% block footer %}
