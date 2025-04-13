@@ -804,6 +804,24 @@ function selectChannel(channelId, channelName, areaName, optionElement) {
     })
 }
 
-
+function deleteInterrupt(interruptId) {
+    if (confirm("Are you sure you want to delete this interrupt?")) {
+        fetch(`/delete_interruption/${interruptId}`, {
+            method: 'DELETE',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Interrupt deleted successfully.");
+                window.location.reload(); // Reload the page to update the list
+            } else {
+                alert("Error deleting interrupt: " + data.error);
+            }
+        })
+        .catch(error => {
+            console.error("Error during interrupt deletion:", error);
+        });
+    }
+}
 
 

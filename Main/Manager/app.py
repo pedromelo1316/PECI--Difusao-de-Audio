@@ -40,6 +40,17 @@ AUDIO_CHANNELS = "1"  # Mono
 NUM_CHANNELS = 3  # Número total de canais
 
 
+@app.route('/delete_interruption/<int:interruption_id>', methods=['DELETE'])
+def delete_interruption(interruption_id):
+    interruption = Interruptions.query.get(interruption_id)
+    if not interruption:
+        return jsonify({"error": "Interrupção não encontrada"}), 404
+
+    db.session.delete(interruption)
+    db.session.commit()
+    
+    return jsonify({"success": True})
+
 
 @app.route('/save_interruption', methods=['POST'])
 def save_interruption():
