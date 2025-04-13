@@ -1799,6 +1799,15 @@ def get_host_ip():
         return ip
     except Exception as e:
         return f"Error: {e}"
+    
+    
+    
+def remove_trash():
+    # apagar ficheiros sdp, txt
+    for file in os.listdir(app.config['UPLOAD_FOLDER']):
+        if file.endswith('.sdp') or file.endswith('.txt'):
+            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], file))
+            print(f"Removed temporary file: {file}")
 
 # Bloco principal de execução
 if __name__ == '__main__':
@@ -1808,6 +1817,7 @@ if __name__ == '__main__':
 
     with app.app_context():
         db.create_all()  # Cria as tabelas no banco de dados, se ainda não existirem
+        remove_trash()  # Remove arquivos temporários
         create_default_channels()  # Inicializa os canais padrão
         get_mics()
 
