@@ -30,6 +30,7 @@ app.config['SECRET_KEY'] = 'your_secret_key'
 db = SQLAlchemy(app)
 socketio = SocketIO(app)
 processes = defaultdict(dict)
+interruptions = defaultdict(dict)
 
 # Configurações de áudio
 BITRATE = "128k"  # Taxa de bits máxima
@@ -52,9 +53,52 @@ def start_interruption(interruption_id):
             if active_interruption.state == "on" and active_interruption.microphone_id != interruption.microphone_id:
                 return jsonify({"error": f"A área '{area.name}' já possui uma interrupção ativa com outro microfone"}), 400
 
-    # Inicia a interrupção
+    # Verifica se algum canal associado à interrupção já tem uma interrupção ativa com outro microfone
+    for channel in interruption.channels:
+        for active_interruption in channel.interruptions:
+            if active_interruption.state == "on" and active_interruption.microphone_id != interruption.microphone_id:
+                return jsonify({"error": f"O canal '{channel.name}' já possui uma interrupção ativa com outro microfone"}), 400
+
+
+    print(interruptions)
+    
+    interruptions[interruption_id] = {
+        "process": None,
+        "areas": interruption.areas,
+        "channels": interruption.channels
+    }
+    
+    # Lógica para iniciar a interrupção (a lógica de início da interrupção deve ser implementada aqui)
+    if interruption_id in interruptions:
+        interruptions[interruption_id]["process"] = start_ffmpeg_process(interruption_id, str(interruption.microphone_id), ChannelType.VOICE)
+    
+        if interruptions[interruption_id]["process"] is None:
+            return jsonify({"error": "Erro ao iniciar o processo FFmpeg"}), 500
+    
+    if interruption_id not in interruptions:
+        return jsonify({"error": "Erro ao iniciar a interrupção"}), 500
+    
+    
+        # Inicia a interrupção
     interruption.state = "on"
     db.session.commit()
+    
+    
+    
+    #mandar info para nodes pertencentes a areas e canais associados à interrupção
+    nodes = []
+    for area in interruption.areas:
+        nodes += area.nodes
+    for channel in interruption.channels:
+        areas = db.session.query(Areas).filter(Areas.channel_id == channel.id).all()
+        for area in areas:
+            nodes += area.nodes
+            
+    while not os.path.exists(f"mic_{interruption_id}.sdp"):
+        time.sleep(0.1)        
+    
+    send_info(nodes, restart=True)
+    
     
     return jsonify({"success": True})
 
@@ -66,9 +110,39 @@ def stop_interruption(interruption_id):
     if not interruption:
         return jsonify({"error": "Interrupção não encontrada"}), 404
 
+
+    
+    # Verifica se a interrupção está ativa
+    if interruption_id in interruptions:
+        # Para o processo FFmpeg associado à interrupção
+        if interruptions[interruption_id]["process"]:
+            interruptions[interruption_id]["process"].terminate()
+            interruptions[interruption_id]["process"].wait()
+            interruptions[interruption_id]["process"] = None
+            
+            
+        if os.path.exists(f"mic_{interruption_id}.sdp"):
+            os.remove(f"mic_{interruption_id}.sdp")
+            
+    else:
+        return jsonify({"error": "Erro ao parar a interrupção"}), 500
+    
     # Para a interrupção (a lógica de parada da interrupção deve ser implementada aqui)
     interruption.state = "off"
     db.session.commit()
+    
+    nodes = []
+    for area in interruption.areas:
+        nodes += area.nodes
+    for channel in interruption.channels:
+        areas = db.session.query(Areas).filter(Areas.channel_id == channel.id).all()
+        for area in areas:
+            nodes += area.nodes
+            
+    while os.path.exists(f"mic_{interruption_id}.sdp"):
+        time.sleep(0.1)        
+    
+    send_info(nodes, restart=True)
     
     return jsonify({"success": True})
 
@@ -79,9 +153,38 @@ def delete_interruption(interruption_id):
     if not interruption:
         return jsonify({"error": "Interrupção não encontrada"}), 404
 
+    # Para o processo FFmpeg associado à interrupção
+    if interruption_id in interruptions:
+        if interruptions[interruption_id]["process"]:
+            interruptions[interruption_id]["process"].terminate()
+            interruptions[interruption_id]["process"].wait()
+            interruptions[interruption_id]["process"] = None
+        del interruptions[interruption_id]
+        
+        if os.path.exists(f"mic_{interruption_id}.sdp"):
+            os.remove(f"mic_{interruption_id}.sdp")
+            
+    # Envia informações para os nós associados à interrupção
+    if interruption.state == "on":
+    
+        nodes = []
+        for area in interruption.areas:
+            nodes += area.nodes
+        for channel in interruption.channels:
+            areas = db.session.query(Areas).filter(Areas.channel_id == channel.id).all()
+            for area in areas:
+                nodes += area.nodes
+                
+        while os.path.exists(f"mic_{interruption_id}.sdp"):
+            time.sleep(0.1)
+    
+
+        send_info(nodes, restart=True)
+    
     db.session.delete(interruption)
     db.session.commit()
     
+
     return jsonify({"success": True})
 
 
@@ -284,9 +387,10 @@ def start_ffmpeg_process(channel, source, _type):
     print("source: ", source)
     print("type: ", _type)
     
+    source = get_source_from_id(_type, source)
     
     if _type != ChannelType.VOICE:
-        source = get_source_from_id(_type, source)
+        
         
         if not source:
             print("Source is empty")
@@ -302,8 +406,6 @@ def start_ffmpeg_process(channel, source, _type):
     
     # Verifica o tipo de transmissão e configura o comando do ffmpeg apropriado
     if _type == ChannelType.VOICE:
-        
-        source = source.split(",")
         
         cmd = [
             "ffmpeg",
@@ -436,6 +538,12 @@ def convert_id_source(_type, id):
         if not song:
             return None
         source = song.name
+        
+    elif _type == ChannelType.VOICE:
+        mic = db.session.query(Microphone).filter(Microphone.id == id).first()
+        if not mic:
+            return None
+        source = f"{mic.card},{mic.device}"
     else:
         return None
     
@@ -474,6 +582,13 @@ def get_source_from_id(_type, list_ids):
             print(f"Erro ao obter URL: {e}")
             return None
         sources = direct_url
+    elif _type == ChannelType.VOICE:
+        print("sources: ", sources)
+        sources = sources[0].split(",")
+        if len(sources) != 2:
+            return None
+        return (sources[0], sources[1])
+
     else:
         return None
     
