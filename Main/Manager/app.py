@@ -424,9 +424,6 @@ def start_ffmpeg_process(channel, source, _type):
         
 
     elif _type == ChannelType.LOCAL:
-        
-        # Transmissão local utilizando uma lista de músicas
-        print("source: ", source)
 
         # Divide o source em uma lista de músicas
         musicas = [musica.strip() for musica in source.split(",")]
@@ -537,7 +534,7 @@ def convert_id_source(_type, id):
         song = db.session.query(Songs).filter(Songs.id == id).first()
         if not song:
             return None
-        source = song.name
+        source = song.song_hash
         
     elif _type == ChannelType.VOICE:
         mic = db.session.query(Microphone).filter(Microphone.id == id).first()
