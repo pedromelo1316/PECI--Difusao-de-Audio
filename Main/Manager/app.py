@@ -770,6 +770,7 @@ playlist_songs = db.Table('playlist_songs',
 class Songs(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False,unique=True)
+    song_hash = db.Column(db.String(200), nullable=False, unique=True)
 
     def __repr__(self):
         return f'<Song {self.id}: {self.name}>'
@@ -1312,79 +1313,132 @@ def save_stream_url():
 # playlist
 ####################
 
+import hashlib
+
+
+# Gera um hash único baseado no conteúdo ou metadados da música
+def generate_hash_name(file_path):
+    hasher = hashlib.sha256()
+    with open(file_path, 'rb') as f:
+        while chunk := f.read(8192):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
 # Rota para obter todas as músicas
 @app.route('/songs', methods=['GET'])
 def get_songs():
     songs = Songs.query.order_by(Songs.id).all()
     return jsonify([{"id": song.id, "name": song.name} for song in songs])
 
-# Rota para adicionar uma nova música
-@app.route('/add_song', methods=['POST'])
-def add_song():
-    
-    if 'file' not in request.files:
-        print("Arquivo de música é obrigatório")
-        return jsonify({"error": "Arquivo de música é obrigatório"}), 400
 
-    file = request.files['file']
-    if file.filename == '':
+
+
+# Função para adicionar novas músicas
+@app.route('/add_songs', methods=['POST'])
+def add_songs():
+    files = request.files.getlist('files[]')
+    print("files: ", files)
+    if not files:
+        return jsonify({"error": "Nenhum arquivo enviado"}), 400
+
+    # Chama a função para salvar as músicas
+    response = save_songs(files)
+    return jsonify(response[0]), response[1]
+
+
+def save_songs(files):
+    if not files:
+        print("Arquivos de música são obrigatórios")
+        return {"error": "Arquivos de música são obrigatórios"}, 400
+
+    if not files or all(file.filename == '' for file in files):
         print("Nenhum arquivo selecionado")
-        return jsonify({"error": "Nenhum arquivo selecionado"}), 400
+        return {"error": "Nenhum arquivo selecionado"}, 400
 
-    if not allowed_file(file.filename):
-        print("Formato de arquivo não suportado")
-        return jsonify({"error": "Formato de arquivo não suportado"}), 400
+    added_songs = []
+    errors = []
 
-    song_name = request.form.get('name')
-    print("song_name: ", song_name)
-    if not song_name:
-        print("Nome da música é obrigatório")
-        return jsonify({"error": "Nome da música é obrigatório"}), 400
+    for file in files:
+        if not allowed_file(file.filename):
+            errors.append({"file": file.filename, "error": "Formato de arquivo não suportado"})
+            continue
 
-    if Songs.query.filter_by(name=song_name).first():
-        return jsonify({"error": "Song already exists."}), 400
+        song_name = os.path.splitext(secure_filename(file.filename))[0]
+        print("song_name: ", song_name)
+        if not song_name:
+            errors.append({"file": file.filename, "error": "Nome da música é obrigatório"})
+            continue
 
-    try:
-        print("Dados recebidos:", request.form)
-        # Salvar o arquivo original
-        filename = secure_filename(file.filename)
-        filename = f"{song_name}{os.path.splitext(filename)[1]}"
-        print("filename: ", filename)
-        original_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(original_path)
+        if Songs.query.filter_by(name=song_name).first():
+            errors.append({"file": file.filename, "error": "Já existe uma música com esse nome"})
+            continue
 
-        # Se o arquivo não for .wav, converte para .wav usando ffmpeg
-        ext = os.path.splitext(filename)[1].lower()
-        if ext != '.wav':
-            wav_filename = f"{song_name}.wav"
-            wav_path = os.path.join(app.config['UPLOAD_FOLDER'], wav_filename)
-            print("wav_path: ", wav_path)
-            try:
-                subprocess.run(
-                    ["ffmpeg", "-y", "-i", original_path, wav_path],
-                    check=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE
-                )
-            except subprocess.CalledProcessError as e:
-                print(f"Erro ao converter o arquivo: {e.stderr.decode()}")
-                return jsonify({"error": "Erro ao converter o arquivo para .wav"}), 500
+        try:
+            # Salvar o arquivo original
+            filename = secure_filename(file.filename)
+            original_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(original_path)
 
-            # Remover o arquivo original (opcional)
-            os.remove(original_path)
-        else:
-            wav_path = original_path
+            # Se o arquivo não for .wav, converte para .wav usando ffmpeg
+            ext = os.path.splitext(filename)[1].lower()
+            if ext != '.wav':
+                wav_filename = f"{song_name}.wav"
+                wav_path = os.path.join(app.config['UPLOAD_FOLDER'], wav_filename)
+                print("wav_path: ", wav_path)
+                try:
+                    subprocess.run(
+                        ["ffmpeg", "-y", "-i", original_path, wav_path],
+                        check=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE
+                    )
+                except subprocess.CalledProcessError as e:
+                    print(f"Erro ao converter o arquivo: {e.stderr.decode()}")
+                    errors.append({"file": file.filename, "error": "Erro ao converter o arquivo para .wav"})
+                    os.remove(original_path)
+                    continue
 
-        # Salvar no banco de dados
-        new_song = Songs(name=song_name)
-        db.session.add(new_song)
-        db.session.commit()
+                # Remover o arquivo original (opcional)
+                os.remove(original_path)
+            else:
+                wav_path = original_path
 
-        print("Nova música adicionada:", new_song.name)
+            song_hash = generate_hash_name(wav_path)
+            wav_filename = f"{song_hash}.wav"
+            print("song_hash: ", song_hash)
 
-        return jsonify({"success": True, "id": new_song.id, "name": new_song.name}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+            existing_song = Songs.query.filter_by(song_hash=song_hash).first()
+            if existing_song:
+                os.remove(wav_path)
+                print(f"Já existe essa música: {existing_song.name}")
+                errors.append({"file": file.filename, "error": f"Já existe essa música: {existing_song.name}"})
+                continue
+            else:
+                if os.path.exists(wav_path):
+                    new_wav_path = os.path.join(app.config['UPLOAD_FOLDER'], wav_filename)
+                    os.rename(wav_path, new_wav_path)
+                    wav_path = new_wav_path
+                else:
+                    print("Arquivo wav não encontrado")
+                    errors.append({"file": file.filename, "error": "Arquivo wav não encontrado"})
+                    continue
+
+            # Salvar no banco de dados
+            new_song = Songs(name=song_name, song_hash=song_hash)
+            db.session.add(new_song)
+            db.session.commit()
+
+            print("Nova música adicionada:", new_song.name)
+            added_songs.append({"id": new_song.id, "name": new_song.name})
+        except Exception as e:
+            errors.append({"file": file.filename, "error": str(e)})
+
+    response = {"success": True, "added_songs": added_songs}
+    if errors:
+        response["errors"] = errors
+
+    return response, 200 if added_songs else 400
 
 # Rota para editar uma música
 @app.route('/update_song/<int:song_id>', methods=['POST'])
@@ -1421,6 +1475,7 @@ def delete_song(song_name):
     if not song:
         return jsonify({"error": "Música não encontrada"}), 404
     try:
+        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], f"{song.song_hash}.wav"))
         db.session.delete(song)
         db.session.commit()
         return jsonify({"success": True}), 200
@@ -1451,9 +1506,6 @@ def add_playlist():
         new_playlist = Playlist(name=playlist_name)
         db.session.add(new_playlist)
         db.session.commit()
-
-        # Criar a pasta da playlist
-        save_playlist_file(playlist_name)
 
 
         return jsonify({"success": True, "id": new_playlist.id, "name": new_playlist.name}), 200
@@ -1585,6 +1637,41 @@ def add_song_to_playlist():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+    
+@app.route('/import_playlist', methods=['POST'])
+def import_playlist():
+    playlist_name = request.form.get('playlist_name')
+    files = request.files.getlist('files[]')  # Obtém os arquivos enviados
+    print("files: ", files)
+
+    if not playlist_name or not files:
+        return jsonify({"error": "Nome da playlist e arquivos de música são obrigatórios"}), 400
+
+    # Verifica se a playlist existe
+    playlist = Playlist.query.filter_by(name=playlist_name).first()
+    if not playlist:
+        return jsonify({"error": "Playlist não encontrada"}), 404
+
+    # Salva as músicas usando a função save_songs
+    response, status_code = save_songs(files)
+    if status_code != 200:
+        return jsonify(response), status_code
+
+    # Adiciona as músicas salvas à playlist
+    added_songs = response.get("added_songs", [])
+    for song_data in added_songs:
+        song = Songs.query.get(song_data["id"])
+        if song and song not in playlist.songs:
+            playlist.songs.append(song)
+
+    db.session.commit()
+    return jsonify({"success": True, "playlist_name": playlist_name, "added_songs": added_songs}), 200
+
+    
+    
+    
+
+
 @app.route('/save_playlist', methods=['POST'])
 def save_playlist():
     data = request.json

@@ -43,11 +43,6 @@
             <!-- Right Section: Músicas -->
             <div class="songs-section">
                 <h2>Songs</h2>
-                {% if all_songs|length == 0 %}
-                <script>
-                    alert("There are no songs available. Please add songs.");
-                </script>
-                {% else %}
                 <ul class="songs-list" id="songs-list">
                     {% for song in all_songs %}
                     <li class="song-item">
@@ -56,13 +51,14 @@
                     </li>
                     {% endfor %}
                 </ul>
-                {% endif %}
             </div>
         </div>
         <!-- New Save Playlist Button -->
-        <div style="text-align: center; margin-top: 20px;">
+        <div class="under" style="text-align: center; margin-top: 20px;">
             <button class="save-playlist-btn" onclick="savePlaylistAndRedirect('{{ playlist_name }}')">Save Playlist</button>
+            <button class="import-btn" onclick="importPlaylist('{{ playlist_name }}')">Import Playlist</button>
         </div>
+
     </div>
 </div>
 

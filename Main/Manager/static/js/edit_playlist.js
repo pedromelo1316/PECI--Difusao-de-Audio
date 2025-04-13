@@ -232,3 +232,51 @@ function saveSong() {
         alert('Erro ao salvar a música.');
     });
 }
+
+
+function importPlaylist(playlistName) {
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "audio/*";
+    fileInput.multiple = true;
+
+    fileInput.onchange = function () {
+        const songFiles = fileInput.files;
+        if (!songFiles || songFiles.length === 0) {
+            alert("É necessário selecionar pelo menos um arquivo de música.");
+            return;
+        }
+
+        if (!playlistName) {
+            alert("O nome da playlist é obrigatório.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('playlist_name', playlistName);
+        Array.from(songFiles).forEach(songFile => {
+            formData.append('files[]', songFile);
+        });
+
+        fetch('/import_playlist', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Playlist criada com sucesso!');
+                window.location.reload();
+            } else {
+                const errorMessages = data.errors.map(error => `${error.file}: ${error.error}`).join('\n');
+                alert(`Erro ao adicionar as músicas:\n${errorMessages}`);
+            }
+        })
+        .catch(err => {
+            console.error('Erro ao adicionar as músicas:', err);
+            alert('Erro ao comunicar com o servidor.');
+        });
+    };
+
+    fileInput.click();
+}

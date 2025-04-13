@@ -302,47 +302,48 @@ function savePlaylist(playlistName) {
     });
 }
 
-// Substituir prompt por modal para adicionar música
-function showAddSongModal() {
-    showCustomModal("Add Music", "Enter the name of the song", true, function (songName) {
-        if (!songName) return;
+// Substituir prompt por modal para adicionar músicas
+function showAddSongsModal() {
+    // Criar input de ficheiros dinamicamente
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "audio/*";
+    fileInput.multiple = true; // Permitir seleção de múltiplos arquivos
 
-        // Criar input de ficheiro dinamicamente
-        const fileInput = document.createElement("input");
-        fileInput.type = "file";
-        fileInput.accept = "audio/*";
+    fileInput.onchange = function () {
+        const songFiles = fileInput.files;
+        if (!songFiles || songFiles.length === 0) {
+            alert("É necessário selecionar pelo menos um arquivo de música.");
+            return;
+        }
 
-        fileInput.onchange = function () {
-            const songFile = fileInput.files[0];
-            if (!songFile) {
-                alert("O arquivo de música é obrigatório.");
-                return;
+        const formData = new FormData();
+        Array.from(songFiles).forEach(songFile => {
+            formData.append('files[]', songFile); // Adiciona cada arquivo ao FormData
+        });
+
+        fetch('/add_songs', {
+            method: 'POST',
+            body: formData // Envia o FormData diretamente
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Resposta do servidor:', data);
+            if (data.success) {
+                alert('Músicas adicionadas com sucesso!');
+                window.location.reload();
+            } else {
+                const errorMessages = data.errors.map(error => `${error.file}: ${error.error}`).join('\n');
+                alert(`Erro ao adicionar as músicas:\n${errorMessages}`);
             }
+        })
+        .catch(err => {
+            console.error('Erro ao adicionar as músicas:', err);
+            alert('Erro ao comunicar com o servidor.');
+        });
+    };
 
-            const formData = new FormData();
-            formData.append('name', songName); // Nome da música
-            formData.append('file', songFile); // Arquivo de música
-
-            fetch('/add_song', {
-                method: 'POST',
-                body: formData // Envia o FormData diretamente
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();
-                } else {
-                    alert(data.error || 'Erro ao adicionar a música.');
-                }
-            })
-            .catch(err => {
-                console.error('Erro ao adicionar a música:', err);
-                alert('Erro ao comunicar com o servidor.');
-            });
-        };
-
-        fileInput.click(); // Simula o clique para abrir o seletor de arquivos
-    });
+    fileInput.click(); // Simula o clique para abrir o seletor de arquivos
 }
 
 // Substituir prompt por modal para editar música
