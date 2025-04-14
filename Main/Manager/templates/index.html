@@ -297,9 +297,9 @@
             </div>
             {% endfor %}
             {% endif %}
-            <div class="zone-box add-zone" id="addAreaButton" onclick="addArea()">
+            <div class="zone-box add-zone" id="addAreaButton">
                 <span>+</span>
-            </div>
+            </div>    
         </div>
     </div>
 </div>
@@ -337,6 +337,21 @@
         </div>    
     </div>
 </div>
+
+
+
+<!-- Modal de adicionar zona -->
+<div id="zoneModal" class="modal">
+    <div class="modal-content">
+      <label for="zoneNameInput">Name of the new zone:</label>
+      <input type="text" id="zoneNameInput" placeholder="Enter zone name" />
+      <div class="modal-buttons">
+        <button id="cancelModalBtn">Cancelar</button>
+        <button id="confirmModalBtn">OK</button>
+      </div>
+    </div>
+  </div>
+  
 
 
 <br>

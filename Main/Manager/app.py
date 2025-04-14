@@ -1820,7 +1820,7 @@ if __name__ == '__main__':
 
     with app.app_context():
         db.create_all()  # Cria as tabelas no banco de dados, se ainda não existirem
-        remove_trash()  # Remove arquivos temporários
+        #remove_trash()  # Remove arquivos temporários
         create_default_channels()  # Inicializa os canais padrão
         get_mics()
 

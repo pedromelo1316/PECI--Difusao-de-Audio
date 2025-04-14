@@ -87,33 +87,58 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    function addArea() {
-        const areaName = prompt("Name of the new zone:");
-        if (!areaName) {
-            alert("The zone name is required!");
-            return;
+    function showZoneModal() {
+        const modal = document.getElementById("zoneModal");
+        const input = document.getElementById("zoneNameInput");
+        modal.style.display = "flex";
+        input.value = "";
+        input.focus();
+    
+        const confirmBtn = document.getElementById("confirmModalBtn");
+        const cancelBtn = document.getElementById("cancelModalBtn");
+    
+        function closeModal() {
+            modal.style.display = "none";
+            confirmBtn.removeEventListener("click", confirmHandler);
+            cancelBtn.removeEventListener("click", closeModal);
         }
-        fetch('/add_area', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: areaName })
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(data => { throw new Error(data.error); });
+    
+        function confirmHandler() {
+            const areaName = input.value.trim();
+            if (!areaName) {
+                alert("The zone name is required!");
+                return;
             }
-            return response.json();
-        })
-        .then(data => {
-            alert("Zone added successfully!");
-            location.reload();
-        })
-        .catch(error => {
-            alert("Error: " + error.message);
-        });
+    
+            fetch('/add_area', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: areaName })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => { throw new Error(data.error); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert("Zone added successfully!");
+                location.reload();
+            })
+            .catch(error => {
+                alert("Error: " + error.message);
+            });
+    
+            closeModal();
+        }
+    
+        confirmBtn.addEventListener("click", confirmHandler);
+        cancelBtn.addEventListener("click", closeModal);
     }
-
-    document.getElementById("addAreaButton").addEventListener("click", addArea);
+    
+    // Este é o listener do botão "Add Zone"
+    document.getElementById("addAreaButton").addEventListener("click", showZoneModal);
+    
 
     let usedZoneColumns = [];
     document.querySelectorAll(".add-column-button").forEach(button => {
