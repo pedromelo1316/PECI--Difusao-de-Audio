@@ -171,6 +171,8 @@ p {
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
     padding: 40px;
     border:#3b3b3b solid 1px;
+    height: 400px; /* Fixed height */
+    overflow-y: auto;
 }
 
 /* Row Container for Speakers and Channels */
@@ -574,6 +576,10 @@ header {
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05);
     flex: 2;
     align-self: center;
+    overflow-y: auto;
+    max-height: 300px;
+    height: 300px; /* Fixed height */
+    overflow-y: auto;
 }
 
 .column-section .column-list {
@@ -603,7 +609,7 @@ header {
     width: 235%;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    gap: 35px;
     flex-direction: column;
     align-items: center;
     border:#3b3b3b solid 1px;
@@ -614,17 +620,15 @@ header {
     background: white;
     border-radius: 16px;
     box-shadow: 0px 4px 5px rgba(0, 0, 0, 0.1);
-    padding: 12px;
+    padding: 8px;
     width: 100%;
-    min-height: 300px;
+    height: 450px;
     transition: transform 0.2s ease-in-out;
     margin-left: 0;
     border: #9c9c9c solid 1px
 }
 
-.zone-box:hover {
-    transform: scale(1.02);
-}
+
 
 .zone-header {
     display: flex;
@@ -994,13 +998,14 @@ footer {
     flex: 1;
     background: #fff;
     padding: 20px; /* No original é maior */
-
-    max-width: 500px; /* No teu atual tens 200px, mudar para 500px */
+    overflow-y: auto;
+    max-height: 500px;
+    max-width: 500px; 
 }
 
 .channel-selection-panel h4 {
     margin-top: 0;
-    margin-bottom: 10px; /* Reduced from 15px */
+    margin-bottom: 10px; 
     font-size: 16px;
     color: #333;
     font-weight: 600;
@@ -1601,6 +1606,10 @@ footer {
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
     width: 70%; /* Garante que a largura seja igual ao dropdown */
     box-sizing: border-box; /* Inclui padding e borda na largura total */
+    overflow-y: auto;
+    max-height: 200px;
+    height: 105px; /* Fixed height */
+    overflow-y: auto;
 }
 
 .channel-option {
