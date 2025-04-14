@@ -549,7 +549,7 @@ def convert_id_source(_type, id):
 
 def get_source_from_id(_type, list_ids):
     
-
+    list_ids = str(list_ids)
     ids = list_ids.split(",")
     sources = list(map(lambda id: convert_id_source(_type, id), ids))
     sources = list(filter(lambda source: source is not None, sources))
