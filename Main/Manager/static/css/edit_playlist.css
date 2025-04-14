@@ -107,9 +107,18 @@ header {
     width: 100%;
 }
 
-.title {
-    text-align: center;
-    flex-grow: 1;
+.playlist_name {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+  }
+  
+.edit-button {
+margin-left: 15px;
+background: none;
+border: none;
+cursor: pointer;
+font-size: 1.2rem;
 }
 
 
@@ -133,9 +142,6 @@ h2 {
     margin-right: auto;
 }
 
-.edit-button {
-    margin-left: auto;
-}
 
 .save-playlist-btn {
     background-color: #22cc3f;

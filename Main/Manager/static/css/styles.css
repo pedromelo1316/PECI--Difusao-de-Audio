@@ -8,6 +8,95 @@ body {
     line-height: 1.6;
 }
 
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  
+.navbar {
+    position: sticky !important;
+    top: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff;
+    z-index: 9999;
+    margin-left: 15px;
+    margin-right: 15px;
+    border-bottom: 2px solid #ccc; /* <-- Linha embaixo da navbar */
+}
+  
+  .nav-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .logo {
+    font-size: 20px;
+    color: #2563eb;
+  }
+  
+  .title {
+    font-weight: bold;
+    font-size: 18px;
+  }
+  
+  .nav-center a {
+    margin: 0 12px;
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  
+  .nav-center a:hover {
+    color: #2563eb;
+  }
+  
+  .nav-right {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .btn-outline {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  
+  .btn-primary {
+    padding: 6px 12px;
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  
+  .btn-primary:hover {
+    background-color: #1d4ed8;
+  }
+  
+  .section {
+    padding: 100px 24px;
+    border-top: 1px solid #ddd;
+    background: #fff;
+    margin-bottom: 20px;
+  }
+  
+.nav-title {
+    font-weight: bold;
+    font-size: 18px;
+    color: #333;
+}
+
+
 .microfones-container {
     flex: none;
     width: 100%; /* Change from 98% */
@@ -85,54 +174,7 @@ cursor: pointer;
 font-size: 18px;
 }
 
-/* Pop-up container */
-.popup {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
 
-/* Pop-up content */
-.popup-content {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    width: 300px;
-    text-align: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    position: relative;
-}
-
-/* Close button */
-.popup-content .close {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    font-size: 20px;
-    cursor: pointer;
-}
-
-/* Button styles */
-.popup-content button {
-    margin-top: 20px;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    background-color: #007bff;
-    color: white;
-    cursor: pointer;
-}
-
-.popup-content button:hover {
-    background-color: #0056b3;
-}
 
 h1 {
     margin: 0;
@@ -338,14 +380,12 @@ p {
 /* ===== HEADER ===== */
 header {
     background: #fff;
-    padding: 20px;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
     margin-bottom: 2px;
     border-bottom:#3b3b3b solid 1px;
 }
 
 .header-content {
-    display: flex;
     flex-direction: column;
     align-items: center;
     position: relative;
@@ -353,14 +393,12 @@ header {
 
 
 .header-center {
-    display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
 }
 
 .header-left {
-    position: absolute;
     left: 20px;
     top: 40%;
     transform: translateY(10%);
@@ -983,25 +1021,6 @@ input[type="checkbox"], input[type="radio"] {
     margin-left: 5px;
 }
 
-.dropdown-menu {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    border: 1px solid #ddd;
-    background-color: #fff;
-    position: absolute;
-    z-index: 1000;
-    width: 7%;
-}
-
-.dropdown-menu li {
-    padding: 6px 10px;
-    cursor: pointer;
-}
-
-.dropdown-menu li:hover {
-    background-color: #f0f0f0;
-}
 
 /* ===== FOOTER ===== */
 footer {
@@ -1693,7 +1712,7 @@ footer {
 
 .channel-options-dropdown {
     position: absolute; /* Permite que o dropdown saia do container pai */
-    z-index: 1000; /* Garante que o dropdown fique acima de outros elementos */
+    z-index: 100; /* Garante que o dropdown fique acima de outros elementos */
     display: none;
     border: 1px solid #ddd;
     border-radius: 8px;

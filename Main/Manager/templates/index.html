@@ -24,30 +24,24 @@
 {% endblock %}
 
 {% block body %}
-<header>
-    <div class="header-content" style="flex-direction: column; align-items: center;">
-        <!-- Add back the header-left section with back button -->
-        <div class="header-left">
-            <i class="fa-solid fa-arrow-left" onclick="window.history.back()"></i>
-        </div>
+
+
+<nav class="navbar" >
+    <div class="nav-left">
         <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Site Logo" class="site-logo">
-        <h3>Audio Manager</h3>
-        <div class="d-flex gap-2">
-            <!-- Import Config -->
-            <button type="button" class="btn btn-outline-secondary rounded-pill shadow-sm px-2 py-1 text-small" onclick="triggerImport()">
-                <i class="bi bi-upload me-1"></i>Import Config
-            </button>
-            <input type="file" id="importConfigInput" style="display: none;" accept=".json" onchange="handleImport(event)">
-            
-            <!-- Export Config -->
-            <button type="button" class="btn btn-outline-secondary rounded-pill shadow-sm px-2 py-1 small" onclick="triggerExport()">
-                <i class="bi bi-download me-1"></i>Export Config
-            </button>
-
-        </div>
-
+        <span class="nav-title">Audio Manager</span>
     </div>
-</header>
+    <div class="nav-center">
+        <a href="#devices">Devices/Channels</a>
+        <a href="#areas">Areas</a>
+        <a href="#mic">Mic Interruption</a>
+    </div>
+    <div class="nav-right">
+        <button class="btn-outline" onclick="triggerImport()"><i class="bi bi-upload me-1"></i>Import Config</button>
+        <button class="btn-primary" onclick="triggerExport()"><i class="bi bi-download me-1"></i>Export Config</button>
+    </div>
+</nav>
+
 
 <script>
     // Trigger the file input for importing
@@ -129,7 +123,10 @@
 </script>
 
 <div class="container"> 
-    <div class="content">
+    
+    <div id="devices" class="content">
+        <br>
+        <br>
         <div class="dual-section">
             <div class="section-left">
                 <div class="section-header">
@@ -265,7 +262,7 @@
     </div>
 </div>
 
-<div class="container">
+<div id="areas" class="container">
     <div class="content">
         <div class="zone-container">
             {% if areas|length < 1 %}
@@ -353,7 +350,7 @@
 </div>
 
 <!-- MIC-INTERRUPTIONS-->
-<div class="container">
+<div id="mic" class="container">
     <div class="microfones-container">
         <div class="interrupt-header">
             <h2>MIC INTERRUPTS</h2>
