@@ -1205,14 +1205,17 @@ def edit_channels():
     streamings = Streaming.query.all()
     streaming_sources = [streaming.name for streaming in streamings]
 
-    if channel.type == ChannelType.LOCAL:
-        associated_songs = get_names_from_ids(channel.type, channel.source)
-        associated_songs = [song.replace("_", " ") for song in associated_songs]
-        associated_stream = None
-    elif channel.type == ChannelType.STREAMING:
-        associated_stream_id = channel.source
-        associated_stream = Streaming.query.get(associated_stream_id).name if associated_stream_id else None
-        associated_songs = []
+    associated_stream = None
+    associated_songs = []
+    if channel.source:
+        if channel.type == ChannelType.LOCAL:
+            associated_songs = get_names_from_ids(channel.type, channel.source)
+            associated_songs = [song.replace("_", " ") for song in associated_songs]
+            
+        elif channel.type == ChannelType.STREAMING:
+            associated_stream_id = channel.source
+            associated_stream = Streaming.query.get(associated_stream_id).name if associated_stream_id else None
+            
 
     return render_template(
         'edit_channels.html',
