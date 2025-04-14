@@ -2,13 +2,34 @@
 
 {% block head %}
 <title>Audio Manager</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    .section-header {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+    }
+    
+    .status-indicator.active {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(34, 204, 63, 0.7); }
+        70% { box-shadow: 0 0 0 6px rgba(34, 204, 63, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(34, 204, 63, 0); }
+    }
+</style>
 {% endblock %}
 
 {% block body %}
 <header>
     <div class="header-content" style="flex-direction: column; align-items: center;">
+        <!-- Add back the header-left section with back button -->
+        <div class="header-left">
+            <i class="fa-solid fa-arrow-left" onclick="window.history.back()"></i>
+        </div>
         <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Site Logo" class="site-logo">
         <h3>Audio Manager</h3>
         <div class="d-flex gap-2">
@@ -108,37 +129,57 @@
 </script>
 
 <div class="container"> 
-    
     <div class="content">
-        <br>
-        <br>
         <div class="dual-section">
             <div class="section-left">
-                <h3>Devices</h3>
+                <div class="section-header">
+                    <h3>Devices</h3>
+                </div>
                 <div class="column-box" id="columnBox" style="display: block;">
                     {% if nodes|length < 1 %}
-                    <h5>No node found</h5>
+                    <div style="text-align: center; padding: 20px; color: #666;">
+                        <i class="fa-solid fa-circle-exclamation" style="font-size: 24px; margin-bottom: 10px;"></i>
+                        <h5>No devices found</h5>
+                    </div>
                     {% else %}
-                    <div class="column-list">
-                        {% for node in nodes %}
-
-                        <div class="column-itemCH">
-                            <div class="column-headerCH">
-                                <span>{{ node.name }}</span>
-                                <div class="column-actions" onclick="event.stopPropagation()">
-                                    <i class="fa-solid fa-chevron-down" onclick="toggleDeviceDetails(this);" style="margin-top:4px;"></i> 
-                                    <i class="fa-solid fa-pen" onclick="event.stopPropagation(); renameNode('{{ node.id }}');" style="margin-top:4px;"></i>
-                                    <a href="/delete/{{ node.id }}"><i class="fa-solid fa-trash" style="color: black;"></i></a>
+                    <div class="channels-layout">
+                        <div class="bottom-controls">
+                            <div class="channel-selection-panel">
+                                <div class="channel-cards">
+                                    {% for node in nodes %}
+                                    <div class="channel-card" data-device-id="{{ node.id }}">
+                                        <div class="card-content">
+                                            <span class="channel-name">{{ node.name }}</span>
+                                            <div class="channel-status">
+                                                <span class="status-indicator" style="background: #22cc3f;"></span>
+                                                <span class="status-text">Connected</span>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; gap: 6px; align-items: center;">
+                                            <div class="toggle-transmission-btn">
+                                                <i class="fa-solid fa-info-circle settings-icon" 
+                                                   onclick="toggleDeviceInfo('{{ node.id }}', this)"></i>
+                                            </div>
+                                            <div class="toggle-transmission-btn">
+                                                <i class="fa-solid fa-pen settings-icon"
+                                                   onclick="renameNode('{{ node.id }}')"></i>
+                                            </div>
+                                            <div class="toggle-transmission-btn">
+                                                <a href="/delete/{{ node.id }}">
+                                                    <i class="fa-solid fa-trash settings-icon"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Modify the device info section to follow immediately after each card -->
+                                    <div id="device-info-{{ node.id }}" class="device-info" style="display: none; padding: 10px; background: #f5f5f5; margin-top: -8px; margin-bottom: 8px; border-radius: 0 0 8px 8px; border: 1px solid #e0e0e0;">
+                                        <p style="display: flex; align-items: center; gap: 5px; margin: 5px 0; font-weight: normal;"><i class="fa-solid fa-network-wired" style="color: #22cc3f;"></i> IP: {{ node.ip }}</p>
+                                        <p style="display: flex; align-items: center; gap: 5px; margin: 5px 0; font-weight: normal;"><i class="fa-solid fa-fingerprint" style="color: #22cc3f;"></i> MAC: {{ node.mac }}</p>
+                                    </div>
+                                    {% endfor %}
                                 </div>
                             </div>
-                            <div class="column-detailsCH" style="display: none;">
-                                <p>IP: {{ node.ip }}</p>
-                                <p>MAC: {{ node.mac }}</p>
-                            </div>
                         </div>
-                        
-
-                        {% endfor %}
                     </div>
                     {% endif %}
                 </div>
@@ -174,7 +215,7 @@
                                                     <span class="status-indicator" style="background: #ccc;"></span>
                                                     <span class="status-text">Inactive</span>
                                                 {% elif channel.state == "playing" %}
-                                                    <span class="status-indicator" style="background: #22cc3f;"></span>
+                                                    <span class="status-indicator active" style="background: #22cc3f;"></span>
                                                     <span class="status-text">Active</span>
                                                 {% endif %}
                                             </div>
@@ -226,11 +267,15 @@
 
 <div class="container">
     <div class="content">
-        <br>
-        <br>
         <div class="zone-container">
             {% if areas|length < 1 %}
-            <h3>Please add zones</h3>
+            <div class="zone-box add-zone" id="addAreaButton" onclick="addArea()" 
+                 style="border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; gap: 15px;">
+                <span style="font-size: 48px; color: #999;">+</span>
+                <div>
+                    <h3 style="color: #777; margin: 0;">Please add zones</h3>
+                </div>
+            </div>
             {% else %}
             {% for area in areas %}
             <div class="zone-box">
@@ -249,7 +294,7 @@
                     <div class="row-container">
                         <!-- Speaker Section -->
                         <div class="column-section">
-                            <h5>Speakers</h5>
+                            <h4>Speakers</h4>
                             <div class="column-list">
                                 {% for node in nodes if node.area_id == area.id %}
                                 <div class="column-item" data-column="{{ node.name }}" data-zone="{{ area.name }}">
@@ -298,10 +343,11 @@
                 </div>
             </div>
             {% endfor %}
-            {% endif %}
-            <div class="zone-box add-zone" id="addAreaButton" onclick="addArea()">
-                <span>+</span>
+            <div class="zone-box add-zone" id="addAreaButton" onclick="addArea()" 
+                 style="border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 48px; color: #999;">+</span>
             </div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -311,7 +357,10 @@
     <div class="microfones-container">
         <div class="interrupt-header">
             <h2>MIC INTERRUPTS</h2>
-            <button class="add-btn" onclick="window.location.href='{{ url_for('add_interruption') }}'"><i class="fas fa-plus"></i></button>
+            <button class="add-btn" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
+                    onclick="window.location.href='{{ url_for('add_interruption') }}'">
+                <i class="fas fa-plus"></i>
+            </button>
         </div>
 
         <div class="interrupt-list">
@@ -341,16 +390,39 @@
 </div>
 
 
-<br>
-<br>
-<footer>
-    <p style="text-align: center;">© 2025 Audio Manager</p>
+<footer style="margin-top: 30px; background-color: #f9f9f9; padding: 25px;">
+    <p style="text-align: center; color: #777;">© 2025 Audio Manager</p>
 </footer>
 {% endblock %}
 
-
-
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script>
+    // Replace add-column-button with a nicer add-speaker-button
+    document.addEventListener('DOMContentLoaded', function() {
+        const addButtons = document.querySelectorAll('.add-column-button');
+        addButtons.forEach(button => {
+            const speakerButton = document.createElement('div');
+            speakerButton.className = 'add-speaker-button';
+            speakerButton.innerHTML = '<i class="fa-solid fa-plus"></i><span>Add Speaker</span>';
+            speakerButton.onclick = function() { showSelectForZone(this); };
+            button.replaceWith(speakerButton);
+        });
+    });
+
+    // Add this new function to toggle device info display
+    function toggleDeviceInfo(deviceId, button) {
+        const infoElement = document.getElementById('device-info-' + deviceId);
+        if (infoElement) {
+            if (infoElement.style.display === 'none') {
+                infoElement.style.display = 'block';
+                button.classList.add('active');
+            } else {
+                infoElement.style.display = 'none';
+                button.classList.remove('active');
+            }
+        }
+    }
+</script>
 {% endblock %}
 

@@ -867,4 +867,27 @@ function stopInterrupt(interruptId){
     }
 }
 
+// Add/modify the toggleDeviceInfo function
+window.toggleDeviceInfo = function(deviceId, button) {
+    const infoElement = document.getElementById('device-info-' + deviceId);
+    if (infoElement) {
+        if (infoElement.style.display === 'none') {
+            // First close any other open device info sections
+            document.querySelectorAll('.device-info').forEach(info => {
+                if (info !== infoElement && info.style.display === 'block') {
+                    info.style.display = 'none';
+                    document.querySelectorAll('.fa-info-circle').forEach(icon => icon.classList.remove('active'));
+                }
+            });
+            
+            // Then open this one
+            infoElement.style.display = 'block';
+            button.classList.add('active');
+        } else {
+            infoElement.style.display = 'none';
+            button.classList.remove('active');
+        }
+    }
+};
+
 
