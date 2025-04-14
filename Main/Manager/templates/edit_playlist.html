@@ -7,17 +7,29 @@
 {% endblock %}
 
 {% block body %}
-<header>
-    <div class="header-content">
-        <button onclick="window.history.back()" class="back-button"><i class="fas fa-arrow-left"></i></button>
-        <div class="title">
-            <h1>Playlist {{ playlist_name }}</h1>
-            <button onclick="renamePlaylist('{{ playlist_name }}')" class="edit-button">
-                <i class="fas fa-pen"></i>
-            </button>
-        </div>
+<nav class="navbar" >
+    <div class="nav-left">
+        <a href="{{ url_for('secundaria') }}" class="settings-link">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
     </div>
-</header>
+    <div class="nav-center">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Site Logo" class="site-logo">
+        <span class="nav-title">Audio Manager</span>
+    </div>
+    <div class="nav-right">
+    <div>
+</nav>
+<div class="header-content">
+    <div class="playlist_name">
+      <h1>Playlist {{ playlist_name }}</h1>
+      <button onclick="renamePlaylist('{{ playlist_name }}')" class="edit-button">
+        <i class="fas fa-pen" style="font-size: 25px; width: 25px; height: 25px;"></i>
+      </button>
+    </div>
+</div>
+  
+
 
 <div class="container">
     <div class="content">

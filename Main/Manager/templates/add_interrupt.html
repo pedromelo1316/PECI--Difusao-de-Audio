@@ -8,19 +8,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endblock %}
 {% block body %}
-    <header>
-        <div class="header-content">
-            <div class="header-left">
-            <a href="{{ url_for('index') }}" class="settings-link">
-                <i class="fa-solid fa-arrow-left"></i>
-            </a>
-            </div>
-            <div class="header-center">
-            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Site Logo" class="site-logo">
-            <h3>Audio Manager</h3>
-            </div>
-        </div>
-    </header>
+<nav class="navbar" >
+  <div class="nav-left">
+      <a href="{{ url_for('index') }}" class="settings-link">
+          <i class="fa-solid fa-arrow-left"></i>
+      </a>
+  </div>
+  <div class="nav-center">
+      <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Site Logo" class="site-logo">
+      <span class="nav-title">Audio Manager</span>
+  </div>
+  <div class="nav-right">
+  <div>
+</nav>
   <div class="form-container">
     <h2>Adicionar Interrupção</h2>
     <form id="interruptForm">
