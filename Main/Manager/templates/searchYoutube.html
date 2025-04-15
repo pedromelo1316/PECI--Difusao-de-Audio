@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Music Search</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    .song {
+      display: flex;
+      align-items: flex-start;
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      gap: 15px;
+    }
+    .song:hover {
+      background-color: #f5f5f5;
+    }
+    .song img {
+      width: 120px;
+      height: auto;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+    .song-info {
+      flex: 1;
+    }
+    .song-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .song-artist {
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>Music Search</h1>
+  <input type="text" id="search" placeholder="Search for songs..." autofocus>
+
+  <div id="results"></div>
+
+  <script>
+    const search = document.getElementById('search');
+    const results = document.getElementById('results');
+
+    search.addEventListener('input', function() {
+      const query = this.value.trim();
+      
+      if (!query) {
+        results.innerHTML = '';
+        return;
+      }
+
+      // Simpler fetch without timeout
+      fetch(`/search_suggestions?query=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(songs => {
+          results.innerHTML = '';
+          songs.forEach(song => {
+            const div = document.createElement('div');
+            div.className = 'song';
+            div.innerHTML = `
+              <img src="${song.thumbnail}" alt="Thumbnail" />
+              <div class="song-info">
+                <div class="song-title">${song.title}</div>
+                <div class="song-artist">${song.author}</div>
+              </div>
+            `;
+            div.onclick = () => selectSong(song.title, song.url);
+            results.appendChild(div);
+          });
+        })
+        .catch(error => {
+          results.innerHTML = '<p>Error loading results</p>';
+          console.error(error);
+        });
+    });
+
+    function selectSong(title, url) {
+      fetch('/select', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `title=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`
+      })
+      .then(() => {
+        window.location.href = '/secundaria';
+      })
+      .catch(error => {
+        alert('Failed to select song');
+        console.error(error);
+      });
+    }
+  </script>
+</body>
+</html>
