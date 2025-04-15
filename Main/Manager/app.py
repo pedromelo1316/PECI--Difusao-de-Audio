@@ -7,7 +7,6 @@ from flask_socketio import SocketIO, emit
 import os
 from flask import request, jsonify
 from werkzeug.utils import secure_filename
-from googleapiclient.discovery import build
 from youtubesearchpython import VideosSearch
 import yt_dlp
 import subprocess
