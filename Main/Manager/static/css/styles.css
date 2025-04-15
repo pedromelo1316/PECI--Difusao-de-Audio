@@ -67,7 +67,7 @@ section {
   }
   
   .nav-center a:hover {
-    color: #2563eb;
+    color: #22cc3f; /* Changed from #2563eb to green */
   }
   
   .nav-right {
@@ -93,7 +93,7 @@ section {
   }
   
   .btn-primary:hover {
-    background-color: #1d4ed8;
+    background-color: #1db035; /* Changed from #1d4ed8 to darker green */
   }
   
 
@@ -559,7 +559,7 @@ header {
 }
 
 .column-actions i:hover {
-    color: #000;
+    color: #22cc3f; /* Changed from #000 to green */
 }
 
 .column-details {
@@ -690,7 +690,7 @@ header {
     margin: 0 auto; /* Centers the button horizontally */
     transition: all 0.2s ease;
     padding: 8px;
-    background: #f9f9f9;
+    background: #fff;
 }
 
 .add-column-button:hover {
@@ -724,7 +724,7 @@ header {
     box-shadow: 0px 4px 5px rgba(0, 0, 0, 0.1);
     padding: 0; /* Reduce from 8px */
     width: 100%;
-    height: 400px;
+    height: 360px;
     transition: transform 0.2s ease-in-out;
     margin-left: 0;
     border: #9c9c9c solid 1px;
@@ -1410,6 +1410,35 @@ footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+    width: 100%;
+}
+
+/* Add specific styling for zone header to ensure consistent appearance */
+#areas .section-header {
+    background: white;
+    padding: 15px 15px 15px 15px;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 0;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    border: #9c9c9c solid 1px;
+    border-bottom: 1px solid #eee;  /* Make the bottom border visible */
+}
+
+#areas .zone-container {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    margin-top: 0;
+    border-top: none;
+}
+
+/* Section Header with Settings Icon */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 10px;
 }
 
@@ -1431,9 +1460,9 @@ footer {
 }
 
 .settings-icon:hover {
-    color: #22cc3f;
-    background-color: rgba(34, 204, 63, 0.1);
-    transform: rotate(30deg);
+    color: #22cc3f !important; /* Changed from #2196F3 to green */
+    background-color: rgba(34, 204, 63, 0.1); /* Changed background to match green */
+    transform: rotate(15deg);
 }
 
 
@@ -1714,6 +1743,7 @@ footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    height: 40px;
 }
 
 .channel-options-dropdown {
@@ -1725,17 +1755,17 @@ footer {
     margin-top: 4px;
     background: white;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-    width: 70%; /* Garante que a largura seja igual ao dropdown */
+    width: 90%; /* Garante que a largura seja igual ao dropdown */
     box-sizing: border-box; /* Inclui padding e borda na largura total */
     overflow-y: auto;
     max-height: 200px;
-    height: 105px; /* Fixed height */
+    height: 105px; 
     overflow-y: auto;
 }
 
 .channel-option {
-    padding: 2px 3px; /* Reduzido para ocupar menos espaço */
-    font-size: 12px; /* Diminuído o tamanho da fonte */
+    padding: 2px 3px; 
+    font-size: 13px; 
     border-bottom: 1px solid #eee;
     cursor: pointer;
 }
@@ -1750,7 +1780,8 @@ footer {
 
 /* Apenas o ícone do lápis gira ao passar o rato */
 .edit-link .settings-icon:hover {
-    transform: rotate(30deg);
+    transform: rotate(15deg);
+    color: #22cc3f !important; /* Changed from #2196F3 to green */
 }
 
 /* O botão de play/stop NÃO gira */
@@ -1874,13 +1905,13 @@ footer {
 }
 
 .column-actions i:hover {
-    color: #333;
+    color: #22cc3f; /* Changed from #2196F3 to green */
     background-color: #f0f0f0;
 }
 
 .column-actions i.fa-pen:hover {
-    color: #22cc3f;
-    background-color: rgba(34, 204, 63, 0.1);
+    color: #22cc3f !important; /* Keep green */
+    background-color: rgba(34, 204, 63, 0.1); /* Changed background to match green */
 }
 
 .column-actions i.fa-trash:hover {
@@ -1963,4 +1994,132 @@ footer {
     flex-direction: column;
     width: 100%;
     margin-bottom: 10px;
+}
+
+/* ===== ICON STANDARDIZATION ===== */
+.fa-solid, .fas, .fa, .far, .fab {
+    color: #555; /* Standard color for all icons */
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.fa-solid:hover, .fas:hover, .fa:hover, .far:hover, .fab:hover {
+    color: #22cc3f; /* Changed from #2196F3 to green */
+}
+
+/* Action specific icons */
+.fa-trash, .fa-trash-alt, .delete-column-button i, .delete-zone {
+    color: #555 !important; /* Standard color initially */
+}
+
+.fa-trash:hover, .fa-trash-alt:hover, .delete-column-button i:hover, .delete-zone:hover {
+    color: #e74c3c !important; /* Red on hover for delete actions */
+}
+
+.fa-play {
+    color: #555 !important;
+}
+
+.fa-play:hover {
+    color: #22cc3f !important; /* Green on hover for play */
+}
+
+.fa-stop, .fa-pause {
+    color: #555 !important;
+}
+
+.fa-stop:hover, .fa-pause:hover {
+    color: #e74c3c !important; /* Red on hover for stop/pause */
+}
+
+.fa-pen, .fa-edit, .settings-icon {
+    color: #555 !important;
+}
+
+.fa-pen:hover, .fa-edit:hover, .settings-icon:hover {
+    color: #22cc3f !important; /* Changed from #2196F3 to green */
+}
+
+/* Override previous styles for info icon */
+.fa-info-circle {
+    color: #555 !important;
+}
+
+.fa-info-circle:hover, .fa-info-circle.active {
+    color: #22cc3f !important;
+}
+
+/* Styling for icons in the column actions */
+.column-actions i {
+    color: #555;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.column-actions i:hover {
+    color: #22cc3f; /* Changed from #2196F3 to green */
+}
+
+/* Icon sizes standardization */
+.column-actions i, .settings-icon {
+    font-size: 15px;
+}
+
+/* Update existing styles that set icon colors */
+.column-actions i.fa-pen:hover {
+    color: #22cc3f !important; /* Keep green */
+    background-color: rgba(34, 204, 63, 0.1); /* Changed background to match green */
+}
+
+.settings-icon:hover {
+    color: #22cc3f;
+    background-color: rgba(34, 204, 63, 0.1);
+    transform: rotate(15deg);
+}
+
+/* Keep color context for status indicators */
+.status-indicator.active {
+    background-color: #22cc3f;
+    box-shadow: 0 0 6px rgba(34, 204, 63, 0.6);
+}
+
+/* Edit icon animation */
+.edit-link .settings-icon:hover {
+    transform: rotate(15deg);
+    color: #22cc3f !important; /* Changed from #2196F3 to green */
+}
+
+/* Make device info icons more consistent */
+.device-info i {
+    color: #22cc3f !important;
+    width: 16px;
+    text-align: center;
+}
+
+/* Media button styling */
+.media-button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background-color: #f0f0f0;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-weight: 500;
+    color: #555;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.media-button i {
+    font-size: 14px;
+    color: #555;
+}
+
+.media-button:hover {
+    background-color: #e7f9e9; /* Changed from #e3e3e3 to light green */
+    color: #22cc3f; /* Changed from #2196F3 to green */
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+.media-button:hover i {
+    color: #22cc3f; /* Changed from #2196F3 to green */
 }
