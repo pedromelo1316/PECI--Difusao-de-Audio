@@ -674,6 +674,8 @@ def save_channel_configs():
                     song = db.session.query(Songs).filter(Songs.name == song_name).first()
                     if song:
                         musicas.append(str(song.id))
+                        
+            print("Musicas: ", musicas)
                     
             channel_source = ", ".join(musicas)
             channel.source = channel_source
@@ -1839,6 +1841,8 @@ def select_song_to_download():
 
 def save_yt_song(song_name, song_hash):
     with app.app_context():
+        # Substitui espaços por underscores no nome da música
+        song_name = song_name.replace(" ", "_")
         # Verifica se a música já existe no banco de dados
         existing_song = Songs.query.filter_by(song_hash=song_hash).first()
         if existing_song:
