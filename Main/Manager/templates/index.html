@@ -170,8 +170,8 @@
                                     </div>
                                     <!-- Modify the device info section to follow immediately after each card -->
                                     <div id="device-info-{{ node.id }}" class="device-info" style="display: none; padding: 10px; background: #f5f5f5; margin-top: -8px; margin-bottom: 8px; border-radius: 0 0 8px 8px; border: 1px solid #e0e0e0;">
-                                        <p style="display: flex; align-items: center; gap: 5px; margin: 5px 0; font-weight: normal;"><i class="fa-solid fa-network-wired" style="color: #22cc3f;"></i> IP: {{ node.ip }}</p>
-                                        <p style="display: flex; align-items: center; gap: 5px; margin: 5px 0; font-weight: normal;"><i class="fa-solid fa-fingerprint" style="color: #22cc3f;"></i> MAC: {{ node.mac }}</p>
+                                        <p style="display: flex; align-items: center; gap: 5px; margin: 5px 0; font-weight: normal;"><i class="fa-solid fa-network-wired"></i> IP: {{ node.ip }}</p>
+                                        <p style="display: flex; align-items: center; gap: 5px; margin: 5px 0; font-weight: normal;"><i class="fa-solid fa-fingerprint"></i> MAC: {{ node.mac }}</p>
                                     </div>
                                     {% endfor %}
                                 </div>
@@ -187,7 +187,9 @@
                     <h3>Channels</h3>
 
                     <a href="{{ url_for('secundaria') }}" class="settings-link">
-                        <i class="fa-solid fa-gear settings-icon"></i>
+                        <span class="media-button">
+                            <i class="fa-solid fa-plus"></i> Media
+                        </span>
                     </a>
                     
                 </div>
@@ -264,6 +266,9 @@
 
 <div id="areas" class="container">
     <div class="content">
+        <div class="section-header">
+            <h3>Zonas</h3>
+        </div>
         <div class="zone-container">
             {% if areas|length < 1 %}
             <div class="zone-box add-zone" id="addAreaButton" onclick="addArea()" 
@@ -278,10 +283,9 @@
             <div class="zone-box">
                 <div class="zone-header">
                     <h3>{{ area.name }}</h3>
-                    <i style=" border: none; border-radius: 4px; padding: 15px 26px; font-size: 20px; cursor: pointer; color: black;"
-                        onclick="removeArea('{{ area.name }}')">
-                        <i class="fa-solid fa-trash delete-zone" style="size: 4px;"></i>
-                </i>
+                    <i onclick="removeArea('{{ area.name }}')">
+                        <i class="fa-solid fa-trash delete-zone"></i>
+                    </i>
                     <form id="remove-area-form-{{ area.name }}" action="/remove_area" method="POST" style="display: none;">
                         <input type="hidden" name="name" value="{{ area.name }}">
                     </form>
@@ -297,7 +301,7 @@
                                 <div class="column-item" data-column="{{ node.name }}" data-zone="{{ area.name }}">
                                     <span>{{ node.name }}</span>
                                     <button class="delete-column-button" onclick="removeZoneColumn(this.closest('.column-item'))">
-                                        <i class="fa-solid fa-trash" style="color: black;"></i>
+                                        <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </div>
                                 {% endfor %}

@@ -212,7 +212,7 @@ document.addEventListener("DOMContentLoaded", function () {
         columnItem.innerHTML = `
             <span>${selectedColumn}</span>
             <button class="delete-column-button">
-                <i class="fa-solid fa-trash" style="color: black;"></i>
+                <i class="fa-solid fa-trash"></i>
             </button>
         `;
 
