@@ -542,50 +542,8 @@ function deleteStreamingLink(element) {
     });
 }
 
-// Função para validar URLs
 
 
-
-function showAddStreamModal() {
-    showCustomModal("Adicionar Link de Transmissão", "Enter the Streaming Name: ", true, function (streamName) {
-        if (!streamName) {
-            showCustomModal("Erro", "Streaming name is required.");
-            return;
-        }
-
-        showCustomModal("Adicionar Link de Transmissão", "Enter the streaming link:", true, function (streamUrl) {
-            if (!streamUrl || !isValidURL(streamUrl)) {
-                showCustomModal("Erro", "Please enter a valid link.");
-                return;
-            }
-
-            fetch('/save_stream_url', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ stream_name: streamName, stream_url: streamUrl, channel_id: 2 })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => {
-                        throw new Error(err.error || "Erro desconhecido");
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();
-                } else {
-                    showCustomModal("Erro", data.error || "Erro ao adicionar o link de transmissão.");
-                }
-            })
-            .catch(err => {
-                console.error("Erro ao adicionar o link de transmissão:", err);
-                showCustomModal("Erro", err.message || "Erro ao comunicar com o servidor.");
-            });
-        });
-    });
-}
 
 // Função para validar URLs
 function isValidURL(url) {
@@ -707,5 +665,167 @@ function editMicrofone(micId, currentName, currentShortcut) {
             console.error("Error updating microphone:", err);
             alert("Error communicating with the server.");
         });
+    });
+}
+
+// New streaming modal functions
+
+// Modal to choose streaming source (Local or Web)
+function showAddStreamChoiceModal() {
+    const modalContainer = document.createElement('div');
+    modalContainer.id = 'addStreamChoiceModal';
+    modalContainer.className = 'custom-modal';
+    modalContainer.innerHTML = `
+        <div class="custom-modal-content">
+            <span class="close" onclick="closeAddStreamChoiceModal()">&times;</span>
+            <h2>Escolha a origem do streaming</h2>
+            <div class="modal-buttons">
+                <button class="confirm" onclick="openLinkStreamModal()">Link</button>
+                <button class="confirm" onclick="openWebStreamModal()">Pesquisar na Web</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modalContainer);
+    modalContainer.style.display = 'block';
+}
+
+function closeAddStreamChoiceModal() {
+    const modal = document.getElementById('addStreamChoiceModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Local streaming: use file input (accepting video files)
+function openLinkStreamModal() {
+    closeAddStreamChoiceModal()
+    showCustomModal("Adicionar Link de Transmissão", "Enter the Streaming Name: ", true, function (streamName) {
+        if (!streamName) {
+            showCustomModal("Erro", "Streaming name is required.");
+            return;
+        }
+
+        showCustomModal("Adicionar Link de Transmissão", "Enter the streaming link:", true, function (streamUrl) {
+            if (!streamUrl || !isValidURL(streamUrl)) {
+                showCustomModal("Erro", "Please enter a valid link.");
+                return;
+            }
+
+            fetch('/save_stream_url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ stream_name: streamName, stream_url: streamUrl, channel_id: 2 })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || "Erro desconhecido");
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    showCustomModal("Erro", data.error || "Erro ao adicionar o link de transmissão.");
+                }
+            })
+            .catch(err => {
+                console.error("Erro ao adicionar o link de transmissão:", err);
+                showCustomModal("Erro", err.message || "Erro ao comunicar com o servidor.");
+            });
+        });
+    });
+}
+
+// Web search streaming: open a modal with search & results area
+function openWebStreamModal() {
+    closeAddStreamChoiceModal();
+    let modal = document.getElementById('webStreamModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'webStreamModal';
+        Object.assign(modal.style, {
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '70vh',
+            height: '70vh',
+            backgroundColor: '#fff',
+            boxShadow: '0 0 10px rgba(0,0,0,0.5)',
+            zIndex: '1000',
+            overflow: 'hidden'
+        });
+        modal.innerHTML = `
+            <div style="position: relative; height: 100%;">
+                <button style="position: absolute; right: 10px; top: 10px;" onclick="closeWebStreamModal()">X</button>
+                <div class="modal-header" style="background-color: #fff; padding: 10px; text-align: center; height: 70px; border-bottom: 2px solid #ccc;">
+                    <h1>Streaming Search</h1>
+                </div>
+                <input type="text" id="streamSearch" placeholder="Search for streams..." autofocus style="width: calc(100% - 20px); margin: 10px;"/>
+                <div id="streamResults" style="overflow-y: auto; height: calc(100% - 140px); margin: 10px;"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        // Attach event listener for stream search input
+        const search = modal.querySelector('#streamSearch');
+        const results = modal.querySelector('#streamResults');
+        search.addEventListener('input', function() {
+            const query = this.value.trim();
+            if (!query) {
+                results.innerHTML = '';
+                return;
+            }
+            fetch(`/stream_search_suggestions?query=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(streams => {
+                    results.innerHTML = '';
+                    streams.forEach(stream => {
+                        const div = document.createElement('div');
+                        div.className = 'stream';
+                        div.innerHTML = `
+                            <img src="${stream.thumbnail}" alt="Thumbnail" />
+                            <div class="stream-info">
+                                <div class="stream-title">${stream.title}</div>
+                                <div class="stream-author">${stream.author}</div>
+                            </div>
+                        `;
+                        div.onclick = () => selectStream(stream.title, stream.url);
+                        results.appendChild(div);
+                    });
+                })
+                .catch(error => {
+                    results.innerHTML = '<p>Error loading results</p>';
+                    console.error(error);
+                });
+        });
+    }
+    modal.style.display = 'block';
+}
+
+function closeWebStreamModal() {
+    const modal = document.getElementById('webStreamModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Function to handle selected stream from web search
+function selectStream(title, url) {
+    fetch('/select_stream', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `title=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`
+    })
+    .then(() => {
+      window.location.href = '/secundaria';
+    })
+    .catch(error => {
+      alert('Failed to select stream');
+      console.error(error);
     });
 }

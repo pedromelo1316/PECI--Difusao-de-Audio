@@ -1820,6 +1820,34 @@ def search_youtube(query, max_results=10):
         print(f"Error occurred: {e}")
     return results
 
+
+
+def search_youtube_live(query, max_results=30):
+    results = []
+    try:
+        videos_search = VideosSearch(query, limit=max_results)
+        search_results = videos_search.result().get('result', [])
+        
+        for item in search_results:
+            duration = item.get('duration', None)
+            # Verifica se é uma stream (duration == None)
+            if duration is None:
+                title = item.get('title', 'Sem título')
+                url = item.get('link', 'Sem link')
+                thumbnail = item.get('thumbnails', [{}])[0].get('url', '')
+                author_info = item.get('channel', {})
+                author = author_info.get('name', 'Desconhecido')
+                
+                results.append({
+                    "title": title,
+                    "url": url,
+                    "thumbnail": thumbnail,
+                    "author": author,
+                })
+    except Exception as e:
+        print(f"Ocorreu um erro: {e}")
+    return results
+
 @app.route("/search_suggestions", methods=["GET"])
 def search_suggestions():
     query = request.args.get('query')
@@ -1829,14 +1857,44 @@ def search_suggestions():
     return jsonify([])
 
 
+@app.route("/stream_search_suggestions", methods=["GET"])   
+def stream_search_suggestions():
+    query = request.args.get('query')
+    if query:
+        print("query: ", query)
+        results = search_youtube_live(query, max_results=5)
+        return jsonify(results)
+    return jsonify([])
+
+
 @app.route("/select", methods=["POST"])
 def select_song_to_download():
-    title = request.form.get("title")
+    title = request.form.get("title").strip()
     url = request.form.get("url")
     print(f"Selected video: {title} - {url}")
 
     # Download the selected YouTube audio in a separate thread to avoid blocking Flask
     threading.Thread(target=download_youtube_audio, args=(url, title)).start()
+
+    return redirect(url_for('secundaria'))
+
+
+@app.route("/select_stream", methods=["POST"])
+def select_stream_to_save():
+    title = request.form.get("title").strip()
+    url = request.form.get("url")
+    print(f"Selected stream: {title} - {url}")
+
+    # verificar se já existe na base de dados o link, se não existe adicionar
+    existing_stream = Streaming.query.filter_by(name=title).first()
+    if existing_stream:
+        print(f"Stream already exists: {existing_stream.name}")
+        return redirect(url_for('secundaria'))
+    # Salvar no banco de dados
+    new_stream = Streaming(name=title, url=url)
+    db.session.add(new_stream)
+    db.session.commit()
+    print("Nova stream adicionada:", new_stream.name)
 
     return redirect(url_for('secundaria'))
 
