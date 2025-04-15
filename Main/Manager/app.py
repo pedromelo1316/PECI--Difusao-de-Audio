@@ -1200,7 +1200,8 @@ def edit_channels():
         playlist.name: [song.name for song in playlist.songs]
         for playlist in playlists
     }
-    all_songs = [song.name for song in Songs.query.all()]
+    all_songs = ",".join(str(song.id) for song in Songs.query.all())
+    all_songs = get_names_from_ids(ChannelType.LOCAL, all_songs) 
     streamings = Streaming.query.all()
     streaming_sources = [streaming.name for streaming in streamings]
 
@@ -1209,7 +1210,6 @@ def edit_channels():
     if channel.source:
         if channel.type == ChannelType.LOCAL:
             associated_songs = get_names_from_ids(channel.type, channel.source)
-            associated_songs = [song.replace("_", " ") for song in associated_songs]
             
         elif channel.type == ChannelType.STREAMING:
             associated_stream_id = channel.source
