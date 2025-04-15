@@ -12,7 +12,7 @@ body {
 section {
     scroll-snap-align: start; /* Fixa cada seção no início */
     scroll-snap-stop: always; /* Força parar em cada seção */
-    height: 100vh;            /* Cada seção ocupa a altura total da tela */
+    height: 90vh;            /* Cada seção ocupa a altura total da tela */
   }
 
 
@@ -213,7 +213,6 @@ p {
     align-items: center;
     flex-direction: column;
     width: 100%;
-    scroll-margin-top: 80px;
 }
 
 .centered-container {
@@ -715,7 +714,7 @@ header {
     box-sizing: border-box; /* Include padding in width calculation */
     margin-top: 25px;
     overflow-y: auto;
-    height: 70vh;
+    height: 60vh;
 }
 
 .zone-box {
