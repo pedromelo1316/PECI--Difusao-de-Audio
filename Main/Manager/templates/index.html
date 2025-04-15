@@ -59,7 +59,34 @@
 <script>
     // Trigger the file input for importing
     function triggerImport() {
-        document.getElementById("importConfigInput").click();
+    
+        console.log("OLALA");
+
+        // Create a FormData object and append the necessary data
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.onchange = () => {
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            // Sending the form data to the server using AJAX
+            fetch('/import_conf', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();  // Reload the page after successful upload
+                } else {
+                    console.log("Error:", data.error);
+                }
+            })
+            .catch(error => {
+                console.error("Error during file upload:", error);
+            });
+        };
+        fileInput.click();
     }
 
     // Handle the file import
