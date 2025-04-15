@@ -206,18 +206,6 @@ p {
 }
 
 /* ===== LAYOUT ===== */
-.container {
-    max-width: 1800px; /* Increase from 1600px */
-    margin: 0 auto;
-    background: none;
-    box-shadow: none;
-    border: none;
-    padding: 0 15px; /* Reduce from 5px 30px */
-    display: flex;
-    justify-content: flex-start;
-    height: 100vh;
-    max-width: 80%;
-}
 
 .content{
     display: flex;

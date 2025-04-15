@@ -20,6 +20,19 @@
         70% { box-shadow: 0 0 0 6px rgba(34, 204, 63, 0); }
         100% { box-shadow: 0 0 0 0 rgba(34, 204, 63, 0); }
     }
+    .container {
+        max-width: 1800px; /* Increase from 1600px */
+        margin: 0 auto;
+        background: none;
+        box-shadow: none;
+        border: none;
+        padding: 0 15px; /* Reduce from 5px 30px */
+        display: flex;
+        justify-content: flex-start;
+        height: 100vh;
+        max-width: 80%;
+    }
+
 </style>
 {% endblock %}
 
@@ -424,5 +437,6 @@
         }
     }
 </script>
+  
 {% endblock %}
 
