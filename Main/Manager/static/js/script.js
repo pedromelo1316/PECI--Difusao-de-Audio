@@ -94,7 +94,7 @@ document.addEventListener("DOMContentLoaded", function () {
         input.value = "";
         input.focus();
     
-        const confirmBtn = document.getElementById("confirmModalBtn");
+        const confirmBtn = document.getElementById("confirmModalBtn");  
         const cancelBtn = document.getElementById("cancelModalBtn");
     
         function closeModal() {
@@ -302,37 +302,59 @@ document.addEventListener("DOMContentLoaded", function () {
         .catch(error => console.error("Error removing speaker:", error));
     }
 
-    window.removeArea = function(areaName) {
-        if (confirm(`Are you sure you want to delete the zone "${areaName}"?`)) {
-            const form = document.getElementById(`remove-area-form-${areaName}`);
-            if (form) {
-                form.submit();
-            } else {
-                console.error(`Form for area ${areaName} not found`);
-                // Alternative approach if form submission doesn't work
-                fetch('/remove_area', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ name: areaName })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Zone deleted successfully!');
-                        location.reload();
-                    } else {
-                        alert('Error deleting zone: ' + data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error deleting zone:', error);
-                    alert('Error deleting zone. Please try again.');
-                });
-            }
+    let deleteAreaName = null;
+
+    function showDeleteConfirmation(areaName) {
+        deleteAreaName = areaName;
+        const modal = document.getElementById("confirmDeleteModal");
+        const text = document.getElementById("confirmDeleteText");
+        text.textContent = `Are you sure you want to delete the zone "${areaName}"?`;
+        modal.style.display = "flex";
+    }
+
+    document.getElementById("cancelDeleteBtn").addEventListener("click", () => {
+        document.getElementById("confirmDeleteModal").style.display = "none";
+        deleteAreaName = null;
+    });
+
+    document.getElementById("confirmDeleteBtn").addEventListener("click", () => {
+        if (!deleteAreaName) return;
+        const modal = document.getElementById("confirmDeleteModal");
+        const form = document.getElementById(`remove-area-form-${deleteAreaName}`);
+
+        if (form) {
+            form.submit();
+        } else {
+            fetch('/remove_area', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name: deleteAreaName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Zone deleted successfully!');
+                    location.reload();
+                } else {
+                    alert('Error deleting zone: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting zone:', error);
+                alert('Error deleting zone. Please try again.');
+            });
         }
+
+        modal.style.display = "none";
+        deleteAreaName = null;
+    });
+
+    window.removeArea = function(areaName) {
+        showDeleteConfirmation(areaName);
     };
+
 
     window.configureProgramming = function(channelId) {
         const url = `/configure_programming/${channelId}`;

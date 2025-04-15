@@ -1719,3 +1719,12 @@ footer {
     background-color: #bbb;
   }
   
+
+  #confirmDeleteBtn {
+    background-color: #dc3545;
+    color: white;
+}
+
+#confirmDeleteBtn:hover {
+    background-color: #c82333;
+}
