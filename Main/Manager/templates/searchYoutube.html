@@ -1,45 +1,108 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>YouTube Song Search</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 40px; background: #f4f4f4; }
-        h1 { text-align: center; }
-        form { text-align: center; margin-bottom: 30px; }
-        .video { margin: 20px auto; width: 400px; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .video img { width: 100%; border-radius: 10px; }
-        .video button {
-            margin-top: 10px;
-            background-color: #cc0000;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 16px;
-        }
-        .video button:hover {
-            background-color: #e60000;
-        }
-    </style>
+  <title>Music Search</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    .song {
+      display: flex;
+      align-items: flex-start;
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      gap: 15px;
+    }
+    .song:hover {
+      background-color: #f5f5f5;
+    }
+    .song img {
+      width: 120px;
+      height: auto;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+    .song-info {
+      flex: 1;
+    }
+    .song-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .song-artist {
+      color: #666;
+    }
+  </style>
 </head>
 <body>
-    <h1>🎵 Search for a Song on YouTube</h1>
-    <form method="POST">
-        <input type="text" name="query" placeholder="Type a song name..." required>
-        <button type="submit">Search</button>
-    </form>
+  <h1>Music Search</h1>
+  <input type="text" id="search" placeholder="Search for songs..." autofocus>
 
-    {% for video in results %}
-        <div class="video">
-            <form action="/select" method="POST">
-                <img src="{{ video.thumbnail }}" alt="{{ video.title }}">
-                <input type="hidden" name="title" value="{{ video.title }}">
-                <input type="hidden" name="url" value="{{ video.url }}">
-                <button type="submit">{{ video.title }}</button>
-            </form>
-        </div>
-    {% endfor %}
+  <div id="results"></div>
+
+  <script>
+    const search = document.getElementById('search');
+    const results = document.getElementById('results');
+
+    search.addEventListener('input', function() {
+      const query = this.value.trim();
+      
+      if (!query) {
+        results.innerHTML = '';
+        return;
+      }
+
+      // Simpler fetch without timeout
+      fetch(`/search_suggestions?query=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(songs => {
+          results.innerHTML = '';
+          songs.forEach(song => {
+            const div = document.createElement('div');
+            div.className = 'song';
+            div.innerHTML = `
+              <img src="${song.thumbnail}" alt="Thumbnail" />
+              <div class="song-info">
+                <div class="song-title">${song.title}</div>
+                <div class="song-artist">${song.author}</div>
+              </div>
+            `;
+            div.onclick = () => selectSong(song.title, song.url);
+            results.appendChild(div);
+          });
+        })
+        .catch(error => {
+          results.innerHTML = '<p>Error loading results</p>';
+          console.error(error);
+        });
+    });
+
+    function selectSong(title, url) {
+      fetch('/select', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `title=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`
+      })
+      .then(() => {
+        window.location.href = '/secundaria';
+      })
+      .catch(error => {
+        alert('Failed to select song');
+        console.error(error);
+      });
+    }
+  </script>
 </body>
 </html>

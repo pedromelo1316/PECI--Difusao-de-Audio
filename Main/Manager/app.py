@@ -8,7 +8,7 @@ import os
 from flask import request, jsonify
 from werkzeug.utils import secure_filename
 from googleapiclient.discovery import build
-
+from youtubesearchpython import VideosSearch
 import yt_dlp
 import subprocess
 import threading
@@ -35,7 +35,7 @@ socketio = SocketIO(app)
 processes = defaultdict(dict)
 interruptions = defaultdict(dict)
 
-YOUTUBE_API_KEY = "AIzaSyAQMBxoyjQTeJyM6KP-om0F-qO1B0cevXU"
+
 
 # Configurações de áudio
 BITRATE = "128k"  # Taxa de bits máxima
@@ -1795,29 +1795,39 @@ def import_conf():
 #############
 #YOUTUBE
 #############
-def search_youtube(query, max_results=5):
-    youtube = build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
-    request = youtube.search().list(
-        q=query,
-        part="snippet",
-        type="video",
-        maxResults=max_results
-    )
-    response = request.execute()
-
+def search_youtube(query, max_results=10):
     results = []
-    for item in response['items']:
-        video_id = item['id']['videoId']
-        title = item['snippet']['title']
-        thumbnail = item['snippet']['thumbnails']['medium']['url']
-        url = f"https://www.youtube.com/watch?v={video_id}"
-        results.append({
-            'title': title,
-            'thumbnail': thumbnail,
-            'url': url
-        })
-
+    try:
+        # Search using youtubesearchpython (searches for videos on YouTube)
+        videos_search = VideosSearch(query, limit=max_results)
+        search_results = videos_search.result().get('result', [])
+        
+        for item in search_results:
+            title = item.get('title', 'Sem título')
+            url = item.get('link', 'Sem link')
+            thumbnail = item.get('thumbnails', [{}])[0].get('url', '')  # Extracting the thumbnail URL
+            author_info = item.get('channel', {})
+            author = author_info.get('name', 'Unknown')  # Extracting the author (channel name)
+            duration = item.get('duration', '00:00')  # Extracting the video duration
+            
+            results.append({
+                "title": title,
+                "url": url,
+                "thumbnail": thumbnail,  # Include the thumbnail URL
+                "author": author,        # Include the author name
+                "duration": duration     # Include the duration
+            })
+    except Exception as e:
+        print(f"Error occurred: {e}")
     return results
+
+@app.route("/search_suggestions", methods=["GET"])
+def search_suggestions():
+    query = request.args.get('query')
+    if query:
+        results = search_youtube(query, max_results=5)  # Limit the number of results
+        return jsonify(results)
+    return jsonify([])
 
 @app.route("/secundaria/searchyt", methods=["GET", "POST"])
 def search_song_on_yt():

@@ -1,45 +1,100 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>YouTube Song Search</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 40px; background: #f4f4f4; }
-        h1 { text-align: center; }
-        form { text-align: center; margin-bottom: 30px; }
-        .video { margin: 20px auto; width: 400px; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .video img { width: 100%; border-radius: 10px; }
-        .video button {
-            margin-top: 10px;
-            background-color: #cc0000;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 16px;
-        }
-        .video button:hover {
-            background-color: #e60000;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>YouTube Music Search</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      font-size: 1.1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .video-item {
+      display: flex;
+      align-items: center;
+      margin: 10px 0;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    .video-item img {
+      width: 120px;
+      height: auto;
+      margin-right: 10px;
+      border-radius: 8px;
+    }
+    .video-info {
+      flex: 1;
+    }
+    .video-info h3 {
+      margin: 0 0 5px 0;
+      font-size: 1rem;
+    }
+    .video-info p {
+      margin: 2px 0;
+      color: #555;
+      font-size: 0.9rem;
+    }
+  </style>
 </head>
 <body>
-    <h1>🎵 Search for a Song on YouTube</h1>
-    <form method="POST">
-        <input type="text" name="query" placeholder="Type a song name..." required>
-        <button type="submit">Search</button>
-    </form>
+  <h1>🎵 YouTube Music Search</h1>
+  <input type="text" id="searchInput" placeholder="Type a song or artist..." autocomplete="off" />
 
-    {% for video in results %}
-        <div class="video">
-            <form action="/select" method="POST">
-                <img src="{{ video.thumbnail }}" alt="{{ video.title }}">
-                <input type="hidden" name="title" value="{{ video.title }}">
-                <input type="hidden" name="url" value="{{ video.url }}">
-                <button type="submit">{{ video.title }}</button>
-            </form>
+  <div id="results">
+    {% for result in results %}
+      <div class="video-item">
+        <img src="{{ result.thumbnail }}" alt="Thumbnail">
+        <div class="video-info">
+          <h3>{{ result.title }}</h3>
+          <p>👤 {{ result.author }}</p>
+          <p>⏱️ {{ result.duration }}</p>
         </div>
+      </div>
     {% endfor %}
+  </div>
+
+  <script>
+    const searchInput = document.getElementById("searchInput");
+    const resultsDiv = document.getElementById("results");
+
+    let timeout = null;
+
+    searchInput.addEventListener("input", () => {
+      clearTimeout(timeout);
+      const query = searchInput.value.trim();
+      if (query.length === 0) {
+        resultsDiv.innerHTML = ""; // clear results if input is empty
+        return;
+      }
+      timeout = setTimeout(() => {
+        fetch(`/search_suggestions?query=${encodeURIComponent(query)}`)
+          .then(response => response.json())
+          .then(data => {
+            resultsDiv.innerHTML = ""; // clear current results
+            data.forEach(item => {
+              const video = document.createElement("div");
+              video.className = "video-item";
+              video.innerHTML = `
+                <img src="${item.thumbnail}" alt="Thumbnail">
+                <div class="video-info">
+                  <h3>${item.title}</h3>
+                  <p>👤 ${item.author}</p>
+                  <p>⏱️ ${item.duration}</p>
+                </div>
+              `;
+              resultsDiv.appendChild(video);
+            });
+          });
+      }, 300); // debounce
+    });
+  </script>
 </body>
 </html>
