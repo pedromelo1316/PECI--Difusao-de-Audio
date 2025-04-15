@@ -122,9 +122,9 @@
 
 </script>
 
-<div class="container"> 
+<section id="devices"  class="container"> 
     
-    <div id="devices" class="content">
+    <div class="content">
         <br>
         <br>
         <div class="dual-section">
@@ -260,10 +260,10 @@
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<div id="areas" class="container">
-    <div class="content">
+<section id="areas" class="container">
+    <div  class="content">
         <div class="zone-container">
             {% if areas|length < 1 %}
             <div class="zone-box add-zone" id="addAreaButton" onclick="addArea()" 
@@ -280,7 +280,7 @@
                     <h3>{{ area.name }}</h3>
                     <i style=" border: none; border-radius: 4px; padding: 15px 26px; font-size: 20px; cursor: pointer; color: black;"
                         onclick="removeArea('{{ area.name }}')">
-                        <i class="fa-solid fa-trash delete-zone" style="size: 4px;"></i>
+                        <i class="fa-solid fa-trash delete-zone" style="size: 4px;" onclick="removeArea('{{ area.name }}')"></i>
                 </i>
                     <form id="remove-area-form-{{ area.name }}" action="/remove_area" method="POST" style="display: none;">
                         <input type="hidden" name="name" value="{{ area.name }}">
@@ -347,44 +347,47 @@
             {% endif %}
         </div>
     </div>
-</div>
+</section>
 
 <!-- MIC-INTERRUPTIONS-->
-<div id="mic" class="container">
-    <div class="microfones-container">
-        <div class="interrupt-header">
-            <h2>MIC INTERRUPTS</h2>
-            <button class="add-btn" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
-                    onclick="window.location.href='{{ url_for('add_interruption') }}'">
-                <i class="fas fa-plus"></i>
-            </button>
+<section id="mic" class="container">
+    <div class="content">
+
+        <div class="microfones-container">
+            <div class="interrupt-header">
+                <h2>MIC INTERRUPTS</h2>
+                <button class="add-btn" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
+                        onclick="window.location.href='{{ url_for('add_interruption') }}'">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+
+            <div class="interrupt-list">
+
+                {% for interrupt in interruptions %}
+                    <div class="interrupt-item">
+                        <div class="interrupt-info">
+                            <strong>{{ interrupt.name }}</strong><br>
+                            Areas: {% for area in interrupt.areas %}{{ area.name }}{% if not loop.last %}; {% endif %}{% endfor %}<br>
+                            Channels: {% for channel in interrupt.channels %}{{ channel.name }}{% if not loop.last %}; {% endif %}{% endfor %}<br>
+                            Microphone: {{ interrupt.microphone }}<br>
+                        </div>
+                        <div class="interrupt-actions">
+                            {% if interrupt.state == "off" %}
+                                <button class="icon-btn" onclick="startInterrupt('{{ interrupt.id }}')"><i class="fas fa-play"></i></button>
+                            {% else %}
+                                <button class="icon-btn" onclick="stopInterrupt('{{ interrupt.id }}')"><i class="fas fa-stop"></i></button>
+                            {% endif %}
+                            <button class="icon-btn" onclick="deleteInterrupt('{{ interrupt.id }}')"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                {% endfor %}
+
+
+            </div>    
         </div>
-
-        <div class="interrupt-list">
-
-            {% for interrupt in interruptions %}
-                <div class="interrupt-item">
-                    <div class="interrupt-info">
-                        <strong>{{ interrupt.name }}</strong><br>
-                        Areas: {% for area in interrupt.areas %}{{ area.name }}{% if not loop.last %}; {% endif %}{% endfor %}<br>
-                        Channels: {% for channel in interrupt.channels %}{{ channel.name }}{% if not loop.last %}; {% endif %}{% endfor %}<br>
-                        Microphone: {{ interrupt.microphone }}<br>
-                    </div>
-                    <div class="interrupt-actions">
-                        {% if interrupt.state == "off" %}
-                            <button class="icon-btn" onclick="startInterrupt('{{ interrupt.id }}')"><i class="fas fa-play"></i></button>
-                        {% else %}
-                            <button class="icon-btn" onclick="stopInterrupt('{{ interrupt.id }}')"><i class="fas fa-stop"></i></button>
-                        {% endif %}
-                        <button class="icon-btn" onclick="deleteInterrupt('{{ interrupt.id }}')"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>
-            {% endfor %}
-
-
-        </div>    
     </div>
-</div>
+</section>
 
 
 <footer style="margin-top: 30px; background-color: #f9f9f9; padding: 25px;">

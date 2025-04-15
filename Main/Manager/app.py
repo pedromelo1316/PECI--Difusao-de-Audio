@@ -1050,12 +1050,12 @@ def remove_area():
     area_name = request.form.get('name')
     if not area_name:
         flash("Area name is required", "error")
-        return redirect('/')
+        return jsonify({"error": "Area name is required"}), 400
     try:
         area = Areas.query.filter_by(name=area_name).first()
         if not area:
             flash("Area not found", "error")
-            return redirect('/')
+            return jsonify({"error": "Area not found"}), 404
         
         print(f"Removing area: {area_name} with ID: {area.id}")
         # Remove a associação dos nós à área antes de removê-la
@@ -1069,11 +1069,10 @@ def remove_area():
         send_info(nodes_in_area)
         flash(f"Area {area_name} removed", "success")
         
-        socketio.emit('reload_page', namespace='/')
-        return redirect('/')
+        return redirect('/#areas')
     except Exception as e:
         flash(str(e), "error")
-        return redirect('/')
+        return jsonify({"error": str(e)}), 500
 
 # Rota para atualizar o volume de uma área
 @app.route('/update_volume', methods=['POST'])

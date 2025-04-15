@@ -1,4 +1,40 @@
 document.addEventListener("DOMContentLoaded", function () {
+    // Forçar height maior para teste
+    document.body.style.height = "300vh";
+    
+    // Adiciona listener para o evento de scroll (para debug, se necessário)
+    window.addEventListener("scroll", function () {
+        console.log("Scroll Position:", window.scrollY);
+    });
+
+    // Código para marcar a seção ativa na navbar
+    const sections = document.querySelectorAll("section");
+    const navLinks = document.querySelectorAll(".nav-center a");
+
+    const observerOptions = {
+        threshold: 0.5 // 50% da section visível
+    };
+
+    const observerCallback = (entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const sectionId = entry.target.getAttribute("id");
+                navLinks.forEach(link => {
+                    // Remove "active" de todos os links
+                    link.classList.remove("active");
+                    // Se o href (sem o #) corresponder ao id da section, adiciona a classe active
+                    if (link.getAttribute("href").substring(1) === sectionId) {
+                        link.classList.add("active");
+                    }
+                });
+            }
+        });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+    sections.forEach(section => observer.observe(section));
+});
+document.addEventListener("DOMContentLoaded", function () {
 
     window.renameNode = function(nodeId) { // Torna a função global
         const newName = prompt("Digite o novo nome para o nó:");
@@ -277,34 +313,13 @@ document.addEventListener("DOMContentLoaded", function () {
         .catch(error => console.error("Error removing speaker:", error));
     }
 
-    window.removeArea = function(areaName) {
+    window.removeArea = function (areaName) {
         if (confirm(`Are you sure you want to delete the zone "${areaName}"?`)) {
             const form = document.getElementById(`remove-area-form-${areaName}`);
             if (form) {
                 form.submit();
             } else {
                 console.error(`Form for area ${areaName} not found`);
-                // Alternative approach if form submission doesn't work
-                fetch('/remove_area', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ name: areaName })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Zone deleted successfully!');
-                        location.reload();
-                    } else {
-                        alert('Error deleting zone: ' + data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error deleting zone:', error);
-                    alert('Error deleting zone. Please try again.');
-                });
             }
         }
     };
@@ -893,11 +908,18 @@ window.toggleDeviceInfo = function(deviceId, button) {
 
 document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("a[href^='#']").forEach(anchor => {
-      anchor.addEventListener("click", function (e) {
-        e.preventDefault();
-        document.querySelector(this.getAttribute("href")).scrollIntoView({
-          behavior: "smooth"
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute("href")).scrollIntoView({
+                behavior: "smooth",
+            });
+
+            // Remove 'active' class from all links
+            document.querySelectorAll("a[href^='#']").forEach(link => link.classList.remove("active"));
+
+            // Add 'active' class to the clicked link
+            this.classList.add("active");
         });
-      });
     });
-  });
+});
+
