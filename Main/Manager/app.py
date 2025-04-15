@@ -659,7 +659,7 @@ def save_channel_configs():
             
             
             musicas = []
-            for item in channel_reproduction.split():
+            for item in channel_reproduction.split(";"):
                 if item.startswith("PLAYLIST:"):
                     playlist_name = item.split(":")[1]
                     playlist = db.session.query(Playlist).filter(Playlist.name == playlist_name).first()
@@ -1387,7 +1387,7 @@ def save_songs(files):
             errors.append({"file": file.filename, "error": "Formato de arquivo não suportado"})
             continue
 
-        song_name = os.path.splitext(secure_filename(file.filename))[0]
+        song_name = os.path.splitext(file.filename)[0]
         print("song_name: ", song_name)
         if not song_name:
             errors.append({"file": file.filename, "error": "Nome da música é obrigatório"})
@@ -1828,14 +1828,6 @@ def search_suggestions():
         return jsonify(results)
     return jsonify([])
 
-@app.route("/secundaria/searchyt", methods=["GET", "POST"])
-def search_song_on_yt():
-    results = []
-    if request.method == "POST":
-        query = request.form.get("query")
-        if query:
-            results = search_youtube(query)
-    return render_template("searchYoutube.html", results=results)
 
 @app.route("/select", methods=["POST"])
 def select_song_to_download():
@@ -1850,8 +1842,6 @@ def select_song_to_download():
 
 def save_yt_song(song_name, song_hash):
     with app.app_context():
-        # Substitui espaços por underscores no nome da música
-        song_name = song_name.replace(" ", "_")
         # Verifica se a música já existe no banco de dados
         existing_song = Songs.query.filter_by(song_hash=song_hash).first()
         if existing_song:
