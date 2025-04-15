@@ -7,6 +7,9 @@ from flask_socketio import SocketIO, emit
 import os
 from flask import request, jsonify
 from werkzeug.utils import secure_filename
+from googleapiclient.discovery import build
+
+import yt_dlp
 import subprocess
 import threading
 import queue
@@ -31,6 +34,8 @@ db = SQLAlchemy(app)
 socketio = SocketIO(app)
 processes = defaultdict(dict)
 interruptions = defaultdict(dict)
+
+YOUTUBE_API_KEY = "AIzaSyAQMBxoyjQTeJyM6KP-om0F-qO1B0cevXU"
 
 # Configurações de áudio
 BITRATE = "128k"  # Taxa de bits máxima
@@ -1784,6 +1789,112 @@ def import_conf():
     return jsonify({"success": True})
 
 #################################################################################
+
+#############
+#YOUTUBE
+#############
+def search_youtube(query, max_results=5):
+    youtube = build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
+    request = youtube.search().list(
+        q=query,
+        part="snippet",
+        type="video",
+        maxResults=max_results
+    )
+    response = request.execute()
+
+    results = []
+    for item in response['items']:
+        video_id = item['id']['videoId']
+        title = item['snippet']['title']
+        thumbnail = item['snippet']['thumbnails']['medium']['url']
+        url = f"https://www.youtube.com/watch?v={video_id}"
+        results.append({
+            'title': title,
+            'thumbnail': thumbnail,
+            'url': url
+        })
+
+    return results
+
+@app.route("/secundaria/searchyt", methods=["GET", "POST"])
+def search_song_on_yt():
+    results = []
+    if request.method == "POST":
+        query = request.form.get("query")
+        if query:
+            results = search_youtube(query)
+    return render_template("searchYoutube.html", results=results)
+
+@app.route("/select", methods=["POST"])
+def select_song_to_download():
+    title = request.form.get("title")
+    url = request.form.get("url")
+    print(f"Selected video: {title} - {url}")
+
+    # Download the selected YouTube audio in a separate thread to avoid blocking Flask
+    threading.Thread(target=download_youtube_audio, args=(url, title)).start()
+
+    return redirect(url_for('secundaria'))
+
+def save_yt_song(song_name, song_hash):
+    with app.app_context():
+        # Verifica se a música já existe no banco de dados
+        existing_song = Songs.query.filter_by(song_hash=song_hash).first()
+        if existing_song:
+            print(f"Song already exists: {existing_song.name}")
+            return 
+        # Salvar no banco de dados
+        new_song = Songs(name=song_name, song_hash=song_hash)
+        db.session.add(new_song)
+        db.session.commit()
+
+        print("Nova música adicionada:", new_song.name)
+
+def download_youtube_audio(youtube_url, song_name):
+    """
+    Extracts audio from a YouTube video and saves it as a WAV file
+    without downloading the video.
+    """
+    safe_filename = song_name.replace(' ', '_')
+    # Create a hash from the song name (you can also use the full path if needed)
+    song_hash = hashlib.sha256(safe_filename.encode()).hexdigest()
+    # Generate the final .wav filename using the hash
+    wav_filename = os.path.join(UPLOAD_FOLDER, f"{song_hash}.wav")
+
+    save_yt_song(song_name, song_hash)
+
+    # Configure yt-dlp to fetch the best audio stream URL
+    ydl_opts = {
+        'format': 'bestaudio/best',  # Best audio quality
+        'quiet': True,               # Suppress logs
+        'extract_audio': True,       # Extract audio (not strictly needed here)
+    }
+
+    # Get the direct audio stream URL
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(youtube_url, download=False)
+        audio_url = info['url']  # Direct stream URL of the audio
+
+    # Stream the audio directly to ffmpeg and save as WAV
+    ffmpeg_cmd = [
+        'ffmpeg',
+        '-i', audio_url,           # Input stream URL
+        '-vn',                     # Disable video (audio only)
+        '-acodec', 'pcm_s16le',    # Audio codec for WAV format
+        '-ar', '44100',            # Set audio sample rate to 44.1kHz (WAV standard)
+        '-ac', '2',                # Set audio channels to stereo (2 channels)
+        '-y',                      # Overwrite output if exists
+        wav_filename
+    ]
+
+    # Run FFmpeg with stdout and stderr suppressed
+    subprocess.run(ffmpeg_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    
+
+    print(f"Downloaded and converted {youtube_url} to {wav_filename}")
+
 #################################################################################
 
 
