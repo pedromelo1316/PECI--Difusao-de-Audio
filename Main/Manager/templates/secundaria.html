@@ -10,7 +10,7 @@
 <nav class="navbar" >
     <div class="nav-left">
         <a href="{{ url_for('index') }}" class="settings-link">
-            <i class="fa-solid fa-arrow-left "></i>
+            <i class="fa-solid fa-arrow-left  icon-arrow-left"></i>
         </a>
     </div>
     <div class="nav-center">
@@ -37,7 +37,9 @@
                         <li class="playlist-item2">
                             <span>{{ playlist.name }}</span>
                             <div class="playlist-actions">                                
-                                <i class="fa-solid fa-pen style="font-size: 16px; color: gray;" onclick="editPlaylist('{{ playlist.id }}')"></i>
+                                <!--<i class="fa-solid fa-pen style="font-size: 16px; color: gray;" onclick="editPlaylist('{{ playlist.id }}')"></i> -->
+                                <i class="fa-solid fa-pen" style="font-size: 16px; color: gray;" onclick="editPlaylist('{{ playlist.id }}')"></i>
+
                                 <i class="fa-solid fa-trash style="font-size: 16px; color: gray;" onclick="deletePlaylist('{{ playlist.name }}')"></i>
                             </div>
                         </li>
@@ -107,7 +109,7 @@
                         {% endfor %}
                     </ul>
                     <div style="text-align: center;">
-                        <button onclick="showAddStreamChoiceModal()">Add Streaming</button>
+                        <button class="green-action-btn" onclick="showAddStreamChoiceModal()">Add Streaming</button>
                     </div>
                 </div>
             </div>
@@ -134,7 +136,7 @@
                     {% endfor %}
                 </ul>
                 <div style="text-align: center;">
-                    <button onclick="fetchMicrophones()">Get Microfones</button>
+                    <button class="green-action-btn" onclick="fetchMicrophones()">Get Microfones</button>
                 </div>
                     
             </div> <!-- Closing the microfone-section div -->

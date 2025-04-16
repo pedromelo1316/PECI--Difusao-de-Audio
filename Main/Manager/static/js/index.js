@@ -316,8 +316,8 @@ function showAddSongsModal() {
             <span class="close" onclick="closeAddSongChoiceModal()">&times;</span>
             <h2>Escolha a origem da música</h2>
             <div class="modal-buttons">
-                <button class="confirm" onclick="openLocalSongModal()">Local</button>
-                <button class="confirm" onclick="openWebSongModal()">Pesquisar na Web</button>
+                <button class="confirm" style="font-weight: bold;" onclick="openLocalSongModal()">Local</button>
+                <button class="confirm" style="font-weight: bold;" onclick="openWebSongModal()">Pesquisar na Web</button>
             </div>
         </div>
     `;

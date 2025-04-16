@@ -36,6 +36,54 @@ section {
     border-bottom: 2px solid #ccc; /* <-- Linha embaixo da navbar */
     height: 10vh;
 }
+
+.navbar a {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16.5px;
+    font-weight: 600;
+    color: #1e1e1e;
+    text-decoration: none;
+    padding: 12px 18px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    transition: all 0.3s ease-in-out;
+}
+
+.navbar a::after {
+    content: '';
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background-color: #10B981;
+    transition: width 0.3s ease, left 0.3s ease;
+    border-radius: 2px;
+}
+
+.navbar a:hover::after {
+    width: 80%;
+    left: 10%;
+}
+
+.navbar a:hover {
+    color: #10B981;
+}
+
+
+
+.navbar a.settings-link::after {
+    display: none;
+}
+
+.navbar a.settings-link:hover {
+    color: inherit; /* mantém a cor original ao passar o rato */
+}
+
+
+
+
 .nav-center a.active {
     color: #2563eb; /* Azul */
     font-weight: bold;
@@ -46,7 +94,18 @@ section {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 28px;
+  }
+  
+  .icon-arrow-left {
+    font-size: 26px; /* Intermédio entre fa-1x (16px) e fa-2x (32px) */
+    color: #333;
+    cursor: pointer;
+    transition: color 0.3s;
+  }
+  
+  .icon-arrow-left:hover {
+    /*color: #5DBB63;*/
+    color: #6FCF97
   }
   
   .logo {
@@ -68,7 +127,7 @@ section {
   }
   
   .nav-center a:hover {
-    color: #22cc3f; /* Changed from #2563eb to green */
+    color: #5DBB63; /* Changed from #2563eb to green */
   }
   
   .nav-right {
@@ -191,6 +250,26 @@ h1 {
     margin-bottom: 15px;
 }
 
+
+h2 {
+    font-size: 20px;
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  
+  h3 {
+    font-size: 18px;
+    color: #444;
+    font-weight: 500;
+  }
+  
+  span, li, p {
+    font-size: 15px;
+    color: #444;
+  }
+  
+/* ===== LAYOUT ===== 
 h2 {
     font-size: 22px;
     font-weight: bold;
@@ -206,6 +285,8 @@ p {
     font-weight: bold;
 }
 
+
+*/
 /* ===== LAYOUT ===== */
 
 .content{
@@ -411,7 +492,7 @@ header {
 }
 
 .header-left .fa-backward-step:hover {
-    color: #22cc3f;
+    color: #5DBB63;
 }
 
 .header-left .fa-arrow-left {
@@ -422,7 +503,7 @@ header {
 }
 
 .header-left .fa-arrow-left:hover {
-    color: #22cc3f;
+    color: #5DBB63;
 }
 
 
@@ -559,7 +640,7 @@ header {
 }
 
 .column-actions i:hover {
-    color: #22cc3f; /* Changed from #000 to green */
+    color: #5DBB63; /* Changed from #000 to green */
 }
 
 .column-details {
@@ -654,7 +735,7 @@ header {
 
 .channel-item.selected {
     background-color: #f0f8f0 !important;
-    border-left: 3px solid #22cc3f;
+    border-left: 3px solid #5DBB63;
 }
 
 /* Column & Speaker Section */
@@ -681,7 +762,7 @@ header {
 .add-column-button {
     padding: 4px;
     text-align: center;
-    color: #22cc3f;
+    color: #5DBB63;
     font-weight: bold;
     cursor: pointer;
     border: #000 dashed 1px;
@@ -911,7 +992,7 @@ header {
 .add-column {
     padding: 8px;
     text-align: center;
-    color: #22cc3f;
+    color: #5DBB63;
     font-weight: bold;
     cursor: pointer;
 }
@@ -920,7 +1001,7 @@ header {
     margin: 10px;
     padding: 8px 16px;
     border: none;
-    background-color: #22cc3f;
+    background-color: #5DBB63;
     color: white;
     cursor: pointer;
     border-radius: 10px;
@@ -937,7 +1018,7 @@ header {
 }
 
 .configure-button {
-    background-color: #22cc3f;
+    background-color: #5DBB63;
     color: white;
 }
 
@@ -959,18 +1040,18 @@ header {
 input[type="range"] {
     width: 100%;
     margin-top: 5px;
-    background-color: #22cc3f;
-    accent-color: #22cc3f;
+    background-color: #5DBB63;
+    accent-color: #5DBB63;
     height: 6px;
     border-radius: 3px;
 }
 
 input[type="checkbox"]:checked {
-    background-color: #22cc3f;
+    background-color: #5DBB63;
 }
 
 input[type="checkbox"], input[type="radio"] {
-    accent-color: #22cc3f;
+    accent-color: #5DBB63;
 }
 
 /* ===== SELECT & DROPDOWN STYLES ===== */
@@ -988,7 +1069,7 @@ input[type="checkbox"], input[type="radio"] {
 }
 
 .select-column:focus {
-    border-color: #22cc3f;
+    border-color: #5DBB63;
     box-shadow: 0 0 5px rgba(34, 204, 63, 0.5);
     outline: none;
 }
@@ -1077,7 +1158,7 @@ footer {
 }
 
 .transmit-button {
-    background-color: #22cc3f;
+    background-color: #5DBB63;
     color: white;
     border: none;
     border-radius: 4px;
@@ -1123,7 +1204,7 @@ footer {
 
 .channel-card:hover {
     transform: translateY(-2px);
-    border-left-color: #22cc3f;
+    border-left-color: #5DBB63;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
 }
 
@@ -1157,7 +1238,7 @@ footer {
 }
 
 .status-indicator.active {
-    background-color: #22cc3f;
+    background-color: #5DBB63;
     box-shadow: 0 0 6px rgba(34, 204, 63, 0.6);
     animation: pulse 2s infinite;
 }
@@ -1206,7 +1287,7 @@ footer {
 }
 
 .toggle-transmission-btn i.fa-play {
-    color: #22cc3f;
+    color: #5DBB63;
 }
 
 .toggle-transmission-btn i.fa-pause {
@@ -1318,7 +1399,7 @@ footer {
 
 /* Make the checkbox indicators more visible */
 .mic-channel-checkbox:checked {
-    accent-color: #22cc3f;
+    accent-color: #5DBB63;
 }
 
 /* ===== MICROPHONE TITLE AND SELECTION ===== */
@@ -1354,7 +1435,7 @@ footer {
 
 .mic-select:focus {
     outline: none;
-    border-color: #22cc3f;
+    border-color: #5DBB63;
     box-shadow: 0 0 0 2px rgba(34, 204, 63, 0.2);
 }
 
@@ -1402,7 +1483,7 @@ footer {
 
 .mic-dropdown-icon.active {
     transform: rotate(180deg);
-    color: #22cc3f;
+    color: #5DBB63;
 }
 
 /* Section Header with Settings Icon */
@@ -1460,7 +1541,7 @@ footer {
 }
 
 .settings-icon:hover {
-    color: #22cc3f !important; /* Changed from #2196F3 to green */
+    color: #5DBB63 !important; /* Changed from #2196F3 to green */
     background-color: rgba(34, 204, 63, 0.1); /* Changed background to match green */
     transform: rotate(15deg);
 }
@@ -1490,7 +1571,7 @@ footer {
 }
 
 .edit-icon:hover {
-    color: #22cc3f;
+    color: #5DBB63;
 }
 
 /* Formulário de Edição do canal */
@@ -1510,7 +1591,7 @@ footer {
 }
 
 .channel-edit-input:focus {
-    border-color: #22cc3f;
+    border-color: #5DBB63;
     box-shadow: 0 0 5px rgba(34, 204, 63, 0.3);
 }
 
@@ -1565,12 +1646,12 @@ footer {
 
 .playlist-box:hover {
     background-color: #e0ffe0;
-    border-color: #22cc3f;
+    border-color: #5DBB63;
 }
 
 .playlist-box.selected {
     background-color: #d2ffd2;
-    border-color: #22cc3f;
+    border-color: #5DBB63;
     font-weight: bold;
 }
 
@@ -1648,9 +1729,9 @@ footer {
 
 .side-menu li.active a {
     background-color: #e0ffe0;
-    color: #22cc3f;
+    color: #5DBB63;
     font-weight: bold;
-    border-left: 4px solid #22cc3f;
+    border-left: 4px solid #5DBB63;
 }
 
 .side-menu li:hover a {
@@ -1781,7 +1862,7 @@ footer {
 /* Apenas o ícone do lápis gira ao passar o rato */
 .edit-link .settings-icon:hover {
     transform: rotate(15deg);
-    color: #22cc3f !important; /* Changed from #2196F3 to green */
+    color: #5DBB63 !important; /* Changed from #2196F3 to green */
 }
 
 /* O botão de play/stop NÃO gira */
@@ -1798,9 +1879,9 @@ footer {
     margin-top: 15px;
     padding: 10px;
     background-color: #f8f8f8;
-    border: 2px dashed #22cc3f;
+    border: 2px dashed #5DBB63;
     border-radius: 8px;
-    color: #22cc3f;
+    color: #5DBB63;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -1905,12 +1986,12 @@ footer {
 }
 
 .column-actions i:hover {
-    color: #22cc3f; /* Changed from #2196F3 to green */
+    color: #5DBB63; /* Changed from #2196F3 to green */
     background-color: #f0f0f0;
 }
 
 .column-actions i.fa-pen:hover {
-    color: #22cc3f !important; /* Keep green */
+    color: #5DBB63 !important; /* Keep green */
     background-color: rgba(34, 204, 63, 0.1); /* Changed background to match green */
 }
 
@@ -1938,7 +2019,7 @@ footer {
 
 .column-detailsCH p::before {
     content: "• ";
-    color: #22cc3f;
+    color: #5DBB63;
     margin-right: 5px;
     font-weight: bold;
 }
@@ -1977,14 +2058,14 @@ footer {
 }
 
 .device-info i {
-    color: #22cc3f;
+    color: #5DBB63;
     width: 16px;
     text-align: center;
 }
 
 /* Style for active info button */
 .toggle-transmission-btn .fa-info-circle.active {
-    color: #22cc3f;
+    color: #5DBB63;
     background-color: rgba(34, 204, 63, 0.1);
 }
 
@@ -2003,7 +2084,7 @@ footer {
 }
 
 .fa-solid:hover, .fas:hover, .fa:hover, .far:hover, .fab:hover {
-    color: #22cc3f; /* Changed from #2196F3 to green */
+    color: #5DBB63; /* Changed from #2196F3 to green */
 }
 
 /* Action specific icons */
@@ -2020,7 +2101,7 @@ footer {
 }
 
 .fa-play:hover {
-    color: #22cc3f !important; /* Green on hover for play */
+    color: #5DBB63 !important; /* Green on hover for play */
 }
 
 .fa-stop, .fa-pause {
@@ -2036,7 +2117,7 @@ footer {
 }
 
 .fa-pen:hover, .fa-edit:hover, .settings-icon:hover {
-    color: #22cc3f !important; /* Changed from #2196F3 to green */
+    color: #5DBB63 !important; /* Changed from #2196F3 to green */
 }
 
 /* Override previous styles for info icon */
@@ -2045,7 +2126,7 @@ footer {
 }
 
 .fa-info-circle:hover, .fa-info-circle.active {
-    color: #22cc3f !important;
+    color: #5DBB63 !important;
 }
 
 /* Styling for icons in the column actions */
@@ -2055,7 +2136,7 @@ footer {
 }
 
 .column-actions i:hover {
-    color: #22cc3f; /* Changed from #2196F3 to green */
+    color: #5DBB63; /* Changed from #2196F3 to green */
 }
 
 /* Icon sizes standardization */
@@ -2065,31 +2146,31 @@ footer {
 
 /* Update existing styles that set icon colors */
 .column-actions i.fa-pen:hover {
-    color: #22cc3f !important; /* Keep green */
+    color: #5DBB63 !important; /* Keep green */
     background-color: rgba(34, 204, 63, 0.1); /* Changed background to match green */
 }
 
 .settings-icon:hover {
-    color: #22cc3f;
+    color: #5DBB63;
     background-color: rgba(34, 204, 63, 0.1);
     transform: rotate(15deg);
 }
 
 /* Keep color context for status indicators */
 .status-indicator.active {
-    background-color: #22cc3f;
+    background-color: #5DBB63;
     box-shadow: 0 0 6px rgba(34, 204, 63, 0.6);
 }
 
 /* Edit icon animation */
 .edit-link .settings-icon:hover {
     transform: rotate(15deg);
-    color: #22cc3f !important; /* Changed from #2196F3 to green */
+    color: #5DBB63 !important; /* Changed from #2196F3 to green */
 }
 
 /* Make device info icons more consistent */
 .device-info i {
-    color: #22cc3f !important;
+    color: #5DBB63 !important;
     width: 16px;
     text-align: center;
 }
@@ -2116,11 +2197,27 @@ footer {
 
 .media-button:hover {
     background-color: #e7f9e9; /* Changed from #e3e3e3 to light green */
-    color: #22cc3f; /* Changed from #2196F3 to green */
+    color: #5DBB63; /* Changed from #2196F3 to green */
     transform: translateY(-2px);
     box-shadow: 0 3px 6px rgba(0,0,0,0.1);
 }
 
 .media-button:hover i {
-    color: #22cc3f; /* Changed from #2196F3 to green */
+    color: #5DBB63; /* Changed from #2196F3 to green */
+}
+
+
+.green-action-btn {
+    background-color: #5DBB63;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.green-action-btn:hover {
+    background-color: #479F52;
 }

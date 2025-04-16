@@ -61,7 +61,7 @@
 
 .microphone-select:focus {
     outline: none;
-    border-color: #22cc3f;
+    border-color: #5dbb63;
     box-shadow: 0 0 5px rgba(34, 204, 63, 0.3);
 }
 
@@ -149,7 +149,7 @@
 }
 
 .edit-icon:hover {
-    color: #22cc3f;
+    color: #5dbb63;
 }
 
 /* Form Editing Channel */
@@ -169,7 +169,7 @@
 }
 
 .channel-edit-input:focus {
-    border-color: #22cc3f;
+    border-color: #5dbb63;
     box-shadow: 0 0 5px rgba(34, 204, 63, 0.3);
 }
 
@@ -263,16 +263,16 @@
 }
 
 .menu-item:hover i {
-    color: #22cc3f;
+    color: #5dbb63;
 }
 
 .menu-item.active {
     background-color: #f0fff0;
-    border-color: #22cc3f;
+    border-color: #5dbb63;
 }
 
 .menu-item.active i {
-    color: #22cc3f;
+    color: #5dbb63;
 }
 
 .menu-item.active .menu-item-indicator {
@@ -281,7 +281,7 @@
     top: 0;
     bottom: 0;
     width: 4px;
-    background-color: #22cc3f;
+    background-color: #5dbb63;
     border-top-left-radius: 10px;
     border-bottom-left-radius: 10px;
 }
@@ -462,7 +462,7 @@
 .stat-value {
     font-size: 24px;
     font-weight: bold;
-    color: #22cc3f;
+    color: #5dbb63;
     margin-bottom: 6px;
 }
 
@@ -478,7 +478,7 @@
 }
 
 .save-button {
-    background-color: #22cc3f;
+    background-color: #5dbb63;
     color: white;
     padding: 12px 24px;
     border: none;
@@ -552,7 +552,7 @@
 
 .drop-zone.drag-over {
     background-color: #e0ffe0;
-    border-color: #22cc3f;
+    border-color: #5dbb63;
 }
 
 .dragging {
@@ -666,7 +666,7 @@
 }
 
 .add-streaming-btn {
-    background-color: #22cc3f;
+    background-color: #5dbb63;
     color: white;
     padding: 10px 20px;
     border: none;
@@ -738,7 +738,7 @@
 }
 
 .add-item-btn {
-    background-color: #22cc3f;
+    background-color: #5dbb63;
     color: white;
     border: none;
     border-radius: 50%;

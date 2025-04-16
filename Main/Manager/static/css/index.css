@@ -381,7 +381,7 @@
 
 .add-streaming {
     cursor: pointer;
-    color: #22cc3f;
+    color: #5dbb63;
     font-weight: bold;
     width: 100%;
     text-align: center;
@@ -406,7 +406,7 @@
 
 .add-playlist, .add-song, .add-streaming {
     cursor: pointer;
-    color: #22cc3f;
+    color: #5dbb63;
     font-weight: bold;
     justify-content: center;
     align-items: center;
@@ -594,7 +594,7 @@ h3 {
 }
 
 .modal-buttons .confirm {
-    background-color: #22cc3f;
+    background-color: #5dbb63;
     color: white;
 }
 
@@ -629,7 +629,7 @@ h3 {
 
 
 button {
-    background-color: #22cc3f;
+    background-color: #5dbb63;
     color: white;
     padding: 10px 20px;
     border: none;
@@ -748,7 +748,7 @@ button:hover {
 }
 
 .custom-modal .modal-buttons .confirm {
-    background-color: #22cc3f;
+    background-color: #5dbb63;
     color: white;
 }
 
@@ -763,7 +763,7 @@ button:hover {
 
 .streaming-item.add-streaming {
     cursor: pointer;
-    color: #22cc3f;
+    color: #5dbb63;
     font-weight: bold;
     text-align: center;
     padding: 10px;
@@ -775,7 +775,7 @@ button:hover {
 
 .streaming-item.add-streaming:hover {
     background-color: #e6ffe6; /* Fundo verde claro ao passar o mouse */
-    border-color: #22cc3f; /* Borda verde ao passar o mouse */
+    border-color: #5dbb63; /* Borda verde ao passar o mouse */
 }
 
 .song-actions i {
