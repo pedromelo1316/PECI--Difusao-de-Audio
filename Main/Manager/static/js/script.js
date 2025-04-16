@@ -1,39 +1,4 @@
-document.addEventListener("DOMContentLoaded", function () {
-    // Forçar height maior para teste
-    document.body.style.height = "300vh";
-    
-    // Adiciona listener para o evento de scroll (para debug, se necessário)
-    window.addEventListener("scroll", function () {
-        console.log("Scroll Position:", window.scrollY);
-    });
 
-    // Código para marcar a seção ativa na navbar
-    const sections = document.querySelectorAll("section");
-    const navLinks = document.querySelectorAll(".nav-center a");
-
-    const observerOptions = {
-        threshold: 0.5 // 50% da section visível
-    };
-
-    const observerCallback = (entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const sectionId = entry.target.getAttribute("id");
-                navLinks.forEach(link => {
-                    // Remove "active" de todos os links
-                    link.classList.remove("active");
-                    // Se o href (sem o #) corresponder ao id da section, adiciona a classe active
-                    if (link.getAttribute("href").substring(1) === sectionId) {
-                        link.classList.add("active");
-                    }
-                });
-            }
-        });
-    };
-
-    const observer = new IntersectionObserver(observerCallback, observerOptions);
-    sections.forEach(section => observer.observe(section));
-});
 document.addEventListener("DOMContentLoaded", function () {
 
     window.renameNode = function(nodeId) { // Torna a função global
