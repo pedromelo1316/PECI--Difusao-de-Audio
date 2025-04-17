@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block head %}
-  <title>Adicionar Interrupção</title>
+  <title>Add Interruption</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/add_interrupt.css') }}">
@@ -22,38 +22,38 @@
   <div>
 </nav>
   <div class="form-container">
-    <h2>Adicionar Interrupção</h2>
+    <h2>Add Interruption</h2>
     <form id="interruptForm">
-        <!-- Nome da interrupção -->
-        <label for="interruptName">Nome da Interrupção:</label>
+        <!-- Interruption name -->
+        <label for="interruptName">Interruption Name:</label>
         <input type="text" id="interruptName" name="interruptName" required>
       
-        <!-- Microfone -->
-        <label for="microphone">Selecionar Microfone:</label>
+        <!-- Microphone -->
+        <label for="microphone">Select Microphone:</label>
         <select id="microphone" name="microphone" required>
-          <option value="">-- Escolher Microfone --</option>
+          <option value="">-- Choose Microphone --</option>
           {% for mic in microphones %}
             <option value="{{ mic.id }}">{{ mic.name }}</option>
           {% endfor %}
         </select>
       
         <div class="checkbox-group">
-          <!-- Áreas -->
+          <!-- Areas -->
           <div class="checkbox-container">
-            <h3>Áreas</h3>
+            <h3>Areas</h3>
             <fieldset>
-              <label><input type="checkbox" id="selectAllAreas"> Selecionar Todas</label><br>
+              <label><input type="checkbox" id="selectAllAreas"> Select All</label><br>
               {% for area in areas %}
                 <label><input type="checkbox" name="areas" value="{{ area.id }}"> {{ area.name }}</label><br>
               {% endfor %}
             </fieldset>
           </div>
       
-          <!-- Canais -->
+          <!-- Channels -->
           <div class="checkbox-container">
-            <h3>Canais</h3>
+            <h3>Channels</h3>
             <fieldset>
-              <label><input type="checkbox" id="selectAllChannels"> Selecionar Todos</label><br>
+              <label><input type="checkbox" id="selectAllChannels"> Select All</label><br>
               {% for channel in channels %}
                 <label><input type="checkbox" name="channels" value="{{ channel.id }}"> {{ channel.name }}</label><br>
               {% endfor %}
@@ -61,26 +61,26 @@
           </div>
         </div>
       
-        <!-- Botão de guardar -->
-        <button type="submit" class="save-btn">Guardar Interrupção</button>
+        <!-- Save button -->
+        <button type="submit" class="save-btn">Save Interruption</button>
       </form>
   </div>
 
   <script>
-    // Selecionar todas as áreas
+    // Select all areas
     document.getElementById('selectAllAreas').addEventListener('change', function () {
       const checkboxes = document.querySelectorAll('input[name="areas"]');
       checkboxes.forEach(cb => cb.checked = this.checked);
     });
   
-    // Selecionar todos os canais
+    // Select all channels
     document.getElementById('selectAllChannels').addEventListener('change', function () {
       const checkboxes = document.querySelectorAll('input[name="channels"]');
       checkboxes.forEach(cb => cb.checked = this.checked);
     });
   
     document.getElementById('interruptForm').addEventListener('submit', function (event) {
-        event.preventDefault(); // Impede o comportamento padrão do formulário
+        event.preventDefault(); // Prevent default form behavior
       
         const formData = new FormData(this);
         const data = {
@@ -99,19 +99,19 @@
         })
           .then(response => {
             if (response.ok) {
-              alert('Interrupção salva com sucesso!');
-              this.reset(); // Limpa o formulário
-              window.location.href = '{{ url_for("index") }}'; // Redireciona para a página inicial
+              alert('Interruption saved successfully!');
+              this.reset(); // Clear the form
+              window.location.href = '{{ url_for("index") }}'; // Redirect to home page
             } else {
-              response.text().then(text => alert('Erro: ' + text));
+              response.text().then(text => alert('Error: ' + text));
             }
           })
-          .catch(error => console.error('Erro:', error));
+          .catch(error => console.error('Error:', error));
       });
   </script>
 {% endblock %}
 {% block footer %}
   <footer>
-    <p>&copy; 2023 Audio Manager. Todos os direitos reservados.</p>
+    <p>&copy; 2023 Audio Manager. All rights reserved.</p>
   </footer>
 {% endblock %}

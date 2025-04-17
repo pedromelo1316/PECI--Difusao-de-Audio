@@ -1,4 +1,6 @@
 let streamingSources = [];
+// ... (previous code remains the same until the updateSectionRight function)
+
 function updateSectionRight(value) {
     const sectionRight = document.getElementById("sectionRightContent");
     const saveButtonContainer = document.getElementById("saveButtonContainer");
@@ -9,44 +11,52 @@ function updateSectionRight(value) {
 
     if (value === "LOCAL") {
         let playlistsHTML = '';
-        for (const [playlistName, songs] of Object.entries(playlistsData)) {
-            playlistsHTML += `
-                <div class="playlist-item" style="display: flex; flex-direction: column; border: 1px solid #ccc; margin-bottom: 10px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <button class="toggle-songs-btn" onclick="toggleSongsVisibility(this)" style="background: none; border: none; cursor: pointer; margin-right: 10px;">
-                            <i class="fa-solid fa-chevron-down"></i>
-                        </button>
-                        <label for="playlist-${playlistName}" style="flex-grow: 1;">
-                            <span class="playlist-name">${playlistName}</span>
-                        </label>
-                        <input type="checkbox" id="playlist-${playlistName}" onchange="addToPlaylist('${playlistName}', 'playlist', this.checked)">
+        if (Object.keys(playlistsData).length > 0) {
+            for (const [playlistName, songs] of Object.entries(playlistsData)) {
+                playlistsHTML += `
+                    <div class="playlist-item" style="display: flex; flex-direction: column; border: 1px solid #ccc; margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <button class="toggle-songs-btn" onclick="toggleSongsVisibility(this)" style="background: none; border: none; cursor: pointer; margin-right: 10px;">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </button>
+                            <label for="playlist-${playlistName}" style="flex-grow: 1;">
+                                <span class="playlist-name">${playlistName}</span>
+                            </label>
+                            <input type="checkbox" id="playlist-${playlistName}" onchange="addToPlaylist('${playlistName}', 'playlist', this.checked)">
+                        </div>
+                        <div class="songs-list" style="display: none; padding-left: 20px; margin-top: 5px;">
+                            ${songs.map(song => `
+                                <div class="song-item" style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span>${song}</span>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
-                    <div class="songs-list" style="display: none; padding-left: 20px; margin-top: 5px;">
-                        ${songs.map(song => `
-                            <div class="song-item" style="display: flex; justify-content: space-between; align-items: center;">
-                                <span>${song}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
+                `;
+            }
+        } else {
+            playlistsHTML = `<p class="no-items-message">No playlists available</p>`;
         }
     
         let songsHTML = '';
-        allSongs.forEach(song => {
-            console.log("song:", song);
-            const isChecked = associatedSongs.includes(song); // Verifica se a música está associada
-            songsHTML += `
-                <div class="song-item" style="display: flex; justify-content: space-between; align-items: center;">
-                    <label for="song-${song}" style="flex-grow: 1;">
-                        <span class="song-name">${song}</span>
-                    </label>
-                    <input type="checkbox" id="song-${song}" onchange="addToPlaylist('${song}', 'song', this.checked)" ${isChecked ? 'checked' : ''}>
-                </div>
-            `;
-        });
+        if (allSongs.length > 0) {
+            allSongs.forEach(song => {
+                console.log("song:", song);
+                const isChecked = associatedSongs.includes(song);
+                songsHTML += `
+                    <div class="song-item" style="display: flex; justify-content: space-between; align-items: center;">
+                        <label for="song-${song}" style="flex-grow: 1;">
+                            <span class="song-name">${song}</span>
+                        </label>
+                        <input type="checkbox" id="song-${song}" onchange="addToPlaylist('${song}', 'song', this.checked)" ${isChecked ? 'checked' : ''}>
+                    </div>
+                `;
+            });
+        } else {
+            songsHTML = `<p class="no-items-message">No songs available</p>`;
+        }
 
-        // Adiciona as músicas associadas ao canal na dropzone
+        // Add channel-associated songs to dropzone
         let associatedSongsHTML = '';
         if (associatedSongs.length > 0) {
             associatedSongs.forEach(song => {
@@ -60,44 +70,48 @@ function updateSectionRight(value) {
                 `;
             });
         } else {
-            associatedSongsHTML = `<p class="no-songs-message">Nenhuma música associada ao canal.</p>`;
+            associatedSongsHTML = `<p class="no-items-message">No songs associated with this channel</p>`;
         }
 
         sectionRight.innerHTML = `
             <div class="inner-section-left">
-                <h3>Lista de reprodução</h3>
+                <h3>Playlist</h3>
                 <div class="selected-playlist-info">
                     <div class="playlist-dropzone">
-                        ${associatedSongsHTML} <!-- Músicas associadas ou mensagem -->
+                        ${associatedSongsHTML}
                     </div>
                 </div>
             </div>
             <div class="inner-section-right">
-                <h3>Playlists Disponíveis</h3>
+                <h3>Playlists</h3>
                 <div class="playlist-container">
                     ${playlistsHTML}
                 </div>
-                <h3>Músicas Disponíveis</h3>
+                <h3>Songs</h3>
                 <div class="songs-container">
                     ${songsHTML}
                 </div>
             </div>
         `;
         saveButtonContainer.style.display = "flex";
-        enablePlaylistReordering(); // Enable drag-and-drop reordering
+        enablePlaylistReordering();
     
     } else if (value === "STREAMING") {
         let streamingHTML = '';
-        streamingSources2.forEach(source => {
-            streamingHTML += `
-                <div class="streaming-item">
-                    <label for="streaming-${source}" style="flex-grow: 1;">
-                        <span>${source}</span>
-                    </label>
-                    <input type="radio" name="streaming-source" id="streaming-${source}" onchange="selectStreamingSource('${source}')" ${associatedStreaming === source ? 'checked' : ''}>
-                </div>
-            `;
-        });
+        if (streamingSources2.length > 0) {
+            streamingSources2.forEach(source => {
+                streamingHTML += `
+                    <div class="streaming-item">
+                        <label for="streaming-${source}" style="flex-grow: 1;">
+                            <span>${source}</span>
+                        </label>
+                        <input type="radio" name="streaming-source" id="streaming-${source}" onchange="selectStreamingSource('${source}')" ${associatedStreaming === source ? 'checked' : ''}>
+                    </div>
+                `;
+            });
+        } else {
+            streamingHTML = `<p class="no-items-message">No streaming sources available</p>`;
+        }
 
         const selectedStreamingHTML = associatedStreaming
             ? `
@@ -107,18 +121,18 @@ function updateSectionRight(value) {
                         <i class="fa-solid fa-trash-can"></i>
                     </button>
                 </div>`
-            : `<p class="section-hint">Selecione uma fonte de streaming</p>`;
+            : `<p class="no-items-message">No streaming source selected</p>`;
 
         sectionRight.innerHTML = `
             <div class="inner-section-left">
-                <h3 id="Streaming_Source_Message">Fonte de Streaming:</h3>
+                <h3 id="Streaming_Source_Message">Streaming Source</h3>
                 <div class="selected-streaming-info">
                     ${selectedStreamingHTML}
                     <div id="selectedStreamingDisplay" style="margin-top: 10px; font-weight: bold;"></div>
                 </div>
             </div>
             <div class="inner-section-right">
-                <h3>Fontes Disponíveis</h3>
+                <h3>Sources</h3>
                 <div class="streaming-container">
                     ${streamingHTML}
                 </div>
@@ -127,10 +141,11 @@ function updateSectionRight(value) {
         saveButtonContainer.style.display = "flex";
     } else {
         sectionRight.className = "inner-dual-section empty-message";
-        sectionRight.innerHTML = `<p style="text-align:center;">Selecione o tipo de reprodução que pretende</p>`;
+        sectionRight.innerHTML = `<p style="text-align:center;">Select the type of playback you want</p>`;
         saveButtonContainer.style.display = "none";
     }
 }
+
 
 function selectStreamingSource(source) {
     const selectedDisplay = document.getElementById("selectedStreamingDisplay");
