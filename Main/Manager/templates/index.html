@@ -284,7 +284,7 @@
                               
                                 <div class="channel-cards">
                                     {% for channel in channels %}
-                                    <div class="channel-card" data-channel-id="{{ channel.id }}">
+                                    <div class="channel-card" data-channel-id="{{ channel.id }}" onclick="window.location.href='{{ url_for('edit_channels', channel_id=channel.id) }}'" style="cursor: pointer;">
                                         <div class="card-content">
                                             <span class="channel-name">{{ channel.name }}</span>
                                             <div class="channel-status">

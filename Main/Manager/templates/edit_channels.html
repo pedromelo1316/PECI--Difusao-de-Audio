@@ -36,8 +36,18 @@
 <div class="channel-title-container">
     <!-- Visualização -->
     <div id="channelTitleDisplay" class="channel-title">
-        <h1 id="channelTitle">{{ channel.name }}</h1>
-        <i class="fa-solid fa-pen edit-icon" onclick="toggleChannelEdit()"></i>
+        <h1 id="channelTitle" style="margin-bottom: 0px">{{ channel.name }}</h1>
+        <i class="fa-solid fa-pen edit-icon" style="font-size: 25px;" onclick="toggleChannelEdit()"></i>
+        <!-- Switch para ativar/desativar canal -->
+        <div class="channel-switch-container">
+            <label class="switch">
+                <input type="checkbox" id="channelSwitch" {% if channel.is_active %}checked{% endif %} onchange="toggleChannelStatus({{ channel.id }})">
+                <span class="slider">
+                    <span class="switch-text off">OFF</span>
+                    <span class="switch-text on">ON</span>
+                </span>
+            </label>
+        </div>
     </div>
 
     <!-- Edição -->
@@ -45,9 +55,9 @@
         <input type="text" id="channelNameInput" name="channel_name" value="{{ channel.name }}" class="channel-edit-input" required>
         <button type="submit" class="save-button">Guardar</button>
     </form>
+
+
 </div>
-
-
 
 
 <div class="containerCH">
@@ -118,7 +128,26 @@
 
     console.log("associated_songs:", associatedSongs);
 
-    
+    function toggleChannelStatus(channelId) {
+        const switchElement = document.getElementById('channelSwitch');
+        const isActive = switchElement.checked;
+
+        // Fazer uma requisição para atualizar o status do canal
+        fetch(`/update_channel_status/${channelId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ is_active: isActive })
+        }).then(response => {
+            if (!response.ok) {
+                console.error('Erro ao atualizar o status do canal');
+            }
+        }).catch(error => {
+            console.error('Erro na requisição:', error);
+        });
+    }
 </script>
 
 <script src="{{ url_for('static', filename='js/edit_channels.js') }}"></script>
