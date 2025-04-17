@@ -1492,17 +1492,25 @@ def update_song(song_id):
 # Rota para excluir uma música
 @app.route('/delete_song/<string:song_name>', methods=['DELETE'])
 def delete_song(song_name):
-    print(f"Eleminar musica {song_name}")
+    print(f"Eliminar música: {song_name}")
     song = Songs.query.filter_by(name=song_name).first()
     if not song:
         return jsonify({"error": "Música não encontrada"}), 404
+    
     try:
-        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], f"{song.song_hash}.wav"))
+        song_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{song.song_hash}.wav")
+        if os.path.exists(song_path):
+            os.remove(song_path)
+        else:
+            print(f"Aviso: Ficheiro '{song_path}' não encontrado. A eliminar só da base de dados.")
+
         db.session.delete(song)
         db.session.commit()
         return jsonify({"success": True}), 200
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
     
 
 @app.route('/playlists', methods=['GET'])
