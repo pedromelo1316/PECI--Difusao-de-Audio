@@ -782,7 +782,12 @@ class Songs(db.Model):
 class Playlist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
-    songs = db.relationship('Songs', secondary=playlist_songs, backref='playlist', lazy=True)
+    songs = db.relationship(
+        'Songs',
+        secondary=playlist_songs,
+        backref='playlist',
+        lazy='subquery'
+    )
 
     def __repr__(self):
         return f'<Playlist {self.id}: {self.name}>'
@@ -1706,49 +1711,51 @@ def import_playlist():
 def save_playlist():
     data = request.json
     playlist_name = data.get('playlist_name')
-    updated_songs = data.get('songs')  # Lista de músicas atualizadas
+    updated_songs = data.get('songs')
 
     if not playlist_name or updated_songs is None:
         return jsonify({"error": "Nome da playlist e lista de músicas são obrigatórios"}), 400
 
-    # Busca a playlist pelo nome
     playlist = Playlist.query.filter_by(name=playlist_name).first()
     if not playlist:
         return jsonify({"error": "Playlist não encontrada"}), 404
 
     try:
-        # Atualiza as músicas da playlist
-        playlist.songs = Songs.query.filter(Songs.name.in_(updated_songs)).all()
+        playlist.songs = []
         db.session.commit()
-
+        for song_name in updated_songs:
+            song = Songs.query.filter_by(name=song_name).first()
+            if song:
+                playlist.songs.append(song)
+        db.session.commit()
         return jsonify({"success": True}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/playlist_order/<playlist_name>')
+def playlist_order(playlist_name):
+    playlist = Playlist.query.filter_by(name=playlist_name).first()
+    if not playlist:
+        return jsonify({"error": "Playlist não encontrada"}), 404
 
-#################################################################################
+    ordered_songs = [song.name for song in playlist.songs]
+    return jsonify({"songs": ordered_songs})
 
 
 @app.route('/export_conf', methods=['GET'])
 def export_conf():
     nodes = Nodes.query.all()
     areas = Areas.query.all()
-    
     config_data = {
-        "nodes": [{"name": node.name, "mac": node.mac, "area": node.area.name if node.area else None} for node
-                  in nodes],
+        "nodes": [{"name": node.name, "mac": node.mac, "area": node.area.name if node.area else None} for node in nodes],
         "areas": [{"name": area.name, "volume": area.volume, "channel": area.channel_id} for area in areas]
     }
 
     json_data = json.dumps(config_data)
-
-    # Create a file-like object in memory
+    print("Configuration exported")
     memory_file = BytesIO(json_data.encode('utf-8'))
     memory_file.seek(0)
-
-    print("Configuration exported")
-    # Send the file for download
     return send_file(memory_file, as_attachment=True, download_name="config.json", mimetype="application/json")
 
 
@@ -1759,10 +1766,8 @@ def import_conf():
     file = request.files['file']
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
-
     file_content = file.read()
-    data = json.loads(file_content) 
-
+    data = json.loads(file_content)
 
     nodes = data.get("nodes", [])
     areas = data.get("areas", [])
@@ -1792,22 +1797,20 @@ def import_conf():
                 new_node = Nodes(name=node_data['name'], mac=node_data['mac']) 
             db.session.add(new_node)
             db.session.commit()
-
     print("Configuration imported")
     return jsonify({"success": True})
-
 #################################################################################
+#######################################
+#############
+#YOUTUBE#####
+#############
 
-#############
-#YOUTUBE
-#############
 def search_youtube(query, max_results=10):
     results = []
     try:
         # Search using youtubesearchpython (searches for videos on YouTube)
         videos_search = VideosSearch(query, limit=max_results)
         search_results = videos_search.result().get('result', [])
-        
         for item in search_results:
             title = item.get('title', 'Sem título')
             url = item.get('link', 'Sem link')
@@ -1815,7 +1818,6 @@ def search_youtube(query, max_results=10):
             author_info = item.get('channel', {})
             author = author_info.get('name', 'Unknown')  # Extracting the author (channel name)
             duration = item.get('duration', '00:00')  # Extracting the video duration
-            
             results.append({
                 "title": title,
                 "url": url,
@@ -1828,13 +1830,11 @@ def search_youtube(query, max_results=10):
     return results
 
 
-
 def search_youtube_live(query, max_results=30):
     results = []
     try:
         videos_search = VideosSearch(query, limit=max_results)
         search_results = videos_search.result().get('result', [])
-        
         for item in search_results:
             duration = item.get('duration', None)
             # Verifica se é uma stream (duration == None)
@@ -1844,7 +1844,6 @@ def search_youtube_live(query, max_results=30):
                 thumbnail = item.get('thumbnails', [{}])[0].get('url', '')
                 author_info = item.get('channel', {})
                 author = author_info.get('name', 'Desconhecido')
-                
                 results.append({
                     "title": title,
                     "url": url,
@@ -1863,8 +1862,7 @@ def search_suggestions():
         return jsonify(results)
     return jsonify([])
 
-
-@app.route("/stream_search_suggestions", methods=["GET"])   
+@app.route("/stream_search_suggestions", methods=["GET"])
 def stream_search_suggestions():
     query = request.args.get('query')
     if query:
@@ -1879,12 +1877,9 @@ def select_song_to_download():
     title = request.form.get("title").strip()
     url = request.form.get("url")
     print(f"Selected video: {title} - {url}")
-
     # Download the selected YouTube audio in a separate thread to avoid blocking Flask
     threading.Thread(target=download_youtube_audio, args=(url, title)).start()
-
     return redirect(url_for('secundaria'))
-
 
 @app.route("/select_stream", methods=["POST"])
 def select_stream_to_save():
@@ -1897,16 +1892,13 @@ def select_stream_to_save():
     if existing_stream:
         print(f"Stream already exists: {existing_stream.name}")
         return redirect(url_for('secundaria'))
+
     # Salvar no banco de dados
     new_stream = Streaming(name=title, url=url)
     db.session.add(new_stream)
     db.session.commit()
     print("Nova stream adicionada:", new_stream.name)
-
     return redirect(url_for('secundaria'))
-
-
-###############
 
 @app.route('/rename_streaming', methods=['POST'])
 def rename_streaming():
@@ -1916,16 +1908,13 @@ def rename_streaming():
 
     if not streaming_id or not new_name:
         return jsonify({'success': False, 'message': 'ID e novo nome são obrigatórios'}), 400
-
     streaming = Streaming.query.get(streaming_id)
     if not streaming:
         return jsonify({'success': False, 'message': 'Streaming não encontrado'}), 404
-
     streaming.name = new_name
     db.session.commit()
 
     return jsonify({'success': True, 'message': 'Nome atualizado com sucesso'})
-
 
 @app.route('/delete_streaming', methods=['POST'])
 def delete_streaming():
@@ -1934,18 +1923,13 @@ def delete_streaming():
 
     if not streaming_id:
         return jsonify({'success': False, 'message': 'ID não fornecido'}), 400
-
     streaming = Streaming.query.get(streaming_id)
     if not streaming:
         return jsonify({'success': False, 'message': 'Streaming não encontrado'}), 404
-
     db.session.delete(streaming)
     db.session.commit()
 
     return jsonify({'success': True, 'message': 'Streaming deletado com sucesso'})
-
-
-#########
 
 def save_yt_song(song_name, song_hash):
     with app.app_context():
@@ -1953,12 +1937,11 @@ def save_yt_song(song_name, song_hash):
         existing_song = Songs.query.filter_by(song_hash=song_hash).first()
         if existing_song:
             print(f"Song already exists: {existing_song.name}")
-            return 
+            return
         # Salvar no banco de dados
         new_song = Songs(name=song_name, song_hash=song_hash)
         db.session.add(new_song)
         db.session.commit()
-
         print("Nova música adicionada:", new_song.name)
 
 def download_youtube_audio(youtube_url, song_name):
@@ -1972,15 +1955,12 @@ def download_youtube_audio(youtube_url, song_name):
     # Generate the final .wav filename using the hash
     wav_filename = os.path.join(UPLOAD_FOLDER, f"{song_hash}.wav")
 
-    save_yt_song(song_name, song_hash)
-
     # Configure yt-dlp to fetch the best audio stream URL
     ydl_opts = {
         'format': 'bestaudio/best',  # Best audio quality
         'quiet': True,               # Suppress logs
         'extract_audio': True,       # Extract audio (not strictly needed here)
     }
-
     # Get the direct audio stream URL
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(youtube_url, download=False)
@@ -2000,13 +1980,10 @@ def download_youtube_audio(youtube_url, song_name):
 
     # Run FFmpeg with stdout and stderr suppressed
     subprocess.run(ffmpeg_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-    
-
     print(f"Downloaded and converted {youtube_url} to {wav_filename}")
-
+    save_yt_song(song_name, song_hash)
 #################################################################################
-
+#################################################################################
 
 def shutdown_handler(stop_event):
     stop_event.set()
@@ -2023,39 +2000,34 @@ def get_host_ip():
         return ip
     except Exception as e:
         return f"Error: {e}"
-    
-    
-    
+
+
 def remove_trash():
     # apagar ficheiros sdp, txt
     for file in os.listdir(app.config['UPLOAD_FOLDER']):
         if file.endswith('.sdp') or file.endswith('.txt'):
             os.remove(os.path.join(app.config['UPLOAD_FOLDER'], file))
             print(f"Removed temporary file: {file}")
-
 # Bloco principal de execução
 if __name__ == '__main__':
     stop_event = threading.Event()  # Evento para interromper a thread
     msg_buffer = queue.Queue()  # Fila para mensagens de status
-    
-
     with app.app_context():
-        db.create_all()  # Cria as tabelas no banco de dados, se ainda não existirem
-        remove_trash()  # Remove arquivos temporários
+        db.create_all()  # Cria as tabelas no banco de dados, se ainda não existirem        
+        remove_trash()  # Remove arquivos temporários    
         create_default_channels()  # Inicializa os canais padrão
         get_mics()
 
-        
-        
     # Associa o sinal SIGINT ao shutdown_handler para tratamento de Ctrl+C
-    signal.signal(signal.SIGINT, lambda signum, frame: shutdown_handler(stop_event))
-
-    # Inicia a thread para detectar novos nós
+    signal.signal(signal.SIGINT, lambda signum, frame: shutdown_handler(stop_event))    
+    # Inicia a thread para detectar novos nós    
     thread = threading.Thread(target=detect_new_nodes, args=(stop_event, msg_buffer), daemon=True)
     thread.start()
-    
-    # Inicia o servidor Flask com SocketIO
+
+
+
+
+
     socketio.run(app, host=get_host_ip() ,debug=False, port=5000)
-    #socketio.run(app, debug=False)
 
 

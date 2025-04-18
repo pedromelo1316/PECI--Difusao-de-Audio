@@ -45,8 +45,11 @@ function addSongToPlaylist(songName, playlistName) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Song successfully added to playlist!');
-            location.reload(); // Recarrega a página para atualizar a lista
+            
+            const playlistName = document.querySelector('.playlist-title').textContent;
+            loadPlaylistOrder(playlistName);
+            
+            location.reload();
         } else {
             alert(data.error || 'Erro ao adicionar música à playlist.');
         }
@@ -57,7 +60,6 @@ function addSongToPlaylist(songName, playlistName) {
     });
 }
 
-
 function removeSongFromPlaylist(songName, playlistName) {
     fetch('/remove_song_from_playlist', {
         method: 'POST',
@@ -67,8 +69,11 @@ function removeSongFromPlaylist(songName, playlistName) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Song successfully removed from playlist!');
-        location.reload(); // Recarrega a página para atualizar a lista
+            // Reload playlist order to reflect the removal
+            const playlistName = document.querySelector('.playlist-title').textContent;
+            loadPlaylistOrder(playlistName);
+           
+            location.reload();
         } else {
             alert(data.error || 'Error removing song from playlist.');
         }
@@ -78,8 +83,6 @@ function removeSongFromPlaylist(songName, playlistName) {
         console.error(err);
     });
 }
-
-
 
 function toggleSong(icon, songName, playlistName) {
     const action = icon.classList.contains('fa-check') ? 'remove' : 'add';
@@ -153,13 +156,50 @@ function loadPlaylistOrder(playlistName) {
                 li.className = 'playlist-item';
                 li.draggable = true;
                 li.dataset.song = song;
-                li.innerHTML = `<span>${index + 1}. ${song}</span>`;
+                li.innerHTML = `<span>${index + 1}. ${song}</span>
+                    <i class="fa-solid fa-trash" onclick="removeSongFromPlaylist('${song}', '${playlistName}')" title="Remove song"></i>`;
                 playlistList.appendChild(li);
             });
+            // Atualiza os ícones e reatribui eventos após DOM update
+            updateSongIcons();
+            rebindSongItemEvents();
         })
         .catch(err => {
             console.error('Erro ao carregar a playlist:', err);
         });
+}
+
+function updateSongIcons() {
+    const playlistSongs = Array.from(
+        document.querySelectorAll('#playlist-list .playlist-item')
+    ).map(li => li.dataset.song);
+
+    document.querySelectorAll('#songs-list .song-item').forEach(item => {
+        const songName = item.querySelector('span').textContent;
+        const icon = item.querySelector('i');
+        icon.classList.remove('fa-check', 'fa-square');
+        if (playlistSongs.includes(songName)) {
+            icon.classList.add('fa-check');
+        } else {
+            icon.classList.add('fa-square');
+        }
+    });
+}
+
+// Reatribui eventos de clique para os ícones das músicas após update do DOM
+function rebindSongItemEvents() {
+    document.querySelectorAll('#songs-list .song-item i').forEach(icon => {
+        icon.onclick = function() {
+            const li = this.closest('.song-item');
+            const songName = li.querySelector('span').textContent;
+            const playlistName = document.querySelector('.playlist-title').textContent;
+            if (this.classList.contains('fa-check')) {
+                removeSongFromPlaylist(songName, playlistName);
+            } else {
+                addSongToPlaylist(songName, playlistName);
+            }
+        };
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -187,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fix the playlist name selector for the updated DOM structure
     const playlistName = document.querySelector('.playlist-title').textContent;
     loadPlaylistOrder(playlistName);
+    // Não precisa de event delegation, pois rebindSongItemEvents faz o trabalho após cada update
 });
 
 function updatePlaylistOrder() {
@@ -247,7 +288,6 @@ function saveSong() {
         alert('Erro ao salvar a música.');
     });
 }
-
 
 function importPlaylist(playlistName) {
     const fileInput = document.createElement("input");

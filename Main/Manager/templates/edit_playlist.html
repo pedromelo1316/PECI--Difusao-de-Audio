@@ -49,7 +49,7 @@
                     {% for song in playlist_songs %}
                     <li class="playlist-item" draggable="true" data-song="{{ song }}">
                         <span>{{ loop.index }}. {{ song }}</span>
-                        <i class="fa-solid fa-minus" onclick="removeSongFromPlaylist('{{ song }}', '{{ playlist_name }}')"></i>
+                        <i class="fa-solid fa-trash" onclick="removeSongFromPlaylist('{{ song }}', '{{ playlist_name }}')" title="Remove song"></i>
                     </li>
                     {% endfor %}
                     {% endif %}

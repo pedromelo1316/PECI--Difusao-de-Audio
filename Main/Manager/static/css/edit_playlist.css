@@ -70,11 +70,12 @@ body {
     max-height: 450px;
     overflow-y: auto;
     min-height: 350px;
+    margin-top: 20px;    /* vertical gap under headings */
 }
 
 .playlist-item, .song-item {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start; /* Align items to the left */
     align-items: center;
     padding: 12px;
     border: 1px solid #ccc;
@@ -82,6 +83,22 @@ body {
     border-radius: 5px;
     background-color: #fff;
     transition: all 0.3s;
+}
+
+.song-item {
+    padding: 16px;        /* increased from 12px */
+    font-size: 16px;      /* slightly larger text */
+    min-height: 60px;     /* ensure a taller item */
+}
+
+.playlist-item span, .song-item span {
+    flex: 1;              /* Allow text to take up available space */
+    text-align: left;     /* Ensure text is left-aligned */
+}
+
+.playlist-item i, .song-item i {
+    margin-left: auto;    /* Push the trash icon to the far right */
+    cursor: pointer;      /* Indicate the icon is clickable */
 }
 
 .playlist-item:hover, .song-item:hover {
