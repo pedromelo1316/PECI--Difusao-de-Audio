@@ -102,7 +102,7 @@ function updateSectionRight(value) {
         streamingSources2.forEach(source => {
             const isChecked = associatedStreaming === source;
             streamingHTML += `
-                <div class="song-item streaming-item">
+                <div class="streaming-item">
                     <label for="streaming-${source}" style="flex-grow: 1;">
                         <span class="streaming-name">${source}</span>
                     </label>
@@ -115,7 +115,7 @@ function updateSectionRight(value) {
             <div class="inner-section-right streaming-section">
                 <span class="container-count">${streamingSources2.length}</span>
                 <h3>Available Streaming Sources</h3>
-                <div class="streaming-container">
+                <div class="streaming-container" style="max-height: 560px; overflow-y: auto;">
                     ${streamingHTML}
                 </div>
             </div>

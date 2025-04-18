@@ -226,6 +226,32 @@
     position: relative; /* Ensure position:relative for absolute positioning of count */
 }
 
+/* Increase height for inner-section-left playlists */
+.inner-section-left .playlist-dropzone {
+    max-height: 600px; /* Increased maximum height */
+    overflow-y: auto; /* Enable vertical scrolling */
+    padding-right: 5px; /* Add padding for scrollbar */
+}
+
+/* Scrollbar styling */
+.inner-section-left .playlist-dropzone::-webkit-scrollbar {
+    width: 8px;
+}
+
+.inner-section-left .playlist-dropzone::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.inner-section-left .playlist-dropzone::-webkit-scrollbar-thumb {
+    background: #5dbb63;
+    border-radius: 10px;
+}
+
+.inner-section-left .playlist-dropzone::-webkit-scrollbar-thumb:hover {
+    background: #4caf50;
+}
+
 /* Larger playlist items in the inner-section-left */
 .inner-section-left .playlist-item,
 .inner-section-left .song-item,
@@ -235,7 +261,7 @@
     margin: 8px 0; /* Increased margin for better spacing */
     background-color: white;
     border-radius: 8px;
-    border-left: 3px solid #ccc;
+   
     font-size: 16px; /* Increased font size */
     color: #333; /* Darker text for better readability */
     min-height: 24px; /* Ensure minimum height */
@@ -376,18 +402,21 @@
 /* Playlist Container & Items */
 .playlist-container {
     display: flex;
-    flex-direction: column; /* Change to vertical list */
-    gap: 9px; /* Add spacing between items */
+    flex-direction: column; 
+    gap: 0.1px; /* Reduced gap between items */
     padding: 15px;
     background: #ffffff;
-    border-radius: 12px;
+ 
     width: 100%;
     box-sizing: border-box;
+    max-height: 250px; 
+    overflow-y: auto; 
+    padding-right: 5px; 
 }
 
 .playlist-item {
     padding: 8px 10px; 
-    margin: 5px 0;
+    margin: 4px 0;
     background-color: white;
     border-radius: 8px; 
     border-left: 3px solid #ccc;
@@ -699,15 +728,17 @@
     border-radius: 12px;
     width: 100%;
     box-sizing: border-box;
+    max-height: 550px; /* Limit the height of the container */
+    overflow-y: auto; /* Enable vertical scrolling */
 }
 
-/* Increase streaming items size */
 .streaming-item {
+    height: 60px; /* Fixed height for all items */
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 14px 16px; /* Increased padding for larger size */
-    margin: 8px 0; /* Increased margin for better spacing */
+ 
     background-color: white;
     border-radius: 8px;
     border: 1px solid #ddd;
@@ -718,6 +749,7 @@
     transition: background-color 0.3s ease, border-color 0.3s ease;
     min-height: 24px; /* Ensure minimum height */
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    flex-shrink: 0; /* Prevent items from shrinking */
 }
 
 .streaming-item span,
@@ -757,7 +789,7 @@
     width: 20px;
     height: 20px;
     border: 2px solid #a8a6a6;
-    border-radius: 4px; /* Square shape */
+    border-radius: 4px; 
     display: flex;
     align-items: center;
     justify-content: center;
