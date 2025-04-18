@@ -444,12 +444,13 @@
 
         <div class="microfones-container">
             <div class="interrupt-header">
-                <h2>MIC INTERRUPTS</h2>
-                <button class="add-btn" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
-                        onclick="window.location.href='{{ url_for('add_interruption') }}'">
+                <h2 style="margin-bottom: 0px;">MIC INTERRUPTS</h2>
+                <button class="add-btn"
+                        onclick="window.location.href='{{ url_for('add_interruption') }}'" title="Nova Interrupção">
                     <i class="fas fa-plus"></i>
+                    <span>Nova Interrupção</span>
                 </button>
-            </div>
+            </div>            
 
             <div class="interrupt-list">
 
