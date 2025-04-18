@@ -166,6 +166,7 @@ function toggleSongsVisibility(button) {
 function addToPlaylist(itemName, itemType, isChecked) {
     const dropZone = document.querySelector('.playlist-dropzone');
     const noSongsMessage = dropZone.querySelector('.no-songs-message');
+    const containerCount = document.querySelector('.inner-section-left .container-count');
 
     if (isChecked) {
         // Avoid duplicates
@@ -189,16 +190,27 @@ function addToPlaylist(itemName, itemType, isChecked) {
             if (noSongsMessage) {
                 noSongsMessage.remove();
             }
+
+            // Increment the container count
+            if (containerCount) {
+                containerCount.textContent = parseInt(containerCount.textContent) + 1;
+            }
         }
     } else {
         // Remove the item if unchecked
         const itemToRemove = dropZone.querySelector(`[data-name="${itemName}"]`);
         if (itemToRemove) {
             itemToRemove.remove();
-			// Check if dropZone is empty and add the message back
-			if (dropZone.children.length === 0) {
-				dropZone.innerHTML = `<p class="no-songs-message">No songs associated with the channel.</p>`;
-			}
+
+            // Decrement the container count
+            if (containerCount) {
+                containerCount.textContent = Math.max(0, parseInt(containerCount.textContent) - 1);
+            }
+
+            // Check if dropZone is empty and add the message back
+            if (dropZone.children.length === 0) {
+                dropZone.innerHTML = `<p class="no-songs-message">No songs associated with the channel.</p>`;
+            }
         }
     }
 }
@@ -235,6 +247,7 @@ function enablePlaylistReordering() {
 function removeItemFromPlaylist(button) {
     const item = button.parentElement; // O botão está dentro do item a ser removido
     const dropZone = document.querySelector('.playlist-dropzone');
+    const containerCount = document.querySelector('.inner-section-left .container-count');
 
     if (dropZone.contains(item)) {
         const itemName = item.dataset.name; // Obtém o nome do item
@@ -245,6 +258,16 @@ function removeItemFromPlaylist(button) {
         }
 
         item.remove(); // Remove o item da lista de reprodução
+
+        // Decrementa o contador do container
+        if (containerCount) {
+            containerCount.textContent = Math.max(0, parseInt(containerCount.textContent) - 1);
+        }
+
+        // Verifica se o dropZone está vazio e adiciona a mensagem de "sem músicas"
+        if (dropZone.children.length === 0) {
+            dropZone.innerHTML = `<p class="no-songs-message">No songs associated with the channel.</p>`;
+        }
     }
 }
 function getDragAfterElement(container, y) {

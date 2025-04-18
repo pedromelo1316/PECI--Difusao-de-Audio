@@ -197,6 +197,12 @@
                 window.location.reload(); // Reload the page if successful
             } else {
                 console.error("Error toggling transmission:", data.error);
+                // Revert the status text back to its original state
+                if (statusText.textContent.trim() === "starting...") {
+                    statusText.textContent = "Inactive";
+                } else if (statusText.textContent.trim() === "stopping...") {
+                    statusText.textContent = "Active";
+                }
             }
         })
         .catch(error => {
@@ -234,7 +240,7 @@
                                             <span class="channel-name">{{ node.name }}</span>
                                             <div class="channel-status">
                                                 <span class="status-indicator" style="background: #22cc3f;"></span>
-                                                <span class="status-text">Connected</span>
+                                                <span class="status-text" style="color: #22cc3f;">Connected</span>
                                             </div>
                                         </div>
                                         <div style="display: flex; gap: 6px; align-items: center;">
