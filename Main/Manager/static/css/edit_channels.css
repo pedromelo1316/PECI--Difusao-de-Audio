@@ -905,7 +905,7 @@
 }
 
 .streaming-section {
-    width: 1000px;
+    width: 60%;
     margin: 0; /* Remove centering */
     margin-left: 0; /* Align to the left */
     position: relative; /* Ensure position:relative for absolute positioning of count */
@@ -1071,7 +1071,7 @@ input:checked + .slider .switch-text.off {
 /* Container Count - Modified to ensure always visible */
 .container-count {
     position: absolute;
-    top: 10px;
+    top: 15px;
     right: 15px;
     background-color: #5dbb63;
     color: white;

@@ -74,6 +74,7 @@ function updateSectionRight(value) {
 
         sectionRight.innerHTML = `
             <div class="inner-section-left">
+            <span class="container-count">${Object.keys(associatedSongs).length}</span>
                 <h3>${channelName} Playlist</h3>
                 <div class="selected-playlist-info">
                     <div class="playlist-dropzone">
