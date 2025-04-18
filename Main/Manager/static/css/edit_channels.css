@@ -235,11 +235,12 @@
     position: relative; /* Ensure the count is positioned relative to the container */
 }
 
-.inner-section-right h3 {
+.inner-section-right h3,
+.inner-section-left h3 {
     margin-bottom: 15px;
     font-size: 26px;
     
-    border-bottom: 1px dashed #eee; /* Add dashed line below h3 */
+    border-bottom: 2.5px dashed #eee; /* Add dashed line below h3 */
     padding-bottom: 18px; /* Add spacing below the text */
 }
 
@@ -538,11 +539,7 @@
 }
 
 /* Selected playlist info section */
-.selected-playlist-info {
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px dashed #eee;
-}
+
 
 .section-hint {
     color: #888;
