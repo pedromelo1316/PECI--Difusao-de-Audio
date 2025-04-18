@@ -10,8 +10,6 @@
 
 {% block body %}
 
-
-
 <nav class="navbar" >
     <div class="nav-left">
         <a href="{{ url_for('index') }}" class="settings-link">
@@ -26,19 +24,13 @@
     <div>
 </nav>
 
-
-<!-- Título "Channel" 
-<div style="text-align: left; margin-top: 40px; margin-bottom: 0px; padding-left: 100px;">
-    <h1>Channel {{ channel_id }}</h1>
-</div> -->
-
-<!-- Título do canal com modo de visualização e edição -->
+<!-- Channel Title with View and Edit Mode -->
 <div class="channel-title-container">
-    <!-- Visualização -->
+    <!-- View -->
     <div id="channelTitleDisplay" class="channel-title">
         <h1 id="channelTitle" style="margin-bottom: 0px">{{ channel.name }}</h1>
         <i class="fa-solid fa-pen edit-icon" style="font-size: 25px;" onclick="toggleChannelEdit()"></i>
-        <!-- Switch para ativar/desativar canal -->
+        <!-- Switch to activate/deactivate channel -->
         <div class="channel-switch-container">
             <label class="switch">
                 <input type="checkbox" id="channelSwitch" {% if channel.is_active %}checked{% endif %} onchange="toggleChannelStatus({{ channel.id }})">
@@ -50,15 +42,12 @@
         </div>
     </div>
 
-    <!-- Edição -->
+    <!-- Edit -->
     <form id="channelEditForm" class="channel-edit-form" style="display: none;" method="POST" action="{{ url_for('update_channel_name', channel_id=channel.id) }}">
         <input type="text" id="channelNameInput" name="channel_name" value="{{ channel.name }}" class="channel-edit-input" required>
-        <button type="submit" class="save-button">Guardar</button>
+        <button type="submit" class="save-button">Save</button>
     </form>
-
-
 </div>
-
 
 <div class="containerCH">
     <div class="contentCH">
@@ -74,7 +63,7 @@
                                         <i class="fa-solid fa-music"></i> 
                                     </div>
                                     <div class="button-text" style="margin-left: 10px;">
-                                        <span>  Playlists</span>
+                                        <span>Playlists</span>
                                     </div>
                                     <div class="menu-item-indicator"></div>
                                 </div>
@@ -83,7 +72,7 @@
                                         <i class="fa-solid fa-podcast"></i>
                                     </div>
                                     <div class="button-text" style="margin-left: 10px;">
-                                        <span>  Streaming</span>
+                                        <span>Streaming</span>
                                     </div>
                                     <div class="menu-item-indicator"></div>
                                 </div>
@@ -92,10 +81,10 @@
                     </div>
                     <div class="vertical-bar"></div> <!-- Add the vertical bar here -->
                     <div class="section-rightCH">
-                        <!-- NOVA estrutura interna dentro de section-right -->
-                        <!-- Este será atualizado dinamicamente -->
+                        <!-- NEW internal structure inside section-right -->
+                        <!-- This will be updated dynamically -->
                         <div id="sectionRightContent" class="inner-dual-section" style="display: none;">
-                            <!-- O conteúdo será gerado dinamicamente via JS -->
+                            <!-- Content will be generated dynamically via JS -->
                         </div>
                     </div>
                 </div>
@@ -107,8 +96,6 @@
 <div class="save-button-container" id="saveButtonContainer" style="display: none;">
     <button type="submit" class="save-button" onclick="saveChanges()">Save</button>
 </div>
-
-
 
 <script>
     console.log("Channel ID:", {{ channel_id }});
@@ -130,7 +117,7 @@
         const switchElement = document.getElementById('channelSwitch');
         const isActive = switchElement.checked;
 
-        // Fazer uma requisição para atualizar o status do canal
+        // Make a request to update the channel status
         fetch(`/update_channel_status/${channelId}`, {
             method: 'POST',
             headers: {
@@ -140,10 +127,10 @@
             body: JSON.stringify({ is_active: isActive })
         }).then(response => {
             if (!response.ok) {
-                console.error('Erro ao atualizar o status do canal');
+                console.error('Error updating channel status');
             }
         }).catch(error => {
-            console.error('Erro na requisição:', error);
+            console.error('Request error:', error);
         });
     }
 </script>
