@@ -2032,6 +2032,8 @@ def remove_trash():
         if file.endswith('.sdp') or file.endswith('.txt'):
             os.remove(os.path.join(app.config['UPLOAD_FOLDER'], file))
             print(f"Removed temporary file: {file}")
+            
+    db.session.query(Interruptions).update({Interruptions.state: 'off'})
 
 # Bloco principal de execução
 if __name__ == '__main__':
