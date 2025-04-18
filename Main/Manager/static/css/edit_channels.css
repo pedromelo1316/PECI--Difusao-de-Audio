@@ -206,6 +206,7 @@
     padding: 22px;
     transition: transform 0.3s ease;
     border:#3b3b3b solid 1px;
+    position: relative; /* Ensure position:relative for absolute positioning of count */
 }
 
 .inner-section-right {
@@ -222,7 +223,9 @@
     overflow: hidden;
     border:#3b3b3b solid 1px;
     min-height: 700px;
+    position: relative; /* Ensure position:relative for absolute positioning of count */
 }
+
 
 .playlists-section,
 .songs-section {
@@ -242,11 +245,6 @@
     
     border-bottom: 2.5px dashed #eee; /* Add dashed line below h3 */
     padding-bottom: 18px; /* Add spacing below the text */
-}
-
-.inner-section-left:hover,
-.inner-section-right:hover {
-    transform: translateY(-3px);
 }
 
 .inner-section-left h4,
@@ -301,11 +299,7 @@
 
 .menu-item:hover {
     background-color: #f9f9f9;
-    transform: translateY(-2px);
-}
-
-.menu-item:hover i {
-    color: #5dbb63;
+    transform: none; /* Remove the translateY(-2px) effect */
 }
 
 .menu-item.active {
@@ -735,8 +729,8 @@
 
 .add-streaming-btn:hover {
     background-color: #1db035;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(34, 204, 63, 0.2);
+    transform: none; /* Remove the translateY(-2px) effect */
+    box-shadow: 0 6px 12px rgba(34, 204, 63, 0.2);
 }
 
 .streaming-item.square {
@@ -780,6 +774,7 @@
     max-width: 680px; /* Optional: Set a maximum width */
     margin: 0; /* Remove centering */
     margin-left: 0; /* Align to the left */
+    position: relative; /* Ensure position:relative for absolute positioning of count */
 }
 
 /* Microphone Section */
@@ -815,7 +810,7 @@
 
 .add-item-btn:hover {
     background-color: #1db035;
-    transform: scale(1.1);
+    transform: none; /* Remove the scale(1.1) effect */
 }
 
 .playlist-item span,
@@ -939,7 +934,7 @@ input:checked + .slider .switch-text.off {
     font-size: 16px;
 }
 
-/* Container Count */
+/* Container Count - Modified to ensure always visible */
 .container-count {
     position: absolute;
     top: 10px;
@@ -949,8 +944,20 @@ input:checked + .slider .switch-text.off {
     font-size: 14px;
     font-weight: bold;
     padding: 5px 10px;
-    border-radius: 8px; /* Reduced border radius for a less oval shape */
+    border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    z-index: 1;
+    z-index: 10; /* Increased z-index to ensure it's above other elements */
+    opacity: 1 !important; /* Force opacity to 1 */
+    visibility: visible !important; /* Force visibility */
+    display: block !important; /* Force display */
+    pointer-events: auto !important; /* Ensure it can be interacted with */
+}
+
+/* Ensure sections have a relative position for proper count positioning */
+.inner-section-right,
+.playlists-section,
+.songs-section,
+.streaming-section {
+    position: relative; /* Ensure position:relative for absolute positioning of count */
 }
 

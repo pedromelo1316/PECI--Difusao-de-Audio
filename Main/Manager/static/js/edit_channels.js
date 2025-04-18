@@ -113,6 +113,7 @@ function updateSectionRight(value) {
 
         sectionRight.innerHTML = `
             <div class="inner-section-right streaming-section">
+                <span class="container-count">${streamingSources2.length}</span>
                 <h3>Available Streaming Sources</h3>
                 <div class="streaming-container">
                     ${streamingHTML}
