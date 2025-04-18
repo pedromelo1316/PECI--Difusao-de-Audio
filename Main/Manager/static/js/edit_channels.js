@@ -100,36 +100,20 @@ function updateSectionRight(value) {
     } else if (value === "STREAMING") {
         let streamingHTML = '';
         streamingSources2.forEach(source => {
+            const isChecked = associatedStreaming === source;
             streamingHTML += `
-                <div class="streaming-item">
+                <div class="song-item streaming-item">
                     <label for="streaming-${source}" style="flex-grow: 1;">
-                        <span>${source}</span>
+                        <span class="streaming-name">${source}</span>
                     </label>
-                    <input type="radio" name="streaming-source" id="streaming-${source}" onchange="selectStreamingSource('${source}')" ${associatedStreaming === source ? 'checked' : ''}>
+                    <input type="checkbox" id="streaming-${source}" onchange="selectStreamingSource('${source}', this)" ${isChecked ? 'checked' : ''}>
                 </div>
             `;
         });
 
-        const selectedStreamingHTML = associatedStreaming
-            ? `
-               <div class="streaming-selected-box">
-                    <span class="streaming-name-selected">${associatedStreaming}</span>
-                    <button onclick="removeStreamingSource('${associatedStreaming}')" style="margin-top: 10px; background: none; border: none; cursor: pointer;, colot: red;">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                </div>`
-            : `<p class="section-hint">Select a streaming source</p>`;
-
         sectionRight.innerHTML = `
-            <div class="inner-section-left">
-                <h3 id="Streaming_Source_Message">Streaming Source:</h3>
-                <div class="selected-streaming-info">
-                    ${selectedStreamingHTML}
-                    <div id="selectedStreamingDisplay" style="margin-top: 10px; font-weight: bold;"></div>
-                </div>
-            </div>
-            <div class="inner-section-right">
-                <h3>Available Sources</h3>
+            <div class="inner-section-right streaming-section">
+                <h3>Available Streaming Sources</h3>
                 <div class="streaming-container">
                     ${streamingHTML}
                 </div>
@@ -143,36 +127,16 @@ function updateSectionRight(value) {
     }
 }
 
-function selectStreamingSource(source) {
-    const selectedDisplay = document.getElementById("selectedStreamingDisplay");
-    const hintMessage = document.querySelector(".section-hint");
+function selectStreamingSource(source, checkbox) {
+    // Ensure only one checkbox is selected at a time
+    const allCheckboxes = document.querySelectorAll('.streaming-container input[type="checkbox"]');
+    allCheckboxes.forEach(cb => {
+        if (cb !== checkbox) {
+            cb.checked = false;
+        }
+    });
 
-    // Hide the hint message
-    if (hintMessage) {
-        hintMessage.style.display = "none";
-    }
-
-    // Update the selected streaming source display dynamically
-    const selectedItem = document.querySelector(`#streaming-${source}`).closest('.streaming-item');
-    if (selectedItem) {
-        selectedDisplay.innerHTML = `
-            <div class="streaming-selected-box" style="padding: ${selectedItem.style.padding}; font-size: ${selectedItem.style.fontSize}; border-radius: ${selectedItem.style.borderRadius};">
-                <span>${source}</span>
-                <button onclick="removeStreamingSource('${source}')" style="margin-top: 10px; background: none; border: none; cursor: pointer;, colot: red;">
-                    <i class="fa-solid fa-trash-can"></i>
-                </button>
-            </div>
-
-        `;
-    }
-
-    // Highlight the selected streaming item
-    const allItems = document.querySelectorAll('.streaming-item');
-    allItems.forEach(item => item.classList.remove('selected'));
-
-    if (selectedItem) {
-        selectedItem.classList.add('selected');
-    }
+    associatedStreaming = checkbox.checked ? source : null; // Update the selected streaming source
 }
 
 function toggleSongsVisibility(button) {
@@ -289,29 +253,19 @@ function getDragAfterElement(container, y) {
 function removeStreamingSource(source) {
     console.log("Removing streaming source:", source);
 
-    // Update the HTML to display the selection message and reset the state
+    // Update the HTML to reset the state
     const sectionRight = document.getElementById("sectionRightContent");
-    const saveButtonContainer = document.getElementById("saveButtonContainer");
-
-    const selectedStreamingHTML = `<p class="section-hint">Select a streaming source</p>`;
 
     sectionRight.innerHTML = `
-        <div class="inner-section-left">
-            <h3 id="Streaming_Source_Message">Streaming Source:</h3>
-            <div class="selected-streaming-info">
-                ${selectedStreamingHTML}
-                <div id="selectedStreamingDisplay" style="margin-top: 10px; font-weight: bold;"></div>
-            </div>
-        </div>
-        <div class="inner-section-right">
-            <h3>Available Sources</h3>
+        <div class="inner-section-right streaming-section">
+            <h3>Available Streaming Sources</h3>
             <div class="streaming-container">
-                ${streamingSources2.map(source => `
+                ${streamingSources2.map(src => `
                     <div class="streaming-item">
-                        <label for="streaming-${source}" style="flex-grow: 1;">
-                            <span>${source}</span>
+                        <label for="streaming-${src}" style="flex-grow: 1;">
+                            <span>${src}</span>
                         </label>
-                        <input type="radio" name="streaming-source" id="streaming-${source}" onchange="selectStreamingSource('${source}')">
+                        <input type="checkbox" id="streaming-${src}" onchange="toggleStreamingSource('${src}', this.checked)">
                     </div>
                 `).join('')}
             </div>
@@ -388,7 +342,7 @@ function saveChanges() {
         selectedSource = sources.length > 0 ? sources.join(';') : null;
     
     } else if (transmissionType === "STREAMING") {
-        const selectedStreaming = document.querySelector('.streaming-container input[type="radio"]:checked');
+        const selectedStreaming = document.querySelector('.streaming-container input[type="checkbox"]:checked');
         selectedSource = selectedStreaming ? selectedStreaming.id.replace('streaming-', '') : null;
     }
 
