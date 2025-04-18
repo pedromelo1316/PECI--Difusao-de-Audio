@@ -174,6 +174,13 @@
 
     // Toggle transmission state and call the Python endpoint
     function toggleTransmission(button, channelId) {
+        // Update the UI to show "starting..." or "stopping..." based on the current state
+        const statusText = button.closest('.channel-card').querySelector('.status-text');
+        if (statusText.textContent.trim() === "Inactive") {
+            statusText.textContent = "starting...";
+        } else if (statusText.textContent.trim() === "Active") {
+            statusText.textContent = "stopping...";
+        }
 
         // Send the channel ID and desired state to the Python endpoint
         fetch(`/toggle_transmission`, {
@@ -186,7 +193,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                console.log("sucess");
+                console.log("success");
                 window.location.reload(); // Reload the page if successful
             } else {
                 console.error("Error toggling transmission:", data.error);
@@ -284,8 +291,8 @@
                               
                                 <div class="channel-cards">
                                     {% for channel in channels %}
-                                    <div class="channel-card" data-channel-id="{{ channel.id }}">
-                                        <div class="card-content">
+                                    <div class="channel-card" data-channel-id="{{ channel.id }}" style="cursor: pointer;">
+                                        <div class="card-content" onclick="window.location.href='{{ url_for('edit_channels', channel_id=channel.id) }}'">
                                             <span class="channel-name">{{ channel.name }}</span>
                                             <div class="channel-status">
                                                 {% if channel.state == "stopped" %}
@@ -297,7 +304,7 @@
                                                 {% endif %}
                                             </div>
                                         </div>
-                                        <div style="display: flex; gap: 6px; align-items: center;">
+                                        <div class="play-edit-div">
                                             <div class="toggle-transmission-btn">
                                                 <i class="fa-solid {% if channel.state == 'stopped' %}fa-play{% else %}fa-stop{% endif %} settings-icon"
                                                    onclick="toggleTransmission(this, {{ channel.id }})"></i>

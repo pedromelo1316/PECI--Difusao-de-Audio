@@ -3,6 +3,27 @@
 /* Estilo para o dropdown de microfones */
 
 
+
+.loading-spinner {
+    border: 3px solid #f3f3f3; /* Light gray */
+    border-top: 3px solid #5dbb63; /* Green */
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 1s linear infinite;
+    margin-left: 10px; /* Espaço entre o switch e o spinner */
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+
 /* Estilização do bloco de fonte selecionada */
 .streaming-selected-box {
     display: flex;
@@ -102,28 +123,45 @@
 }
 
 .section-options {
-    flex: 0 0 280px;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.06);
-    padding: 25px;
+    background: none; /* Remove the background */
+    border: none; /* Remove the border */
+    padding: 0; /* Remove padding */
+    margin-right: 40px; /* Increase spacing from the options */
+    height: 100%; /* Ensure the line spans the full height */
+    min-height: 100%; /* Extend to match section-rightCH */
     position: sticky;
     top: 20px;
     align-self: flex-start;
     max-height: calc(100vh - 240px);
     overflow-y: auto;
-    border:#3b3b3b solid 1px;
+    margin-top: 20px; 
+    border-right: none; /* Remove the previous border */
+    width: 15%;
 }
 
 .section-rightCH {
     flex: 1;
     min-width: 0;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.06);
-    padding: 25px;
+    background: transparent; /* Make background transparent */
+    box-shadow: none; /* Remove box shadow */
+    padding: 0px;
     overflow: visible;
-    border:#3b3b3b solid 1px;
+    border: none; /* Remove border */
+  
+}
+
+/* Vertical Bar */
+.vertical-bar {
+    position: relative;
+    width: 2px;
+    background-color: #ccc;
+    margin-left: -45px; /* Increase spacing from section-options */
+    margin-right: 30px; /* Add spacing to the right as well */
+    margin-top: 20px;
+    height: 100%;
+    min-height: 500px; /* Ensure it extends far enough */
+    align-self: stretch;
+    flex-shrink: 0; /* Prevent the bar from shrinking */
 }
 
 /* Channel Title Container */
@@ -138,7 +176,7 @@
 .channel-title {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 16px; /* Increase gap to accommodate the switch */
 }
 
 .edit-icon {
@@ -179,6 +217,7 @@
     flex-wrap: wrap;
     gap: 25px;
     margin-top: 20px;
+    width: 100%;
 }
 
 .inner-section-left {
@@ -190,10 +229,13 @@
     padding: 22px;
     transition: transform 0.3s ease;
     border:#3b3b3b solid 1px;
+    position: relative; /* Ensure position:relative for absolute positioning of count */
 }
 
 .inner-section-right {
-    flex: 1;
+    display: flex;
+    flex-direction: column; 
+    gap: 20px; /* Add spacing between sections */
     min-width: 280px;
     background: white;
     border-radius: 12px;
@@ -202,11 +244,106 @@
     transition: transform 0.3s ease;
     overflow: hidden;
     border:#3b3b3b solid 1px;
+    min-height: 500px;
+    position: relative; /* Ensure position:relative for absolute positioning of count */
 }
 
-.inner-section-left:hover,
-.inner-section-right:hover {
-    transform: translateY(-3px);
+/* Increase height for inner-section-left playlists */
+.inner-section-left .playlist-dropzone {
+    max-height: 600px; /* Increased maximum height */
+    overflow-y: auto; /* Enable vertical scrolling */
+    padding-right: 5px; /* Add padding for scrollbar */
+}
+
+/* Scrollbar styling */
+.inner-section-left .playlist-dropzone::-webkit-scrollbar {
+    width: 8px;
+}
+
+.inner-section-left .playlist-dropzone::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.inner-section-left .playlist-dropzone::-webkit-scrollbar-thumb {
+    background: #5dbb63;
+    border-radius: 10px;
+}
+
+.inner-section-left .playlist-dropzone::-webkit-scrollbar-thumb:hover {
+    background: #4caf50;
+}
+
+/* Larger playlist items in the inner-section-left */
+.inner-section-left .playlist-item,
+.inner-section-left .song-item,
+.playlist-dropzone .playlist-item,
+.playlist-dropzone .song-item {
+    padding: 14px 16px; /* Increased padding for larger size */
+    margin: 8px 0; /* Increased margin for better spacing */
+    background-color: white;
+    border-radius: 8px;
+   
+    font-size: 16px; /* Increased font size */
+    color: #333; /* Darker text for better readability */
+    min-height: 24px; /* Ensure minimum height */
+}
+
+/* Update playlist items in the inner-section-left to have borders like songs */
+.inner-section-left .playlist-item,
+.playlist-dropzone .playlist-item {
+    border: 1px solid #ddd; /* Add same border as song items */
+    border-left: 3px solid #5dbb63; /* Maintain the left border accent but make it green */
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.inner-section-left .song-item,
+.playlist-dropzone .song-item {
+    border: 1px solid #ddd; /* Ensure song items have consistent border */
+    border-left: 3px solid #5dbb63; /* Add green left accent to match playlist items */
+}
+
+.inner-section-left .playlist-item span,
+.inner-section-left .song-item span,
+.playlist-dropzone .playlist-item span,
+.playlist-dropzone .song-item span {
+    font-size: 17px; /* Larger font size */
+    font-weight: 500;
+}
+
+/* Ensure remove buttons are properly positioned */
+.inner-section-left .remove-item-btn,
+.playlist-dropzone .remove-item-btn {
+    right: 12px; /* Move slightly more to the right for larger items */
+    width: 30px; /* Larger button */
+    height: 30px; /* Larger button */
+}
+
+.inner-section-left .remove-item-btn i,
+.playlist-dropzone .remove-item-btn i {
+    font-size: 16px; /* Larger icon */
+}
+
+.playlists-section,
+.songs-section {
+    flex: 1; /* Each section takes up half of the height */
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #ccc; /* Add a light gray border */
+    border-radius: 8px; /* Add rounded corners */
+    padding: 10px; /* Add padding inside the containers */
+    position: relative; /* Ensure the count is positioned relative to the container */
+}
+
+.inner-section-right h3,
+.inner-section-left h3 {
+    margin-bottom: 15px;
+    font-size: 26px;
+    
+    border-bottom: 2.5px dashed #eee; /* Add dashed line below h3 */
+    padding-bottom: 18px; /* Add spacing below the text */
 }
 
 .inner-section-left h4,
@@ -223,7 +360,7 @@
     border-radius: 12px;
     padding: 10px;
     margin-top: 15px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+   
 }
 
 .menu-list {
@@ -235,13 +372,15 @@
 .menu-item {
     display: flex;
     align-items: center;
-    padding: 14px 16px;
+    padding: 18px 20px; /* Increased padding for a larger clickable area */
     border-radius: 10px;
     background-color: white;
     cursor: pointer;
     transition: all 0.25s ease;
     position: relative;
     border: 1px solid #f0f0f0;
+    
+  
 }
 
 .menu-item i {
@@ -259,11 +398,7 @@
 
 .menu-item:hover {
     background-color: #f9f9f9;
-    transform: translateY(-2px);
-}
-
-.menu-item:hover i {
-    color: #5dbb63;
+    transform: none; /* Remove the translateY(-2px) effect */
 }
 
 .menu-item.active {
@@ -289,20 +424,23 @@
 /* Playlist Container & Items */
 .playlist-container {
     display: flex;
-    flex-direction: column; /* Change to vertical list */
-    gap: 9px; /* Add spacing between items */
+    flex-direction: column; 
+    gap: 0.1px; /* Reduced gap between items */
     padding: 15px;
     background: #ffffff;
-    border-radius: 12px;
+ 
     width: 100%;
     box-sizing: border-box;
+    max-height: 250px; 
+    overflow-y: auto; 
+    padding-right: 5px; 
 }
 
 .playlist-item {
-    padding: 8px 10px; /* Match padding of .song-item */
-    margin: 5px 0;
+    padding: 8px 10px; 
+    margin: 4px 0;
     background-color: white;
-    border-radius: 8px; /* Match border radius of .song-item */
+    border-radius: 8px; 
     border-left: 3px solid #ccc;
     font-size: 14px;
     color: #555;
@@ -312,12 +450,12 @@
 
 .playlist-item:hover {
     background-color: #f9f9f9;
-    border-color: #bbb; /* Match hover effect of .song-item */
+    border-color: #bbb; 
 }
 
 .playlist-item.expanded {
     background-color: #f8fffa;
-    border-color: #4caf50; /* Match selected effect */
+    border-color: #4caf50; 
 }
 
 .playlist-name {
@@ -366,7 +504,6 @@
     margin: 5px 0;
     background-color: white;
     border-radius: 8px;
-    border-left: 3px solid #ccc;
     font-size: 14px;
     color: #333;
     transition: background-color 0.2s;
@@ -384,8 +521,7 @@
     padding: 15px;
     background: #ffffff;
     border-radius: 12px;
- 
-    margin-top: 20px;
+    margin-top: 0; 
 }
 
 .song-item {
@@ -417,12 +553,29 @@
     padding: 30px;
 }
 
+
 #sectionRightContent.empty-message p {
     color: #888;
     font-size: 18px;
     max-width: 400px;
     text-align: center;
     font-weight: normal;
+}
+
+/* No Songs Message Styling - Very Simple */
+.no-songs-message,
+.no-streaming-message {
+    text-align: center;
+    padding: 20px;
+    color: #999;
+    font-size: 15px;
+}
+
+
+.streaming-container .no-streaming-message {
+    margin-top: -30px; 
+    position: relative;
+    display: block;
 }
 
 /* Stats Container */
@@ -488,6 +641,7 @@
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 6px rgba(34, 204, 63, 0.2);
+    margin-bottom: 100px;
 }
 
 .save-button:hover {
@@ -497,11 +651,7 @@
 }
 
 /* Selected playlist info section */
-.selected-playlist-info {
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px dashed #eee;
-}
+
 
 .section-hint {
     color: #888;
@@ -560,28 +710,43 @@
     cursor: grabbing;
 }
 
-/* Remove button for items in the selected playlist */
+/* Improved Remove button for items in the selected playlist */
 .remove-item-btn {
     position: absolute;
-    top: 5px;
-    right: 5px;
-    background-color: transparent;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    background-color: #f8f8f8;
     color: #ff4d4d;
-    border: none;
+    border: 1px solid #e0e0e0;
     border-radius: 50%;
-    width: 20px;
-    height: 20px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.3s, transform 0.2s;
+    opacity: 0.85;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .remove-item-btn:hover {
+    background-color: #ff4d4d;
+    color: white;
     opacity: 1;
-    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(255, 77, 77, 0.4);
+}
+
+.remove-item-btn i {
+    font-size: 14px;
+}
+
+/* Make sure items in the selected playlist have proper spacing for the remove button */
+.playlist-dropzone .playlist-item,
+.playlist-dropzone .song-item {
+    position: relative;
+    padding-right: 40px; /* Increased space for the remove button */
 }
 
 /* Make sure items in the selected playlist have relative positioning */
@@ -602,36 +767,56 @@
     border-radius: 12px;
     width: 100%;
     box-sizing: border-box;
+    max-height: 550px; /* Limit the height of the container */
+    overflow-y: auto; /* Enable vertical scrolling */
 }
 
 .streaming-item {
+    height: 60px; /* Fixed height for all items */
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 16px; /* Increased padding for larger size */
+    padding: 14px 16px; /* Increased padding for larger size */
+ 
     background-color: white;
-    border-radius: 8px; /* Match border radius of .song-item */
-    border: 1px solid #ddd; /* Match border style of .song-item */
+    border-radius: 8px;
+    border: 1px solid #ddd;
+   
     font-size: 16px; /* Increased font size */
     color: #333;
+    cursor: pointer;
     transition: background-color 0.3s ease, border-color 0.3s ease;
+    min-height: 24px; /* Ensure minimum height */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    flex-shrink: 0; /* Prevent items from shrinking */
+}
+
+.streaming-item span,
+.streaming-item .streaming-name {
+    font-size: 17px; /* Larger font size */
+    font-weight: 500;
+    color: #333;
+}
+
+.streaming-item input[type="checkbox"] {
+    transform: scale(1.2); /* Larger checkbox */
+    margin-left: 15px; /* More spacing */
     cursor: pointer;
 }
 
 .streaming-item:hover {
     background-color: #f9f9f9;
-    border-color: #bbb; /* Match hover effect of .song-item */
+    border-color: #bbb; /* Match hover effect of song-item */
+}
+
+.streaming-item input[type="checkbox"]:checked + label {
+    background-color: #f8fffa;
+    border-color: #4caf50;
 }
 
 .streaming-item.selected {
     background-color: #f8fffa;
     border-color: #4caf50; /* Match selected effect */
-}
-
-.streaming-item span {
-    flex-grow: 1;
-    font-weight: 500;
-    color: #333;
 }
 
 .streaming-item input[type="radio"] {
@@ -643,7 +828,7 @@
     width: 20px;
     height: 20px;
     border: 2px solid #a8a6a6;
-    border-radius: 4px; /* Square shape */
+    border-radius: 4px; 
     display: flex;
     align-items: center;
     justify-content: center;
@@ -680,8 +865,8 @@
 
 .add-streaming-btn:hover {
     background-color: #1db035;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(34, 204, 63, 0.2);
+    transform: none; /* Remove the translateY(-2px) effect */
+    box-shadow: 0 6px 12px rgba(34, 204, 63, 0.2);
 }
 
 .streaming-item.square {
@@ -720,6 +905,13 @@
     color: #4caf50;
 }
 
+.streaming-section {
+    width: 1000px;
+    margin: 0; /* Remove centering */
+    margin-left: 0; /* Align to the left */
+    position: relative; /* Ensure position:relative for absolute positioning of count */
+}
+
 /* Microphone Section */
 .microphone-item {
     display: flex;
@@ -753,7 +945,7 @@
 
 .add-item-btn:hover {
     background-color: #1db035;
-    transform: scale(1.1);
+    transform: none; /* Remove the scale(1.1) effect */
 }
 
 .playlist-item span,
@@ -762,5 +954,145 @@
     font-size: 16px; /* Unified font size */
     font-weight: 500; /* Unified font weight */
     color: #333; /* Unified text color */
+}
+
+/* Switch Container */
+.channel-switch-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Switch Styles */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: white;
+    font-weight: bold;
+    overflow: hidden; /* Ensure only one label is visible */
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #5dbb63;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.switch-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    transition: opacity 0.4s;
+}
+
+.switch-text.off {
+    opacity: 1; /* Initially visible */
+    left: 10px; /* Move to the left */
+}
+
+.switch-text.on {
+    opacity: 0; /* Initially hidden */
+    right: 10px; /* Move to the right */
+}
+
+input:checked + .slider .switch-text.on {
+    opacity: 1; /* Show "ON" when checked */
+}
+
+input:checked + .slider .switch-text.off {
+    opacity: 0; /* Hide "OFF" when checked */
+}
+
+/* Switch Label */
+#switchLabel {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Info Badge */
+.info-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: #5dbb63;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 5px 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.info-badge i {
+    font-size: 16px;
+}
+
+/* Container Count - Modified to ensure always visible */
+.container-count {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background-color: #5dbb63;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 10; /* Increased z-index to ensure it's above other elements */
+    opacity: 1 !important; /* Force opacity to 1 */
+    visibility: visible !important; /* Force visibility */
+    display: block !important; /* Force display */
+    pointer-events: auto !important; /* Ensure it can be interacted with */
+}
+
+/* Ensure sections have a relative position for proper count positioning */
+.inner-section-right,
+.playlists-section,
+.songs-section,
+.streaming-section {
+    position: relative; /* Ensure position:relative for absolute positioning of count */
 }
 
