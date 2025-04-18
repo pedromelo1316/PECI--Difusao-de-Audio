@@ -1244,6 +1244,8 @@ def update_channel_name(channel_id):
     if not new_name:
         return "Nome inválido", 400
 
+
+
     # Recupera o canal
     channel = Channels.query.get_or_404(channel_id)
     old_name = channel.name
@@ -1260,6 +1262,26 @@ def update_channel_name(channel_id):
     
     except Exception as e:
         return f"Erro ao atualizar o nome do canal: {e}", 500
+
+
+
+# Rota para verificar se o nome do canal já existe
+@app.route('/check_channel_name', methods=['POST'])
+def check_channel_name():
+    data = request.json
+    new_name = data.get('name')
+    channel_id = data.get('channel_id')  # Opcional: ignorar o próprio canal
+
+    if not new_name:
+        return jsonify({'exists': False})
+
+    existing_channel = Channels.query.filter(Channels.name == new_name).first()
+
+    # Se existir canal com o mesmo nome E for diferente do canal atual
+    if existing_channel and existing_channel.id != channel_id:
+        return jsonify({'exists': True})
+    else:
+        return jsonify({'exists': False})
 
 
 

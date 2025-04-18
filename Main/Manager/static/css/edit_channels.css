@@ -632,7 +632,7 @@
 .save-button {
     background-color: #5dbb63;
     color: white;
-    padding: 12px 24px;
+    padding: 8px 20px;
     border: none;
     border-radius: 8px;
     font-size: 16px;
@@ -1098,5 +1098,15 @@ input:checked + .slider .switch-text.off {
 .songs-section,
 .streaming-section {
     position: relative; /* Ensure position:relative for absolute positioning of count */
+}
+
+
+#errorMessage {
+    color: #ff4d4d;
+    font-size: 13px;
+    margin-top: 4px;
+    padding-left: 2px;
+    font-family: 'Roboto', sans-serif;
+    text-align: left;
 }
 
