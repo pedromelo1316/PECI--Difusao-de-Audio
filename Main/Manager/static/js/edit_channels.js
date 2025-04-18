@@ -441,3 +441,13 @@ function toggleStreamingSelection(item) {
     `;
 }
 
+
+function toggleChannelEdit() {
+    const displayDiv = document.getElementById('channelTitleDisplay');
+    const editForm = document.getElementById('channelEditForm');
+
+    // Esconde a vista normal e mostra a form de edição
+    displayDiv.style.display = 'none';
+    editForm.style.display = 'flex'; // MOSTRAR a form em flex para o botão aparecer ao lado
+}
+

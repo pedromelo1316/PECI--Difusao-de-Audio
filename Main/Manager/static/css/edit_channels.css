@@ -640,6 +640,11 @@
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 6px rgba(34, 204, 63, 0.2);
+    /*margin-bottom: 100px;*/
+}
+
+/* Só quando o botão está no container principal de guardar (lá em baixo na página) é que tem margem */
+.save-button-container .save-button {
     margin-bottom: 100px;
 }
 
