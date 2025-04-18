@@ -206,40 +206,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const zoneName = selectElement.closest(".zone-box").querySelector("h3").textContent.trim();
         const columnList = selectElement.closest(".column-section").querySelector(".column-list");
 
-        const columnItem = document.createElement("div");
-        columnItem.classList.add("column-item");
-        columnItem.dataset.column = selectedColumn;
-        columnItem.dataset.zone = zoneName;
-        columnItem.innerHTML = `
-            <span>${selectedColumn}</span>
-            <button class="delete-column-button">
-                <i class="fa-solid fa-trash"></i>
-            </button>
-        `;
-
-        columnItem.querySelector(".delete-column-button").addEventListener("click", function (event) {
-            event.preventDefault();
-            event.stopPropagation();
-            removeZoneColumn(columnItem);
-        });
-
-        columnList.appendChild(columnItem);
-        selectElement.parentElement.remove();
-
-        // Check if there are still speakers available to add
-        fetch("/get_free_nodes")
-            .then(response => response.json())
-            .then(nodes => {
-                if (nodes.length > 0) {
-                    const addColumnButton = document.createElement("div");
-                    addColumnButton.classList.add("add-column-button");
-                    addColumnButton.innerHTML = '<span>+ Speaker</span>';
-                    addColumnButton.onclick = function() { showSelectForZone(this); };
-                    selectElement.closest(".column-section").appendChild(addColumnButton);
-                }
-            })
-            .catch(error => console.error("Error checking available speakers:", error));
-
         fetch("/add_column_to_zone", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -249,8 +215,6 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(data => {
             if (data.error) {
                 alert("Error: " + data.error);
-                columnItem.remove();
-                usedZoneColumns = usedZoneColumns.filter(name => name !== selectedColumn);
             }
         })
         .catch(error => console.error("Error adding speaker:", error));

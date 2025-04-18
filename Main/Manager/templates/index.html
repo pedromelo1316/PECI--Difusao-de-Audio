@@ -385,13 +385,13 @@
                                 {% for node in nodes if node.area_id == area.id %}
                                 <div class="column-item" data-column="{{ node.name }}" data-zone="{{ area.name }}">
                                     <span>{{ node.name }}</span>
-                                    <button class="delete-column-button" onclick="removeZoneColumn(this.closest('.column-item'))">
-                                        <i class="fa-solid fa-trash"></i>
+                                    <button class="delete-column-button" onclick="removeZoneColumn(this.closest('.column-item'))" style="color: red;">
+                                        <i class="fa-solid fa-times"></i>
                                     </button>
                                 </div>
                                 {% endfor %}
                             <div class="add-column-button" onclick="showSelectForZone(this)">
-                                <span>+ Speaker</span>
+                                <span>+ Add Speaker</span>
                             </div>
                             </div>
                             
