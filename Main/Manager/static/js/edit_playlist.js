@@ -151,15 +151,19 @@ function loadPlaylistOrder(playlistName) {
         .then(data => {
             const playlistList = document.getElementById('playlist-list');
             playlistList.innerHTML = '';
-            data.songs.forEach((song, index) => {
-                const li = document.createElement('li');
-                li.className = 'playlist-item';
-                li.draggable = true;
-                li.dataset.song = song;
-                li.innerHTML = `<span>${index + 1}. ${song}</span>
-                    <i class="fa-solid fa-trash" onclick="removeSongFromPlaylist('${song}', '${playlistName}')" title="Remove song"></i>`;
-                playlistList.appendChild(li);
-            });
+            if (!data.songs.length) {
+                playlistList.innerHTML = '<li class="empty-playlist-message">No songs in the playlist</li>';
+            } else {
+                data.songs.forEach((song, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'playlist-item';
+                    li.draggable = true;
+                    li.dataset.song = song;
+                    li.innerHTML = `<span>${index + 1}. ${song}</span>
+                        <i class="fa-solid fa-trash" onclick="removeSongFromPlaylist('${song}', '${playlistName}')" title="Remove song"></i>`;
+                    playlistList.appendChild(li);
+                });
+            }
             // Atualiza os ícones e reatribui eventos após DOM update
             updateSongIcons();
             rebindSongItemEvents();
