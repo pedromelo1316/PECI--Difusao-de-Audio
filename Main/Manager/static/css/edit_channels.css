@@ -226,6 +226,57 @@
     position: relative; /* Ensure position:relative for absolute positioning of count */
 }
 
+/* Larger playlist items in the inner-section-left */
+.inner-section-left .playlist-item,
+.inner-section-left .song-item,
+.playlist-dropzone .playlist-item,
+.playlist-dropzone .song-item {
+    padding: 14px 16px; /* Increased padding for larger size */
+    margin: 8px 0; /* Increased margin for better spacing */
+    background-color: white;
+    border-radius: 8px;
+    border-left: 3px solid #ccc;
+    font-size: 16px; /* Increased font size */
+    color: #333; /* Darker text for better readability */
+    min-height: 24px; /* Ensure minimum height */
+}
+
+/* Update playlist items in the inner-section-left to have borders like songs */
+.inner-section-left .playlist-item,
+.playlist-dropzone .playlist-item {
+    border: 1px solid #ddd; /* Add same border as song items */
+    border-left: 3px solid #5dbb63; /* Maintain the left border accent but make it green */
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.inner-section-left .song-item,
+.playlist-dropzone .song-item {
+    border: 1px solid #ddd; /* Ensure song items have consistent border */
+    border-left: 3px solid #5dbb63; /* Add green left accent to match playlist items */
+}
+
+.inner-section-left .playlist-item span,
+.inner-section-left .song-item span,
+.playlist-dropzone .playlist-item span,
+.playlist-dropzone .song-item span {
+    font-size: 17px; /* Larger font size */
+    font-weight: 500;
+}
+
+/* Ensure remove buttons are properly positioned */
+.inner-section-left .remove-item-btn,
+.playlist-dropzone .remove-item-btn {
+    right: 12px; /* Move slightly more to the right for larger items */
+    width: 30px; /* Larger button */
+    height: 30px; /* Larger button */
+}
+
+.inner-section-left .remove-item-btn i,
+.playlist-dropzone .remove-item-btn i {
+    font-size: 16px; /* Larger icon */
+}
 
 .playlists-section,
 .songs-section {
@@ -335,10 +386,10 @@
 }
 
 .playlist-item {
-    padding: 8px 10px; /* Match padding of .song-item */
+    padding: 8px 10px; 
     margin: 5px 0;
     background-color: white;
-    border-radius: 8px; /* Match border radius of .song-item */
+    border-radius: 8px; 
     border-left: 3px solid #ccc;
     font-size: 14px;
     color: #555;
@@ -348,12 +399,12 @@
 
 .playlist-item:hover {
     background-color: #f9f9f9;
-    border-color: #bbb; /* Match hover effect of .song-item */
+    border-color: #bbb; 
 }
 
 .playlist-item.expanded {
     background-color: #f8fffa;
-    border-color: #4caf50; /* Match selected effect */
+    border-color: #4caf50; 
 }
 
 .playlist-name {
@@ -402,7 +453,6 @@
     margin: 5px 0;
     background-color: white;
     border-radius: 8px;
-    border-left: 3px solid #ccc;
     font-size: 14px;
     color: #333;
     transition: background-color 0.2s;
@@ -592,28 +642,43 @@
     cursor: grabbing;
 }
 
-/* Remove button for items in the selected playlist */
+/* Improved Remove button for items in the selected playlist */
 .remove-item-btn {
     position: absolute;
-    top: 5px;
-    right: 5px;
-    background-color: transparent;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    background-color: #f8f8f8;
     color: #ff4d4d;
-    border: none;
+    border: 1px solid #e0e0e0;
     border-radius: 50%;
-    width: 20px;
-    height: 20px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.3s, transform 0.2s;
+    opacity: 0.85;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .remove-item-btn:hover {
+    background-color: #ff4d4d;
+    color: white;
     opacity: 1;
-    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(255, 77, 77, 0.4);
+}
+
+.remove-item-btn i {
+    font-size: 14px;
+}
+
+/* Make sure items in the selected playlist have proper spacing for the remove button */
+.playlist-dropzone .playlist-item,
+.playlist-dropzone .song-item {
+    position: relative;
+    padding-right: 40px; /* Increased space for the remove button */
 }
 
 /* Make sure items in the selected playlist have relative positioning */
@@ -636,19 +701,36 @@
     box-sizing: border-box;
 }
 
+/* Increase streaming items size */
 .streaming-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 15px; /* Match song-item padding */
-    margin: 5px 0;
+    padding: 14px 16px; /* Increased padding for larger size */
+    margin: 8px 0; /* Increased margin for better spacing */
     background-color: white;
-    border-radius: 8px; /* Match song-item border radius */
-    border: 1px solid #ddd; /* Match song-item border style */
-    font-size: 14px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+   
+    font-size: 16px; /* Increased font size */
     color: #333;
     cursor: pointer;
     transition: background-color 0.3s ease, border-color 0.3s ease;
+    min-height: 24px; /* Ensure minimum height */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.streaming-item span,
+.streaming-item .streaming-name {
+    font-size: 17px; /* Larger font size */
+    font-weight: 500;
+    color: #333;
+}
+
+.streaming-item input[type="checkbox"] {
+    transform: scale(1.2); /* Larger checkbox */
+    margin-left: 15px; /* More spacing */
+    cursor: pointer;
 }
 
 .streaming-item:hover {
@@ -656,17 +738,6 @@
     border-color: #bbb; /* Match hover effect of song-item */
 }
 
-.streaming-item input[type="checkbox"] {
-    margin-left: 10px;
-    cursor: pointer;
-}
-
-.streaming-item .streaming-name {
-    font-weight: 500;
-    color: #333;
-}
-
-/* Highlight selected streaming item */
 .streaming-item input[type="checkbox"]:checked + label {
     background-color: #f8fffa;
     border-color: #4caf50;
@@ -675,12 +746,6 @@
 .streaming-item.selected {
     background-color: #f8fffa;
     border-color: #4caf50; /* Match selected effect */
-}
-
-.streaming-item span {
-    flex-grow: 1;
-    font-weight: 500;
-    color: #333;
 }
 
 .streaming-item input[type="radio"] {
