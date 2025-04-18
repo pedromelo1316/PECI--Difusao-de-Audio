@@ -1,5 +1,8 @@
 document.addEventListener('DOMContentLoaded', loadPlaylists);
 
+
+
+
 function loadPlaylists() {
     fetch('/playlists')
         .then(response => response.json())
@@ -304,31 +307,54 @@ function savePlaylist(playlistName) {
 
 // Substituir prompt por modal para adicionar músicas
 function showAddSongsModal() {
-    // Criar input de ficheiros dinamicamente
+    // Cria modal de escolha com 2 opções: Local e Pesquisar na Web
+    const modalContainer = document.createElement('div');
+    modalContainer.id = 'addSongChoiceModal';
+    modalContainer.className = 'custom-modal';
+    modalContainer.innerHTML = `
+        <div class="custom-modal-content">
+            <span class="close" onclick="closeAddSongChoiceModal()">&times;</span>
+            <h2>Escolha a origem da música</h2>
+            <div class="modal-buttons">
+                <button class="confirm" style="font-weight: bold;" onclick="openLocalSongModal()">Local</button>
+                <button class="confirm" style="font-weight: bold;" onclick="openWebSongModal()">Pesquisar na Web</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modalContainer);
+    modalContainer.style.display = 'block';
+}
+
+function closeAddSongChoiceModal() {
+    const modal = document.getElementById('addSongChoiceModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function openLocalSongModal() {
+    closeAddSongChoiceModal();
+    // Lógica já existente para selecionar ficheiros localmente
     const fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.accept = "audio/*";
-    fileInput.multiple = true; // Permitir seleção de múltiplos arquivos
-
+    fileInput.multiple = true;
     fileInput.onchange = function () {
         const songFiles = fileInput.files;
         if (!songFiles || songFiles.length === 0) {
             alert("É necessário selecionar pelo menos um arquivo de música.");
             return;
         }
-
         const formData = new FormData();
         Array.from(songFiles).forEach(songFile => {
-            formData.append('files[]', songFile); // Adiciona cada arquivo ao FormData
+            formData.append('files[]', songFile);
         });
-
         fetch('/add_songs', {
             method: 'POST',
-            body: formData // Envia o FormData diretamente
+            body: formData
         })
         .then(response => response.json())
         .then(data => {
-            console.log('Resposta do servidor:', data);
             if (data.success) {
                 alert('Músicas adicionadas com sucesso!');
                 window.location.reload();
@@ -338,12 +364,101 @@ function showAddSongsModal() {
             }
         })
         .catch(err => {
-            console.error('Erro ao adicionar as músicas:', err);
             alert('Erro ao comunicar com o servidor.');
+            console.error('Erro ao adicionar as músicas:', err);
         });
     };
+    fileInput.click();
+}
 
-    fileInput.click(); // Simula o clique para abrir o seletor de arquivos
+function openWebSongModal() {
+    closeAddSongChoiceModal();
+    let modal = document.getElementById('webSongModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'webSongModal';
+        Object.assign(modal.style, {
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '70vh',
+            height: '70vh',
+            backgroundColor: '#fff',
+            boxShadow: '0 0 10px rgba(0,0,0,0.5)',
+            zIndex: '1000',
+            overflow: 'hidden'
+        });
+        modal.innerHTML = `
+            <div style="position: relative; height: 100%;">
+            <div class="modal-header" style="background-color: #fff; padding: 10px; text-align: center; height: 70px; border-bottom: 2px solid #ccc;">
+                <button onclick="closeWebSongModal()">X</button>
+                <h1>Music Search</h1>
+            </div>
+            <input type="text" id="search" placeholder="Search for songs..." autofocus />
+            <div id="results"></div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        // Attach event listener for the search input
+        const search = modal.querySelector('#search');
+        const results = modal.querySelector('#results');
+        search.addEventListener('input', function() {
+          const query = this.value.trim();
+          if (!query) {
+            results.innerHTML = '';
+            return;
+          }
+          fetch(`/search_suggestions?query=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(songs => {
+              results.innerHTML = '';
+              songs.forEach(song => {
+                const div = document.createElement('div');
+                div.className = 'song';
+                div.innerHTML = `
+                  <img src="${song.thumbnail}" alt="Thumbnail" />
+                  <div class="song-info">
+                    <div class="song-title">${song.title}</div>
+                    <div class="song-artist">${song.author}</div>
+                  </div>
+                `;
+                div.onclick = () => selectSong(song.title, song.url);
+                results.appendChild(div);
+              });
+            })
+            .catch(error => {
+              results.innerHTML = '<p>Error loading results</p>';
+              console.error(error);
+            });
+        });
+    }
+    modal.style.display = 'block';
+}
+
+function closeWebSongModal() {
+    const modal = document.getElementById('webSongModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function selectSong(title, url) {
+    fetch('/select', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `title=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`
+    })
+    .then(() => {
+      window.location.href = '/secundaria';
+    })
+    .catch(error => {
+      alert('Failed to select song');
+      console.error(error);
+    });
 }
 
 // Substituir prompt por modal para editar música
@@ -427,50 +542,8 @@ function deleteStreamingLink(element) {
     });
 }
 
-// Função para validar URLs
 
 
-
-function showAddStreamModal() {
-    showCustomModal("Adicionar Link de Transmissão", "Enter the Streaming Name: ", true, function (streamName) {
-        if (!streamName) {
-            showCustomModal("Erro", "Streaming name is required.");
-            return;
-        }
-
-        showCustomModal("Adicionar Link de Transmissão", "Enter the streaming link:", true, function (streamUrl) {
-            if (!streamUrl || !isValidURL(streamUrl)) {
-                showCustomModal("Erro", "Please enter a valid link.");
-                return;
-            }
-
-            fetch('/save_stream_url', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ stream_name: streamName, stream_url: streamUrl, channel_id: 2 })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => {
-                        throw new Error(err.error || "Erro desconhecido");
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();
-                } else {
-                    showCustomModal("Erro", data.error || "Erro ao adicionar o link de transmissão.");
-                }
-            })
-            .catch(err => {
-                console.error("Erro ao adicionar o link de transmissão:", err);
-                showCustomModal("Erro", err.message || "Erro ao comunicar com o servidor.");
-            });
-        });
-    });
-}
 
 // Função para validar URLs
 function isValidURL(url) {
@@ -592,5 +665,167 @@ function editMicrofone(micId, currentName, currentShortcut) {
             console.error("Error updating microphone:", err);
             alert("Error communicating with the server.");
         });
+    });
+}
+
+// New streaming modal functions
+
+// Modal to choose streaming source (Local or Web)
+function showAddStreamChoiceModal() {
+    const modalContainer = document.createElement('div');
+    modalContainer.id = 'addStreamChoiceModal';
+    modalContainer.className = 'custom-modal';
+    modalContainer.innerHTML = `
+        <div class="custom-modal-content">
+            <span class="close" onclick="closeAddStreamChoiceModal()">&times;</span>
+            <h2>Escolha a origem do streaming</h2>
+            <div class="modal-buttons">
+                <button class="confirm" onclick="openLinkStreamModal()">Link</button>
+                <button class="confirm" onclick="openWebStreamModal()">Pesquisar na Web</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modalContainer);
+    modalContainer.style.display = 'block';
+}
+
+function closeAddStreamChoiceModal() {
+    const modal = document.getElementById('addStreamChoiceModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Local streaming: use file input (accepting video files)
+function openLinkStreamModal() {
+    closeAddStreamChoiceModal()
+    showCustomModal("Adicionar Link de Transmissão", "Enter the Streaming Name: ", true, function (streamName) {
+        if (!streamName) {
+            showCustomModal("Erro", "Streaming name is required.");
+            return;
+        }
+
+        showCustomModal("Adicionar Link de Transmissão", "Enter the streaming link:", true, function (streamUrl) {
+            if (!streamUrl || !isValidURL(streamUrl)) {
+                showCustomModal("Erro", "Please enter a valid link.");
+                return;
+            }
+
+            fetch('/save_stream_url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ stream_name: streamName, stream_url: streamUrl, channel_id: 2 })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || "Erro desconhecido");
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    showCustomModal("Erro", data.error || "Erro ao adicionar o link de transmissão.");
+                }
+            })
+            .catch(err => {
+                console.error("Erro ao adicionar o link de transmissão:", err);
+                showCustomModal("Erro", err.message || "Erro ao comunicar com o servidor.");
+            });
+        });
+    });
+}
+
+// Web search streaming: open a modal with search & results area
+function openWebStreamModal() {
+    closeAddStreamChoiceModal();
+    let modal = document.getElementById('webStreamModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'webStreamModal';
+        Object.assign(modal.style, {
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '70vh',
+            height: '70vh',
+            backgroundColor: '#fff',
+            boxShadow: '0 0 10px rgba(0,0,0,0.5)',
+            zIndex: '1000',
+            overflow: 'hidden'
+        });
+        modal.innerHTML = `
+            <div style="position: relative; height: 100%;">
+                <button style="position: absolute; right: 10px; top: 10px;" onclick="closeWebStreamModal()">X</button>
+                <div class="modal-header" style="background-color: #fff; padding: 10px; text-align: center; height: 70px; border-bottom: 2px solid #ccc;">
+                    <h1>Streaming Search</h1>
+                </div>
+                <input type="text" id="streamSearch" placeholder="Search for streams..." autofocus style="width: calc(100% - 20px); margin: 10px;"/>
+                <div id="streamResults" style="overflow-y: auto; height: calc(100% - 140px); margin: 10px;"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        // Attach event listener for stream search input
+        const search = modal.querySelector('#streamSearch');
+        const results = modal.querySelector('#streamResults');
+        search.addEventListener('input', function() {
+            const query = this.value.trim();
+            if (!query) {
+                results.innerHTML = '';
+                return;
+            }
+            fetch(`/stream_search_suggestions?query=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(streams => {
+                    results.innerHTML = '';
+                    streams.forEach(stream => {
+                        const div = document.createElement('div');
+                        div.className = 'stream';
+                        div.innerHTML = `
+                            <img src="${stream.thumbnail}" alt="Thumbnail" />
+                            <div class="stream-info">
+                                <div class="stream-title">${stream.title}</div>
+                                <div class="stream-author">${stream.author}</div>
+                            </div>
+                        `;
+                        div.onclick = () => selectStream(stream.title, stream.url);
+                        results.appendChild(div);
+                    });
+                })
+                .catch(error => {
+                    results.innerHTML = '<p>Error loading results</p>';
+                    console.error(error);
+                });
+        });
+    }
+    modal.style.display = 'block';
+}
+
+function closeWebStreamModal() {
+    const modal = document.getElementById('webStreamModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Function to handle selected stream from web search
+function selectStream(title, url) {
+    fetch('/select_stream', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `title=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`
+    })
+    .then(() => {
+      window.location.href = '/secundaria';
+    })
+    .catch(error => {
+      alert('Failed to select stream');
+      console.error(error);
     });
 }

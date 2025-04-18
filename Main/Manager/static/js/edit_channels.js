@@ -34,6 +34,7 @@ function updateSectionRight(value) {
     
         let songsHTML = '';
         allSongs.forEach(song => {
+            console.log("song:", song);
             const isChecked = associatedSongs.includes(song); // Verifica se a música está associada
             songsHTML += `
                 <div class="song-item" style="display: flex; justify-content: space-between; align-items: center;">
@@ -365,7 +366,7 @@ function saveChanges() {
             }
         }).filter(source => source !== null); // Filter out null values
 
-        selectedSource = sources.length > 0 ? sources.join(' ') : null;
+        selectedSource = sources.length > 0 ? sources.join(';') : null;
     
     } else if (transmissionType === "STREAMING") {
         const selectedStreaming = document.querySelector('.streaming-container input[type="radio"]:checked');

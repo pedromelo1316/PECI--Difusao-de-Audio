@@ -7,6 +7,8 @@ from flask_socketio import SocketIO, emit
 import os
 from flask import request, jsonify
 from werkzeug.utils import secure_filename
+from youtubesearchpython import VideosSearch
+import yt_dlp
 import subprocess
 import threading
 import queue
@@ -31,6 +33,8 @@ db = SQLAlchemy(app)
 socketio = SocketIO(app)
 processes = defaultdict(dict)
 interruptions = defaultdict(dict)
+
+
 
 # Configurações de áudio
 BITRATE = "128k"  # Taxa de bits máxima
@@ -654,7 +658,7 @@ def save_channel_configs():
             
             
             musicas = []
-            for item in channel_reproduction.split():
+            for item in channel_reproduction.split(";"):
                 if item.startswith("PLAYLIST:"):
                     playlist_name = item.split(":")[1]
                     playlist = db.session.query(Playlist).filter(Playlist.name == playlist_name).first()
@@ -669,6 +673,8 @@ def save_channel_configs():
                     song = db.session.query(Songs).filter(Songs.name == song_name).first()
                     if song:
                         musicas.append(str(song.id))
+                        
+            print("Musicas: ", musicas)
                     
             channel_source = ", ".join(musicas)
             channel.source = channel_source
@@ -1050,12 +1056,12 @@ def remove_area():
     area_name = request.form.get('name')
     if not area_name:
         flash("Area name is required", "error")
-        return redirect('/')
+        return jsonify({"error": "Area name is required"}), 400
     try:
         area = Areas.query.filter_by(name=area_name).first()
         if not area:
             flash("Area not found", "error")
-            return redirect('/')
+            return jsonify({"error": "Area not found"}), 404
         
         print(f"Removing area: {area_name} with ID: {area.id}")
         # Remove a associação dos nós à área antes de removê-la
@@ -1069,11 +1075,10 @@ def remove_area():
         send_info(nodes_in_area)
         flash(f"Area {area_name} removed", "success")
         
-        socketio.emit('reload_page', namespace='/')
-        return redirect('/')
+        return redirect('/#areas')
     except Exception as e:
         flash(str(e), "error")
-        return redirect('/')
+        return jsonify({"error": str(e)}), 500
 
 # Rota para atualizar o volume de uma área
 @app.route('/update_volume', methods=['POST'])
@@ -1201,7 +1206,8 @@ def edit_channels():
         playlist.name: [song.name for song in playlist.songs]
         for playlist in playlists
     }
-    all_songs = [song.name for song in Songs.query.all()]
+    all_songs = ",".join(str(song.id) for song in Songs.query.all())
+    all_songs = get_names_from_ids(ChannelType.LOCAL, all_songs) 
     streamings = Streaming.query.all()
     streaming_sources = [streaming.name for streaming in streamings]
 
@@ -1210,7 +1216,6 @@ def edit_channels():
     if channel.source:
         if channel.type == ChannelType.LOCAL:
             associated_songs = get_names_from_ids(channel.type, channel.source)
-            associated_songs = [song.replace("_", " ") for song in associated_songs]
             
         elif channel.type == ChannelType.STREAMING:
             associated_stream_id = channel.source
@@ -1381,7 +1386,7 @@ def save_songs(files):
             errors.append({"file": file.filename, "error": "Formato de arquivo não suportado"})
             continue
 
-        song_name = os.path.splitext(secure_filename(file.filename))[0]
+        song_name = os.path.splitext(file.filename)[0]
         print("song_name: ", song_name)
         if not song_name:
             errors.append({"file": file.filename, "error": "Nome da música é obrigatório"})
@@ -1784,6 +1789,172 @@ def import_conf():
     return jsonify({"success": True})
 
 #################################################################################
+
+#############
+#YOUTUBE
+#############
+def search_youtube(query, max_results=10):
+    results = []
+    try:
+        # Search using youtubesearchpython (searches for videos on YouTube)
+        videos_search = VideosSearch(query, limit=max_results)
+        search_results = videos_search.result().get('result', [])
+        
+        for item in search_results:
+            title = item.get('title', 'Sem título')
+            url = item.get('link', 'Sem link')
+            thumbnail = item.get('thumbnails', [{}])[0].get('url', '')  # Extracting the thumbnail URL
+            author_info = item.get('channel', {})
+            author = author_info.get('name', 'Unknown')  # Extracting the author (channel name)
+            duration = item.get('duration', '00:00')  # Extracting the video duration
+            
+            results.append({
+                "title": title,
+                "url": url,
+                "thumbnail": thumbnail,  # Include the thumbnail URL
+                "author": author,        # Include the author name
+                "duration": duration     # Include the duration
+            })
+    except Exception as e:
+        print(f"Error occurred: {e}")
+    return results
+
+
+
+def search_youtube_live(query, max_results=30):
+    results = []
+    try:
+        videos_search = VideosSearch(query, limit=max_results)
+        search_results = videos_search.result().get('result', [])
+        
+        for item in search_results:
+            duration = item.get('duration', None)
+            # Verifica se é uma stream (duration == None)
+            if duration is None:
+                title = item.get('title', 'Sem título')
+                url = item.get('link', 'Sem link')
+                thumbnail = item.get('thumbnails', [{}])[0].get('url', '')
+                author_info = item.get('channel', {})
+                author = author_info.get('name', 'Desconhecido')
+                
+                results.append({
+                    "title": title,
+                    "url": url,
+                    "thumbnail": thumbnail,
+                    "author": author,
+                })
+    except Exception as e:
+        print(f"Ocorreu um erro: {e}")
+    return results
+
+@app.route("/search_suggestions", methods=["GET"])
+def search_suggestions():
+    query = request.args.get('query')
+    if query:
+        results = search_youtube(query, max_results=5)  # Limit the number of results
+        return jsonify(results)
+    return jsonify([])
+
+
+@app.route("/stream_search_suggestions", methods=["GET"])   
+def stream_search_suggestions():
+    query = request.args.get('query')
+    if query:
+        print("query: ", query)
+        results = search_youtube_live(query, max_results=5)
+        return jsonify(results)
+    return jsonify([])
+
+
+@app.route("/select", methods=["POST"])
+def select_song_to_download():
+    title = request.form.get("title").strip()
+    url = request.form.get("url")
+    print(f"Selected video: {title} - {url}")
+
+    # Download the selected YouTube audio in a separate thread to avoid blocking Flask
+    threading.Thread(target=download_youtube_audio, args=(url, title)).start()
+
+    return redirect(url_for('secundaria'))
+
+
+@app.route("/select_stream", methods=["POST"])
+def select_stream_to_save():
+    title = request.form.get("title").strip()
+    url = request.form.get("url")
+    print(f"Selected stream: {title} - {url}")
+
+    # verificar se já existe na base de dados o link, se não existe adicionar
+    existing_stream = Streaming.query.filter_by(name=title).first()
+    if existing_stream:
+        print(f"Stream already exists: {existing_stream.name}")
+        return redirect(url_for('secundaria'))
+    # Salvar no banco de dados
+    new_stream = Streaming(name=title, url=url)
+    db.session.add(new_stream)
+    db.session.commit()
+    print("Nova stream adicionada:", new_stream.name)
+
+    return redirect(url_for('secundaria'))
+
+def save_yt_song(song_name, song_hash):
+    with app.app_context():
+        # Verifica se a música já existe no banco de dados
+        existing_song = Songs.query.filter_by(song_hash=song_hash).first()
+        if existing_song:
+            print(f"Song already exists: {existing_song.name}")
+            return 
+        # Salvar no banco de dados
+        new_song = Songs(name=song_name, song_hash=song_hash)
+        db.session.add(new_song)
+        db.session.commit()
+
+        print("Nova música adicionada:", new_song.name)
+
+def download_youtube_audio(youtube_url, song_name):
+    """
+    Extracts audio from a YouTube video and saves it as a WAV file
+    without downloading the video.
+    """
+    safe_filename = song_name.replace(' ', '_')
+    # Create a hash from the song name (you can also use the full path if needed)
+    song_hash = hashlib.sha256(safe_filename.encode()).hexdigest()
+    # Generate the final .wav filename using the hash
+    wav_filename = os.path.join(UPLOAD_FOLDER, f"{song_hash}.wav")
+
+    save_yt_song(song_name, song_hash)
+
+    # Configure yt-dlp to fetch the best audio stream URL
+    ydl_opts = {
+        'format': 'bestaudio/best',  # Best audio quality
+        'quiet': True,               # Suppress logs
+        'extract_audio': True,       # Extract audio (not strictly needed here)
+    }
+
+    # Get the direct audio stream URL
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(youtube_url, download=False)
+        audio_url = info['url']  # Direct stream URL of the audio
+
+    # Stream the audio directly to ffmpeg and save as WAV
+    ffmpeg_cmd = [
+        'ffmpeg',
+        '-i', audio_url,           # Input stream URL
+        '-vn',                     # Disable video (audio only)
+        '-acodec', 'pcm_s16le',    # Audio codec for WAV format
+        '-ar', '44100',            # Set audio sample rate to 44.1kHz (WAV standard)
+        '-ac', '2',                # Set audio channels to stereo (2 channels)
+        '-y',                      # Overwrite output if exists
+        wav_filename
+    ]
+
+    # Run FFmpeg with stdout and stderr suppressed
+    subprocess.run(ffmpeg_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    
+
+    print(f"Downloaded and converted {youtube_url} to {wav_filename}")
+
 #################################################################################
 
 

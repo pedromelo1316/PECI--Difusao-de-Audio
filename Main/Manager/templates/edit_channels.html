@@ -15,7 +15,7 @@
 <nav class="navbar" >
     <div class="nav-left">
         <a href="{{ url_for('index') }}" class="settings-link">
-            <i class="fa-solid fa-arrow-left"></i>
+            <i class="fa-solid fa-arrow-left icon-arrow-left"></i>
         </a>
     </div>
     <div class="nav-center">
@@ -115,6 +115,8 @@
     const associatedSongs = {{ associated_songs | tojson }};
     const associatedStreaming = {{ associated_stream | tojson }};
     const channelType = {{ channel_type | tojson }};
+
+    console.log("associated_songs:", associatedSongs);
 
     
 </script>

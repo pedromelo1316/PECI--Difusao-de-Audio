@@ -1,3 +1,4 @@
+
 document.addEventListener("DOMContentLoaded", function () {
 
     window.renameNode = function(nodeId) { // Torna a função global
@@ -237,7 +238,7 @@ document.addEventListener("DOMContentLoaded", function () {
         columnItem.innerHTML = `
             <span>${selectedColumn}</span>
             <button class="delete-column-button">
-                <i class="fa-solid fa-trash" style="color: black;"></i>
+                <i class="fa-solid fa-trash"></i>
             </button>
         `;
 
@@ -914,14 +915,44 @@ function stopInterrupt(interruptId){
     }
 }
 
+// Add/modify the toggleDeviceInfo function
+window.toggleDeviceInfo = function(deviceId, button) {
+    const infoElement = document.getElementById('device-info-' + deviceId);
+    if (infoElement) {
+        if (infoElement.style.display === 'none') {
+            // First close any other open device info sections
+            document.querySelectorAll('.device-info').forEach(info => {
+                if (info !== infoElement && info.style.display === 'block') {
+                    info.style.display = 'none';
+                    document.querySelectorAll('.fa-info-circle').forEach(icon => icon.classList.remove('active'));
+                }
+            });
+            
+            // Then open this one
+            infoElement.style.display = 'block';
+            button.classList.add('active');
+        } else {
+            infoElement.style.display = 'none';
+            button.classList.remove('active');
+        }
+    }
+};
+
 
 document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("a[href^='#']").forEach(anchor => {
-      anchor.addEventListener("click", function (e) {
-        e.preventDefault();
-        document.querySelector(this.getAttribute("href")).scrollIntoView({
-          behavior: "smooth"
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute("href")).scrollIntoView({
+                behavior: "smooth",
+            });
+
+            // Remove 'active' class from all links
+            document.querySelectorAll("a[href^='#']").forEach(link => link.classList.remove("active"));
+
+            // Add 'active' class to the clicked link
+            this.classList.add("active");
         });
-      });
     });
-  });
+});
+

@@ -77,12 +77,12 @@ body {
 
 .add-song {
     cursor: pointer;
-    color: #22cc3f;
+    color: #5dbb63;
     font-weight: bold;
 }
 
 .fa-check {
-    color: #22cc3f;
+    color: #5dbb63;
     cursor: pointer;
 }
 
@@ -144,7 +144,7 @@ h2 {
 
 
 .save-playlist-btn {
-    background-color: #22cc3f;
+    background-color: #5dbb63;
     color: white;
     padding: 12px 24px;
     border: none;
