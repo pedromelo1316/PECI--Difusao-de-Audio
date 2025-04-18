@@ -836,6 +836,7 @@ window.toggleDeviceInfo = function(deviceId, button) {
 
 
 document.addEventListener("DOMContentLoaded", () => {
+    
     document.querySelectorAll("a[href^='#']").forEach(anchor => {
         anchor.addEventListener("click", function (e) {
             e.preventDefault();

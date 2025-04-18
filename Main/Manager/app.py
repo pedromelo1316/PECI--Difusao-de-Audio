@@ -738,6 +738,7 @@ class Nodes(db.Model):
     name = db.Column(db.String(200), nullable=False)
     mac = db.Column(db.String(200), unique=True, nullable=False)
     area_id = db.Column(db.Integer, db.ForeignKey('areas.id'), nullable=True)
+    connected = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         return f'<Node {self.id}: {self.name}>'
@@ -986,7 +987,7 @@ def detect_new_nodes(stop_event, msg_buffer):
                         if db.session.query(Nodes).filter(Nodes.mac == node_mac).first():
                             raise Exception("MAC already in use")
                         node_name = node_name.upper()
-                        node = Nodes(name=node_name, mac=node_mac, ip=node_ip)  #remover este area_id = 1
+                        node = Nodes(name=node_name, mac=node_mac, ip=node_ip, connected=True)  #remover este area_id = 1
                         db.session.add(node)
                         db.session.commit()
                     
@@ -998,6 +999,7 @@ def detect_new_nodes(stop_event, msg_buffer):
                         'ip': node.ip
                     })
                     msg_buffer.put(f"Node {node_name} connected")
+                    
                 except Exception as e:
                     if str(e) == "Limit of nodes with the same name reached":
                         msg_buffer.put("Limit of nodes with the same name reached")
@@ -1006,6 +1008,7 @@ def detect_new_nodes(stop_event, msg_buffer):
                         with app.app_context():
                             node = db.session.query(Nodes).filter(Nodes.mac == node_mac).first()
                             node.ip = node_ip
+                            node.connected = True
                             db.session.commit()
 
                             node_name = node.name
@@ -2034,6 +2037,9 @@ def remove_trash():
             print(f"Removed temporary file: {file}")
             
     db.session.query(Interruptions).update({Interruptions.state: 'off'})
+    db.session.commit()
+    db.session.query(Nodes).update({Nodes.connected: False})
+    db.session.commit()
 
 # Bloco principal de execução
 if __name__ == '__main__':

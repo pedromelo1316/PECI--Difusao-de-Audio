@@ -97,8 +97,6 @@
 
     // Trigger the file input for importing
     function triggerImport() {
-    
-        console.log("OLALA");
 
         // Create a FormData object and append the necessary data
         const fileInput = document.createElement('input');
@@ -236,16 +234,27 @@
                                 <div class="channel-cards">
                                     {% for node in nodes %}
                                     <div class="channel-card" data-device-id="{{ node.id }}">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="#22cc3f" viewBox="0 0 24 24">
-                                            <path d="M5 9v6h4l5 5V4l-5 5H5zm13.5 3a4.5 4.5 0 0 0-1.44-3.31l-1.06 1.06A3 3 0 0 1 17 12a3 3 0 0 1-1 2.25l1.06 1.06A4.5 4.5 0 0 0 18.5 12zm2.5 0a7 7 0 0 0-2.1-5l-1.06 1.06A5.5 5.5 0 0 1 20 12a5.5 5.5 0 0 1-2.16 4.38l1.06 1.06A7 7 0 0 0 21 12z"/>
-                                        </svg>                                         
+                                        {% if node.connected %}
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="#22cc3f" viewBox="0 0 24 24">
+                                                <path d="M5 9v6h4l5 5V4l-5 5H5zm13.5 3a4.5 4.5 0 0 0-1.44-3.31l-1.06 1.06A3 3 0 0 1 17 12a3 3 0 0 1-1 2.25l1.06 1.06A4.5 4.5 0 0 0 18.5 12zm2.5 0a7 7 0 0 0-2.1-5l-1.06 1.06A5.5 5.5 0 0 1 20 12a5.5 5.5 0 0 1-2.16 4.38l1.06 1.06A7 7 0 0 0 21 12z"/>
+                                            </svg>
+                                        {% else %}
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="#ccc" viewBox="0 0 24 24">
+                                                <path d="M5 9v6h4l5 5V4l-5 5H5zm13.5 3a4.5 4.5 0 0 0-1.44-3.31l-1.06 1.06A3 3 0 0 1 17 12a3 3 0 0 1-1 2.25l1.06 1.06A4.5 4.5 0 0 0 18.5 12zm2.5 0a7 7 0 0 0-2.1-5l-1.06 1.06A5.5 5.5 0 0 1 20 12a5.5 5.5 0 0 1-2.16 4.38l1.06 1.06A7 7 0 0 0 21 12z"/>
+                                            </svg>
+                                        {% endif %}                               
                                         <div class="card-content">
                                             <span class="channel-name">                                            
                                                 {{ node.name }}
                                             </span>
                                             <div class="channel-status">
-                                                <span class="status-indicator" style="background: #22cc3f;"></span>
-                                                <span class="status-text" style="color: #22cc3f;">Connected</span>
+                                                {% if node.connected %}
+                                                    <span class="status-indicator" style="background: #22cc3f;"></span>
+                                                    <span class="status-text" style="color: #22cc3f;">Connected</span>
+                                                {% else %}
+                                                    <span class="status-indicator" style="background: #ccc;"></span>
+                                                    <span class="status-text">Disconnected</span>
+                                                {% endif %}
                                             </div>
                                         </div>
                                         <div style="display: flex; gap: 6px; align-items: center;">
