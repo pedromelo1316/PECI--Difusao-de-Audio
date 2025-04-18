@@ -9,42 +9,45 @@ function updateSectionRight(value) {
 
     if (value === "LOCAL") {
         let playlistsHTML = '';
-        for (const [playlistName, songs] of Object.entries(playlistsData)) {
-            playlistsHTML += `
-                <div class="playlist-item" style="display: flex; flex-direction: column; border: 1px solid #ccc; margin-bottom: 10px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <button class="toggle-songs-btn" onclick="toggleSongsVisibility(this)" style="background: none; border: none; cursor: pointer; margin-right: 10px;">
-                            <i class="fa-solid fa-chevron-down"></i>
-                        </button>
-                        <label for="playlist-${playlistName}" style="flex-grow: 1;">
-                            <span class="playlist-name">${playlistName}</span>
-                        </label>
-                        <input type="checkbox" id="playlist-${playlistName}" onchange="addToPlaylist('${playlistName}', 'playlist', this.checked)">
+        if (Object.keys(playlistsData).length > 0) {
+            for (const [playlistName, songs] of Object.entries(playlistsData)) {
+                playlistsHTML += `
+                    <div class="playlist-item" style="display: flex; flex-direction: column; border: 1px solid #ccc; margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <button class="toggle-songs-btn" onclick="toggleSongsVisibility(this)" style="background: none; border: none; cursor: pointer; margin-right: 10px;">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </button>
+                            <label for="playlist-${playlistName}" style="flex-grow: 1;">
+                                <span class="playlist-name">${playlistName}</span>
+                            </label>
+                            <input type="checkbox" id="playlist-${playlistName}" onchange="addToPlaylist('${playlistName}', 'playlist', this.checked)">
+                        </div>
+                        <div class="songs-list" style="display: none; padding-left: 20px; margin-top: 5px;">
+                            ${songs.map(song => `
+                                <div class="song-item" style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span>${song}</span>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
-                    <div class="songs-list" style="display: none; padding-left: 20px; margin-top: 5px;">
-                        ${songs.map(song => `
-                            <div class="song-item" style="display: flex; justify-content: space-between; align-items: center;">
-                                <span>${song}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
+                `;
+            }
         }
-    
+
         let songsHTML = '';
-        allSongs.forEach(song => {
-            console.log("song:", song);
-            const isChecked = associatedSongs.includes(song); // Verifica se a música está associada
-            songsHTML += `
-                <div class="song-item" style="display: flex; justify-content: space-between; align-items: center;">
-                    <label for="song-${song}" style="flex-grow: 1;">
-                        <span class="song-name">${song}</span>
-                    </label>
-                    <input type="checkbox" id="song-${song}" onchange="addToPlaylist('${song}', 'song', this.checked)" ${isChecked ? 'checked' : ''}>
-                </div>
-            `;
-        });
+        if (allSongs.length > 0) {
+            allSongs.forEach(song => {
+                const isChecked = associatedSongs.includes(song); // Verifica se a música está associada
+                songsHTML += `
+                    <div class="song-item" style="display: flex; justify-content: space-between; align-items: center;">
+                        <label for="song-${song}" style="flex-grow: 1;">
+                            <span class="song-name">${song}</span>
+                        </label>
+                        <input type="checkbox" id="song-${song}" onchange="addToPlaylist('${song}', 'song', this.checked)" ${isChecked ? 'checked' : ''}>
+                    </div>
+                `;
+            });
+        }
 
         // Adiciona as músicas associadas ao canal na dropzone
         let associatedSongsHTML = '';
@@ -68,18 +71,24 @@ function updateSectionRight(value) {
                 <h3>Lista de reprodução</h3>
                 <div class="selected-playlist-info">
                     <div class="playlist-dropzone">
-                        ${associatedSongsHTML} <!-- Músicas associadas ou mensagem -->
+                        ${associatedSongsHTML} <!-- Músicas associadas -->
                     </div>
                 </div>
             </div>
             <div class="inner-section-right">
-                <h3>Playlists Disponíveis</h3>
-                <div class="playlist-container">
-                    ${playlistsHTML}
+                <div class="playlists-section">
+                    <span class="container-count">${Object.keys(playlistsData).length}</span>
+                    <h3>Playlists Disponíveis</h3>
+                    <div class="playlist-container">
+                        ${playlistsHTML}
+                    </div>
                 </div>
-                <h3>Músicas Disponíveis</h3>
-                <div class="songs-container">
-                    ${songsHTML}
+                <div class="songs-section">
+                    <span class="container-count">${allSongs.length}</span>
+                    <h3>Músicas Disponíveis</h3>
+                    <div class="songs-container">
+                        ${songsHTML}
+                    </div>
                 </div>
             </div>
         `;
