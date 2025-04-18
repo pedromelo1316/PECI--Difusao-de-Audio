@@ -102,30 +102,44 @@
 }
 
 .section-options {
-    flex: 0 0 280px;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.06);
-    padding: 30px; 
+    background: none; /* Remove the background */
+    border: none; /* Remove the border */
+    padding: 0; /* Remove padding */
+    margin-right: 40px; /* Increase spacing from the options */
+    height: 100%; /* Ensure the line spans the full height */
+    min-height: 100%; /* Extend to match section-rightCH */
     position: sticky;
     top: 20px;
     align-self: flex-start;
     max-height: calc(100vh - 240px);
     overflow-y: auto;
-    border:#3b3b3b solid 1px;
     margin-top: 20px; 
+    border-right: none; /* Remove the previous border */
 }
 
 .section-rightCH {
     flex: 1;
     min-width: 0;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.06);
-    padding: 25px;
+    background: transparent; /* Make background transparent */
+    box-shadow: none; /* Remove box shadow */
+    padding: 0px;
     overflow: visible;
-    border:#3b3b3b solid 1px;
-    margin-top: 20px; 
+    border: none; /* Remove border */
+  
+}
+
+/* Vertical Bar */
+.vertical-bar {
+    position: relative;
+    width: 2px;
+    background-color: #ccc;
+    margin-left: -45px; /* Increase spacing from section-options */
+    margin-right: 30px; /* Add spacing to the right as well */
+    margin-top: 20px;
+    height: 100%;
+    min-height: 700px; /* Ensure it extends far enough */
+    align-self: stretch;
+    flex-shrink: 0; /* Prevent the bar from shrinking */
 }
 
 /* Channel Title Container */
