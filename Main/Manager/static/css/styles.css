@@ -320,7 +320,6 @@ p {
     padding: 15px; /* Reduce from 25px */
     border:#3b3b3b solid 1px;
   
-    overflow-y: auto;
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease;
     flex: 1; /* Allow them to grow equally */
@@ -328,8 +327,8 @@ p {
     flex-direction: column;
 }
 
+
 .section-left {
-    
     height: 400px; /* Reduced from 400px */
 }
 
@@ -579,6 +578,7 @@ header {
     display: block;
     background: white;
     border-radius: 12px;
+    overflow-y: scroll;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
     padding: 8px; /* Reduce from 10px */
     margin-top: 5px; /* Reduce from 10px */
@@ -974,7 +974,6 @@ header {
     gap: 8px; /* More consistent spacing between cards */
     width: 100%; /* Ensure container takes full width */
     height: 100%;
-    overflow-y: auto;
     padding: 2px; /* Add a small padding around all cards */
 }
 
@@ -1199,7 +1198,6 @@ footer {
     width: 100%;
     margin-bottom: 2px;
     position: relative;
-    overflow: hidden; /* Prevents content from spilling outside borders */
 }
 
 .channel-card:hover {
@@ -1318,6 +1316,7 @@ footer {
 /* ===== CHANNELS LAYOUT REARRANGEMENT ===== */
 .channels-layout {
     display: flex;
+    overflow-y: auto;
     flex-direction: column;
     gap: 20px;
 }
