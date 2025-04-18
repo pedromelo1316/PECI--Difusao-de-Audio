@@ -10,7 +10,7 @@
 <nav class="navbar" >
     <div class="nav-left">
         <a href="{{ url_for('secundaria') }}" class="settings-link">
-            <i class="fa-solid fa-arrow-left"></i>
+            <i class="fa-solid fa-arrow-left" style="font-size: 24px;"></i>
         </a>
     </div>
     <div class="nav-center">
@@ -20,16 +20,20 @@
     <div class="nav-right">
     <div>
 </nav>
-<div class="header-content">
-    <div class="playlist_name">
-      <h1>Playlist {{ playlist_name }}</h1>
-      <button onclick="renamePlaylist('{{ playlist_name }}')" class="edit-button">
-        <i class="fas fa-pen" style="font-size: 25px; width: 25px; height: 25px;"></i>
-      </button>
+<div class="page-header">
+    <div class="playlist-title-container">
+        <div class="playlist-icon">
+            <i class="fas fa-list-ul"></i>
+        </div>
+        <div class="playlist-info">
+            <span class="playlist-label">Playlist</span>
+            <h1 class="playlist-title">{{ playlist_name }}</h1>
+        </div>
+        <button onclick="renamePlaylist('{{ playlist_name }}')" class="edit-button" title="Rename playlist">
+            <i class="fas fa-pen"></i>
+        </button>
     </div>
 </div>
-  
-
 
 <div class="container">
     <div class="content">
@@ -56,12 +60,16 @@
             <div class="songs-section">
                 <h2>Songs</h2>
                 <ul class="songs-list" id="songs-list">
+                    {% if all_songs|length == 0 %}
+                    <li class="empty-playlist-message">No songs available. Import some songs first.</li>
+                    {% else %}
                     {% for song in all_songs %}
                     <li class="song-item">
                         <span>{{ song }}</span>
                         <i class="fa-solid fa-{{ 'check' if song in playlist_songs else 'square' }}" onclick="addSongToPlaylist('{{ song }}', '{{ playlist_name }}')"></i>
                     </li>
                     {% endfor %}
+                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -70,14 +78,8 @@
             <button class="save-playlist-btn" onclick="savePlaylistAndRedirect('{{ playlist_name }}')">Save Playlist</button>
             <button class="import-btn" onclick="importPlaylist('{{ playlist_name }}')">Import Playlist</button>
         </div>
-
     </div>
 </div>
-
-
-
-
-
 
 <script src="{{ url_for('static', filename='js/edit_playlist.js') }}"></script>
 {% endblock %}

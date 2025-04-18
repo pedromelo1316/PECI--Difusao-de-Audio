@@ -1,23 +1,37 @@
 function renamePlaylist(playlistName) {
-    const newName = prompt('Novo nome da playlist:', playlistName);
+    const newName = prompt('Enter new playlist name:', playlistName);
 
     if (newName && newName !== playlistName) {
-        fetch(`/edit_playlist_by_name`, { // Nova rota para buscar pelo nome
+        fetch(`/edit_playlist_by_name`, { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ current_name: playlistName, new_name: newName }) // Envia o nome atual e o novo nome
+            body: JSON.stringify({ current_name: playlistName, new_name: newName })
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Atualiza o título do cabeçalho sem recarregar
-                document.querySelector('.title h1').textContent = "Playlist " + newName;
+                // Update the title using the new selector
+                document.querySelector('.playlist-title').textContent = newName;
+                // Show a success notification
+                const notification = document.createElement('div');
+                notification.className = 'success-notification';
+                notification.textContent = 'Playlist renamed successfully!';
+                document.body.appendChild(notification);
+                setTimeout(() => {
+                    notification.classList.add('show');
+                    setTimeout(() => {
+                        notification.classList.remove('show');
+                        setTimeout(() => {
+                            document.body.removeChild(notification);
+                        }, 300);
+                    }, 2000);
+                }, 100);
             } else {
-                alert('Erro ao renomear a playlist.');
+                alert('Error renaming playlist.');
             }
         })
         .catch(err => {
-            alert('Erro ao renomear a playlist.');
+            alert('Error renaming playlist.');
         });
     }
 }
@@ -170,7 +184,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    const playlistName = document.querySelector('.title h1').textContent.replace('Playlist ', '');
+    // Fix the playlist name selector for the updated DOM structure
+    const playlistName = document.querySelector('.playlist-title').textContent;
     loadPlaylistOrder(playlistName);
 });
 
