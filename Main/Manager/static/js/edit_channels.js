@@ -99,17 +99,22 @@ function updateSectionRight(value) {
     
     } else if (value === "STREAMING") {
         let streamingHTML = '';
-        streamingSources2.forEach(source => {
-            const isChecked = associatedStreaming === source;
-            streamingHTML += `
-                <div class="streaming-item">
-                    <label for="streaming-${source}" style="flex-grow: 1;">
-                        <span class="streaming-name">${source}</span>
-                    </label>
-                    <input type="checkbox" id="streaming-${source}" onchange="selectStreamingSource('${source}', this)" ${isChecked ? 'checked' : ''}>
-                </div>
-            `;
-        });
+        
+        if (streamingSources2.length > 0) {
+            streamingSources2.forEach(source => {
+                const isChecked = associatedStreaming === source;
+                streamingHTML += `
+                    <div class="streaming-item">
+                        <label for="streaming-${source}" style="flex-grow: 1;">
+                            <span class="streaming-name">${source}</span>
+                        </label>
+                        <input type="checkbox" id="streaming-${source}" onchange="selectStreamingSource('${source}', this)" ${isChecked ? 'checked' : ''}>
+                    </div>
+                `;
+            });
+        } else {
+            streamingHTML = `<p class="no-streaming-message">No streaming sources available.</p>`;
+        }
 
         sectionRight.innerHTML = `
             <div class="inner-section-right streaming-section">
