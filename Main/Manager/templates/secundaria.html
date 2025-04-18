@@ -99,13 +99,13 @@
                 <div class="streaming-section">
                     <ul id="streaming-list">
                         {% for streaming in streamings %}
-                        <li class="streaming-item">
-                            <span>{{ streaming.name }}</span>
+                        <li class="streaming-item" id="streaming-item-{{ streaming.id }}">
+                            <span id="stream-name-{{ streaming.id }}">{{ streaming.name }}</span>
                             <div class="streaming-actions">
-                                <i class="fa-solid fa-pen " onclick="editStreaming('{{ streaming.id }}')"></i>
-                                <i class="fa-solid fa-trash" onclick="deleteStreaming('{{ streaming.name }}')"></i>
+                                <i class="fa-solid fa-pen" onclick="editStreaming('{{ streaming.id }}')"></i>
+                                <i class="fa-solid fa-trash" onclick="deleteStreaming('{{ streaming.id }}')"></i>
                             </div>
-                        </li>
+                        </li>                        
                         {% endfor %}
                     </ul>
                     <div style="text-align: center;">

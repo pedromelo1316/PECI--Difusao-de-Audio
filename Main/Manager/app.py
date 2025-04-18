@@ -1905,6 +1905,48 @@ def select_stream_to_save():
 
     return redirect(url_for('secundaria'))
 
+
+###############
+
+@app.route('/rename_streaming', methods=['POST'])
+def rename_streaming():
+    data = request.get_json()
+    streaming_id = data.get('id')
+    new_name = data.get('new_name')
+
+    if not streaming_id or not new_name:
+        return jsonify({'success': False, 'message': 'ID e novo nome são obrigatórios'}), 400
+
+    streaming = Streaming.query.get(streaming_id)
+    if not streaming:
+        return jsonify({'success': False, 'message': 'Streaming não encontrado'}), 404
+
+    streaming.name = new_name
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Nome atualizado com sucesso'})
+
+
+@app.route('/delete_streaming', methods=['POST'])
+def delete_streaming():
+    data = request.get_json()
+    streaming_id = data.get('id')
+
+    if not streaming_id:
+        return jsonify({'success': False, 'message': 'ID não fornecido'}), 400
+
+    streaming = Streaming.query.get(streaming_id)
+    if not streaming:
+        return jsonify({'success': False, 'message': 'Streaming não encontrado'}), 404
+
+    db.session.delete(streaming)
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Streaming deletado com sucesso'})
+
+
+#########
+
 def save_yt_song(song_name, song_hash):
     with app.app_context():
         # Verifica se a música já existe no banco de dados

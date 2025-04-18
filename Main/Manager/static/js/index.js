@@ -520,6 +520,7 @@ function deletePlaylist(playlistId) {
 
 
 // Editar link de streaming
+/*
 function editStreamingLink(element) {
     const listItem = element.closest(".streaming-item");
     const linkElement = listItem.querySelector("a");
@@ -533,8 +534,9 @@ function editStreamingLink(element) {
         linkElement.textContent = newLink;
     });
 }
-
+*/
 // Eliminar link de streaming
+/*
 function deleteStreamingLink(element) {
     showCustomModal("Eliminar Link", "Tem a certeza que deseja apagar este link?", false, function () {
         const listItem = element.closest(".streaming-item");
@@ -542,7 +544,7 @@ function deleteStreamingLink(element) {
     });
 }
 
-
+*/
 
 
 // Função para validar URLs
@@ -578,31 +580,61 @@ function toggleColumnDetails(element) {
 }
 
 function editStreaming(streamingId) {
-    if (!streamingId) {
-        console.error("ID do streaming não fornecido.");
-        showCustomModal("Erro", "ID do streaming não foi fornecido.");
-        return;
-    }
+    const span = document.querySelector(`#stream-name-${streamingId}`);
+    const currentName = span.innerText;
 
-    console.log("Editando streaming com ID:", streamingId);
-    // Redireciona para a página de edição do streaming específico
-    window.location.href = `/edit_streaming/${streamingId}`;
+    const newName = prompt("Novo nome do streaming:", currentName);
+    if (!newName || newName.trim() === "" || newName === currentName) return;
+
+    fetch('/rename_streaming', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            id: streamingId,
+            new_name: newName
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            span.innerText = newName;
+        } else {
+            alert("Erro: " + data.message);
+        }
+    })
+    .catch(error => {
+        console.error("Erro ao renomear streaming:", error);
+        alert("Erro ao renomear streaming.");
+    });
 }
 
 function deleteStreaming(streamingId) {
-    if (!confirm('Tem certeza que deseja excluir este link de streaming?')) return;
+    if (!confirm("Tem certeza que deseja deletar este streaming?")) return;
 
-    fetch(`/delete_streaming/${streamingId}`, { method: 'DELETE' })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                loadStreamingLinks();
-            } else {
-                alert(data.error || 'Erro ao excluir o link de streaming.');
-            }
-        })
-        .catch(err => console.error('Erro ao excluir o link de streaming:', err));
+    fetch('/delete_streaming', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id: streamingId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const item = document.getElementById(`streaming-item-${streamingId}`);
+            if (item) item.remove();
+        } else {
+            alert("Erro ao deletar: " + data.message);
+        }
+    })
+    .catch(error => {
+        console.error("Erro ao deletar streaming:", error);
+        alert("Erro ao deletar streaming.");
+    });
 }
+
 
 document.addEventListener('DOMContentLoaded', loadStreamingLinks);
 
