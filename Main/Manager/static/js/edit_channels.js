@@ -188,6 +188,7 @@ function toggleSongsVisibility(button) {
 
 function addToPlaylist(itemName, itemType, isChecked) {
     const dropZone = document.querySelector('.playlist-dropzone');
+    const noSongsMessage = dropZone.querySelector('.no-songs-message');
 
     if (isChecked) {
         // Avoid duplicates
@@ -206,12 +207,21 @@ function addToPlaylist(itemName, itemType, isChecked) {
             `;
             dropZone.appendChild(newItem);
             enablePlaylistReordering(); // Re-enable drag-and-drop for the new item
+
+            // Remove the "no songs" message if it exists
+            if (noSongsMessage) {
+                noSongsMessage.remove();
+            }
         }
     } else {
         // Remove the item if unchecked
         const itemToRemove = dropZone.querySelector(`[data-name="${itemName}"]`);
         if (itemToRemove) {
             itemToRemove.remove();
+			// Check if dropZone is empty and add the message back
+			if (dropZone.children.length === 0) {
+				dropZone.innerHTML = `<p class="no-songs-message">Nenhuma música associada ao canal.</p>`;
+			}
         }
     }
 }
