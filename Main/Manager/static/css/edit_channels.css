@@ -221,8 +221,7 @@
 }
 
 .inner-section-left {
-    flex: 1;
-    min-width: 220px;
+    width: 60%;
     background: white;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -236,7 +235,6 @@
     display: flex;
     flex-direction: column; 
     gap: 20px; /* Add spacing between sections */
-    min-width: 280px;
     background: white;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -246,6 +244,7 @@
     border:#3b3b3b solid 1px;
     min-height: 500px;
     position: relative; /* Ensure position:relative for absolute positioning of count */
+    width: 35%;
 }
 
 /* Increase height for inner-section-left playlists */
