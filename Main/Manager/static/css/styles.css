@@ -16,6 +16,17 @@ section {
   }
 
 
+
+
+.play-edit-div{
+    width: 20%;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+}
+
+
 * {
     margin: 0;
     padding: 0;
@@ -1212,6 +1223,7 @@ footer {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    width: 80%;
 }
 
 .channel-name {

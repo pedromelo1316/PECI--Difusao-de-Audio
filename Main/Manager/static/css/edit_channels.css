@@ -3,6 +3,27 @@
 /* Estilo para o dropdown de microfones */
 
 
+
+.loading-spinner {
+    border: 3px solid #f3f3f3; /* Light gray */
+    border-top: 3px solid #5dbb63; /* Green */
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 1s linear infinite;
+    margin-left: 10px; /* Espaço entre o switch e o spinner */
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+
 /* Estilização do bloco de fonte selecionada */
 .streaming-selected-box {
     display: flex;

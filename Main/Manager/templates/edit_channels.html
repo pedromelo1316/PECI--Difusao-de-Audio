@@ -33,12 +33,13 @@
         <!-- Switch to activate/deactivate channel -->
         <div class="channel-switch-container">
             <label class="switch">
-                <input type="checkbox" id="channelSwitch" {% if channel.is_active %}checked{% endif %} onchange="toggleChannelStatus({{ channel.id }})">
+                <input type="checkbox" id="channelSwitch" {% if channel.state == 'playing' %}checked{% endif %} onchange="toggleChannelStatus({{ channel.id }})">
                 <span class="slider">
                     <span class="switch-text off">OFF</span>
                     <span class="switch-text on">ON</span>
                 </span>
             </label>
+            <span class="loading-spinner" id="switchLoadingSpinner" style="display: none;"></span>
         </div>
     </div>
 
@@ -115,22 +116,39 @@
 
     function toggleChannelStatus(channelId) {
         const switchElement = document.getElementById('channelSwitch');
+        const spinner = document.getElementById('switchLoadingSpinner');
         const isActive = switchElement.checked;
-
-        // Make a request to update the channel status
-        fetch(`/update_channel_status/${channelId}`, {
+    
+        // Exibe o spinner e desativa o switch
+        spinner.style.display = 'inline-block';
+        switchElement.disabled = true;
+    
+        // Envia a requisição para o backend
+        fetch(`/toggle_transmission`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
             },
-            body: JSON.stringify({ is_active: isActive })
-        }).then(response => {
-            if (!response.ok) {
-                console.error('Error updating channel status');
+            body: JSON.stringify({ channel_id: channelId }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log("Success");
+                window.location.reload(); // Recarrega a página se for bem-sucedido
+            } else {
+                console.error("Error toggling transmission:", data.error);
+                alert("Erro ao alternar o estado do canal.");
             }
-        }).catch(error => {
-            console.error('Request error:', error);
+        })
+        .catch(error => {
+            console.error("Error during transmission toggle:", error);
+            alert("Erro ao comunicar com o servidor.");
+        })
+        .finally(() => {
+            // Oculta o spinner e reativa o switch
+            spinner.style.display = 'none';
+            switchElement.disabled = false;
         });
     }
 </script>
