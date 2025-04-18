@@ -136,6 +136,7 @@
     overflow-y: auto;
     margin-top: 20px; 
     border-right: none; /* Remove the previous border */
+    width: 15%;
 }
 
 .section-rightCH {
@@ -216,6 +217,7 @@
     flex-wrap: wrap;
     gap: 25px;
     margin-top: 20px;
+    width: 100%;
 }
 
 .inner-section-left {
@@ -234,7 +236,6 @@
     display: flex;
     flex-direction: column; 
     gap: 20px; /* Add spacing between sections */
-    flex: 1;
     min-width: 280px;
     background: white;
     border-radius: 12px;
@@ -551,6 +552,7 @@
     flex-direction: column;
     padding: 30px;
 }
+
 
 #sectionRightContent.empty-message p {
     color: #888;
@@ -904,8 +906,7 @@
 }
 
 .streaming-section {
-    width: 50%; /* Set the width to half */
-    width: 680px; /* Optional: Set a maximum width */
+    width: 1000px;
     margin: 0; /* Remove centering */
     margin-left: 0; /* Align to the left */
     position: relative; /* Ensure position:relative for absolute positioning of count */

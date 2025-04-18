@@ -404,7 +404,6 @@ p {
 
 .inner-section-left,
 .inner-section-right {
-    flex: 1;
     background: white;
     border-radius: 12px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
@@ -1639,9 +1638,6 @@ footer {
     flex: 1;
 }
 
-.section-rightCH {
-    flex: 6; /* original e correto, atualmente já está assim */
-}
 
 
 
