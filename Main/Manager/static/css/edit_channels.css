@@ -137,7 +137,7 @@
     margin-right: 30px; /* Add spacing to the right as well */
     margin-top: 20px;
     height: 100%;
-    min-height: 700px; /* Ensure it extends far enough */
+    min-height: 500px; /* Ensure it extends far enough */
     align-self: stretch;
     flex-shrink: 0; /* Prevent the bar from shrinking */
 }
@@ -222,7 +222,7 @@
     transition: transform 0.3s ease;
     overflow: hidden;
     border:#3b3b3b solid 1px;
-    min-height: 700px;
+    min-height: 500px;
     position: relative; /* Ensure position:relative for absolute positioning of count */
 }
 
