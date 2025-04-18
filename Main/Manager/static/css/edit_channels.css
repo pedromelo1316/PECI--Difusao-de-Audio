@@ -884,7 +884,7 @@
 
 .streaming-section {
     width: 50%; /* Set the width to half */
-    max-width: 680px; /* Optional: Set a maximum width */
+    width: 680px; /* Optional: Set a maximum width */
     margin: 0; /* Remove centering */
     margin-left: 0; /* Align to the left */
     position: relative; /* Ensure position:relative for absolute positioning of count */
