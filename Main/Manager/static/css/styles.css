@@ -612,7 +612,6 @@ header {
     background: white;
     border-radius: 12px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    padding: 8px; /* Reduce from 10px */
     border:#9c9c9c solid 1px;
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease;
@@ -1208,7 +1207,6 @@ footer {
 /* ===== CHANNEL TRANSMISSION CONTROLS ===== */
 .channel-selection-panel {
     flex: 1;
-    background: #fff;
     padding: 20px;
     overflow-y: auto;
     max-height: 500px;
