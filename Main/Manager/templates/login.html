@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - Audio Manager</title>
+  <link rel="stylesheet" href="{{url_for('static',filename='css/login.css')}}">
+</head>
+<body>
+  <div class="form-container">
+    <h2>Welcome</h2>
+    <input type="email" id="loginEmail" placeholder="Enter your email" required>
+    <input type="password" id="loginPassword" placeholder="Enter your password" required>
+    <button onclick="audioLogin()">Log in</button>
+    <p>Don't have an account? <a href="{{ url_for('custom_register') }}">Sign up</a></p>
+  </div>
+  <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+</body>
+</html>

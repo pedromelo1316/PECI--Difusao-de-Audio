@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register - Audio Manager</title>
+  <link rel="stylesheet" href="{{url_for('static',filename='css/login.css')}}">
+</head>
+<body>
+  <div class="form-container">
+    <h2>Create your account</h2>
+    <input type="text" id="registerName" placeholder="Full Name" required>
+    <input type="email" id="registerEmail" placeholder="Email address" required>
+    <input type="password" id="registerPassword" placeholder="Password" required>
+    <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+    <button onclick="audioRegister()">Create Account</button>
+    <p>Already have an account? <a href="{{ url_for('custom_login') }}">Login</a></p>
+  </div>
+  <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+</body>
+</html>
