@@ -861,10 +861,16 @@ def index():
 
 @app.route('/index', methods=['GET'])
 def dashboard(): 
-    nodes = Nodes.query.all()
-    channels = Channels.query.all()
-    areas = Areas.query.all()
-    return render_template('index.html', nodes=nodes, channels=channels, areas=areas)
+    nodes = Nodes.query.order_by(Nodes.id).all()
+    areas = Areas.query.order_by(Areas.id).all()
+    channels = Channels.query.order_by(Channels.id).all()
+    microphones = Microphone.query.all()
+    interruptions = Interruptions.query.all()
+    interruptions_areas = db.session.query(interruption_areas).all()
+    interruptions_channels = db.session.query(interruption_channels).all()
+    for area in areas:
+        area.current_channel = next((channel.name for channel in channels if channel.id == area.channel_id), None)
+    return render_template('index.html', nodes=nodes, channels=channels, areas=areas, microphones=microphones, interruptions=interruptions, interruptions_areas=interruptions_areas, interruptions_channels=interruptions_channels)
 
 
 
