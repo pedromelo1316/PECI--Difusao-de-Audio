@@ -183,12 +183,12 @@ section {
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
     padding: 20px; /* Reduce from 25px */
     border: #3b3b3b solid 1px;
-    overflow: auto;
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease;
     width: 100%; /* Full width */
     box-sizing: border-box; /* Include padding in width calculation */
     height: 70vh;
+    overflow-y: hidden;
 }
 
 .microfones-container:hover {
@@ -236,9 +236,11 @@ section {
 
 
 .interrupt-list {
-display: flex;
-flex-direction: column;
-gap: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto; /* alterado de hidden para auto */
+    max-height: 90%; /* defina a altura desejada */
 }
 
 .interrupt-item {

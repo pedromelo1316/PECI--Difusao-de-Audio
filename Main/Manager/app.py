@@ -42,7 +42,7 @@ SAMPLE_RATE = "48000"  # Taxa de amostragem
 CHUNCK_SIZE = 960
 AUDIO_CHANNELS = "1"  # Mono
 
-NUM_CHANNELS = 3  # Número total de canais
+NUM_CHANNELS = 6  # Número total de canais
 
 
 @app.route('/start_interruption/<int:interruption_id>', methods=['POST'])
