@@ -10,9 +10,9 @@
 
 {% block body %}
 
-<nav class="navbar" >
+<nav class="navbar">
     <div class="nav-left">
-        <a href="{{ url_for('index') }}" class="settings-link">
+        <a href="{{ url_for('dashboard') }}" class="settings-link">
             <i class="fa-solid fa-arrow-left icon-arrow-left"></i>
         </a>
     </div>
@@ -21,7 +21,10 @@
         <span class="nav-title">Audio Manager</span>
     </div>
     <div class="nav-right">
-    <div>
+        <a href="{{ url_for('logout') }}" class="logout-icon">
+            <i class="fa-solid fa-right-from-bracket"></i>
+        </a>
+    </div>
 </nav>
 
 <!-- Channel Title with View and Edit Mode -->

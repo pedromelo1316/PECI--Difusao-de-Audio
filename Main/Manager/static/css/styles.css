@@ -547,12 +547,7 @@ header {
     text-align: center;
 }
 
-.logout-icon {
-    color: #000; /* Preto */
-    font-size: 24px; /* Aumentado de 20px para 24px */
-    text-decoration: none;
-    transition: color 0.3s ease;
-}
+
 
 .logout-icon:hover {
     color: #5DBB63; /* Verde ao passar o mouse */
