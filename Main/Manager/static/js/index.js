@@ -371,71 +371,82 @@ function openLocalSongModal() {
     fileInput.click();
 }
 
+
 function openWebSongModal() {
-    closeAddSongChoiceModal();
+    closeAddSongChoiceModal(); // Fecha o modal anterior, se existir
     let modal = document.getElementById('webSongModal');
+
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'webSongModal';
-        Object.assign(modal.style, {
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '70vh',
-            height: '70vh',
-            backgroundColor: '#fff',
-            boxShadow: '0 0 10px rgba(0,0,0,0.5)',
-            zIndex: '1000',
-            overflow: 'hidden'
-        });
-        modal.innerHTML = `
-            <div style="position: relative; height: 100%;">
-            <div class="modal-header" style="background-color: #fff; padding: 10px; text-align: center; height: 70px; border-bottom: 2px solid #ccc;">
-                <button onclick="closeWebSongModal()">X</button>
-                <h1>Music Search</h1>
-            </div>
-            <input type="text" id="search" placeholder="Search for songs..." autofocus />
-            <div id="results"></div>
-            </div>
-        `;
+        modal.className = 'web-modal'; // AQUI adicionamos a classe web-modal!!
 
+        modal.innerHTML = `
+            <div class="modal-header">
+                <h1>Pesquisar Música</h1>
+                <button class="close" onclick="closeWebSongModal()">&#x2715;</button>
+            </div>
+            <input type="text" id="songSearch" placeholder="Pesquisar música..." autofocus>
+            <div id="results" style="overflow-y: auto; height: 400px; margin-top: 10px;"></div>
+        `;
         document.body.appendChild(modal);
-        // Attach event listener for the search input
-        const search = modal.querySelector('#search');
-        const results = modal.querySelector('#results');
-        search.addEventListener('input', function() {
-          const query = this.value.trim();
-          if (!query) {
+    } else {
+        // Atualizar o conteúdo (opcional)
+        modal.innerHTML = `
+            <div class="modal-header">
+                <h1>Pesquisar Música</h1>
+                <button class="close" onclick="closeWebSongModal()">&#x2715;</button>
+            </div>
+            <input type="text" id="songSearch" placeholder="Pesquisar música..." autofocus>
+            <div id="results" style="overflow-y: auto; height: 400px; margin-top: 10px;"></div>
+        `;
+    }
+
+    modal.style.display = 'block';
+
+    const search = modal.querySelector('#songSearch');
+    const results = modal.querySelector('#results');
+
+    search.addEventListener('input', function() {
+        const query = this.value.trim();
+        if (!query) {
             results.innerHTML = '';
             return;
-          }
-          fetch(`/search_suggestions?query=${encodeURIComponent(query)}`)
+        }
+
+        results.innerHTML = '<p>A carregar...</p>';
+
+        fetch(`/search_suggestions?query=${encodeURIComponent(query)}`)
             .then(response => response.json())
             .then(songs => {
-              results.innerHTML = '';
-              songs.forEach(song => {
-                const div = document.createElement('div');
-                div.className = 'song';
-                div.innerHTML = `
-                  <img src="${song.thumbnail}" alt="Thumbnail" />
-                  <div class="song-info">
-                    <div class="song-title">${song.title}</div>
-                    <div class="song-artist">${song.author}</div>
-                  </div>
-                `;
-                div.onclick = () => selectSong(song.title, song.url);
-                results.appendChild(div);
-              });
+                results.innerHTML = '';
+                if (songs.length === 0) {
+                    results.innerHTML = '<p>Nenhum resultado encontrado.</p>';
+                    return;
+                }
+                songs.forEach(song => {
+                    const div = document.createElement('div');
+                    div.className = 'song'; // já está correto
+                    div.innerHTML = `
+                        <img src="${song.thumbnail}" alt="Thumbnail">
+                        <div class="song-info">
+                            <div class="song-title">${song.title}</div>
+                            <div class="song-artist">${song.author}</div>
+                        </div>
+                    `;
+                    div.onclick = () => selectSong(song.title, song.url);
+                    results.appendChild(div);
+                });
             })
             .catch(error => {
-              results.innerHTML = '<p>Error loading results</p>';
-              console.error(error);
+                console.error(error);
+                results.innerHTML = '<p style="color: red;">Erro ao carregar resultados.</p>';
             });
-        });
-    }
-    modal.style.display = 'block';
+    });
 }
+
+
+
 
 function closeWebSongModal() {
     const modal = document.getElementById('webSongModal');
@@ -463,34 +474,33 @@ function selectSong(title, url) {
 
 // Substituir prompt por modal para editar música
 function editSong(songId, currentName) {
-    showCustomModal("Editar Música", "Enter the new song name:", true, function (newName) {
-        if (!newName || newName === currentName) return;
+    showCustomModal("Editar Música", "Introduza o novo nome da música:", true, function (newName) {
+        if (!newName || newName.trim() === "" || newName === currentName) return;
 
-        if (newName && newName !== currentName) {
-            fetch(`/update_song/${songId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ new_name: newName })
-            })
-            .then(response => {
-                if (response.ok) {
-                    window.location.reload();
-                } else {
-                    showCustomModal("Erro", "Erro ao atualizar o nome da música.");
-                }
-            })
-            .catch(err => {
+        fetch(`/update_song/${songId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ new_name: newName })
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.reload();
+            } else {
                 showCustomModal("Erro", "Erro ao atualizar o nome da música.");
-            });
-        }
+            }
+        })
+        .catch(err => {
+            showCustomModal("Erro", "Erro ao atualizar o nome da música.");
+        });
     });
 }
 
+
 // Substituir confirm padrão ao eliminar música
-function deleteSong(songname) {
-    showCustomModal("Eliminar Música", "Are you sure you want to delete this song?", false, function () {
-        console.log("Deleting song:", songname);
-        fetch(`/delete_song/${songname}`, { method: 'DELETE' })
+function deleteSong(songName) {
+    showCustomModal("Eliminar Música", "Tem a certeza que deseja apagar esta música?", false, function () {
+        console.log("Deleting song:", songName);
+        fetch(`/delete_song/${encodeURIComponent(songName)}`, { method: 'DELETE' })
         .then(response => {
             if (response.ok) {
                 window.location.reload();
@@ -503,6 +513,7 @@ function deleteSong(songname) {
         });
     });
 }
+
 
 function deletePlaylist(playlistId) {
     if (!confirm('Are you sure you want to delete this playlist?')) return;
@@ -793,50 +804,48 @@ function openLinkStreamModal() {
 function openWebStreamModal() {
     closeAddStreamChoiceModal();
     let modal = document.getElementById('webStreamModal');
+
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'webStreamModal';
-        Object.assign(modal.style, {
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '70vh',
-            height: '70vh',
-            backgroundColor: '#fff',
-            boxShadow: '0 0 10px rgba(0,0,0,0.5)',
-            zIndex: '1000',
-            overflow: 'hidden'
-        });
+        modal.className = 'web-modal'; // AQUI!! mesma classe bonita
+
         modal.innerHTML = `
-            <div style="position: relative; height: 100%;">
-                <button style="position: absolute; right: 10px; top: 10px;" onclick="closeWebStreamModal()">X</button>
-                <div class="modal-header" style="background-color: #fff; padding: 10px; text-align: center; height: 70px; border-bottom: 2px solid #ccc;">
-                    <h1>Streaming Search</h1>
-                </div>
-                <input type="text" id="streamSearch" placeholder="Search for streams..." autofocus style="width: calc(100% - 20px); margin: 10px;"/>
-                <div id="streamResults" style="overflow-y: auto; height: calc(100% - 140px); margin: 10px;"></div>
+            <div class="modal-header">
+                <h1>Pesquisar Streaming</h1>
+                <button class="close" onclick="closeWebStreamModal()">&#x2715;</button>
             </div>
+            <input type="text" id="streamSearch" placeholder="Pesquisar streaming..." autofocus>
+            <div id="streamResults" style="overflow-y: auto; height: 400px; margin-top: 10px;"></div>
         `;
+
         document.body.appendChild(modal);
-        // Attach event listener for stream search input
+
         const search = modal.querySelector('#streamSearch');
         const results = modal.querySelector('#streamResults');
+
         search.addEventListener('input', function() {
             const query = this.value.trim();
             if (!query) {
                 results.innerHTML = '';
                 return;
             }
+
+            results.innerHTML = '<p>A carregar...</p>';
+
             fetch(`/stream_search_suggestions?query=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(streams => {
                     results.innerHTML = '';
+                    if (streams.length === 0) {
+                        results.innerHTML = '<p>Nenhum resultado encontrado.</p>';
+                        return;
+                    }
                     streams.forEach(stream => {
                         const div = document.createElement('div');
                         div.className = 'stream';
                         div.innerHTML = `
-                            <img src="${stream.thumbnail}" alt="Thumbnail" />
+                            <img src="${stream.thumbnail}" alt="Thumbnail">
                             <div class="stream-info">
                                 <div class="stream-title">${stream.title}</div>
                                 <div class="stream-author">${stream.author}</div>
@@ -847,13 +856,15 @@ function openWebStreamModal() {
                     });
                 })
                 .catch(error => {
-                    results.innerHTML = '<p>Error loading results</p>';
                     console.error(error);
+                    results.innerHTML = '<p style="color: red;">Erro ao carregar resultados.</p>';
                 });
         });
     }
+
     modal.style.display = 'block';
 }
+
 
 function closeWebStreamModal() {
     const modal = document.getElementById('webStreamModal');
