@@ -1209,7 +1209,6 @@ footer {
 .channel-selection-panel {
     flex: 1;
     padding: 20px;
-    overflow-y: auto;
     max-height: 500px;
     max-width: none; /* Remove the max-width constraint to allow full width */
     width: 100%; /* Ensure it takes full width */
@@ -1331,8 +1330,9 @@ footer {
     width: 100%;
     gap: 20px;
     margin-top: 10px;
+    margin-bottom: 10px;
     flex: 1;
-    height: 100%;
+    height: 90%;
 }
 
 /* ===== RESPONSIVE STYLES ===== */
