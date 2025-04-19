@@ -7,6 +7,7 @@ body {
   height: 100%;
   scroll-snap-type: y mandatory; /* Define scroll snapping vertical obrigatório */
   scroll-behavior: smooth; /* Deslize suave */
+  background: #f9f9f9; 
 }
 
 section {
@@ -40,11 +41,11 @@ section {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #fff;
+    background-color: #f9f9f9;
     z-index: 9999;
-    margin-left: 15px;
-    margin-right: 15px;
-    border-bottom: 2px solid #ccc; /* <-- Linha embaixo da navbar */
+    width: 100%; /* Faz a navbar ocupar toda a largura */
+    padding: 0 15px; /* Mantém o espaçamento interno */
+    border-bottom: 2px solid #ccc; /* Linha embaixo da navbar */
     height: 10vh;
 }
 
@@ -104,7 +105,7 @@ section {
   .nav-left {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 5px; /* Reduzi o espaçamento entre o logo e o texto */
   }
   
   .icon-arrow-left {
@@ -143,7 +144,8 @@ section {
   
   .nav-right {
     display: flex;
-    gap: 10px;
+    gap: 7px; 
+    justify-content: flex-end; 
   }
   
   .btn-outline {
@@ -172,6 +174,20 @@ section {
     font-weight: bold;
     font-size: 18px;
     color: #333;
+}
+
+.nav-right .logout-icon {
+    color: #000; /* Preto */
+    font-size: 21px !important; /* Aumentado significativamente e forçado com !important */
+    text-decoration: none;
+    transition: color 0.3s ease;
+    display: flex;            /* Garante que o contêiner se ajuste ao tamanho do ícone */
+    align-items: center;      /* Centraliza verticalmente */
+    justify-content: center;  /* Centraliza horizontalmente */
+}
+
+.nav-right .logout-icon i {
+    font-size: 21px !important; /* Força o tamanho do ícone dentro do link */
 }
 
 
@@ -547,9 +563,13 @@ header {
     text-align: center;
 }
 
+
+
 .logout-icon {
-    font-size: 28px;
-    cursor: pointer;
+    color: #000; /* Preto */
+    font-size: 36px; /* Aumentado de 32px para 36px */
+    text-decoration: none;
+    transition: color 0.3s ease;
 }
 
 /* Site Logo */
@@ -557,7 +577,8 @@ header {
     height: 60px;
     margin: 0;
     display: inline-block;
-    margin-right: 20px;
+    margin-right: 5px; /* Reduzi o espaçamento à direita */
+    margin-left: 30px; /* Adicionei margem à esquerda para movê-la à direita */
 }
 
 /* ===== COLUMN BOX & ITEMS ===== */

@@ -846,9 +846,21 @@ class Streaming(db.Model):
         self.url = url
         
 
-# Rota principal (index) que renderiza a página inicial com os nós, áreas e canais
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    email = db.Column(db.String(200), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+
+    def __repr__(self):
+        return f'<User {self.id}: {self.name}>'
+
 @app.route('/', methods=['GET'])
 def index():
+    return redirect(url_for('custom_login'))
+
+@app.route('/index', methods=['GET'])
+def dashboard(): 
     nodes = Nodes.query.order_by(Nodes.id).all()
     areas = Areas.query.order_by(Areas.id).all()
     channels = Channels.query.order_by(Channels.id).all()
@@ -858,17 +870,48 @@ def index():
     interruptions_channels = db.session.query(interruption_channels).all()
     for area in areas:
         area.current_channel = next((channel.name for channel in channels if channel.id == area.channel_id), None)
+    return render_template('index.html', nodes=nodes, channels=channels, areas=areas, microphones=microphones, interruptions=interruptions, interruptions_areas=interruptions_areas, interruptions_channels=interruptions_channels)
 
-    #
-    # playlists = get_playlists()  # Função que retorna as playlists
-    #songs = get_songs()  # Função que retorna as músicas
-    #return render_template('index.html', playlists=playlists, songs=songs)
-    ####
-    #playlist = db.session.query(Playlist).first()  # Substitua por lógica específica, se necessário
 
-    ###
 
-    return render_template("index.html", nodes=nodes, areas=areas, channels=channels, microphones=microphones, interruptions=interruptions, interruptions_areas=interruptions_areas, interruptions_channels=interruptions_channels)
+@app.route('/login', methods=['GET', 'POST'])
+def custom_login():
+    if request.method == 'POST':
+        data = request.json
+        email = data.get('email')
+        password = data.get('password')
+
+        user = User.query.filter_by(email=email, password=password).first()
+        if user:
+            return jsonify({"success": True, "message": "Login successful", "redirectUrl": "/index"}), 200
+        else:
+            return jsonify({"error": "Invalid email or password"}), 401
+    return render_template("login.html")
+
+
+@app.route('/register', methods=['GET','POST'])
+def custom_register():
+    if request.method == 'POST':
+        data = request.json
+        name = data.get('name')
+        email = data.get('email')
+        password = data.get('password')
+
+        if User.query.filter_by(email=email).first():
+            return jsonify({"error": "Email already registered"}), 400
+
+        new_user = User(name=name, email=email, password=password)
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Registration successful"}), 201
+    return render_template('register.html')
+
+
+@app.route('/logout', methods=['GET'])
+def logout():
+    return redirect(url_for('custom_login'))
+
+
 # Rota para deleção de um nó específico
 @app.route('/delete/<int:id>')
 def delete(id):
@@ -1694,15 +1737,11 @@ def import_playlist():
     added_songs = response.get("added_songs", [])
     for song_data in added_songs:
         song = Songs.query.get(song_data["id"])
-        if song and song not in playlist.songs:
+        if song and song not in playlist.songs:  # Fix: Replace '&&' with 'and'
             playlist.songs.append(song)
 
     db.session.commit()
     return jsonify({"success": True, "playlist_name": playlist_name, "added_songs": added_songs}), 200
-
-    
-    
-    
 
 
 @app.route('/save_playlist', methods=['POST'])
