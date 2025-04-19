@@ -144,7 +144,8 @@ section {
   
   .nav-right {
     display: flex;
-    gap: 10px;
+    gap: 7px; 
+    justify-content: flex-end; 
   }
   
   .btn-outline {
@@ -173,6 +174,20 @@ section {
     font-weight: bold;
     font-size: 18px;
     color: #333;
+}
+
+.nav-right .logout-icon {
+    color: #000; /* Preto */
+    font-size: 21px !important; /* Aumentado significativamente e forçado com !important */
+    text-decoration: none;
+    transition: color 0.3s ease;
+    display: flex;            /* Garante que o contêiner se ajuste ao tamanho do ícone */
+    align-items: center;      /* Centraliza verticalmente */
+    justify-content: center;  /* Centraliza horizontalmente */
+}
+
+.nav-right .logout-icon i {
+    font-size: 21px !important; /* Força o tamanho do ícone dentro do link */
 }
 
 
@@ -549,9 +564,11 @@ header {
 
 
 
-.logout-icon:hover {
-    color: #5DBB63; /* Verde ao passar o mouse */
-    background: none; /* Remove fundo */
+.logout-icon {
+    color: #000; /* Preto */
+    font-size: 36px; /* Aumentado de 32px para 36px */
+    text-decoration: none;
+    transition: color 0.3s ease;
 }
 
 /* Site Logo */
