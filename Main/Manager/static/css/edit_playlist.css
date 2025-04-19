@@ -27,8 +27,7 @@ body {
     justify-content: center;
     align-items: center; 
     flex-direction: column;
-    min-height: 85vh;
-    margin-top: -140px;
+    margin-top: 20px;
 }
 
 .content {
