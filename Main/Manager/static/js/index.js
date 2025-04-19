@@ -635,43 +635,62 @@ function deleteStreaming(streamingId) {
     });
 }
 
-
-document.addEventListener('DOMContentLoaded', loadStreamingLinks);
-
-
-
 function fetchMicrophones() {
+    const icon = document.getElementById('microfone-status-icon');
+    const button = document.getElementById('sync-microphones-btn');
+
+    // Mostrar "A sincronizar..."
+    button.innerHTML = 'A sincronizar...';
+    icon.style.display = 'none'; // Esconde o ícone enquanto sincroniza
+
     fetch('/update_microphones')
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                console.log('Microphones fetched successfully:', data.microphones);
-                const microphoneSection = document.querySelector('.microfone-section');
-                microphoneSection.innerHTML = `
-                    <ul id="microphone-list">
-                        ${data.microphones.map(mic => `
-                            <li class="microfone-item">
-                                <span>${mic.name}</span>
-                                <div class="microfone-actions">
-                                    <i class="fa-solid fa-pen" onclick="editMicrofone('${mic.id}', '${mic.name}')"></i>
-                                    <i class="fa-solid fa-trash" onclick="deleteMicrofone('${mic.name}')"></i>
-                                </div>
-                            </li>
-                        `).join('')}
-                    </ul>
-                    <div style="text-align: center;">
-                        <button onclick="fetchMicrophones()">Get Microfones</button>
-                    </div>
-                `;
-            } else if (data.error) {
-                console.error('Failed to fetch microphones:', data.error);
-                alert('Failed to fetch microphones: ' + data.error);
+                // Atualizar lista de microfones
+                const microphoneList = document.getElementById('microphone-list');
+                microphoneList.innerHTML = data.microphones.map(mic => `
+                    <li class="microfone-item">
+                        <span>${mic.name}</span>
+                        <div class="microfone-actions">
+                            <i class="fa-solid fa-pen" onclick="editMicrofone('${mic.id}', '${mic.name}', '${mic.short_cut}')"></i>
+                            <i class="fa-solid fa-trash" onclick="deleteMicrofone('${mic.name}')"></i>
+                        </div>
+                    </li>
+                `).join('');
+
+                // Depois de 2 segundos: mostrar o check verde
+                setTimeout(() => {
+                    icon.classList.remove('fa-rotate-right');
+                    icon.classList.add('fa-check');
+                    icon.style.display = 'inline-block';
+                    icon.style.color = '#10B981'; // Verde
+                    button.innerHTML = 'Sincronizado!';
+
+                    // Depois de mais 5 segundos: voltar a mostrar a rodinha
+                    setTimeout(() => {
+                        icon.classList.remove('fa-check');
+                        icon.classList.add('fa-rotate-right');
+                        icon.style.color = ''; // Tira o verde
+                        button.innerHTML = 'Sync Microfones';
+                        icon.style.display = 'inline-block'; // Certifica-te que aparece
+                    }, 5000);
+
+                }, 2000);
+
             } else {
-                console.error('Failed to fetch microphones:', data.error || 'Unknown error');
+                alert('Erro ao sincronizar microfones: ' + (data.error || 'Erro desconhecido.'));
+                icon.style.display = 'inline-block';
             }
         })
-        .catch(error => console.error('Error fetching microphones:', error));
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro a contactar o servidor.');
+            icon.style.display = 'inline-block';
+        });
 }
+
+
 
 function editMicrofone(micId, currentName, currentShortcut) {
     showCustomModal("Edit Microphone", "Update the microphone Name:", true, function (newName) {
