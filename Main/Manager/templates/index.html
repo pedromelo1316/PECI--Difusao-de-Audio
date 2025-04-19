@@ -97,6 +97,7 @@
 
     // Trigger the file input for importing
     function triggerImport() {
+    
 
         // Create a FormData object and append the necessary data
         const fileInput = document.createElement('input');
@@ -298,7 +299,7 @@
                     </a>
                     
                 </div>
-                <div class="column-box" id="channelsBox" style="display: block;">
+                <div class="column-box" id="columnBox" style="display: block;">
                     {% if channels|length < 1 %}
                     <h4>No channels found</h4>
                     {% else %}
