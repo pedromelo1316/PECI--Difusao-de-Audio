@@ -634,58 +634,57 @@ function deleteStreaming(streamingId) {
         alert("Erro ao deletar streaming.");
     });
 }
-
 function fetchMicrophones() {
     const icon = document.getElementById('microfone-status-icon');
     const button = document.getElementById('sync-microphones-btn');
 
-    // Mostrar "A sincronizar..."
-    button.innerHTML = 'A sincronizar...';
-    icon.style.display = 'none'; // Esconde o ícone enquanto sincroniza
+    // Show "Syncing..."
+    button.innerHTML = 'Syncing...';
+    icon.style.display = 'none'; // Hide the icon while syncing
 
     fetch('/update_microphones')
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Atualizar lista de microfones
+                // Update microphone list
                 const microphoneList = document.getElementById('microphone-list');
                 microphoneList.innerHTML = data.microphones.map(mic => `
-                    <li class="microfone-item">
+                    <li class="microphone-item">
                         <span>${mic.name}</span>
-                        <div class="microfone-actions">
-                            <i class="fa-solid fa-pen" onclick="editMicrofone('${mic.id}', '${mic.name}', '${mic.short_cut}')"></i>
-                            <i class="fa-solid fa-trash" onclick="deleteMicrofone('${mic.name}')"></i>
+                        <div class="microphone-actions">
+                            <i class="fa-solid fa-pen" onclick="editMicrophone('${mic.id}', '${mic.name}', '${mic.short_cut}')"></i>
+                            <i class="fa-solid fa-trash" onclick="deleteMicrophone('${mic.name}')"></i>
                         </div>
                     </li>
                 `).join('');
 
-                // Depois de 2 segundos: mostrar o check verde
+                // After 2 seconds: show green checkmark
                 setTimeout(() => {
                     icon.classList.remove('fa-rotate-right');
                     icon.classList.add('fa-check');
                     icon.style.display = 'inline-block';
-                    icon.style.color = '#10B981'; // Verde
-                    button.innerHTML = 'Sincronizado!';
+                    icon.style.color = '#10B981'; // Green
+                    button.innerHTML = 'Synced!';
 
-                    // Depois de mais 5 segundos: voltar a mostrar a rodinha
+                    // After another 5 seconds: show the spinning icon again
                     setTimeout(() => {
                         icon.classList.remove('fa-check');
                         icon.classList.add('fa-rotate-right');
-                        icon.style.color = ''; // Tira o verde
-                        button.innerHTML = 'Sync Microfones';
-                        icon.style.display = 'inline-block'; // Certifica-te que aparece
+                        icon.style.color = ''; // Reset color
+                        button.innerHTML = 'Sync Microphones';
+                        icon.style.display = 'inline-block'; // Make sure it appears
                     }, 5000);
 
                 }, 2000);
 
             } else {
-                alert('Erro ao sincronizar microfones: ' + (data.error || 'Erro desconhecido.'));
+                alert('Error syncing microphones: ' + (data.error || 'Unknown error.'));
                 icon.style.display = 'inline-block';
             }
         })
         .catch(error => {
-            console.error('Erro:', error);
-            alert('Erro a contactar o servidor.');
+            console.error('Error:', error);
+            alert('Error contacting the server.');
             icon.style.display = 'inline-block';
         });
 }
