@@ -39,7 +39,7 @@
 {% block body %}
 
 
-<nav class="navbar" >
+<nav class="navbar">
     <div class="nav-left">
         <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Site Logo" class="site-logo">
         <span class="nav-title">Audio Manager</span>
@@ -52,7 +52,9 @@
     <div class="nav-right">
         <button class="btn-outline" onclick="triggerImport()"><i class="bi bi-upload me-1"></i>Import Config</button>
         <button class="btn-primary" onclick="triggerExport()"><i class="bi bi-download me-1"></i>Export Config</button>
-        <a href="{{ url_for('custom_login') }}" class="btn-primary" style="text-decoration: none;">Logout</a>
+        <a href="{{ url_for('logout') }}" class="logout-icon">
+            <i class="fa-solid fa-right-from-bracket"></i>
+        </a>
     </div>
 </nav>
 

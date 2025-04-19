@@ -43,9 +43,9 @@ section {
     align-items: center;
     background-color: #f9f9f9;
     z-index: 9999;
-    margin-left: 15px;
-    margin-right: 15px;
-    border-bottom: 2px solid #ccc; /* <-- Linha embaixo da navbar */
+    width: 100%; /* Faz a navbar ocupar toda a largura */
+    padding: 0 15px; /* Mantém o espaçamento interno */
+    border-bottom: 2px solid #ccc; /* Linha embaixo da navbar */
     height: 10vh;
 }
 
@@ -105,7 +105,7 @@ section {
   .nav-left {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 5px; /* Reduzi o espaçamento entre o logo e o texto */
   }
   
   .icon-arrow-left {
@@ -548,8 +548,15 @@ header {
 }
 
 .logout-icon {
-    font-size: 28px;
-    cursor: pointer;
+    color: #000; /* Preto */
+    font-size: 24px; /* Aumentado de 20px para 24px */
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.logout-icon:hover {
+    color: #5DBB63; /* Verde ao passar o mouse */
+    background: none; /* Remove fundo */
 }
 
 /* Site Logo */
@@ -557,7 +564,8 @@ header {
     height: 60px;
     margin: 0;
     display: inline-block;
-    margin-right: 20px;
+    margin-right: 5px; /* Reduzi o espaçamento à direita */
+    margin-left: 30px; /* Adicionei margem à esquerda para movê-la à direita */
 }
 
 /* ===== COLUMN BOX & ITEMS ===== */
