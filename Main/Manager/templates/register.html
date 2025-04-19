@@ -6,6 +6,10 @@
   <link rel="stylesheet" href="{{url_for('static',filename='css/login.css')}}">
 </head>
 <body>
+  <div class="logo-container">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="AudioManager Logo">
+    <h1>AudioManager</h1>
+  </div>
   <div class="form-container">
     <h2>Create your account</h2>
     <input type="text" id="registerName" placeholder="Full Name" required>

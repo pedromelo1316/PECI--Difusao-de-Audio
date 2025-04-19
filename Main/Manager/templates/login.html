@@ -6,6 +6,10 @@
   <link rel="stylesheet" href="{{url_for('static',filename='css/login.css')}}">
 </head>
 <body>
+  <div class="logo-container">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="AudioManager Logo">
+    <h1>AudioManager</h1>
+  </div>
   <div class="form-container">
     <h2>Welcome</h2>
     <input type="email" id="loginEmail" placeholder="Enter your email" required>
