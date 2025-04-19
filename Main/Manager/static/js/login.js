@@ -58,3 +58,34 @@ function audioLogin() {
       alert('An error occurred during login.');
     });
 }
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Set up for login form
+  const loginInputs = ['loginEmail', 'loginPassword'];
+  loginInputs.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          audioLogin();
+        }
+      });
+    }
+  });
+  
+  
+  const registerInputs = ['registerName', 'registerEmail', 'registerPassword', 'confirmPassword'];
+  registerInputs.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          audioRegister();
+        }
+      });
+    }
+  });
+});
