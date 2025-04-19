@@ -2,23 +2,65 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Register - Audio Manager</title>
   <link rel="stylesheet" href="{{url_for('static',filename='css/login.css')}}">
 </head>
 <body>
+  <!-- Ondas de som animadas -->
+  <div class="sound-wave-container">
+    <div class="sound-wave"></div>
+    <div class="sound-wave"></div>
+    <div class="sound-wave"></div>
+  </div>
+  
+  <div class="wifi-waves">
+    <i class="fas fa-wifi"></i>
+  </div>
+  <div class="sound-waves">
+    <i class="fas fa-volume-up"></i>
+  </div>
+  
   <div class="logo-container">
     <img src="{{ url_for('static', filename='img/logo.png') }}" alt="AudioManager Logo">
-    <h1>AudioManager</h1>
+    <div class="logo-text">
+      <h1>AudioManager</h1>
+    </div>
   </div>
+  
   <div class="form-container">
     <h2>Create your account</h2>
-    <input type="text" id="registerName" placeholder="Full Name" required>
-    <input type="email" id="registerEmail" placeholder="Email address" required>
-    <input type="password" id="registerPassword" placeholder="Password" required>
-    <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
-    <button onclick="audioRegister()">Create Account</button>
+    
+    <div class="input-group">
+      <i class="fas fa-user"></i>
+      <input type="text" id="registerName" placeholder="Full Name" required>
+    </div>
+    
+    <div class="input-group">
+      <i class="fas fa-envelope"></i>
+      <input type="email" id="registerEmail" placeholder="Email address" required>
+    </div>
+    
+    <div class="input-group">
+      <i class="fas fa-lock"></i>
+      <input type="password" id="registerPassword" placeholder="Password" required>
+    </div>
+    
+    <div class="input-group">
+      <i class="fas fa-check-circle"></i>
+      <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+    </div>
+    
+    <button onclick="audioRegister()">Create Account <i class="fas fa-user-plus"></i></button>
     <p>Already have an account? <a href="{{ url_for('custom_login') }}">Login</a></p>
+    
+    <div class="feature-pills">
+      <div class="feature-pill"><i class="fas fa-wifi"></i> WiFi</div>
+      <div class="feature-pill"><i class="fas fa-music"></i> Multi-room</div>
+      <div class="feature-pill"><i class="fas fa-sync"></i> Sync</div>
+    </div>
   </div>
+  
   <script src="{{ url_for('static', filename='js/login.js') }}"></script>
 </body>
 </html>
