@@ -24,7 +24,7 @@ body {
   justify-content: center;
   height: 100vh;
   font-family: 'Poppins', sans-serif;
-  background: #f9f9f9; /* Garantindo que o fundo seja totalmente branco */
+  background: #f9f9f9; 
   margin: 0;
   color: var(--text-dark);
   position: relative;

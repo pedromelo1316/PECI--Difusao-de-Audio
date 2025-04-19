@@ -861,7 +861,11 @@ def index():
 
 @app.route('/index', methods=['GET'])
 def dashboard(): 
-    return render_template('index.html')
+    nodes = Nodes.query.all()
+    channels = Channels.query.all()
+    areas = Areas.query.all()
+    return render_template('index.html', nodes=nodes, channels=channels, areas=areas)
+
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -895,6 +899,11 @@ def custom_register():
         db.session.commit()
         return jsonify({"success": True, "message": "Registration successful"}), 201
     return render_template('register.html')
+
+
+@app.route('/logout', methods=['GET'])
+def logout():
+    return redirect(url_for('custom_login'))
 
 
 # Rota para deleção de um nó específico
