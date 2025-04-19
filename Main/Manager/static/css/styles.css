@@ -2270,3 +2270,167 @@ footer {
 .green-action-btn:hover {
     background-color: #479F52;
 }
+/* ====== MODAIS DE PESQUISA (mantendo a tua estrutura) ====== */
+
+#webSongModal, #webStreamModal {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 30px 40px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    width: 95%;
+    max-width: 700px;
+    max-height: 100vh;
+    overflow-y: auto;
+    font-family: 'Roboto', sans-serif;
+    animation: fadeIn 0.3s ease;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+}
+
+/* FadeIn Animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Cabeçalho */
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.modal-header h1 {
+    font-size: 26px;
+    font-weight: bold;
+    color: #333;
+    margin: 0;
+}
+
+/* Botão de fechar */
+.modal-header button.close {
+    position: absolute !important;
+    top: 10px !important;
+    right: 10px !important;
+    width: 36px !important;
+    height: 36px !important;
+    background: none !important;
+    border: none !important;
+    font-size: 20px !important;
+    font-weight: bold !important;
+    color: #888 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease, transform 0.2s ease, background-color 0.3s ease !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 1001 !important;
+}
+
+.modal-header button.close:hover {
+    color: #5DBB63 !important;
+    background-color: #e6f8ed !important;
+    transform: scale(1.1) !important;
+}
+
+
+/* Campo de pesquisa */
+#songSearch, #streamSearch {
+    width: 100%;
+    padding: 16px 20px;
+    margin: 10px 0 20px 0;
+    border: 1px solid #ccc;
+    border-radius: 40px;
+    font-size: 18px;
+    background-color: #fafafa;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+#songSearch:focus, #streamSearch:focus {
+    background-color: #ffffff;
+    border-color: #5DBB63;
+    box-shadow: 0 0 8px rgba(93, 187, 99, 0.4);
+}
+
+/* Áreas de resultados (#results e #streamResults) */
+/* Áreas de resultados */
+#results, #streamResults {
+    overflow-y: auto;
+    max-height: 400px; /* MESMA altura nos dois */
+    margin-top: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+/* Scroll bonito */
+#results::-webkit-scrollbar,
+#streamResults::-webkit-scrollbar {
+    width: 8px;
+}
+
+#results::-webkit-scrollbar-track,
+#streamResults::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+#results::-webkit-scrollbar-thumb,
+#streamResults::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+#results::-webkit-scrollbar-thumb:hover,
+#streamResults::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Estilo dos resultados individuais */
+.song, .stream {
+    display: flex;
+    align-items: center;
+    background: #f9f9f9;
+    border-radius: 14px;
+    padding: 14px;
+    margin: 12px 0;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.song:hover, .stream:hover {
+    background: #e6f8ed;
+}
+
+/* Imagens */
+.song img, .stream img {
+    width: 70px;
+    height: 70px;
+    border-radius: 14px;
+    margin-right: 20px;
+    object-fit: cover;
+}
+
+/* Info do resultado */
+.song-info, .stream-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.song-title, .stream-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
+
+.song-artist, .stream-author {
+    font-size: 15px;
+    color: #777;
+}

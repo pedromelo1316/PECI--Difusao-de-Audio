@@ -125,7 +125,10 @@
 <div class="container">
     <div class="content">
         <div class="microfone-box">
-            <h3>Microfones</h3>
+            <h3 style="display: flex; align-items: center; gap: 8px;">
+                Microfones
+                <i id="microfone-status-icon" class="fa-solid fa-rotate-right" style="font-size: 18px; cursor: pointer;" onclick="fetchMicrophones()"></i>
+            </h3>       
             <div class="microfone-section">
                 <ul id="microphone-list">
                     {% for microfone in microfones %}
@@ -138,11 +141,13 @@
                     </li>
                     {% endfor %}
                 </ul>
-                <div style="text-align: center;">
-                    <button class="green-action-btn" onclick="fetchMicrophones()">Get Microfones</button>
+
+                <div style="display: flex; justify-content: center; margin-top: 10px;">
+                    <button id="sync-microphones-btn" class="green-action-btn" onclick="fetchMicrophones()">
+                        Sync Microfones
+                    </button>
                 </div>
-                    
-            </div> <!-- Closing the microfone-section div -->
+            </div>
         </div>
     </div>
 </div>
