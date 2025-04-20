@@ -195,15 +195,18 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .channel-edit-input {
-    font-size: 22px;
-    padding: 6px 12px;
-    border: 1px solid #ccc;
+    font-size: 18px;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
     border-radius: 8px;
-    outline: none;
-    width: 300px;
+    width: 100%;
 }
 
 .channel-edit-input:focus {
@@ -965,6 +968,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    margin-left: 15px;
 }
 
 /* Switch Styles */
@@ -1104,9 +1108,98 @@ input:checked + .slider .switch-text.off {
 #errorMessage {
     color: #ff4d4d;
     font-size: 13px;
-    margin-top: 4px;
-    padding-left: 2px;
-    font-family: 'Roboto', sans-serif;
-    text-align: left;
+    margin-top: 8px;
+    font-weight: normal;
+}
+
+/* Styles from edit_playlist.css for page header */
+.page-header {
+    padding: 45px 30px 15px;    
+    background-color: #fff; 
+    border-bottom: none;
+    position: relative;
+    width: 100%;
+    margin-bottom: 40px;
+}
+
+.page-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 10%;             /* Diminuir para aumentar a largura da linha */
+    width: 80%;            /* Aumentar a largura da linha divisória */
+    height: 1px;
+    background-color: #eaeaea;
+}
+
+.playlist-title-container {
+    display: flex;
+    align-items: center;
+    max-width: 1400px;     /* Aumentar de 1200px para 1400px */
+    width: 90%;           /* Garantir que ocupe 90% da largura disponível */
+    margin: 0 auto;
+}
+
+.playlist-icon {
+    background-color: #5dbb63;
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.playlist-icon i {
+    font-size: 22px;
+}
+
+.playlist-info {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.playlist-label {
+    font-size: 14px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.playlist-title {
+    margin: 0;
+    font-size: 28px;
+    font-weight: bold;
+    color: #333;
+}
+
+.edit-button {
+    background-color: #f1f1f1;
+    color: #555;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 15px;
+}
+
+.edit-button:hover {
+    background-color: #e4e4e4;
+    color: #5dbb63;
+    transform: scale(1.05);
+}
+
+.edit-button i {
+    font-size: 16px;
 }
 

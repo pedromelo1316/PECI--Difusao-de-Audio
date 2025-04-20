@@ -27,11 +27,18 @@
 </nav>
 
 <!-- Channel Title with View and Edit Mode -->
-<div class="channel-title-container">
-    <!-- View -->
-    <div id="channelTitleDisplay" class="channel-title">
-        <h1 id="channelTitle" style="margin-bottom: 0px">{{ channel.name }}</h1>
-        <i class="fa-solid fa-pen edit-icon" style="font-size: 25px;" onclick="toggleChannelEdit()"></i>
+<div class="page-header">
+    <div class="playlist-title-container">
+        <div class="playlist-icon">
+            <i class="fas fa-volume-up"></i>
+        </div>
+        <div class="playlist-info">
+            <span class="playlist-label">Channel</span>
+            <h1 class="playlist-title" id="channelTitle">{{ channel.name }}</h1>
+        </div>
+        <button onclick="toggleChannelEdit()" class="edit-button" title="Rename channel">
+            <i class="fas fa-pen"></i>
+        </button>
         <div class="channel-switch-container">
             <label class="switch">
                 <input type="checkbox" id="channelSwitch" {% if channel.state == 'playing' %}checked{% endif %} onchange="toggleChannelStatus({{ channel.id }})">
@@ -43,16 +50,15 @@
             <span class="loading-spinner" id="switchLoadingSpinner" style="display: none;"></span>
         </div>
     </div>
-
-    <!-- Edit -->
-    <form id="channelEditForm" class="channel-edit-form" style="display: flex; align-items: center; gap: 10px; position: relative; display: none; margin-bottom: 40px;" method="POST" action="{{ url_for('update_channel_name', channel_id=channel.id) }}">
-        <div style="position: relative; display: flex; flex-direction: column;">
-            <input type="text" id="channelNameInput" name="channel_name" value="{{ channel.name }}" class="channel-edit-input" required style="width: 300px;">
-            <div id="errorMessage" style="color: red; font-size: 14px; margin-top: 10px; position: absolute; top: 100%; left: 0; display: none;"></div>
-        </div>
-        <button type="submit" class="save-button" style="height: 40px;">Save</button>
-    </form>
     
+    <!-- Edit Form -->
+    <form id="channelEditForm" class="channel-edit-form" style="display: none; margin: 15px auto 0; max-width: 500px;" method="POST" action="{{ url_for('update_channel_name', channel_id=channel.id) }}">
+        <div style="position: relative; display: flex; flex-direction: column; width: 100%;">
+            <input type="text" id="channelNameInput" name="channel_name" value="{{ channel.name }}" class="channel-edit-input" required>
+            <div id="errorMessage" style="display: none;"></div>
+        </div>
+        <button type="submit" class="save-button">Save</button>
+    </form>
 </div>
 
 <div class="containerCH">
