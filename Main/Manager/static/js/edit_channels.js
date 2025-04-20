@@ -67,35 +67,53 @@ function updateSectionRight(value) {
         } else {
             associatedSongsHTML = `<p class="no-songs-message">No songs associated with the channel.</p>`;
         }
-
-        sectionRight.innerHTML = `
+        if (allSongs.length === 0) {
+            sectionRight.innerHTML = `
             <div class="inner-section-left">
                 <h3>${channelName} Playlist</h3>
                 <div class="selected-playlist-info">
-                    <div class="playlist-dropzone">
-                        ${associatedSongsHTML} <!-- Associated songs -->
-                    </div>
+                <div class="playlist-dropzone">
+                    ${associatedSongsHTML} <!-- Associated songs -->
+                </div>
+                </div>
+            </div>
+            <div class="inner-section-right">
+                <div class="no-songs-warning" style="text-align: center; padding: 20px;">
+                <p>No songs available. Please add media to proceed.</p>
+                <button style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;" class="add-media-btn" onclick="window.location.href='/secundaria'">Add Songs</button>
+                </div>
+            </div>
+            `;
+        } else {
+            sectionRight.innerHTML = `
+            <div class="inner-section-left">
+                <h3>${channelName} Playlist</h3>
+                <div class="selected-playlist-info">
+                <div class="playlist-dropzone">
+                    ${associatedSongsHTML} <!-- Associated songs -->
+                </div>
                 </div>
             </div>
             <div class="inner-section-right">
                 <div class="playlists-section">
-                    <span class="container-count">${Object.keys(playlistsData).length}</span>
-                    <h3>Available Playlists</h3>
-                    <div class="playlist-container">
-                        ${playlistsHTML}
-                    </div>
+                <span class="container-count">${Object.keys(playlistsData).length}</span>
+                <h3>Available Playlists</h3>
+                <div class="playlist-container">
+                    ${playlistsHTML}
+                </div>
                 </div>
                 <div class="songs-section">
-                    <span class="container-count">${allSongs.length}</span>
-                    <h3>Available Songs</h3>
-                    <div class="songs-container">
-                        ${songsHTML}
-                    </div>
+                <span class="container-count">${allSongs.length}</span>
+                <h3>Available Songs</h3>
+                <div class="songs-container">
+                    ${songsHTML}
+                </div>
                 </div>
             </div>
-        `;
-        saveButtonContainer.style.display = "flex";
-        enablePlaylistReordering(); // Enable drag-and-drop reordering
+            `;
+            saveButtonContainer.style.display = "flex";
+            enablePlaylistReordering(); // Enable drag-and-drop reordering
+        }
     
     } else if (value === "STREAMING") {
         let streamingHTML = '';
@@ -113,7 +131,12 @@ function updateSectionRight(value) {
                 `;
             });
         } else {
-            streamingHTML = `<p class="no-streaming-message">No streaming sources available.</p>`;
+            streamingHTML = `
+                <div class="no-streaming-warning" style="text-align: center; padding: 20px;">
+                    <p>No streaming sources available.</p>
+                    <button style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;" class="add-streams-btn" onclick="window.location.href='/secundaria'">Add Streaming</button>
+                </div>
+            `;
         }
 
         sectionRight.innerHTML = `
