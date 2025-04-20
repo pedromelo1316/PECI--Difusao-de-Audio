@@ -1571,17 +1571,52 @@ def delete_song(song_name):
         return jsonify({"error": "Música não encontrada"}), 404
     
     try:
+        # Verificar se a música está associada a algum canal
+        channels = Channels.query.filter(Channels.source.like(f"%{song.id}%"), Channels.type == ChannelType.LOCAL).all()
+        for channel in channels:
+            # Remover a música da lista de fontes do canal
+            sources = channel.source.split(",")
+            sources = [src for src in sources if src != str(song.id)]
+            channel.source = ",".join(sources) if sources else None
+            db.session.commit()
+            
+            if channel.state == "playing":
+                # Se o canal estiver tocando, reinicie o canal
+                
+                
+                print(processes)
+                
+                #stop ffmpeg process
+                if processes[channel.id]["process"] is not None:
+                    processes[channel.id]["process"].terminate()
+                    processes[channel.id]["process"].wait()
+                    processes[channel.id]["process"] = None
+                
+                if channel.source:
+                    processes[channel.id]["process"] = start_ffmpeg_process(channel.id, channel.source, channel.type)
+                else:
+                    channel.state = "stopped"
+                    db.session.commit()
+                    
+                    
+                print(f"Canal {channel.name} reiniciado após remoção da música.")
+                
+                
+
+        # Remover o arquivo da música
         song_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{song.song_hash}.wav")
         if os.path.exists(song_path):
             os.remove(song_path)
         else:
             print(f"Aviso: Ficheiro '{song_path}' não encontrado. A eliminar só da base de dados.")
 
+        # Remover a música do banco de dados
         db.session.delete(song)
         db.session.commit()
         return jsonify({"success": True}), 200
 
     except Exception as e:
+        print(f"Erro: {e}")
         return jsonify({"error": str(e)}), 500
 
     
@@ -1990,10 +2025,34 @@ def delete_streaming():
     streaming = Streaming.query.get(streaming_id)
     if not streaming:
         return jsonify({'success': False, 'message': 'Streaming não encontrado'}), 404
-    db.session.delete(streaming)
-    db.session.commit()
 
-    return jsonify({'success': True, 'message': 'Streaming deletado com sucesso'})
+    try:
+        # Verificar se o streaming está associado a algum canal
+        channels = Channels.query.filter(Channels.source == str(streaming_id), Channels.type == ChannelType.STREAMING).all()
+        for channel in channels:
+            channel.source = None
+            db.session.commit()
+
+            if channel.state == "playing":
+                # Parar o processo FFmpeg associado ao canal
+                if processes.get(channel.id) is not None:
+                    processes[channel.id]['process'].terminate()
+                    processes[channel.id]['process'].wait()
+                    processes[channel.id]['process'] = None
+
+                if os.path.exists(f"session_{channel.id}.sdp"):
+                    os.remove(f"session_{channel.id}.sdp")
+
+                channel.state = "stopped"
+                db.session.commit()
+
+        # Deletar o streaming
+        db.session.delete(streaming)
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': 'Streaming deletado com sucesso'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 def save_yt_song(song_name, song_hash):
     with app.app_context():
