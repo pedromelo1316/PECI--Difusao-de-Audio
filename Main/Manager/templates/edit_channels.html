@@ -3,15 +3,16 @@
 {% block head %}
 <title>Edit Channels</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
 <link rel="stylesheet" href="{{ url_for('static', filename='css/edit_channels.css') }}">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endblock %}
 
 {% block body %}
 
-<nav class="navbar">
+<nav class="navbar" >
     <div class="nav-left">
-        <a href="{{ url_for('dashboard') }}" class="settings-link">
+        <a href="{{ url_for('index') }}" class="settings-link">
             <i class="fa-solid fa-arrow-left icon-arrow-left"></i>
         </a>
     </div>
@@ -20,39 +21,41 @@
         <span class="nav-title">Audio Manager</span>
     </div>
     <div class="nav-right">
-        <a href="{{ url_for('logout') }}" class="logout-icon">
-            <i class="fa-solid fa-right-from-bracket"></i>
-        </a>
-    </div>
+    <div>
 </nav>
 
-<!-- Channel Title with View and Edit Mode -->
-<div class="channel-title-container">
-    <!-- View -->
-    <div id="channelTitleDisplay" class="channel-title">
-        <h1 id="channelTitle" style="margin-bottom: 0px">{{ channel.name }}</h1>
-        <i class="fa-solid fa-pen edit-icon" style="font-size: 25px;" onclick="toggleChannelEdit()"></i>
+<!-- Channel Title with View and Edit Mode - Styled like edit_playlist -->
+<div class="page-header">
+    <div class="playlist-title-container">
+        <div class="playlist-icon">
+            <i class="fas fa-volume-up"></i>
+        </div>
+        <div class="playlist-info">
+            <span class="playlist-label">Channel</span>
+            <h1 class="playlist-title" id="channelTitle">{{ channel.name }}</h1>
+        </div>
+        <button onclick="toggleChannelEdit()" class="edit-button" title="Rename channel">
+            <i class="fas fa-pen"></i>
+        </button>
+        <!-- Switch to activate/deactivate channel -->
         <div class="channel-switch-container">
             <label class="switch">
-                <input type="checkbox" id="channelSwitch" {% if channel.state == 'playing' %}checked{% endif %} onchange="toggleChannelStatus({{ channel.id }})">
+                <input type="checkbox" id="channelSwitch" {% if channel.is_active %}checked{% endif %} onchange="toggleChannelStatus({{ channel.id }})">
                 <span class="slider">
                     <span class="switch-text off">OFF</span>
                     <span class="switch-text on">ON</span>
                 </span>
             </label>
-            <span class="loading-spinner" id="switchLoadingSpinner" style="display: none;"></span>
         </div>
     </div>
 
-    <!-- Edit -->
-    <form id="channelEditForm" class="channel-edit-form" style="display: flex; align-items: center; gap: 10px; position: relative; display: none; margin-bottom: 40px;" method="POST" action="{{ url_for('update_channel_name', channel_id=channel.id) }}">
-        <div style="position: relative; display: flex; flex-direction: column;">
-            <input type="text" id="channelNameInput" name="channel_name" value="{{ channel.name }}" class="channel-edit-input" required style="width: 300px;">
-            <div id="errorMessage" style="color: red; font-size: 14px; margin-top: 10px; position: absolute; top: 100%; left: 0; display: none;"></div>
+    <!-- Edit Form -->
+    <form id="channelEditForm" class="channel-edit-form" style="display: none;" method="POST" action="{{ url_for('update_channel_name', channel_id=channel.id) }}">
+        <input type="text" id="channelNameInput" name="channel_name" value="{{ channel.name }}" class="channel-edit-input" required>
+        <div class="form-actions">
+            <button type="submit" class="save-button">Save</button>
         </div>
-        <button type="submit" class="save-button" style="height: 40px;">Save</button>
     </form>
-    
 </div>
 
 <div class="containerCH">
@@ -85,10 +88,12 @@
                             </nav>
                         </div>
                     </div>
-                    <div class="vertical-bar"></div>
+                    <div class="vertical-bar"></div> <!-- Add the vertical bar here -->
                     <div class="section-rightCH">
+                        <!-- NEW internal structure inside section-right -->
+                        <!-- This will be updated dynamically -->
                         <div id="sectionRightContent" class="inner-dual-section" style="display: none;">
-                            <!-- Conteúdo dinâmico via JS -->
+                            <!-- Content will be generated dynamically via JS -->
                         </div>
                     </div>
                 </div>
@@ -101,14 +106,13 @@
     <button type="submit" class="save-button" onclick="saveChanges()">Save</button>
 </div>
 
-<!-- Scripts -->
 <script>
     console.log("Channel ID:", {{ channel_id }});
     console.log("Channel Name:", "{{ channel.name }}");
     console.log("Playlists Data:", {{ playlist_songs | tojson }});
     console.log("All Songs Data:", {{ all_songs | tojson }});
+    console.log("Streaming Sources Data:", {{ streaming_sources | tojson }});
     console.log("Streaming Sources:", {{ streaming_sources | tojson }});
-
     const playlistsData = {{ playlist_songs | tojson }};
     const allSongs = {{ all_songs | tojson }};
     const streamingSources2 = {{ streaming_sources | tojson }};
@@ -116,75 +120,34 @@
     const associatedStreaming = {{ associated_stream | tojson }};
     const channelType = {{ channel_type | tojson }};
 
+    console.log("associated_songs:", associatedSongs);
+
     function toggleChannelStatus(channelId) {
         const switchElement = document.getElementById('channelSwitch');
-        const spinner = document.getElementById('switchLoadingSpinner');
         const isActive = switchElement.checked;
-    
-        spinner.style.display = 'inline-block';
-        switchElement.disabled = true;
-    
-        fetch(`/toggle_transmission`, {
+
+        // Make a request to update the channel status
+        fetch(`/update_channel_status/${channelId}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ channel_id: channelId }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert("Erro ao alternar o estado do canal.");
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ is_active: isActive })
+        }).then(response => {
+            if (!response.ok) {
+                console.error('Error updating channel status');
             }
-        })
-        .catch(error => {
-            console.error("Error during transmission toggle:", error);
-            alert("Erro ao comunicar com o servidor.");
-        })
-        .finally(() => {
-            spinner.style.display = 'none';
-            switchElement.disabled = false;
+        }).catch(error => {
+            console.error('Request error:', error);
         });
     }
-    document.addEventListener('DOMContentLoaded', function () {
-        const input = document.getElementById('channelNameInput');
-        const errorMessage = document.getElementById('errorMessage');
-        const saveButton = document.querySelector('#channelEditForm .save-button');
-
-        input.addEventListener('input', function () {
-            const name = input.value.trim();
-            const channelId = {{ channel.id }};
-            
-            if (name.length === 0) {
-                errorMessage.style.display = 'none';
-                saveButton.disabled = false;
-                return;
-            }
-
-            fetch('/check_channel_name', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: name, channel_id: channelId })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.exists) {
-                    errorMessage.textContent = 'The name you entered is already used by another channel. Please enter a different name.';
-                    errorMessage.style.display = 'block';
-                    saveButton.disabled = true;
-                } else {
-                    errorMessage.style.display = 'none';
-                    saveButton.disabled = false;
-                }
-            })
-            .catch(error => {
-                console.error('Erro ao verificar nome do canal:', error);
-            });
-        });
-    });
-
 </script>
 
 <script src="{{ url_for('static', filename='js/edit_channels.js') }}"></script>
 
 {% endblock %}
+
+
+
+
