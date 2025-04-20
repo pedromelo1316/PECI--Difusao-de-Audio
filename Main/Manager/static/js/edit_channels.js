@@ -413,3 +413,19 @@ function toggleStreamingSelection(item) {
     `;
 }
 
+// Add this function to toggle channel edit mode if it doesn't exist already
+function toggleChannelEdit() {
+    const displayElement = document.querySelector('.playlist-title-container');
+    const editForm = document.getElementById('channelEditForm');
+    
+    if (editForm.style.display === 'none') {
+        editForm.style.display = 'flex';
+        displayElement.style.opacity = '0.5';
+    } else {
+        editForm.style.display = 'none';
+        displayElement.style.opacity = '1';
+    }
+    
+    document.getElementById('channelNameInput').focus();
+}
+

@@ -24,12 +24,19 @@
     <div>
 </nav>
 
-<!-- Channel Title with View and Edit Mode -->
-<div class="channel-title-container">
-    <!-- View -->
-    <div id="channelTitleDisplay" class="channel-title">
-        <h1 id="channelTitle" style="margin-bottom: 0px">{{ channel.name }}</h1>
-        <i class="fa-solid fa-pen edit-icon" style="font-size: 25px;" onclick="toggleChannelEdit()"></i>
+<!-- Channel Title with View and Edit Mode - Styled like edit_playlist -->
+<div class="page-header">
+    <div class="playlist-title-container">
+        <div class="playlist-icon">
+            <i class="fas fa-volume-up"></i>
+        </div>
+        <div class="playlist-info">
+            <span class="playlist-label">Channel</span>
+            <h1 class="playlist-title" id="channelTitle">{{ channel.name }}</h1>
+        </div>
+        <button onclick="toggleChannelEdit()" class="edit-button" title="Rename channel">
+            <i class="fas fa-pen"></i>
+        </button>
         <!-- Switch to activate/deactivate channel -->
         <div class="channel-switch-container">
             <label class="switch">
@@ -42,7 +49,7 @@
         </div>
     </div>
 
-    <!-- Edit -->
+    <!-- Edit Form -->
     <form id="channelEditForm" class="channel-edit-form" style="display: none;" method="POST" action="{{ url_for('update_channel_name', channel_id=channel.id) }}">
         <input type="text" id="channelNameInput" name="channel_name" value="{{ channel.name }}" class="channel-edit-input" required>
         <button type="submit" class="save-button">Save</button>

@@ -227,28 +227,28 @@ header {
 }
 
 .edit-button {
-    background-color: #f1f1f1;
+    background-color: transparent;
     color: #555;
     border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    width: auto;
+    height: auto;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
+    padding: 0;
     margin-left: 15px;
+    transition: color 0.2s ease;
 }
 
 .edit-button:hover {
-    background-color: #e4e4e4;
+    background-color: transparent;
     color: #5dbb63;
-    transform: scale(1.05);
+    transform: none;
 }
 
 .edit-button i {
-    font-size: 16px;
+    font-size: 24px; /* Increased from 20px to 24px */
 }
 
 .header-content {
