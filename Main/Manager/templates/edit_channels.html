@@ -52,7 +52,9 @@
     <!-- Edit Form -->
     <form id="channelEditForm" class="channel-edit-form" style="display: none;" method="POST" action="{{ url_for('update_channel_name', channel_id=channel.id) }}">
         <input type="text" id="channelNameInput" name="channel_name" value="{{ channel.name }}" class="channel-edit-input" required>
-        <button type="submit" class="save-button">Save</button>
+        <div class="form-actions">
+            <button type="submit" class="save-button">Save</button>
+        </div>
     </form>
 </div>
 

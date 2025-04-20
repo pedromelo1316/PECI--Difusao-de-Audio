@@ -171,10 +171,37 @@
 /* Form Editing Channel */
 .channel-edit-form {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column;    /* stack input and buttons */
+    align-items: stretch;
+    gap: 8px;
     margin: 15px auto 0;
     max-width: 500px;
+}
+
+.channel-edit-form .channel-edit-input {
+    width: 100%;
+}
+
+/* Button row under input */
+.channel-edit-form .form-actions {
+    display: flex;
+    justify-content: flex-end; 
+}
+
+.channel-edit-form .save-button {
+    background-color: #5dbb63;
+    color: white;
+    padding: 6px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    white-space: nowrap; /* Prevent text from wrapping */
+}
+
+.channel-edit-form .save-button:hover {
+    background-color: #4caf50;
 }
 
 /* Inner Section Styling */
@@ -1144,6 +1171,7 @@ input:checked + .slider .switch-text.off {
     transition: color 0.2s ease;
 }
 
+
 .edit-button:hover {
     background-color: transparent;
     color: #5dbb63;
@@ -1151,6 +1179,12 @@ input:checked + .slider .switch-text.off {
 }
 
 .edit-button i {
-    font-size: 24px !important; /* Increased from 20px to 24px */
+    font-size: 24px; /* Increased from 20px to 24px */
 }
 
+.back-button, .edit-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+}
