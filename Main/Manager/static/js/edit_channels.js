@@ -228,20 +228,26 @@ function enablePlaylistReordering() {
 }
 
 function removeItemFromPlaylist(button) {
-    const item = button.parentElement; // O botão está dentro do item a ser removido
+    const item = button.parentElement;
     const dropZone = document.querySelector('.playlist-dropzone');
 
     if (dropZone.contains(item)) {
-        const itemName = item.dataset.name; // Obtém o nome do item
+        const itemName = item.dataset.name;
         const checkbox = document.getElementById(`playlist-${itemName}`) || document.getElementById(`song-${itemName}`);
-        
         if (checkbox) {
-            checkbox.checked = false; // Desmarca o checkbox correspondente
+            checkbox.checked = false; // Desmarcar o checkbox correspondente
         }
 
-        item.remove(); // Remove o item da lista de reprodução
+        item.remove(); // Remove o item da dropzone
+
+        // Se ficar vazia, mostra novamente a mensagem de "no songs"
+        const remaining = dropZone.querySelectorAll('.playlist-item, .song-item').length;
+        if (remaining === 0) {
+            dropZone.innerHTML = `<p class="no-songs-message">No songs associated with the channel.</p>`;
+        }
     }
 }
+
 function getDragAfterElement(container, y) {
     const draggableElements = [...container.querySelectorAll('.playlist-item:not(.dragging), .song-item:not(.dragging)')];
 
