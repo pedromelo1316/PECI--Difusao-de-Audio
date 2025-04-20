@@ -34,8 +34,6 @@ function updateSectionRight(value) {
                     </div>
                 `;
             }
-        } else {
-            playlistsHTML = `<p class="no-items-message">No playlists available</p>`;
         }
 
         let songsHTML = '';
@@ -51,11 +49,9 @@ function updateSectionRight(value) {
                     </div>
                 `;
             });
-        } else {
-            songsHTML = `<p class="no-items-message">No songs available</p>`;
         }
 
-        // Add channel-associated songs to dropzone
+        // Adiciona as músicas associadas ao canal na dropzone
         let associatedSongsHTML = '';
         if (associatedSongs.length > 0) {
             associatedSongs.forEach(song => {
@@ -69,12 +65,11 @@ function updateSectionRight(value) {
                 `;
             });
         } else {
-            associatedSongsHTML = `<p class="no-items-message">No songs associated with this channel</p>`;
+            associatedSongsHTML = `<p class="no-songs-message">No songs associated with the channel.</p>`;
         }
 
         sectionRight.innerHTML = `
             <div class="inner-section-left">
-            <span class="container-count">${Object.keys(associatedSongs).length}</span>
                 <h3>${channelName} Playlist</h3>
                 <div class="selected-playlist-info">
                     <div class="playlist-dropzone">
@@ -100,7 +95,7 @@ function updateSectionRight(value) {
             </div>
         `;
         saveButtonContainer.style.display = "flex";
-        enablePlaylistReordering();
+        enablePlaylistReordering(); // Enable drag-and-drop reordering
     
     } else if (value === "STREAMING") {
         let streamingHTML = '';
@@ -166,7 +161,6 @@ function toggleSongsVisibility(button) {
 function addToPlaylist(itemName, itemType, isChecked) {
     const dropZone = document.querySelector('.playlist-dropzone');
     const noSongsMessage = dropZone.querySelector('.no-songs-message');
-    const containerCount = document.querySelector('.inner-section-left .container-count');
 
     if (isChecked) {
         // Avoid duplicates
@@ -190,27 +184,16 @@ function addToPlaylist(itemName, itemType, isChecked) {
             if (noSongsMessage) {
                 noSongsMessage.remove();
             }
-
-            // Increment the container count
-            if (containerCount) {
-                containerCount.textContent = parseInt(containerCount.textContent) + 1;
-            }
         }
     } else {
         // Remove the item if unchecked
         const itemToRemove = dropZone.querySelector(`[data-name="${itemName}"]`);
         if (itemToRemove) {
             itemToRemove.remove();
-
-            // Decrement the container count
-            if (containerCount) {
-                containerCount.textContent = Math.max(0, parseInt(containerCount.textContent) - 1);
-            }
-
-            // Check if dropZone is empty and add the message back
-            if (dropZone.children.length === 0) {
-                dropZone.innerHTML = `<p class="no-songs-message">No songs associated with the channel.</p>`;
-            }
+			// Check if dropZone is empty and add the message back
+			if (dropZone.children.length === 0) {
+				dropZone.innerHTML = `<p class="no-songs-message">No songs associated with the channel.</p>`;
+			}
         }
     }
 }
@@ -247,7 +230,6 @@ function enablePlaylistReordering() {
 function removeItemFromPlaylist(button) {
     const item = button.parentElement; // O botão está dentro do item a ser removido
     const dropZone = document.querySelector('.playlist-dropzone');
-    const containerCount = document.querySelector('.inner-section-left .container-count');
 
     if (dropZone.contains(item)) {
         const itemName = item.dataset.name; // Obtém o nome do item
@@ -258,16 +240,6 @@ function removeItemFromPlaylist(button) {
         }
 
         item.remove(); // Remove o item da lista de reprodução
-
-        // Decrementa o contador do container
-        if (containerCount) {
-            containerCount.textContent = Math.max(0, parseInt(containerCount.textContent) - 1);
-        }
-
-        // Verifica se o dropZone está vazio e adiciona a mensagem de "sem músicas"
-        if (dropZone.children.length === 0) {
-            dropZone.innerHTML = `<p class="no-songs-message">No songs associated with the channel.</p>`;
-        }
     }
 }
 function getDragAfterElement(container, y) {
@@ -439,20 +411,5 @@ function toggleStreamingSelection(item) {
             <span class="streaming-name-selected">${item.textContent.trim()}</span>
         </div>
     `;
-}
-
-function toggleChannelEdit() {
-    const displayElement = document.querySelector('.playlist-title-container');
-    const editForm = document.getElementById('channelEditForm');
-    
-    if (editForm.style.display === 'none') {
-        editForm.style.display = 'flex';
-        displayElement.style.opacity = '0.5';
-    } else {
-        editForm.style.display = 'none';
-        displayElement.style.opacity = '1';
-    }
-    
-    document.getElementById('channelNameInput').focus();
 }
 
