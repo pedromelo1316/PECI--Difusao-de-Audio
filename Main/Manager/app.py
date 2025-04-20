@@ -951,7 +951,7 @@ def update(id):
         return render_template('update.html', node=node)
 
 # Função para enviar informações atualizadas para os nós via broadcast UDP
-def send_info(nodes, removed=False, suspended=False, restart=False):
+def send_info(nodes, removed=False, suspended=False, restart=False, test=False):
     if not removed and not suspended:
         dic = {}
         for node in nodes:
@@ -997,6 +997,11 @@ def send_info(nodes, removed=False, suspended=False, restart=False):
         for node in nodes:
             mac = node.mac
             dic[mac].update({"restart": True})
+    
+    if test:
+        for node in nodes:
+            mac = node.mac
+            dic[mac].update({"test": True})
             
 
             
@@ -1285,6 +1290,29 @@ def edit_channels():
         channel_type=channel.type,
         channel_source=channel.source
     )
+    
+    
+    
+@app.route('/test-device/<int:node_id>', methods=['POST'])
+def test_device(node_id):
+    """
+    Função para testar um dispositivo enviando um som de teste (pi) por 5 segundos.
+    """
+    node = Nodes.query.get(node_id)
+    if not node:
+        return jsonify({"error": "Dispositivo não encontrado"}), 404
+
+    # Configuração do tom de teste
+    test_tone_frequency = 1000  # Frequência do tom em Hz
+    test_duration = 5  # Duração do teste em segundos
+    multicast_address = f"rtp://239.255.2.{node_id}:12345"  # Endereço multicast para o teste
+    
+    
+    send_info([node], test=True)
+
+
+
+    return jsonify({"success": True, "message": "Teste concluído com sucesso"}), 200
 
 @app.route('/update_channel_name/<int:channel_id>', methods=['POST'])
 def update_channel_name(channel_id):
@@ -2035,7 +2063,7 @@ def delete_streaming():
 
             if channel.state == "playing":
                 # Parar o processo FFmpeg associado ao canal
-                if processes.get(channel.id) is not None:
+                if processes[channel.id]['process'] is not None:
                     processes[channel.id]['process'].terminate()
                     processes[channel.id]['process'].wait()
                     processes[channel.id]['process'] = None

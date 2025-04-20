@@ -213,6 +213,64 @@
     }
 
 
+    function startCountdown(button, nodeId) {
+        // Verificar se o spinner já existe
+        const parent = button.closest('.test-Device');
+        if (parent.querySelector('.loading-spinner')) {
+            return; // Não fazer nada se já estiver ativo
+        }
+
+        // Salvar o conteúdo original do botão
+        const originalContent = button.outerHTML;
+    
+        // Adicionar o spinner ao redor do botão
+        const spinner = document.createElement('div');
+        spinner.className = 'loading-spinner';
+        parent.appendChild(spinner);
+    
+        // Criar o elemento de contagem regressiva
+        const countdownText = document.createElement('span');
+        countdownText.className = 'countdown-text';
+        countdownText.textContent = '5';
+        parent.appendChild(countdownText);
+    
+        let countdown = 5;
+    
+        // Atualizar a contagem regressiva a cada segundo
+        const interval = setInterval(() => {
+            countdown -= 1;
+            countdownText.textContent = countdown;
+    
+            // Quando a contagem regressiva terminar, restaurar o botão original
+            if (countdown === 0) {
+                clearInterval(interval);
+                spinner.remove();
+                countdownText.remove();
+            }
+        }, 1000);
+    }
+
+    function testDevice(button, nodeId) {
+        
+        fetch(`/test-device/${nodeId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ node_id: nodeId }),
+        }).then(response => {
+            if (response.ok) {
+                console.log("Test started successfully");
+                startCountdown(button, nodeId); // Start the countdown
+            } else {
+                console.error("Error starting test:", response.statusText);
+            }
+        }).catch(error => {
+            console.error("Error during test device request:", error);
+        });
+    }
+
+
 </script>
 
 <section id="devices"  class="container"> 
@@ -262,6 +320,10 @@
                                             </div>
                                         </div>
                                         <div style="display: flex; gap: 6px; align-items: center;">
+                                            <div class="toggle-transmission-btn test-Device">
+                                                <i class="fa-solid fa-play settings-icon"
+                                                   onclick="testDevice(this, {{ node.id }})"></i>
+                                            </div>
                                             <div class="toggle-transmission-btn">
                                                 <i class="fa-solid fa-info-circle settings-icon" 
                                                    onclick="toggleDeviceInfo('{{ node.id }}', this)"></i>
