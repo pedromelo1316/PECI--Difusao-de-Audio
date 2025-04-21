@@ -881,6 +881,7 @@ function submitAddInterruption() {
         .then(data => {
             if (data.success) {
                 alert('Interruption added successfully!');
+                form.reset(); // Clear the form fields
                 closeAddInterruptionModal();
                 location.reload(); // Reload the page to update the list
             } else {
@@ -892,6 +893,7 @@ function submitAddInterruption() {
             alert('Error adding interruption.');
         });
 }
+
 
 document.addEventListener('DOMContentLoaded', function () {
     // Select all areas
