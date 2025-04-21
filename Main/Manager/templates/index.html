@@ -281,7 +281,7 @@
         <div class="dual-section">
             <div class="section-left">
                 <div class="section-header">
-                    <h3>Devices</h3>
+                    <h3>Devices ({{ nodes|length }})</h3>
                 </div>
                 <div class="column-box" id="columnBox" style="display: block; margin-top: 2px;">
                     {% if nodes|length < 1 %}
@@ -355,7 +355,7 @@
 
             <div class="section-right">
                 <div class="section-header">
-                    <h3>Channels</h3>
+                    <h3>Channels ({{ channels|length }}) </h3>
 
                     <a href="{{ url_for('secundaria') }}" class="settings-link">
                         <span class="media-button">
@@ -478,7 +478,7 @@
 <section id="areas" class="container">
     <div  class="content">
         <div class="section-header">
-            <h3>Zone</h3>
+            <h3>Zones ({{ areas|length }})</h3>
         </div>
         <div class="zone-container">
             {% if areas|length < 1 %}
@@ -567,19 +567,16 @@
 <!-- MIC-INTERRUPTIONS-->
 <section id="mic" class="container">
     <div class="content">
-
         <div class="microfones-container">
             <div class="interrupt-header">
-                <h2 style="margin-bottom: 0px;">MIC INTERRUPTS</h2>
-                <button class="add-btn"
-                        onclick="window.location.href='{{ url_for('add_interruption') }}'" title="Nova Interrupção">
+                <h2 style="margin-bottom: 0px;">MIC INTERRUPTS ({{ interruptions|length }})</h2>
+                <button class="add-btn" onclick="openAddInterruptionModal()" title="Nova Interrupção">
                     <i class="fas fa-plus"></i>
                     <span>Nova Interrupção</span>
                 </button>
             </div>            
 
             <div class="interrupt-list">
-
                 {% for interrupt in interruptions %}
                     <div class="interrupt-item">
                         <div class="interrupt-info">
@@ -604,6 +601,56 @@
         </div>
     </div>
 </section>
+
+
+<div id="addInterruptionModal" class="interrupt-modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Adicionar Nova Interrupção</h2>
+            <button class="close" onclick="closeAddInterruptionModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="addInterruptionForm">
+                <label for="interruptionName">Nome da Interrupção:</label>
+                <input type="text" id="interruptionName" name="name" required>
+
+                <label for="microphone">Microfone:</label>
+                <select id="microphone" name="microphone_id" required>
+                    {% for mic in microphones %}
+                        <option value="{{ mic.id }}">{{ mic.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <!-- Novo layout horizontal para Áreas e Canais -->
+                <div class="checkbox-flex-container">
+                    <!-- Areas -->
+                    <div class="checkbox-container">
+                        <h3>Áreas</h3>
+                        <fieldset>
+                            <label><input type="checkbox" id="selectAllAreas"> Selecionar Todas</label>
+                            {% for area in areas %}
+                                <label><input type="checkbox" name="areas_ids" value="{{ area.id }}"> {{ area.name }}</label>
+                            {% endfor %}
+                        </fieldset>
+                    </div>
+
+                    <!-- Channels -->
+                    <div class="checkbox-container">
+                        <h3>Canais</h3>
+                        <fieldset>
+                            <label><input type="checkbox" id="selectAllChannels"> Selecionar Todos</label>
+                            {% for channel in channels %}
+                                <label><input type="checkbox" name="channels_ids" value="{{ channel.id }}"> {{ channel.name }}</label>
+                            {% endfor %}
+                        </fieldset>
+                    </div>
+                </div>
+
+                <button type="button" class="green-action-btn" onclick="submitAddInterruption()">Salvar</button>
+            </form>
+        </div>
+    </div>
+</div>
 
 
 <footer style="margin-top: 30px; background-color: #f9f9f9; padding: 25px;">

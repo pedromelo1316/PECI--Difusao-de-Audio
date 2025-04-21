@@ -101,7 +101,7 @@
             if (response.ok) {
               alert('Interruption saved successfully!');
               this.reset(); // Clear the form
-              window.location.href = '{{ url_for("index") }}'; // Redirect to home page
+              window.location.href = '{{ url_for("dashboard") }}'; // Redirect to home page
             } else {
               response.text().then(text => alert('Error: ' + text));
             }

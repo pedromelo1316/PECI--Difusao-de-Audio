@@ -1,4 +1,3 @@
-
 document.addEventListener("DOMContentLoaded", function () {
 
     window.renameNode = function(nodeId) { // Torna a função global
@@ -856,3 +855,54 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
+// Function to open the Add Interruption Modal
+function openAddInterruptionModal() {
+    document.getElementById('addInterruptionModal').style.display = 'block';
+}
+
+// Function to close the Add Interruption Modal
+function closeAddInterruptionModal() {
+    document.getElementById('addInterruptionModal').style.display = 'none';
+}
+
+// Function to submit the Add Interruption form
+function submitAddInterruption() {
+    const form = document.getElementById('addInterruptionForm');
+    const formData = new FormData(form);
+
+    fetch('/save_interruption', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(Object.fromEntries(formData)),
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Interruption added successfully!');
+                closeAddInterruptionModal();
+                location.reload(); // Reload the page to update the list
+            } else {
+                alert('Error adding interruption: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error adding interruption.');
+        });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Select all areas
+    document.getElementById('selectAllAreas').addEventListener('change', function () {
+        const checkboxes = document.querySelectorAll('input[name="areas_ids"]');
+        checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+
+    // Select all channels
+    document.getElementById('selectAllChannels').addEventListener('change', function () {
+        const checkboxes = document.querySelectorAll('input[name="channels_ids"]');
+        checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+});
