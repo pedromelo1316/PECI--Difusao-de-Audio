@@ -1999,8 +1999,15 @@ def select_song_to_download():
     title = request.form.get("title").strip()
     url = request.form.get("url")
     print(f"Selected video: {title} - {url}")
+    song_name = title
+    safe_filename = song_name.replace(' ', '_')
+    # Create a hash from the song name (you can also use the full path if needed)
+    song_hash = hashlib.sha256(safe_filename.encode()).hexdigest()
+    # Generate the final .wav filename using the hash
+    wav_filename = os.path.join(UPLOAD_FOLDER, f"{song_hash}.wav")
     # Download the selected YouTube audio in a separate thread to avoid blocking Flask
-    threading.Thread(target=download_youtube_audio, args=(url, title)).start()
+    threading.Thread(target=download_youtube_audio, args=(url, wav_filename)).start()
+    save_yt_song(song_name, song_hash)
     return redirect(url_for('secundaria'))
 
 @app.route("/select_stream", methods=["POST"])
@@ -2090,16 +2097,12 @@ def save_yt_song(song_name, song_hash):
         db.session.commit()
         print("Nova música adicionada:", new_song.name)
 
-def download_youtube_audio(youtube_url, song_name):
+def download_youtube_audio(youtube_url, wav_filename):
     """
     Extracts audio from a YouTube video and saves it as a WAV file
     without downloading the video.
     """
-    safe_filename = song_name.replace(' ', '_')
-    # Create a hash from the song name (you can also use the full path if needed)
-    song_hash = hashlib.sha256(safe_filename.encode()).hexdigest()
-    # Generate the final .wav filename using the hash
-    wav_filename = os.path.join(UPLOAD_FOLDER, f"{song_hash}.wav")
+
 
     # Configure yt-dlp to fetch the best audio stream URL
     ydl_opts = {
@@ -2127,7 +2130,7 @@ def download_youtube_audio(youtube_url, song_name):
     # Run FFmpeg with stdout and stderr suppressed
     subprocess.run(ffmpeg_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     print(f"Downloaded and converted {youtube_url} to {wav_filename}")
-    save_yt_song(song_name, song_hash)
+    
 #################################################################################
 #################################################################################
 
