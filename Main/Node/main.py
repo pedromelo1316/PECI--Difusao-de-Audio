@@ -75,44 +75,30 @@ def wait_for_info(n, port=8081):
                             ffmpeg.wait()
                             ffmpeg = None
                         
-                        # Reproduzir um som de "pi" por 5 segundos
-                        p = pyaudio.PyAudio()
-                        stream = p.open(format=pyaudio.paInt16,
-                                        channels=1,
-                                        rate=FREQ,
-                                        output=True)
-                        
-                        # Gerar um tom de 440 Hz (nota A4) por 5 segundos
+                        # Usar ffplay para reproduzir um tom de 440 Hz por 5 segundos
                         try:
-                            duration = 2  # segundos
-                            frequency = 440.0  # Hz
-                            samples = (np.sin(2 * np.pi * np.arange(FREQ * duration) * frequency / FREQ)).astype(np.float32)
-                            stream.write(samples.tobytes())
-                        except Exception as e:
-                            print(f"Error generating tone: {e}")
-                        finally:
-                            # Garantir que o stream e o PyAudio sejam fechados corretamente
-                            if stream.is_active():
-                                stream.stop_stream()
-                            stream.close()
-                            p.terminate()
-                            
-                        time.sleep(1)
-                        
-                        # Reiniciar o processo ffplay
-                        if os.path.exists('session_received.sdp'):
                             cmd = [
                                 'ffplay',
-                                '-protocol_whitelist', 'file,rtp,udp',
-                                '-nodisp',
-                                '-i', 'session_received.sdp',
-                                '-af', f'volume={n.getVolume()}'
+                                '-f', 'lavfi',
+                                '-i', 'sine=frequency=440:duration=5',
+                                '-nodisp'
                             ]
                             ffmpeg = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                            print("Resumed ffplay process")
-                        else:
-                            print("SDP file not found, cannot restart ffplay")
-
+                            print("Test tone playing...")
+                            
+                            # Esperar 5 segundos e parar o ffplay
+                            time.sleep(5)
+                            if ffmpeg is not None:
+                                ffmpeg.terminate()
+                                ffmpeg.wait()
+                                ffmpeg = None
+                                print("Test tone stopped successfully")
+                        except Exception as e:
+                            print(f"Error playing test tone with ffplay: {e}")
+                                        
+                        
+                                                
+                                            
                     
                     
                     # Atualiza as configurações de canal, volume e header a partir da mensagem
