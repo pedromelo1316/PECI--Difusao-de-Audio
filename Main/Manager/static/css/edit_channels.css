@@ -953,8 +953,32 @@
 .channel-switch-container {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-left: 15px; 
+    gap: 10px; /* Espaço entre o switch e o spinner */
+}
+
+.loading-spinner {
+    width: 20px; /* Largura fixa para o spinner */
+    height: 20px; /* Altura fixa para o spinner */
+    border: 2px solid #ccc; /* Estilo do spinner */
+    border-top: 2px solid #5dbb63; /* Cor do spinner */
+    border-radius: 50%; /* Forma circular */
+    animation: spin 1s linear infinite;
+    visibility: hidden; /* Oculta o spinner, mas mantém o espaço */
+}
+
+/* Quando o spinner está ativo */
+.loading-spinner.active {
+    visibility: visible; /* Torna o spinner visível */
+}
+
+/* Animação para o spinner */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Switch Styles */

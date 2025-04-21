@@ -34,7 +34,7 @@
             <span class="playlist-label">Channel</span>
             <h1 class="playlist-title" id="channelTitle">{{ channel.name }}</h1>
         </div>
-        <button onclick="toggleChannelEdit()" class="edit-button" title="Rename channel">
+        <button onclick="toggleChannelEdit()" class="edit-button" title="Rename channel" style="margin-right: 10px">
             <i class="fas fa-pen"></i>
         </button>
         <!-- Switch to activate/deactivate channel -->
@@ -46,6 +46,7 @@
                     <span class="switch-text on">ON</span>
                 </span>
             </label>
+            <span class="loading-spinner" id="switchLoadingSpinner"></span>
         </div>
     </div>
 
@@ -124,22 +125,32 @@
 
     function toggleChannelStatus(channelId) {
         const switchElement = document.getElementById('channelSwitch');
+        const spinner = document.getElementById('switchLoadingSpinner');
         const isActive = switchElement.checked;
-
-        // Make a request to update the channel status
-        fetch(`/update_channel_status/${channelId}`, {
+    
+        spinner.classList.add('active'); // Exibe o spinner
+        switchElement.disabled = true;
+    
+        fetch(`/toggle_transmission`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({ is_active: isActive })
-        }).then(response => {
-            if (!response.ok) {
-                console.error('Error updating channel status');
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ channel_id: channelId }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert("Erro ao alternar o estado do canal.");
             }
-        }).catch(error => {
-            console.error('Request error:', error);
+        })
+        .catch(error => {
+            console.error("Error during transmission toggle:", error);
+            alert("Erro ao comunicar com o servidor.");
+        })
+        .finally(() => {
+            spinner.classList.remove('active'); // Oculta o spinner
+            switchElement.disabled = false;
         });
     }
 </script>
