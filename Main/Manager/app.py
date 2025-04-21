@@ -101,7 +101,7 @@ def start_interruption(interruption_id):
     while not os.path.exists(f"mic_{interruption_id}.sdp"):
         time.sleep(0.1)        
     
-    send_info(nodes, restart=True)
+    send_info(nodes)
     
     
     return jsonify({"success": True})
@@ -146,7 +146,7 @@ def stop_interruption(interruption_id):
     while os.path.exists(f"mic_{interruption_id}.sdp"):
         time.sleep(0.1)        
     
-    send_info(nodes, restart=True)
+    send_info(nodes)
     
     return jsonify({"success": True})
 
@@ -183,7 +183,7 @@ def delete_interruption(interruption_id):
             time.sleep(0.1)
     
 
-        send_info(nodes, restart=True)
+        send_info(nodes)
     
     db.session.delete(interruption)
     db.session.commit()
@@ -374,7 +374,7 @@ def toggle_transmission():
     for area in areas:
         nodes += area.nodes
     
-    send_info(nodes, restart=True)
+    send_info(nodes)
     return jsonify({'success': True})
 
 
@@ -522,7 +522,7 @@ def create_default_channels():
         channel.state = "stopped"
     db.session.commit()
     
-    send_info(Nodes.query.all(), restart=True)  # Envia informações iniciais para os nós
+    send_info(Nodes.query.all())  # Envia informações iniciais para os nós
             
     return processes
 
@@ -708,7 +708,7 @@ def save_channel_configs():
     print("sending info to nodes")
     print(nodes)
     
-    send_info(nodes, restart=True)
+    send_info(nodes)
     
     
 
@@ -951,7 +951,7 @@ def update(id):
         return render_template('update.html', node=node)
 
 # Função para enviar informações atualizadas para os nós via broadcast UDP
-def send_info(nodes, removed=False, suspended=False, restart=False, test=False):
+def send_info(nodes, removed=False, suspended=False, test=False):
     if not removed and not suspended:
         dic = {}
         for node in nodes:
@@ -992,11 +992,6 @@ def send_info(nodes, removed=False, suspended=False, restart=False, test=False):
         for node in nodes:
             mac = node.mac
             dic[mac] = {"suspended": True}
-            
-    if restart:
-        for node in nodes:
-            mac = node.mac
-            dic[mac].update({"restart": True})
     
     if test:
         for node in nodes:
@@ -1072,7 +1067,7 @@ def detect_new_nodes(stop_event, msg_buffer):
 
                 with app.app_context():
                     node = db.session.query(Nodes).filter(Nodes.mac == node_mac).first()
-                    send_info([node], restart=True)
+                    send_info([node])
                     socketio.emit('reload_page', namespace='/')  # Envia comando para recarregar a página
 
 # Rota para renomear um nó
@@ -1149,7 +1144,7 @@ def update_volume():
         area.volume = new_volume
         print(f"Volume updated to {new_volume} for area {area_name}")
         db.session.commit()
-        send_info(Nodes.query.filter_by(area_id=area.id).all(), restart=True)
+        send_info(Nodes.query.filter_by(area_id=area.id).all())
         return redirect('/')
     except Exception as e:
         return redirect('/')

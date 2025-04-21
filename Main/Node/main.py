@@ -65,6 +65,53 @@ def wait_for_info(n, port=8081):
                     
                     elif "suspended" in info.keys():
                         print("Node suspended")
+                        
+                    elif "test" in info.keys():
+                        print("Test mode activated")
+                        
+                        # Parar o processo ffplay atual
+                        if ffmpeg is not None:
+                            ffmpeg.terminate()
+                            ffmpeg.wait()
+                            ffmpeg = None
+                        
+                        # Reproduzir um som de "pi" por 5 segundos
+                        p = pyaudio.PyAudio()
+                        stream = p.open(format=pyaudio.paInt16,
+                                        channels=1,
+                                        rate=FREQ,
+                                        output=True)
+                        
+                        # Gerar um tom de 440 Hz (nota A4) por 5 segundos
+                        try:
+                            duration = 2  # segundos
+                            frequency = 440.0  # Hz
+                            samples = (np.sin(2 * np.pi * np.arange(FREQ * duration) * frequency / FREQ)).astype(np.float32)
+                            stream.write(samples.tobytes())
+                        except Exception as e:
+                            print(f"Error generating tone: {e}")
+                        finally:
+                            # Garantir que o stream e o PyAudio sejam fechados corretamente
+                            if stream.is_active():
+                                stream.stop_stream()
+                            stream.close()
+                            p.terminate()
+                            
+                        time.sleep(1)
+                        
+                        # Reiniciar o processo ffplay
+                        if os.path.exists('session_received.sdp'):
+                            cmd = [
+                                'ffplay',
+                                '-protocol_whitelist', 'file,rtp,udp',
+                                '-nodisp',
+                                '-i', 'session_received.sdp',
+                                '-af', f'volume={n.getVolume()}'
+                            ]
+                            ffmpeg = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            print("Resumed ffplay process")
+                        else:
+                            print("SDP file not found, cannot restart ffplay")
 
                     
                     
@@ -73,64 +120,64 @@ def wait_for_info(n, port=8081):
                     volume = info["volume"] if "volume" in info.keys() else None
                     new_HEADER = info["header_normal"] if "header_normal" in info.keys() else None
                     new_mic_HEADER = info["header_mic"] if "header_mic" in info.keys() else None
-                    restart = info["restart"] if "restart" in info.keys() else False
                     
-                    # Se volume recebido for diferente do atual, atualiza
-                    if volume is not None and n.getVolume() != volume:
-                        n.setVolume(float(volume))
                     
-                    if restart and new_HEADER is not None:
-                        
-                        HEADER = new_HEADER
-                        channel = new_channel
-                        n.setChannel(new_channel)
-                        if new_HEADER is not None:
-                            with open('session_received.sdp', 'w') as f:
-                                f.write(new_HEADER)
-                        else:
-                            if os.path.exists('session_received.sdp'):
-                                os.remove('session_received.sdp')
-                                
-                        if new_mic_HEADER is not None:
-                            with open('session_received_mic.sdp', 'w') as f:
-                                f.write(new_mic_HEADER)
-                        else:
-                            if os.path.exists('session_received_mic.sdp'):
-                                os.remove('session_received_mic.sdp')
-                        n.setVolume(float(volume))
-                        print("Updated channel and header")
-                        
-                        
-                        if ffmpeg is not None:
-                            ffmpeg.terminate()
-                            ffmpeg.wait()
-                            ffmpeg = None
+                    n.setVolume(float(volume))
+                
+                
+                    if ffmpeg is not None:
+                        ffmpeg.terminate()
+                        ffmpeg.wait()
+                        ffmpeg = None
+                    
+                    HEADER = new_HEADER
+                    channel = new_channel
+                    n.setChannel(new_channel)
+                    if new_HEADER is not None:
+                        with open('session_received.sdp', 'w') as f:
+                            f.write(new_HEADER)
+                    else:
+                        if os.path.exists('session_received.sdp'):
+                            os.remove('session_received.sdp')
                             
-                            
-                        #se ficheiro SDP já existe 
+                    if new_mic_HEADER is not None:
+                        with open('session_received_mic.sdp', 'w') as f:
+                            f.write(new_mic_HEADER)
+                    else:
                         if os.path.exists('session_received_mic.sdp'):
-                            cmd = [
-                                'ffplay',
-                                '-protocol_whitelist', 'file,rtp,udp',
-                                '-nodisp',
-                                '-i', 'session_received_mic.sdp',  # Arquivo SDP gerado pelo emissor
-                                '-af', f'volume={volume}'  # Aplica o volume dinamicamente
-                            ]
-                        elif os.path.exists('session_received.sdp'):
-                            cmd = [
-                                'ffplay',
-                                '-protocol_whitelist', 'file,rtp,udp',
-                                '-nodisp',
-                                '-i', 'session_received.sdp',  # Arquivo SDP gerado pelo emissor
-                                '-af', f'volume={volume}'  # Aplica o volume dinamicamente
-                            ]
-                        else:
-                            print("SDP file not found")
-                            continue
+                            os.remove('session_received_mic.sdp')
+                            
+                            
+                    print("Updated channel and header")
+                    
+                    
+
                         
-                        ffmpeg = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                        print("Restarting ffmpeg with new header, channel, and volume")
-                        # Atualiza o header e o canal
+                        
+                    #se ficheiro SDP já existe 
+                    if os.path.exists('session_received_mic.sdp'):
+                        cmd = [
+                            'ffplay',
+                            '-protocol_whitelist', 'file,rtp,udp',
+                            '-nodisp',
+                            '-i', 'session_received_mic.sdp',  # Arquivo SDP gerado pelo emissor
+                            '-af', f'volume={volume}'  # Aplica o volume dinamicamente
+                        ]
+                    elif os.path.exists('session_received.sdp'):
+                        cmd = [
+                            'ffplay',
+                            '-protocol_whitelist', 'file,rtp,udp',
+                            '-nodisp',
+                            '-i', 'session_received.sdp',  # Arquivo SDP gerado pelo emissor
+                            '-af', f'volume={volume}'  # Aplica o volume dinamicamente
+                        ]
+                    else:
+                        print("SDP file not found")
+                        continue
+                    
+                    ffmpeg = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    print("Restarting ffmpeg with new header, channel, and volume")
+                    # Atualiza o header e o canal
 
 
             except socket.timeout:
@@ -181,6 +228,12 @@ def main():
         mac = ':'.join([f'{(uuid.getnode() >> i) & 0xff:02x}' for i in reversed(range(0, 48, 8))])
         # Cria o objeto node_client com as informações do dispositivo
         n = node_client.node_client(nome, mac)
+        
+        if os.path.exists('session_received.sdp'):
+            os.remove('session_received.sdp')
+            
+        while os.path.exists('session_received.sdp'):
+            time.sleep(1)
 
         # Associa o sinal SIGINT ao shutdown_handler para tratamento de Ctrl+C
         signal.signal(signal.SIGINT, shutdown_handler)
