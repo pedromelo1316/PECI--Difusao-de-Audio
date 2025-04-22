@@ -186,16 +186,23 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+
+
     function addArea() {
-        const areaName = prompt("Name of the new zone:");
-        if (!areaName) {
-            alert("The zone name is required!");
+        openZoneModal(); // Agora só abre o modal bonito que já tens!
+    }
+    
+    function saveNewZone() {
+        const zoneName = document.getElementById('zoneNameInput').value.trim();
+        if (!zoneName) {
+            alert('Por favor, insira um nome válido para a zona.');
             return;
         }
+    
         fetch('/add_area', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: areaName })
+            body: JSON.stringify({ name: zoneName })
         })
         .then(response => {
             if (!response.ok) {
@@ -204,13 +211,26 @@ document.addEventListener("DOMContentLoaded", function () {
             return response.json();
         })
         .then(data => {
-            alert("Zone added successfully!");
+            alert("Zona adicionada com sucesso!");
+            closeZoneModal();
             location.reload();
         })
         .catch(error => {
-            alert("Error: " + error.message);
+            alert("Erro: " + error.message);
         });
     }
+    
+    // <-- Adiciona isto logo a seguir:
+    window.saveNewZone = saveNewZone;
+
+    document.getElementById('zoneNameInput').addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            saveNewZone();
+        }
+    });
+    
+    
 
     document.getElementById("addAreaButton").addEventListener("click", addArea);
 
@@ -237,7 +257,14 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
 
-
+    function openZoneModal() {
+        document.getElementById('newZoneModal').style.display = 'flex';
+    }
+    
+    function closeZoneModal() {
+        document.getElementById('newZoneModal').style.display = 'none';
+    }
+    
 
     function showSelectForZone(buttonElement) {
         console.log("Adding column to zone");
