@@ -862,7 +862,7 @@ class User(db.Model):
 
 @app.route('/', methods=['GET'])
 def index():
-    return redirect(url_for('custom_login'))
+    return redirect(url_for('dashboard'))
 
 @app.route('/index', methods=['GET'])
 def dashboard(): 
