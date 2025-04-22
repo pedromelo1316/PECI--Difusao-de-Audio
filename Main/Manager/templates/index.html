@@ -40,6 +40,19 @@
 
 <div id="pageContent">
 
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert-message alert-{{ category }}">
+            <i class="fa-solid {% if category == 'error' %}fa-circle-exclamation{% elif category == 'success' %}fa-circle-check{% endif %} alert-icon"></i>
+            {{ message }}
+            </div>
+        {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+
     <nav class="navbar">
         <div class="nav-left">
             <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Site Logo" class="site-logo">
@@ -574,7 +587,7 @@
                     <h2 style="margin-bottom: 0px;">MIC INTERRUPTS ({{ interruptions|length }})</h2>
                     <button class="add-btn" onclick="openAddInterruptionModal()" title="Nova Interrupção">
                         <i class="fas fa-plus"></i>
-                        <span>Nova Interrupção</span>
+                        <span>New Interruption</span>
                     </button>
                 </div>            
 
@@ -604,58 +617,58 @@
         </div>
     </section>
 
-
-    <div id="addInterruptionModal" class="interrupt-modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Adicionar Nova Interrupção</h2>
-                <button class="close" onclick="closeAddInterruptionModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="addInterruptionForm">
-                    <label for="interruptionName">Nome da Interrupção:</label>
-                    <input type="text" id="interruptionName" name="name" required>
-
-                    <label for="microphone">Microfone:</label>
-                    <select id="microphone" name="microphone_id" required>
-                        {% for mic in microphones %}
-                            <option value="{{ mic.id }}">{{ mic.name }}</option>
-                        {% endfor %}
-                    </select>
-
-                    <!-- Novo layout horizontal para Áreas e Canais -->
-                    <div class="checkbox-flex-container">
-                        <!-- Areas -->
-                        <div class="checkbox-container">
-                            <h3>Áreas</h3>
-                            <fieldset>
-                                <label><input type="checkbox" id="selectAllAreas"> Selecionar Todas</label>
-                                {% for area in areas %}
-                                    <label><input type="checkbox" name="areas_ids" value="{{ area.id }}"> {{ area.name }}</label>
-                                {% endfor %}
-                            </fieldset>
-                        </div>
-
-                        <!-- Channels -->
-                        <div class="checkbox-container">
-                            <h3>Canais</h3>
-                            <fieldset>
-                                <label><input type="checkbox" id="selectAllChannels"> Selecionar Todos</label>
-                                {% for channel in channels %}
-                                    <label><input type="checkbox" name="channels_ids" value="{{ channel.id }}"> {{ channel.name }}</label>
-                                {% endfor %}
-                            </fieldset>
-                        </div>
-                    </div>
-
-                    <button type="button" class="green-action-btn" onclick="submitAddInterruption()">Salvar</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <!-- TODO o conteúdo da tua página vai aqui -->
 </div>
+
+
+
+<div id="addInterruptionModal" class="interrupt-modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Nova Interrupção</h2>
+            <button class="close" onclick="closeAddInterruptionModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="addInterruptionForm">
+                <label for="interruptionName">Nome da Interrupção</label>
+                <input type="text" id="interruptionName" name="name" placeholder="Ex: Interrupção Microfone Zona A" required>
+
+                <label for="microphone">Microfone</label>
+                <select id="microphone" name="microphone_id" required>
+                    {% for mic in microphones %}
+                        <option value="{{ mic.id }}">{{ mic.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <div class="checkbox-flex-container">
+                    <div class="checkbox-container">
+                        <h3>Áreas</h3>
+                        <fieldset>
+                            <label><input type="checkbox" id="selectAllAreas"> Selecionar Todas</label>
+                            {% for area in areas %}
+                                <label><input type="checkbox" name="areas_ids" value="{{ area.id }}"> {{ area.name }}</label>
+                            {% endfor %}
+                        </fieldset>
+                    </div>
+
+                    <div class="checkbox-container">
+                        <h3>Canais</h3>
+                        <fieldset>
+                            <label><input type="checkbox" id="selectAllChannels"> Selecionar Todos</label>
+                            {% for channel in channels %}
+                                <label><input type="checkbox" name="channels_ids" value="{{ channel.id }}"> {{ channel.name }}</label>
+                            {% endfor %}
+                        </fieldset>
+                    </div>
+                </div>
+
+                <button type="button" class="green-action-btn" onclick="submitAddInterruption()">Guardar Interrupção</button>
+            </form>
+        </div>
+    </div>
+</div>
+    
+
 
 <!-- Modal de Edição de Nome -->
 <div id="editNodeModal" class="interrupt-modal" style="display: none;">

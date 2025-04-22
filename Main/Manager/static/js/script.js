@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const newName = document.getElementById('editNodeName').value.trim();
 
         if (!newName) {
-            alert("O nome não pode estar vazio!");
+            mostrarMensagem("O nome não pode estar vazio!");
             return;
         }
 
@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (response.redirected) {
                 window.location.href = response.url;
             } else {
-                alert('Erro ao renomear o dispositivo.');
+                mostrarMensagem('Erro ao renomear o dispositivo.');
             }
         })
         .catch(error => {
@@ -109,10 +109,10 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .then(response => {
                 if (response.ok) {
-                    alert("Nó renomeado com sucesso!");
+                    mostrarMensagem("Nó renomeado com sucesso!");
                     location.reload(); // Recarrega a página para refletir a mudança
                 } else {
-                    response.text().then(text => alert("Erro ao renomear o nó: " + text));
+                    response.text().then(text => mostrarMensagem("Erro ao renomear o nó: " + text));
                 }
             })
             .catch(error => console.error('Erro:', error));
@@ -122,6 +122,21 @@ document.addEventListener("DOMContentLoaded", function () {
     };*/
 
 
+
+    function mostrarMensagem(mensagem, tipo = "info") {
+        const msgDiv = document.createElement("div");
+        msgDiv.className = `mostrarMensagem-message mostrarMensagem-${tipo}`;
+        msgDiv.innerHTML = `
+            <i class="fa-solid ${tipo === "success" ? "fa-circle-check" : tipo === "error" ? "fa-circle-exclamation" : "fa-circle-info"} mostrarMensagem-icon"></i>
+            ${mensagem}
+        `;
+        document.body.appendChild(msgDiv);
+        setTimeout(() => msgDiv.remove(), 4000);
+    }
+
+
+    
+    
     const columnBox = document.getElementById("columnBox");
 
     window.toggleColumnDetails = function(icon) {
@@ -145,7 +160,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }).then(response => {
                 if (!response.ok) {
                     console.error("Erro ao atualizar o nome da coluna:", response.statusText);
-                    alert("Erro ao atualizar o nome da coluna.");
+                    mostrarMensagem("Erro ao atualizar o nome da coluna.");
                     columnNameSpan.textContent = currentName;
                 }
             }).catch(error => {
@@ -195,7 +210,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function saveNewZone() {
         const zoneName = document.getElementById('zoneNameInput').value.trim();
         if (!zoneName) {
-            alert('Por favor, insira um nome válido para a zona.');
+            mostrarMensagem('Please enter a valid name for the zone.');
             return;
         }
     
@@ -211,12 +226,12 @@ document.addEventListener("DOMContentLoaded", function () {
             return response.json();
         })
         .then(data => {
-            alert("Zona adicionada com sucesso!");
+            mostrarMensagem("Zona adicionada com sucesso!");
             closeZoneModal();
             location.reload();
         })
         .catch(error => {
-            alert("Erro: " + error.message);
+            mostrarMensagem("Erro: " + error.message);
         });
     }
     
@@ -375,7 +390,7 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(response => response.json())
         .then(data => {
             if (data.error) {
-                alert("Error: " + data.error);
+                mostrarMensagem("Error: " + data.error);
             }
         })
         .catch(error => console.error("Error adding speaker:", error));
@@ -397,7 +412,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 columnElement.remove();
             } else {
                 console.error("Error removing speaker:", data.error);
-                alert("Error: " + data.error);
+                mostrarMensagem("Error: " + data.error);
             }
         })
         .catch(error => console.error("Error removing speaker:", error));
@@ -427,9 +442,9 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .then(response => {
                 if (response.ok) {
-                    alert("Programming interrupted successfully!");
+                    mostrarMensagem("Programming interrupted successfully!");
                 } else {
-                    alert("Failed to interrupt programming.");
+                    mostrarMensagem("Failed to interrupt programming.");
                 }
             })
             .catch(error => console.error("Error interrupting programming:", error));
@@ -488,7 +503,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }).then(response => {
                 if (!response.ok) {
                     console.error("Error updating channel name:", response.statusText);
-                    alert("Error updating channel name.");
+                    mostrarMensagem("Error updating channel name.");
                     channelNameSpan.textContent = currentName;
                 }
             }).catch(error => {
@@ -514,7 +529,7 @@ document.addEventListener("DOMContentLoaded", function() {
             });
             
             if (selectedChannels.length === 0) {
-                alert('Please select at least one channel for transmission.');
+                mostrarMensagem('Please select at least one channel for transmission.');
                 return;
             }
             
@@ -529,14 +544,14 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert(`Transmission started on channels: ${selectedChannels.join(', ')}`);
+                    mostrarMensagem(`Transmission started on channels: ${selectedChannels.join(', ')}`);
                 } else {
-                    alert('Error: ' + data.error);
+                    mostrarMensagem('Error: ' + data.error);
                 }
             })
             .catch(error => {
                 console.error('Error transmitting channels:', error);
-                alert('Failed to start transmission. Please try again.');
+                mostrarMensagem('Failed to start transmission. Please try again.');
             });
         });
     }
@@ -600,12 +615,12 @@ function updateChannelTransmission(channelId, isActive) {
     .then(data => {
         if (!data.success) {
             console.error(`Failed to ${isActive ? 'activate' : 'deactivate'} channel:`, data.error);
-            alert(`Error: ${data.error}`);
+            mostrarMensagem(`Error: ${data.error}`);
         }
     })
     .catch(error => {
         console.error('Error updating channel transmission:', error);
-        alert('Failed to update channel status. Please try again.');
+        mostrarMensagem('Failed to update channel status. Please try again.');
     });
 }
 
@@ -785,7 +800,7 @@ function saveChannelName() {
     const newName = input.value.trim();
 
     if (!newName) {
-        alert("O nome não pode estar vazio!");
+        mostrarMensagem("O nome não pode estar vazio!");
         return;
     }
 
@@ -802,11 +817,11 @@ function saveChannelName() {
         })
     }).then(response => {
         if (!response.ok) {
-            alert("Erro ao atualizar o nome.");
+            mostrarMensagem("Erro ao atualizar o nome.");
             input.value = title.textContent;
         }
     }).catch(error => {
-        alert("Erro ao contactar o servidor.");
+        mostrarMensagem("Erro ao contactar o servidor.");
         console.error(error);
     });
 }
@@ -917,10 +932,10 @@ function deleteInterrupt(interruptId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert("Interrupt deleted successfully.");
+                mostrarMensagem("Interrupt deleted successfully.");
                 window.location.reload(); // Reload the page to update the list
             } else {
-                alert("Error deleting interrupt: " + data.error);
+                mostrarMensagem("Error deleting interrupt: " + data.error);
             }
         })
         .catch(error => {
@@ -938,10 +953,10 @@ function startInterrupt(interruptId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert("Interrupt started successfully.");
+                mostrarMensagem("Interrupt started successfully.");
                 window.location.reload(); // Reload the page to update the list
             } else {
-                alert("Error starting interrupt: " + data.error);
+                mostrarMensagem("Error starting interrupt: " + data.error);
             }
         })
         .catch(error => {
@@ -960,10 +975,10 @@ function stopInterrupt(interruptId){
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert("Interrupt stopped successfully.");
+                mostrarMensagem("Interrupt stopped successfully.");
                 window.location.reload(); // Reload the page to update the list
             } else {
-                alert("Error stopping interrupt: " + data.error);
+                mostrarMensagem("Error stopping interrupt: " + data.error);
             }
         })
         .catch(error => {
@@ -1018,14 +1033,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 // Function to open the Add Interruption Modal
+
+
 function openAddInterruptionModal() {
     document.getElementById('addInterruptionModal').style.display = 'block';
+    document.getElementById('pageContent').classList.add('blurred');
 }
 
 // Function to close the Add Interruption Modal
+
+function openAddInterruptionModal() {
+    document.getElementById('addInterruptionModal').style.display = 'block';
+    document.getElementById('pageContent').classList.add('blurred');
+}
+
 function closeAddInterruptionModal() {
     document.getElementById('addInterruptionModal').style.display = 'none';
+    document.getElementById('pageContent').classList.remove('blurred');
 }
+
+
 
 // Function to submit the Add Interruption form
 function submitAddInterruption() {
@@ -1042,17 +1069,17 @@ function submitAddInterruption() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('Interruption added successfully!');
+                mostrarMensagem('Interruption added successfully!');
                 form.reset(); // Clear the form fields
                 closeAddInterruptionModal();
                 location.reload(); // Reload the page to update the list
             } else {
-                alert('Error adding interruption: ' + data.error);
+                mostrarMensagem('Error adding interruption: ' + data.error);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error adding interruption.');
+            mostrarMensagem('Error adding interruption.');
         });
 }
 
