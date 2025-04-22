@@ -33,7 +33,7 @@
             <div class="grid-container">
                 <!-- Playlists Section -->
                 <div class="playlists-section">
-                    <h2>Playlists</h2>
+                    <h2>Playlists ({{ playlists|length }})</h2>
                     <br>
                     <ul class="playlists-list" id="playlists-list">
                         {% for playlist in playlists %}
@@ -55,7 +55,7 @@
 
                 <!-- Songs Section -->
                 <div class="songs-section">
-                    <h2>Songs</h2>
+                    <h2>Songs ({{ songs|length }})</h2>
                     <br>
                     <ul class="playlists-list" id="song-list">
                         {% for song in songs %}
@@ -97,7 +97,7 @@
 <div class="container">
     <div class="content">
         <div id="streams" class="stream-box">
-            <h3>Streaming</h3>
+            <h3>Streaming ({{ streaming|length }})</h3>
             <div class="grid-container">
                 <div class="streaming-section">
                     <ul id="streaming-list">
@@ -127,7 +127,7 @@
         <div class="microfone-box">
             <h3 style="display: flex; align-items: center; gap: 8px;">
                 Microfones
-                <i id="microfone-status-icon" class="fa-solid fa-rotate-right" style="font-size: 18px; cursor: pointer;" onclick="fetchMicrophones()"></i>
+                <i id="microfone-status-icon" class="fa-solid fa-rotate-right" style="font-size: 18px; cursor: pointer;" onclick="fetchMicrophones()" ></i> ({{ microfones|length }})
             </h3>       
             <div class="microfone-section">
                 <ul id="microphone-list">
