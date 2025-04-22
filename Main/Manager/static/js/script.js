@@ -229,7 +229,36 @@ document.addEventListener("DOMContentLoaded", function () {
             saveNewZone();
         }
     });
+
     
+
+
+
+    let zoneToRemove = null;
+
+    window.askRemoveZone = function (areaId, areaName) {
+        zoneToRemove = areaId;
+        const message = `Tem a certeza que deseja remover a zona <strong>${areaName}</strong>?`;
+        document.getElementById('removeZoneMessage').innerHTML = message;
+        document.getElementById('confirmRemoveZoneModal').style.display = 'flex';
+    };
+    
+    window.closeRemoveZoneModal = function () {
+        zoneToRemove = null;
+        document.getElementById('confirmRemoveZoneModal').style.display = 'none';
+    };
+    
+    window.confirmRemoveZone = function () {
+        if (zoneToRemove !== null) {
+            const form = document.getElementById(`remove-area-form-${zoneToRemove}`);
+            if (form) {
+                form.submit();
+            } else {
+                console.error(`Formulário da zona ${zoneToRemove} não encontrado.`);
+            }
+            closeRemoveZoneModal();
+        }
+    };
     
 
     document.getElementById("addAreaButton").addEventListener("click", addArea);
@@ -261,9 +290,13 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById('newZoneModal').style.display = 'flex';
     }
     
-    function closeZoneModal() {
+    window.closeZoneModal = function () {
         document.getElementById('newZoneModal').style.display = 'none';
-    }
+        document.getElementById('zoneNameInput').value = '';
+        document.body.style.overflow = 'auto';
+        document.getElementById('pageContent').classList.remove('blurred');
+    };
+    
     
 
     function showSelectForZone(buttonElement) {
