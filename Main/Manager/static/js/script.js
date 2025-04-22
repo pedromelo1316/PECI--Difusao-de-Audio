@@ -1,6 +1,103 @@
 document.addEventListener("DOMContentLoaded", function () {
 
-    window.renameNode = function(nodeId) { // Torna a função global
+    window.renameNode = function(nodeId) {
+        const currentName = document.querySelector(`[data-device-id="${nodeId}"] .channel-name`).textContent.trim();
+        document.getElementById('editNodeId').value = nodeId;
+        document.getElementById('editNodeName').value = currentName;
+
+        document.getElementById('editNodeModal').style.display = 'block';
+        document.getElementById('pageContent').classList.add('blurred'); // ➔ Aplica o blur
+        document.getElementById('editNodeName').focus(); // ➔ Dá focus no input
+    };
+
+    window.closeEditNodeModal = function() {
+        document.getElementById('editNodeModal').style.display = 'none';
+        document.getElementById('pageContent').classList.remove('blurred'); // ➔ Tira o blur
+        document.body.style.overflow = 'auto';
+    };
+
+    window.submitEditNode = function() {
+        const nodeId = document.getElementById('editNodeId').value;
+        const newName = document.getElementById('editNodeName').value.trim();
+
+        if (!newName) {
+            alert("O nome não pode estar vazio!");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('name', newName);
+
+        fetch(`/rename_node/${nodeId}`, {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else {
+                alert('Erro ao renomear o dispositivo.');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+        });
+    };
+
+    // Quando carrega Enter no campo do nome, guarda
+    const editNodeInput = document.getElementById('editNodeName');
+    if (editNodeInput) {
+        editNodeInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                submitEditNode();
+            }
+        });
+    }
+
+    // Opcional: Se carregares Esc, fecha o modal
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeEditNodeModal();
+        }
+    });
+
+
+    /*window.confirmDelete = function() {
+        if (deleteNodeId) {
+            window.location.href = `/delete/${deleteNodeId}`;  // faz GET, como esperado
+        }
+    };*/
+    
+    
+
+
+
+    let deleteNodeId = null; // Guardar o ID do dispositivo que se quer eliminar
+
+    // Quando clicas no ícone da lixeira ➔ abre o modal bonito
+    window.confirmDeleteNode = function(nodeId, nodeName) {
+        deleteNodeId = nodeId; // Guarda o ID do dispositivo
+        document.querySelector('#confirmDeleteModal p').innerHTML = `Tem a certeza que quer eliminar <strong>${nodeName}</strong>?`;
+        document.getElementById('confirmDeleteModal').style.display = 'flex';
+    };
+    
+    // Quando clicas "Cancelar" no modal
+    window.closeDeleteModal = function() {
+        document.getElementById('confirmDeleteModal').style.display = 'none';
+        deleteNodeId = null; // Limpa o ID
+    };
+    
+    // Quando clicas "Apagar" no modal
+    window.confirmDelete = function() {
+        if (deleteNodeId) {
+            window.location.href = `/delete/${deleteNodeId}`; // Redireciona com GET
+        }
+    };
+    
+    
+
+    /*window.renameNode = function(nodeId) { // Torna a função global
         const newName = prompt("Digite o novo nome para o nó:");
         if (newName) {
             fetch(`/rename_node/${nodeId}`, {
@@ -20,7 +117,9 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .catch(error => console.error('Erro:', error));
         }
-    };
+
+
+    };*/
 
 
     const columnBox = document.getElementById("columnBox");
@@ -136,6 +235,9 @@ document.addEventListener("DOMContentLoaded", function () {
             this.nextElementSibling.textContent = `Volume: ${this.value}%`;
         });
     });
+
+
+
 
     function showSelectForZone(buttonElement) {
         console.log("Adding column to zone");

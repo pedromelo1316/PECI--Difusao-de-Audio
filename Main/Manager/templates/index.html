@@ -38,367 +38,349 @@
 
 {% block body %}
 
+<div id="pageContent">
 
-<nav class="navbar">
-    <div class="nav-left">
-        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Site Logo" class="site-logo">
-        <span class="nav-title">Audio Manager</span>
-    </div>
-    <div class="nav-center">
-        <a href="#devices">Devices/Channels</a>
-        <a href="#areas">Areas</a>
-        <a href="#mic">Mic Interruption</a>
-    </div>
-    <div class="nav-right">
-        <button class="btn-outline" onclick="triggerImport()"><i class="bi bi-upload me-1"></i>Import Config</button>
-        <button class="btn-primary" onclick="triggerExport()"><i class="bi bi-download me-1"></i>Export Config</button>
-        <a href="{{ url_for('logout') }}" class="logout-icon">
-            <i class="fa-solid fa-right-from-bracket"></i>
-        </a>
-    </div>
-</nav>
+    <nav class="navbar">
+        <div class="nav-left">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Site Logo" class="site-logo">
+            <span class="nav-title">Audio Manager</span>
+        </div>
+        <div class="nav-center">
+            <a href="#devices">Devices/Channels</a>
+            <a href="#areas">Areas</a>
+            <a href="#mic">Mic Interruption</a>
+        </div>
+        <div class="nav-right">
+            <button class="btn-outline" onclick="triggerImport()"><i class="bi bi-upload me-1"></i>Import Config</button>
+            <button class="btn-primary" onclick="triggerExport()"><i class="bi bi-download me-1"></i>Export Config</button>
+            <a href="{{ url_for('logout') }}" class="logout-icon">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </a>
+        </div>
+    </nav>
 
 
-<script>
+    <script>
 
-    document.addEventListener("DOMContentLoaded", function () {
-        // Forçar height maior para teste
-        document.body.style.height = "300vh";
-        
-        // Adiciona listener para o evento de scroll (para debug, se necessário)
-        window.addEventListener("scroll", function () {
-            console.log("Scroll Position:", window.scrollY);
-        });
-    
-        // Código para marcar a seção ativa na navbar
-        const sections = document.querySelectorAll("section");
-        const navLinks = document.querySelectorAll(".nav-center a");
-    
-        const observerOptions = {
-            threshold: 0.5 // 50% da section visível
-        };
-    
-        const observerCallback = (entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const sectionId = entry.target.getAttribute("id");
-                    navLinks.forEach(link => {
-                        // Remove "active" de todos os links
-                        link.classList.remove("active");
-                        // Se o href (sem o #) corresponder ao id da section, adiciona a classe active
-                        if (link.getAttribute("href").substring(1) === sectionId) {
-                            link.classList.add("active");
-                        }
-                    });
-                }
+        document.addEventListener("DOMContentLoaded", function () {
+            // Forçar height maior para teste
+            document.body.style.height = "300vh";
+            
+            // Adiciona listener para o evento de scroll (para debug, se necessário)
+            window.addEventListener("scroll", function () {
+                console.log("Scroll Position:", window.scrollY);
             });
-        };
-    
-        const observer = new IntersectionObserver(observerCallback, observerOptions);
-        sections.forEach(section => observer.observe(section));
-    });
+        
+            // Código para marcar a seção ativa na navbar
+            const sections = document.querySelectorAll("section");
+            const navLinks = document.querySelectorAll(".nav-center a");
+        
+            const observerOptions = {
+                threshold: 0.5 // 50% da section visível
+            };
+        
+            const observerCallback = (entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const sectionId = entry.target.getAttribute("id");
+                        navLinks.forEach(link => {
+                            // Remove "active" de todos os links
+                            link.classList.remove("active");
+                            // Se o href (sem o #) corresponder ao id da section, adiciona a classe active
+                            if (link.getAttribute("href").substring(1) === sectionId) {
+                                link.classList.add("active");
+                            }
+                        });
+                    }
+                });
+            };
+        
+            const observer = new IntersectionObserver(observerCallback, observerOptions);
+            sections.forEach(section => observer.observe(section));
+        });
 
-    // Trigger the file input for importing
-    function triggerImport() {
-    
+        // Trigger the file input for importing
+        function triggerImport() {
+        
 
-        // Create a FormData object and append the necessary data
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.onchange = () => {
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
+            // Create a FormData object and append the necessary data
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.onchange = () => {
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
 
-            // Sending the form data to the server using AJAX
-            fetch('/import_conf', {
+                // Sending the form data to the server using AJAX
+                fetch('/import_conf', {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();  // Reload the page after successful upload
+                    } else {
+                        console.log("Error:", data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error during file upload:", error);
+                });
+            };
+            fileInput.click();
+        }
+
+        // Handle the file import
+        function handleImport(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const formData = new FormData();
+                formData.append('file', file);  // Appending the file to FormData
+
+                // Sending the form data to the server using AJAX
+                fetch('/import_conf', {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();  // Reload the page after successful upload
+                    } else {
+                        console.log("Error:", data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error during file upload:", error);
+                });
+            } else {
+                console.log("No file selected.");
+            }
+        }
+
+        // Trigger the export of config
+        function triggerExport() {
+            // Make a GET request to Flask to get the configuration as a file
+            fetch('/export_conf')
+                .then(response => response.blob())  // Get the response as a Blob
+                .then(blob => {
+                    // Create a link to download the Blob content
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'config.json';  // Specify the default file name
+                    link.click();  // Trigger the download
+                })
+                .catch(error => {
+                    console.error("Error exporting config:", error);
+                });
+        }
+
+        // Toggle transmission state and call the Python endpoint
+        function toggleTransmission(button, channelId) {
+            // Update the UI to show "starting..." or "stopping..." based on the current state
+            const statusText = button.closest('.channel-card').querySelector('.status-text');
+            if (statusText.textContent.trim() === "Inactive") {
+                statusText.textContent = "starting...";
+            } else if (statusText.textContent.trim() === "Active") {
+                statusText.textContent = "stopping...";
+            }
+
+            // Send the channel ID and desired state to the Python endpoint
+            fetch(`/toggle_transmission`, {
                 method: 'POST',
-                body: formData,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ channel_id: channelId }),
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    window.location.reload();  // Reload the page after successful upload
+                    console.log("success");
+                    window.location.reload(); // Reload the page if successful
                 } else {
-                    console.log("Error:", data.error);
+                    console.error("Error toggling transmission:", data.error);
+                    // Revert the status text back to its original state
+                    if (statusText.textContent.trim() === "starting...") {
+                        statusText.textContent = "Inactive";
+                    } else if (statusText.textContent.trim() === "stopping...") {
+                        statusText.textContent = "Active";
+                    }
                 }
             })
             .catch(error => {
-                console.error("Error during file upload:", error);
+                console.error("Error during transmission toggle:", error);
             });
-        };
-        fileInput.click();
-    }
-
-    // Handle the file import
-    function handleImport(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const formData = new FormData();
-            formData.append('file', file);  // Appending the file to FormData
-
-            // Sending the form data to the server using AJAX
-            fetch('/import_conf', {
-                method: 'POST',
-                body: formData,
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();  // Reload the page after successful upload
-                } else {
-                    console.log("Error:", data.error);
-                }
-            })
-            .catch(error => {
-                console.error("Error during file upload:", error);
-            });
-        } else {
-            console.log("No file selected.");
-        }
-    }
-
-    // Trigger the export of config
-    function triggerExport() {
-        // Make a GET request to Flask to get the configuration as a file
-        fetch('/export_conf')
-            .then(response => response.blob())  // Get the response as a Blob
-            .then(blob => {
-                // Create a link to download the Blob content
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = 'config.json';  // Specify the default file name
-                link.click();  // Trigger the download
-            })
-            .catch(error => {
-                console.error("Error exporting config:", error);
-            });
-    }
-
-    // Toggle transmission state and call the Python endpoint
-    function toggleTransmission(button, channelId) {
-        // Update the UI to show "starting..." or "stopping..." based on the current state
-        const statusText = button.closest('.channel-card').querySelector('.status-text');
-        if (statusText.textContent.trim() === "Inactive") {
-            statusText.textContent = "starting...";
-        } else if (statusText.textContent.trim() === "Active") {
-            statusText.textContent = "stopping...";
         }
 
-        // Send the channel ID and desired state to the Python endpoint
-        fetch(`/toggle_transmission`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ channel_id: channelId }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                console.log("success");
-                window.location.reload(); // Reload the page if successful
-            } else {
-                console.error("Error toggling transmission:", data.error);
-                // Revert the status text back to its original state
-                if (statusText.textContent.trim() === "starting...") {
-                    statusText.textContent = "Inactive";
-                } else if (statusText.textContent.trim() === "stopping...") {
-                    statusText.textContent = "Active";
-                }
+
+        function startCountdown(button, nodeId) {
+            // Verificar se o spinner já existe
+            const parent = button.closest('.test-Device');
+            if (parent.querySelector('.loading-spinner')) {
+                return; // Não fazer nada se já estiver ativo
             }
-        })
-        .catch(error => {
-            console.error("Error during transmission toggle:", error);
-        });
-    }
 
-
-    function startCountdown(button, nodeId) {
-        // Verificar se o spinner já existe
-        const parent = button.closest('.test-Device');
-        if (parent.querySelector('.loading-spinner')) {
-            return; // Não fazer nada se já estiver ativo
-        }
-
-        // Salvar o conteúdo original do botão
-        const originalContent = button.outerHTML;
-    
-        // Adicionar o spinner ao redor do botão
-        const spinner = document.createElement('div');
-        spinner.className = 'loading-spinner';
-        parent.appendChild(spinner);
-    
-        // Criar o elemento de contagem regressiva
-        const countdownText = document.createElement('span');
-        countdownText.className = 'countdown-text';
-        countdownText.textContent = '5';
-        parent.appendChild(countdownText);
-    
-        let countdown = 5;
-    
-        // Atualizar a contagem regressiva a cada segundo
-        const interval = setInterval(() => {
-            countdown -= 1;
-            countdownText.textContent = countdown;
-    
-            // Quando a contagem regressiva terminar, restaurar o botão original
-            if (countdown === 0) {
-                clearInterval(interval);
-                spinner.remove();
-                countdownText.remove();
-            }
-        }, 1000);
-    }
-
-    function testDevice(button, nodeId) {
+            // Salvar o conteúdo original do botão
+            const originalContent = button.outerHTML;
         
-        fetch(`/test-device/${nodeId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ node_id: nodeId }),
-        }).then(response => {
-            if (response.ok) {
-                console.log("Test started successfully");
-                startCountdown(button, nodeId); // Start the countdown
-            } else {
-                console.error("Error starting test:", response.statusText);
-            }
-        }).catch(error => {
-            console.error("Error during test device request:", error);
-        });
-    }
+            // Adicionar o spinner ao redor do botão
+            const spinner = document.createElement('div');
+            spinner.className = 'loading-spinner';
+            parent.appendChild(spinner);
+        
+            // Criar o elemento de contagem regressiva
+            const countdownText = document.createElement('span');
+            countdownText.className = 'countdown-text';
+            countdownText.textContent = '5';
+            parent.appendChild(countdownText);
+        
+            let countdown = 5;
+        
+            // Atualizar a contagem regressiva a cada segundo
+            const interval = setInterval(() => {
+                countdown -= 1;
+                countdownText.textContent = countdown;
+        
+                // Quando a contagem regressiva terminar, restaurar o botão original
+                if (countdown === 0) {
+                    clearInterval(interval);
+                    spinner.remove();
+                    countdownText.remove();
+                }
+            }, 1000);
+        }
+
+        function testDevice(button, nodeId) {
+            
+            fetch(`/test-device/${nodeId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ node_id: nodeId }),
+            }).then(response => {
+                if (response.ok) {
+                    console.log("Test started successfully");
+                    startCountdown(button, nodeId); // Start the countdown
+                } else {
+                    console.error("Error starting test:", response.statusText);
+                }
+            }).catch(error => {
+                console.error("Error during test device request:", error);
+            });
+        }
 
 
-</script>
+    </script>
 
-<section id="devices"  class="container"> 
-    
-    <div class="content">
-        <br>
-        <br>
-        <div class="dual-section">
-            <div class="section-left">
-                <div class="section-header">
-                    <h3>Devices ({{ nodes|length }})</h3>
-                </div>
-                <div class="column-box" id="columnBox" style="display: block; margin-top: 2px;">
-                    {% if nodes|length < 1 %}
-                    <div style="text-align: center; padding: 20px; color: #666;">
-                        <i class="fa-solid fa-circle-exclamation" style="font-size: 24px; margin-bottom: 10px;"></i>
-                        <h5>No devices found</h5>
+    <section id="devices"  class="container"> 
+        
+        <div class="content">
+            <br>
+            <br>
+            <div class="dual-section">
+                <div class="section-left">
+                    <div class="section-header">
+                        <h3>Devices ({{ nodes|length }})</h3>
                     </div>
-                    {% else %}
-                    <div class="channels-layout">
-                        <div class="bottom-controls">
-                            <div class="channel-selection-panel">
-                                <div class="channel-cards">
-                                    {% for node in nodes %}
-                                    <div class="channel-card" data-device-id="{{ node.id }}">
-                                        {% if node.connected %}
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="#22cc3f" viewBox="0 0 24 24">
-                                                <path d="M5 9v6h4l5 5V4l-5 5H5zm13.5 3a4.5 4.5 0 0 0-1.44-3.31l-1.06 1.06A3 3 0 0 1 17 12a3 3 0 0 1-1 2.25l1.06 1.06A4.5 4.5 0 0 0 18.5 12zm2.5 0a7 7 0 0 0-2.1-5l-1.06 1.06A5.5 5.5 0 0 1 20 12a5.5 5.5 0 0 1-2.16 4.38l1.06 1.06A7 7 0 0 0 21 12z"/>
-                                            </svg>
-                                        {% else %}
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="#ccc" viewBox="0 0 24 24">
-                                                <path d="M5 9v6h4l5 5V4l-5 5H5zm13.5 3a4.5 4.5 0 0 0-1.44-3.31l-1.06 1.06A3 3 0 0 1 17 12a3 3 0 0 1-1 2.25l1.06 1.06A4.5 4.5 0 0 0 18.5 12zm2.5 0a7 7 0 0 0-2.1-5l-1.06 1.06A5.5 5.5 0 0 1 20 12a5.5 5.5 0 0 1-2.16 4.38l1.06 1.06A7 7 0 0 0 21 12z"/>
-                                            </svg>
-                                        {% endif %}                               
-                                        <div class="card-content">
-                                            <span class="channel-name">                                            
-                                                {{ node.name }}
-                                            </span>
-                                            <div class="channel-status">
-                                                {% if node.connected %}
-                                                    <span class="status-indicator" style="background: #22cc3f;"></span>
-                                                    <span class="status-text" style="color: #22cc3f;">Connected</span>
-                                                {% else %}
-                                                    <span class="status-indicator" style="background: #ccc;"></span>
-                                                    <span class="status-text">Disconnected</span>
-                                                {% endif %}
+                    <div class="column-box" id="columnBox" style="display: block; margin-top: 2px;">
+                        {% if nodes|length < 1 %}
+                        <div style="text-align: center; padding: 20px; color: #666;">
+                            <i class="fa-solid fa-circle-exclamation" style="font-size: 24px; margin-bottom: 10px;"></i>
+                            <h5>No devices found</h5>
+                        </div>
+                        {% else %}
+                        <div class="channels-layout">
+                            <div class="bottom-controls">
+                                <div class="channel-selection-panel">
+                                    <div class="channel-cards">
+                                        {% for node in nodes %}
+                                        <div class="channel-card" data-device-id="{{ node.id }}">
+                                            {% if node.connected %}
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="#22cc3f" viewBox="0 0 24 24">
+                                                    <path d="M5 9v6h4l5 5V4l-5 5H5zm13.5 3a4.5 4.5 0 0 0-1.44-3.31l-1.06 1.06A3 3 0 0 1 17 12a3 3 0 0 1-1 2.25l1.06 1.06A4.5 4.5 0 0 0 18.5 12zm2.5 0a7 7 0 0 0-2.1-5l-1.06 1.06A5.5 5.5 0 0 1 20 12a5.5 5.5 0 0 1-2.16 4.38l1.06 1.06A7 7 0 0 0 21 12z"/>
+                                                </svg>
+                                            {% else %}
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="#ccc" viewBox="0 0 24 24">
+                                                    <path d="M5 9v6h4l5 5V4l-5 5H5zm13.5 3a4.5 4.5 0 0 0-1.44-3.31l-1.06 1.06A3 3 0 0 1 17 12a3 3 0 0 1-1 2.25l1.06 1.06A4.5 4.5 0 0 0 18.5 12zm2.5 0a7 7 0 0 0-2.1-5l-1.06 1.06A5.5 5.5 0 0 1 20 12a5.5 5.5 0 0 1-2.16 4.38l1.06 1.06A7 7 0 0 0 21 12z"/>
+                                                </svg>
+                                            {% endif %}                               
+                                            <div class="card-content">
+                                                <span class="channel-name">                                            
+                                                    {{ node.name }}
+                                                </span>
+                                                <div class="channel-status">
+                                                    {% if node.connected %}
+                                                        <span class="status-indicator" style="background: #22cc3f;"></span>
+                                                        <span class="status-text" style="color: #22cc3f;">Connected</span>
+                                                    {% else %}
+                                                        <span class="status-indicator" style="background: #ccc;"></span>
+                                                        <span class="status-text">Disconnected</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div style="display: flex; gap: 6px; align-items: center;">
+                                                <div class="toggle-transmission-btn test-Device">
+                                                    <i class="fa-solid fa-play settings-icon"
+                                                    onclick="testDevice(this, {{ node.id }})"></i>
+                                                </div>
+                                                <div class="toggle-transmission-btn">
+                                                    <i class="fa-solid fa-info-circle settings-icon" 
+                                                    onclick="toggleDeviceInfo('{{ node.id }}', this)"></i>
+                                                </div>
+                                                <div class="toggle-transmission-btn">
+                                                    <i class="fa-solid fa-pen settings-icon"
+                                                    onclick="renameNode('{{ node.id }}')"></i>
+                                                </div>
+                                                <div class="toggle-transmission-btn">
+                                                    <i class="fa-solid fa-trash device-delete-icon" onclick="confirmDeleteNode('{{ node.id }}', '{{ node.name }}')"></i>
+                                                </div>
+                                                
                                             </div>
                                         </div>
-                                        <div style="display: flex; gap: 6px; align-items: center;">
-                                            <div class="toggle-transmission-btn test-Device">
-                                                <i class="fa-solid fa-play settings-icon"
-                                                   onclick="testDevice(this, {{ node.id }})"></i>
-                                            </div>
-                                            <div class="toggle-transmission-btn">
-                                                <i class="fa-solid fa-info-circle settings-icon" 
-                                                   onclick="toggleDeviceInfo('{{ node.id }}', this)"></i>
-                                            </div>
-                                            <div class="toggle-transmission-btn">
-                                                <i class="fa-solid fa-pen settings-icon"
-                                                   onclick="renameNode('{{ node.id }}')"></i>
-                                            </div>
-                                            <div class="toggle-transmission-btn">
-                                                <a href="/delete/{{ node.id }}">
-                                                    <i class="fa-solid fa-trash settings-icon"></i>
-                                                </a>
-                                            </div>
+                                        <!-- Modify the device info section to follow immediately after each card -->
+                                        <div id="device-info-{{ node.id }}" class="device-info" style="display: none; padding: 10px; background: #f5f5f5; margin-top: -8px; margin-bottom: 8px; border-radius: 0 0 8px 8px; border: 1px solid #e0e0e0;">
+                                            <p style="display: flex; align-items: center; gap: 5px; margin: 5px 0; font-weight: normal;"><i class="fa-solid fa-network-wired"></i> IP: {{ node.ip }}</p>
+                                            <p style="display: flex; align-items: center; gap: 5px; margin: 5px 0; font-weight: normal;"><i class="fa-solid fa-fingerprint"></i> MAC: {{ node.mac }}</p>
                                         </div>
+                                        {% endfor %}
                                     </div>
-                                    <!-- Modify the device info section to follow immediately after each card -->
-                                    <div id="device-info-{{ node.id }}" class="device-info" style="display: none; padding: 10px; background: #f5f5f5; margin-top: -8px; margin-bottom: 8px; border-radius: 0 0 8px 8px; border: 1px solid #e0e0e0;">
-                                        <p style="display: flex; align-items: center; gap: 5px; margin: 5px 0; font-weight: normal;"><i class="fa-solid fa-network-wired"></i> IP: {{ node.ip }}</p>
-                                        <p style="display: flex; align-items: center; gap: 5px; margin: 5px 0; font-weight: normal;"><i class="fa-solid fa-fingerprint"></i> MAC: {{ node.mac }}</p>
-                                    </div>
-                                    {% endfor %}
                                 </div>
                             </div>
                         </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
                 </div>
-            </div>
 
-            <div class="section-right">
-                <div class="section-header">
-                    <h3>Channels ({{ channels|length }}) </h3>
+                <div class="section-right">
+                    <div class="section-header">
+                        <h3>Channels ({{ channels|length }}) </h3>
 
-                    <a href="{{ url_for('secundaria') }}" class="settings-link">
-                        <span class="media-button">
-                            Edit Media
-                        </span>
-                    </a>
-                    
-                </div>
-                <div class="column-box" id="columnBox" style="display: block;">
-                    {% if channels|length < 1 %}
-                    <h4>No channels found</h4>
-                    {% else %}
-                    <div class="channels-layout">
+                        <a href="{{ url_for('secundaria') }}" class="settings-link">
+                            <span class="media-button">
+                                Edit Media
+                            </span>
+                        </a>
+                        
+                    </div>
+                    <div class="column-box" id="columnBox" style="display: block;">
+                        {% if channels|length < 1 %}
+                        <h4>No channels found</h4>
+                        {% else %}
+                        <div class="channels-layout">
 
 
-                        <div class="bottom-controls">
-                            <!-- Left: Audio Transmission -->
-                            <div class="channel-selection-panel">
-                              
-                                <div class="channel-cards">
-                                    {% for channel in channels %}
-                                    <div class="channel-card" data-channel-id="{{ channel.id }}" style="cursor: pointer;">
-                                        <div class="wifi-icon">
-                                            {% if channel.state == "stopped" %}
-                                                <svg width="35" height="35" viewBox="0 0 365.892 365.892" fill="#ccc" xmlns="http://www.w3.org/2000/svg">
-                                                <g>
-                                                    <circle cx="182.945" cy="286.681" r="41.494"/>
-                                                    <path d="M182.946,176.029c-35.658,0-69.337,17.345-90.09,46.398c-5.921,8.288-4.001,19.806,4.286,25.726
-                                                    c3.249,2.321,6.994,3.438,10.704,3.438c5.754,0,11.423-2.686,15.021-7.724c13.846-19.383,36.305-30.954,60.078-30.954
-                                                    c23.775,0,46.233,11.571,60.077,30.953c5.919,8.286,17.437,10.209,25.726,4.288c8.288-5.92,10.208-17.438,4.288-25.726
-                                                    C252.285,193.373,218.606,176.029,182.946,176.029z"/>
-                                                    <path d="M182.946,106.873c-50.938,0-99.694,21.749-133.77,59.67c-6.807,7.576-6.185,19.236,1.392,26.044
-                                                    c3.523,3.166,7.929,4.725,12.32,4.725c5.051-0.001,10.082-2.063,13.723-6.116c27.091-30.148,65.849-47.439,106.336-47.439
-                                                    s79.246,17.291,106.338,47.438c6.808,7.576,18.468,8.198,26.043,1.391c7.576-6.808,8.198-18.468,1.391-26.043
-                                                    C282.641,128.621,233.883,106.873,182.946,106.873z"/>
-                                                    <path d="M360.611,112.293c-47.209-48.092-110.305-74.577-177.665-74.577c-67.357,0-130.453,26.485-177.664,74.579
-                                                    c-7.135,7.269-7.027,18.944,0.241,26.079c3.59,3.524,8.255,5.282,12.918,5.281c4.776,0,9.551-1.845,13.161-5.522
-                                                    c40.22-40.971,93.968-63.534,151.344-63.534c57.379,0,111.127,22.563,151.343,63.532c7.136,7.269,18.812,7.376,26.08,0.242
-                                                    C367.637,131.238,367.745,119.562,360.611,112.293z"/>
-                                                </g>
-                                                </svg>
-                                            {% elif channel.state == "playing" %}
-                                                <svg width="35" height="35" viewBox="0 0 365.892 365.892" fill="#22cc3f" xmlns="http://www.w3.org/2000/svg">
+                            <div class="bottom-controls">
+                                <!-- Left: Audio Transmission -->
+                                <div class="channel-selection-panel">
+                                
+                                    <div class="channel-cards">
+                                        {% for channel in channels %}
+                                        <div class="channel-card" data-channel-id="{{ channel.id }}" style="cursor: pointer;">
+                                            <div class="wifi-icon">
+                                                {% if channel.state == "stopped" %}
+                                                    <svg width="35" height="35" viewBox="0 0 365.892 365.892" fill="#ccc" xmlns="http://www.w3.org/2000/svg">
                                                     <g>
                                                         <circle cx="182.945" cy="286.681" r="41.494"/>
                                                         <path d="M182.946,176.029c-35.658,0-69.337,17.345-90.09,46.398c-5.921,8.288-4.001,19.806,4.286,25.726
@@ -415,242 +397,298 @@
                                                         C367.637,131.238,367.745,119.562,360.611,112.293z"/>
                                                     </g>
                                                     </svg>
-                                            {% endif %}
-                                        </div>
-                                                                           
-                                        <div class="card-content" onclick="window.location.href='{{ url_for('edit_channels', channel_id=channel.id) }}'">
-                                            <span class="channel-name">{{ channel.name }}</span>
-                                            <div class="channel-status">
-                                                {% if channel.state == "stopped" %}
-                                                    <span class="status-indicator" style="background: #ccc;"></span>
-                                                    <span class="status-text">Inactive</span>
                                                 {% elif channel.state == "playing" %}
-                                                    <span class="status-indicator active" style="background: #22cc3f;"></span>
-                                                    <span class="status-text">Active</span>
+                                                    <svg width="35" height="35" viewBox="0 0 365.892 365.892" fill="#22cc3f" xmlns="http://www.w3.org/2000/svg">
+                                                        <g>
+                                                            <circle cx="182.945" cy="286.681" r="41.494"/>
+                                                            <path d="M182.946,176.029c-35.658,0-69.337,17.345-90.09,46.398c-5.921,8.288-4.001,19.806,4.286,25.726
+                                                            c3.249,2.321,6.994,3.438,10.704,3.438c5.754,0,11.423-2.686,15.021-7.724c13.846-19.383,36.305-30.954,60.078-30.954
+                                                            c23.775,0,46.233,11.571,60.077,30.953c5.919,8.286,17.437,10.209,25.726,4.288c8.288-5.92,10.208-17.438,4.288-25.726
+                                                            C252.285,193.373,218.606,176.029,182.946,176.029z"/>
+                                                            <path d="M182.946,106.873c-50.938,0-99.694,21.749-133.77,59.67c-6.807,7.576-6.185,19.236,1.392,26.044
+                                                            c3.523,3.166,7.929,4.725,12.32,4.725c5.051-0.001,10.082-2.063,13.723-6.116c27.091-30.148,65.849-47.439,106.336-47.439
+                                                            s79.246,17.291,106.338,47.438c6.808,7.576,18.468,8.198,26.043,1.391c7.576-6.808,8.198-18.468,1.391-26.043
+                                                            C282.641,128.621,233.883,106.873,182.946,106.873z"/>
+                                                            <path d="M360.611,112.293c-47.209-48.092-110.305-74.577-177.665-74.577c-67.357,0-130.453,26.485-177.664,74.579
+                                                            c-7.135,7.269-7.027,18.944,0.241,26.079c3.59,3.524,8.255,5.282,12.918,5.281c4.776,0,9.551-1.845,13.161-5.522
+                                                            c40.22-40.971,93.968-63.534,151.344-63.534c57.379,0,111.127,22.563,151.343,63.532c7.136,7.269,18.812,7.376,26.08,0.242
+                                                            C367.637,131.238,367.745,119.562,360.611,112.293z"/>
+                                                        </g>
+                                                        </svg>
                                                 {% endif %}
                                             </div>
-                                        </div>
-                                        <div class="play-edit-div">
-                                            <div class="toggle-transmission-btn">
-                                                <i class="fa-solid {% if channel.state == 'stopped' %}fa-play{% else %}fa-stop{% endif %} settings-icon"
-                                                   onclick="toggleTransmission(this, {{ channel.id }})"></i>
+                                                                            
+                                            <div class="card-content" onclick="window.location.href='{{ url_for('edit_channels', channel_id=channel.id) }}'">
+                                                <span class="channel-name">{{ channel.name }}</span>
+                                                <div class="channel-status">
+                                                    {% if channel.state == "stopped" %}
+                                                        <span class="status-indicator" style="background: #ccc;"></span>
+                                                        <span class="status-text">Inactive</span>
+                                                    {% elif channel.state == "playing" %}
+                                                        <span class="status-indicator active" style="background: #22cc3f;"></span>
+                                                        <span class="status-text">Active</span>
+                                                    {% endif %}
+                                                </div>
                                             </div>
-                                            <div class="toggle-transmission-btn">
-                                                <a href="{{ url_for('edit_channels', channel_id=channel.id) }}" class="edit-link">
-                                                    <i class="fa-solid fa-pen settings-icon"></i>
-                                                </a>
+                                            <div class="play-edit-div">
+                                                <div class="toggle-transmission-btn">
+                                                    <i class="fa-solid {% if channel.state == 'stopped' %}fa-play{% else %}fa-stop{% endif %} settings-icon"
+                                                    onclick="toggleTransmission(this, {{ channel.id }})"></i>
+                                                </div>
+                                                <div class="toggle-transmission-btn">
+                                                    <a href="{{ url_for('edit_channels', channel_id=channel.id) }}" class="edit-link">
+                                                        <i class="fa-solid fa-pen settings-icon"></i>
+                                                    </a>
+                                                </div>
                                             </div>
                                         </div>
+                                        {% endfor %}
                                     </div>
+                                </div>
+                                
+                                
+                                    </div>
+                                </div>
+                            </div>
+                            <!--<div class="column-list">
+                                {% for channel in channels %}
+                                <div class="column-item channel-item" data-channel-id="{{ channel.id }}" onclick="toggleChannelOptions(this)">
+                                    <span>Channel {{ channel.id }}</span>
+                                    <div class="column-actions" onclick="event.stopPropagation()">
+                                        <i class="fa-solid fa-pen tooltip-icon" onclick="editChannelName(this, {{ channel.id }})">
+                                            <span class="tooltip-text">Edit Channel Name</span>
+                                        </i>
+                                        <i class="fa-solid fa-gear tooltip-icon" onclick="configureProgramming({{ channel.id }})"></i>
+                                    </div>
+                                    
+                                    <div class="channel-options" style="display: none;">
+                                        <button onclick="interruptWithMicrophone({{ channel.id }})" class="interrupt-button">Interrupt with Microphone</button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>-->
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="areas" class="container">
+        <div  class="content">
+            <div class="section-header">
+                <h3>Zones ({{ areas|length }})</h3>
+            </div>
+            <div class="zone-container">
+                {% if areas|length < 1 %}
+                <div class="zone-box add-zone" id="addAreaButton" onclick="addArea()" 
+                    style="border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; gap: 15px;">
+                    <span style="font-size: 48px; color: #999;">+</span>
+                    <div>
+                        <h3 style="color: #777; margin: 0;">Please add zones</h3>
+                    </div>
+                </div>
+                {% else %}
+                {% for area in areas %}
+                <div class="zone-box">
+                    <div class="zone-header">
+                        <h3>{{ area.name }}</h3>
+                        <i onclick="removeArea('{{ area.name }}')">
+                            <i class="fa-solid fa-trash delete-zone"></i>
+                        </i>
+                        <form id="remove-area-form-{{ area.name }}" action="/remove_area" method="POST" style="display: none;">
+                            <input type="hidden" name="name" value="{{ area.name }}">
+                        </form>
+                    </div>
+                    <div class="zone-content">
+                        <!-- Row Container to group Speakers and Channels side by side -->
+                        <div class="row-container">
+                            <!-- Speaker Section -->
+                            <div class="column-section">
+                                <h4>Speakers</h4>
+                                <div class="column-list">
+                                    {% for node in nodes if node.area_id == area.id %}
+                                    <div class="column-item" data-column="{{ node.name }}" data-zone="{{ area.name }}">
+                                        <span>{{ node.name }}</span>
+                                        <button class="delete-column-button" onclick="removeZoneColumn(this.closest('.column-item'))" style="color: red;">
+                                            <i class="fa-solid fa-times"></i>
+                                        </button>
+                                    </div>
+                                    {% endfor %}
+                                <div class="add-column-button" onclick="showSelectForZone(this)">
+                                    <span>+ Add Speaker</span>
+                                </div>
+                                </div>
+                                
+                                
+                            </div>
+                            
+                            <!-- Channel Section -->
+                            <div class="channel-section">
+                                <h4>Channels</h4>
+                                <div class="channel-dropdown" onclick="toggleChannelDropdown(this)" style="cursor: pointer; border: 1px solid #ddd; border-radius: 8px; padding: 4px; background: #fff; display: flex; justify-content: space-between; align-items: center;">
+                                    <span id="selectedChannel-{{ area.name }}">
+                                        {{ area.current_channel if area.current_channel else "Select Channel" }}
+                                    </span>
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </div>
+                                <div class="channel-options-dropdown" style="display: none; border: 1px solid #ddd; border-radius: 8px; margin-top: 4px; background: white; box-shadow: 0px 2px 5px rgba(0,0,0,0.1);">
+                                    {% for channel in channels %}
+                                        <div class="channel-option" style="padding: 8px; border-bottom: 1px solid #ddd; cursor: pointer;" onclick="selectChannel('{{ channel.id }}', '{{ channel.name }}', '{{ area.name }}', this)">
+                                            {{ channel.name }}
+                                        </div>
                                     {% endfor %}
                                 </div>
                             </div>
-                            
-                            
-                                </div>
-                            </div>
-                        </div>
-                        <!--<div class="column-list">
-                            {% for channel in channels %}
-                            <div class="column-item channel-item" data-channel-id="{{ channel.id }}" onclick="toggleChannelOptions(this)">
-                                <span>Channel {{ channel.id }}</span>
-                                <div class="column-actions" onclick="event.stopPropagation()">
-                                    <i class="fa-solid fa-pen tooltip-icon" onclick="editChannelName(this, {{ channel.id }})">
-                                        <span class="tooltip-text">Edit Channel Name</span>
-                                    </i>
-                                    <i class="fa-solid fa-gear tooltip-icon" onclick="configureProgramming({{ channel.id }})"></i>
-                                </div>
-                                
-                                <div class="channel-options" style="display: none;">
-                                    <button onclick="interruptWithMicrophone({{ channel.id }})" class="interrupt-button">Interrupt with Microphone</button>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>-->
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section id="areas" class="container">
-    <div  class="content">
-        <div class="section-header">
-            <h3>Zones ({{ areas|length }})</h3>
-        </div>
-        <div class="zone-container">
-            {% if areas|length < 1 %}
-            <div class="zone-box add-zone" id="addAreaButton" onclick="addArea()" 
-                 style="border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; gap: 15px;">
-                <span style="font-size: 48px; color: #999;">+</span>
-                <div>
-                    <h3 style="color: #777; margin: 0;">Please add zones</h3>
-                </div>
-            </div>
-            {% else %}
-            {% for area in areas %}
-            <div class="zone-box">
-                <div class="zone-header">
-                    <h3>{{ area.name }}</h3>
-                    <i onclick="removeArea('{{ area.name }}')">
-                        <i class="fa-solid fa-trash delete-zone"></i>
-                    </i>
-                    <form id="remove-area-form-{{ area.name }}" action="/remove_area" method="POST" style="display: none;">
-                        <input type="hidden" name="name" value="{{ area.name }}">
-                    </form>
-                </div>
-                <div class="zone-content">
-                    <!-- Row Container to group Speakers and Channels side by side -->
-                    <div class="row-container">
-                        <!-- Speaker Section -->
-                        <div class="column-section">
-                            <h4>Speakers</h4>
-                            <div class="column-list">
-                                {% for node in nodes if node.area_id == area.id %}
-                                <div class="column-item" data-column="{{ node.name }}" data-zone="{{ area.name }}">
-                                    <span>{{ node.name }}</span>
-                                    <button class="delete-column-button" onclick="removeZoneColumn(this.closest('.column-item'))" style="color: red;">
-                                        <i class="fa-solid fa-times"></i>
-                                    </button>
-                                </div>
-                                {% endfor %}
-                            <div class="add-column-button" onclick="showSelectForZone(this)">
-                                <span>+ Add Speaker</span>
-                            </div>
-                            </div>
-                            
-                            
                         </div>
                         
-                        <!-- Channel Section -->
-                        <div class="channel-section">
-                            <h4>Channels</h4>
-                            <div class="channel-dropdown" onclick="toggleChannelDropdown(this)" style="cursor: pointer; border: 1px solid #ddd; border-radius: 8px; padding: 4px; background: #fff; display: flex; justify-content: space-between; align-items: center;">
-                                <span id="selectedChannel-{{ area.name }}">
-                                    {{ area.current_channel if area.current_channel else "Select Channel" }}
-                                </span>
-                                <i class="fa-solid fa-chevron-down"></i>
-                            </div>
-                            <div class="channel-options-dropdown" style="display: none; border: 1px solid #ddd; border-radius: 8px; margin-top: 4px; background: white; box-shadow: 0px 2px 5px rgba(0,0,0,0.1);">
-                                {% for channel in channels %}
-                                    <div class="channel-option" style="padding: 8px; border-bottom: 1px solid #ddd; cursor: pointer;" onclick="selectChannel('{{ channel.id }}', '{{ channel.name }}', '{{ area.name }}', this)">
-                                        {{ channel.name }}
-                                    </div>
-                                {% endfor %}
-                            </div>
+                        <!-- Volume Section - Full Width at Bottom -->
+                        <div class="volume-section">
+                            <h4>Volume</h4>
+                            <form action="/update_volume" method="POST" class="volume-form">
+                                <input type="hidden" name="name" value="{{ area.name }}">
+                                <input type="range" name="volume" min="0" max="100" value="{{ area.volume }}" class="volume-slider">
+                                <p class="volume-label">Volume: {{ area.volume }}%</p>
+                            </form>
                         </div>
-                    </div>
-                    
-                    <!-- Volume Section - Full Width at Bottom -->
-                    <div class="volume-section">
-                        <h4>Volume</h4>
-                        <form action="/update_volume" method="POST" class="volume-form">
-                            <input type="hidden" name="name" value="{{ area.name }}">
-                            <input type="range" name="volume" min="0" max="100" value="{{ area.volume }}" class="volume-slider">
-                            <p class="volume-label">Volume: {{ area.volume }}%</p>
-                        </form>
                     </div>
                 </div>
-            </div>
-            {% endfor %}
-            <div class="zone-box add-zone" id="addAreaButton" onclick="addArea()" 
-                 style="border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center;">
-                <span style="font-size: 48px; color: #999;">+</span>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-</section>
-
-<!-- MIC-INTERRUPTIONS-->
-<section id="mic" class="container">
-    <div class="content">
-        <div class="microfones-container">
-            <div class="interrupt-header">
-                <h2 style="margin-bottom: 0px;">MIC INTERRUPTS ({{ interruptions|length }})</h2>
-                <button class="add-btn" onclick="openAddInterruptionModal()" title="Nova Interrupção">
-                    <i class="fas fa-plus"></i>
-                    <span>Nova Interrupção</span>
-                </button>
-            </div>            
-
-            <div class="interrupt-list">
-                {% for interrupt in interruptions %}
-                    <div class="interrupt-item">
-                        <div class="interrupt-info">
-                            <strong>{{ interrupt.name }}</strong><br>
-                            Areas: {% for area in interrupt.areas %}{{ area.name }}{% if not loop.last %}; {% endif %}{% endfor %}<br>
-                            Channels: {% for channel in interrupt.channels %}{{ channel.name }}{% if not loop.last %}; {% endif %}{% endfor %}<br>
-                            Microphone: {{ interrupt.microphone }}<br>
-                        </div>
-                        <div class="interrupt-actions">
-                            {% if interrupt.state == "off" %}
-                                <button class="icon-btn" onclick="startInterrupt('{{ interrupt.id }}')"><i class="fas fa-play"></i></button>
-                            {% else %}
-                                <button class="icon-btn" onclick="stopInterrupt('{{ interrupt.id }}')"><i class="fas fa-stop"></i></button>
-                            {% endif %}
-                            <button class="icon-btn" onclick="deleteInterrupt('{{ interrupt.id }}')"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
                 {% endfor %}
-
-
-            </div>    
-        </div>
-    </div>
-</section>
-
-
-<div id="addInterruptionModal" class="interrupt-modal" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Adicionar Nova Interrupção</h2>
-            <button class="close" onclick="closeAddInterruptionModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="addInterruptionForm">
-                <label for="interruptionName">Nome da Interrupção:</label>
-                <input type="text" id="interruptionName" name="name" required>
-
-                <label for="microphone">Microfone:</label>
-                <select id="microphone" name="microphone_id" required>
-                    {% for mic in microphones %}
-                        <option value="{{ mic.id }}">{{ mic.name }}</option>
-                    {% endfor %}
-                </select>
-
-                <!-- Novo layout horizontal para Áreas e Canais -->
-                <div class="checkbox-flex-container">
-                    <!-- Areas -->
-                    <div class="checkbox-container">
-                        <h3>Áreas</h3>
-                        <fieldset>
-                            <label><input type="checkbox" id="selectAllAreas"> Selecionar Todas</label>
-                            {% for area in areas %}
-                                <label><input type="checkbox" name="areas_ids" value="{{ area.id }}"> {{ area.name }}</label>
-                            {% endfor %}
-                        </fieldset>
-                    </div>
-
-                    <!-- Channels -->
-                    <div class="checkbox-container">
-                        <h3>Canais</h3>
-                        <fieldset>
-                            <label><input type="checkbox" id="selectAllChannels"> Selecionar Todos</label>
-                            {% for channel in channels %}
-                                <label><input type="checkbox" name="channels_ids" value="{{ channel.id }}"> {{ channel.name }}</label>
-                            {% endfor %}
-                        </fieldset>
-                    </div>
+                <div class="zone-box add-zone" id="addAreaButton" onclick="addArea()" 
+                    style="border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 48px; color: #999;">+</span>
                 </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
 
-                <button type="button" class="green-action-btn" onclick="submitAddInterruption()">Salvar</button>
-            </form>
+    <!-- MIC-INTERRUPTIONS-->
+    <section id="mic" class="container">
+        <div class="content">
+            <div class="microfones-container">
+                <div class="interrupt-header">
+                    <h2 style="margin-bottom: 0px;">MIC INTERRUPTS ({{ interruptions|length }})</h2>
+                    <button class="add-btn" onclick="openAddInterruptionModal()" title="Nova Interrupção">
+                        <i class="fas fa-plus"></i>
+                        <span>Nova Interrupção</span>
+                    </button>
+                </div>            
+
+                <div class="interrupt-list">
+                    {% for interrupt in interruptions %}
+                        <div class="interrupt-item">
+                            <div class="interrupt-info">
+                                <strong>{{ interrupt.name }}</strong><br>
+                                Areas: {% for area in interrupt.areas %}{{ area.name }}{% if not loop.last %}; {% endif %}{% endfor %}<br>
+                                Channels: {% for channel in interrupt.channels %}{{ channel.name }}{% if not loop.last %}; {% endif %}{% endfor %}<br>
+                                Microphone: {{ interrupt.microphone }}<br>
+                            </div>
+                            <div class="interrupt-actions">
+                                {% if interrupt.state == "off" %}
+                                    <button class="icon-btn" onclick="startInterrupt('{{ interrupt.id }}')"><i class="fas fa-play"></i></button>
+                                {% else %}
+                                    <button class="icon-btn" onclick="stopInterrupt('{{ interrupt.id }}')"><i class="fas fa-stop"></i></button>
+                                {% endif %}
+                                <button class="icon-btn" onclick="deleteInterrupt('{{ interrupt.id }}')"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    {% endfor %}
+
+
+                </div>    
+            </div>
+        </div>
+    </section>
+
+
+    <div id="addInterruptionModal" class="interrupt-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Adicionar Nova Interrupção</h2>
+                <button class="close" onclick="closeAddInterruptionModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addInterruptionForm">
+                    <label for="interruptionName">Nome da Interrupção:</label>
+                    <input type="text" id="interruptionName" name="name" required>
+
+                    <label for="microphone">Microfone:</label>
+                    <select id="microphone" name="microphone_id" required>
+                        {% for mic in microphones %}
+                            <option value="{{ mic.id }}">{{ mic.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <!-- Novo layout horizontal para Áreas e Canais -->
+                    <div class="checkbox-flex-container">
+                        <!-- Areas -->
+                        <div class="checkbox-container">
+                            <h3>Áreas</h3>
+                            <fieldset>
+                                <label><input type="checkbox" id="selectAllAreas"> Selecionar Todas</label>
+                                {% for area in areas %}
+                                    <label><input type="checkbox" name="areas_ids" value="{{ area.id }}"> {{ area.name }}</label>
+                                {% endfor %}
+                            </fieldset>
+                        </div>
+
+                        <!-- Channels -->
+                        <div class="checkbox-container">
+                            <h3>Canais</h3>
+                            <fieldset>
+                                <label><input type="checkbox" id="selectAllChannels"> Selecionar Todos</label>
+                                {% for channel in channels %}
+                                    <label><input type="checkbox" name="channels_ids" value="{{ channel.id }}"> {{ channel.name }}</label>
+                                {% endfor %}
+                            </fieldset>
+                        </div>
+                    </div>
+
+                    <button type="button" class="green-action-btn" onclick="submitAddInterruption()">Salvar</button>
+                </form>
+            </div>
         </div>
     </div>
+
+    <!-- TODO o conteúdo da tua página vai aqui -->
 </div>
+
+<!-- Modal de Edição de Nome -->
+<div id="editNodeModal" class="interrupt-modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Edit Name of Device</h2>
+        <button class="close" style= "top: -5px" onclick="closeEditNodeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editNodeForm">
+          <input type="hidden" id="editNodeId">
+          <label for="editNodeName">Novo Nome:</label>
+          <input type="text" id="editNodeName" name="name" required>
+  
+          <div  class="modal-footer" style="display: flex; gap: 10px; margin-top: 20px;">
+            <button type="button" class="btn-save" onclick="submitEditNode()">Guardar</button>
+            <button type="button" class="btn-cancel" onclick="closeEditNodeModal()">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+<!-- Modal de confirmação de eliminação -->
+<div id="confirmDeleteModal" class="custom-modal" style="display: none;">
+    <div class="custom-modal-content">
+      <h2>Confirmar Eliminação</h2>
+      <p>Tem a certeza que quer eliminar este dispositivo?</p>
+      <div class="modal-buttons">
+        <button class="btn-cancel" onclick="closeDeleteModal()">Cancelar</button>
+        <button class="btn-delete" onclick="confirmDelete()">Apagar</button>
+      </div>
+    </div>
+  </div>
+  
 
 
 <footer style="margin-top: 30px; background-color: #f9f9f9; padding: 25px;">
@@ -686,6 +724,50 @@
             }
         }
     }
+
+    /*function renameNode(nodeId) {
+    const currentName = document.querySelector(`[data-device-id="${nodeId}"] .channel-name`).textContent.trim();
+    document.getElementById('editNodeId').value = nodeId;
+    document.getElementById('editNodeName').value = currentName;
+    
+    // Agora mostrar o modal bonito
+    const modal = document.getElementById('editNodeModal');
+    modal.style.display = 'block';
+
+    // Também podes bloquear o fundo (opcional para melhorar ainda mais)
+    document.body.style.overflow = 'hidden';
+}
+
+    function closeEditNodeModal() {
+        document.getElementById('editNodeModal').style.display = 'none';
+        document.body.style.overflow = 'auto'; // Permite scroll de novo
+    }
+
+
+    function submitEditNode() {
+    const nodeId = document.getElementById('editNodeId').value;
+    const newName = document.getElementById('editNodeName').value;
+
+    const formData = new FormData();
+    formData.append('name', newName);
+
+    fetch(`/rename_node/${nodeId}`, {
+        method: 'POST',
+        body: formData,
+    })
+    .then(response => {
+        if (response.redirected) {
+        window.location.href = response.url; // A tua rota já faz redirect para "/"
+        } else {
+        console.error('Erro ao renomear');
+        }
+    })
+    .catch(error => {
+        console.error('Erro na comunicação:', error);
+    });
+    }*/
+
+
 </script>
   
 {% endblock %}

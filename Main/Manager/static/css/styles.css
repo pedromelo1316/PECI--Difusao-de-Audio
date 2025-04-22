@@ -476,7 +476,206 @@ p {
     color: #666;
 }
 
+/* ===== POP-UP ---- MODAL ===== */
 
+.btn-save {
+    background-color: #10B981; /* verde */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-save:hover {
+    background-color: #0e9f6e; /* tom de verde mais escuro no hover */
+}
+
+.btn-cancel {
+    background-color: #e5e7eb; /* cinza claro */
+    color: #374151; /* cinza escuro no texto */
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-cancel:hover {
+    background-color: #d1d5db; /* cinza médio no hover */
+}   
+
+
+  /* Blur do conteúdo */
+  .blurred {
+      filter: blur(5px);
+      pointer-events: none;
+      user-select: none;
+      transition: filter 0.3s ease;
+  }
+
+  /* Animação de fade-in para o modal */
+  .interrupt-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    width: 90%;
+    max-width: 400px;
+    padding: 20px;
+    text-align: left;
+    box-sizing: border-box;
+    max-height: 80vh;
+    overflow-y: auto;
+
+    /* <-- Estes dois novos garantem o centro absoluto! */
+    margin: 0;
+}
+
+  @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+  }
+
+  /* Estilo dos botões */
+  .btn-save {
+      background-color: #10B981;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+  }
+
+  .btn-save:hover {
+      background-color: #0e9f6e;
+  }
+
+  .btn-cancel {
+      background-color: #e5e7eb;
+      color: #374151;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+  }
+
+  .btn-cancel:hover {
+      background-color: #d1d5db;
+  }
+
+
+
+/* ===== DELETE MODAL - Estilo Modernizado ===== */
+
+.custom-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+    animation: fadeIn 0.4s ease;
+}
+
+.custom-modal-content {
+    background: #ffffff;
+    padding: 35px 45px;
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    animation: scaleUp 0.35s ease;
+}
+
+.custom-modal-content h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #111827;
+}
+
+.custom-modal-content p {
+    font-size: 16px;
+    color: #4B5563;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 30px;
+}
+
+.btn-cancel, .btn-delete {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-cancel {
+    background-color: #f9fafb;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.btn-cancel:hover {
+    background-color: #e5e7eb;
+}
+
+.btn-delete {
+    background-color: #ef4444;
+    color: #ffffff;
+    border: 1px solid #ef4444;
+}
+
+.btn-delete:hover {
+    background-color: #dc2626;
+    border-color: #dc2626;
+}
+
+/* Animações */
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+    0% {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+  
 
 .save-button-container {
     display: flex;
@@ -2113,6 +2312,23 @@ footer {
     text-align: center;
 }
 
+
+/* Para o ícone do balde em Devices */
+.device-delete-icon {
+    font-size: 17px;
+    color: #555;
+    transition: all 0.3s ease;
+    padding: 6px;
+    border-radius: 50%;
+}
+
+.device-delete-icon:hover {
+    color: #e74c3c !important; /* Vermelho no hover */
+    background-color: rgba(231, 76, 60, 0.1); /* Fundo vermelho suave */
+    transform: rotate(15deg); /* Igual ao lápis */
+}
+
+
 /* Style for active info button */
 .toggle-transmission-btn .fa-info-circle.active {
     color: #5DBB63;
@@ -2520,7 +2736,7 @@ footer {
     color: #333;
 }
 
-.modal-header .close {
+/*.modal-header .close {
     background: none;
     border: none;
     font-size: 1.5em;
@@ -2529,7 +2745,30 @@ footer {
     position: absolute;
     top: 10px;
     right: 10px;
+}*/
+
+.modal-header .close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #777;
+    position: absolute;
+    top: 6px; /* Subir ligeiramente */
+    right: 14px; /* Ajustar para ficar mais ao canto */
+    padding: 0;
+    line-height: 1;
+    z-index: 1001;
+    transition: color 0.3s ease, background-color 0.3s ease, transform 0.2s ease;
 }
+
+.modal-header .close:hover {
+    color: #5DBB63;
+    background-color: #e6f8ed;
+    transform: scale(1.1);
+    border-radius: 50%;
+}
+
 
 .modal-body label {
     display: block;
