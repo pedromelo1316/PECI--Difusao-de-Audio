@@ -31,7 +31,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SECRET_KEY'] = 'your_secret_key'
 db = SQLAlchemy(app)
 socketio = SocketIO(app)
-processes = defaultdict(dict)
+processes = defaultdict(lambda: {"process": None, "stderr_thread": None, "current_song": None, "monitor_stop_event": None})
 interruptions = defaultdict(dict)
 
 
@@ -42,7 +42,7 @@ SAMPLE_RATE = "48000"  # Taxa de amostragem
 CHUNCK_SIZE = 960
 AUDIO_CHANNELS = "1"  # Mono
 
-NUM_CHANNELS = 6  # Número total de canais
+NUM_CHANNELS = 3  # Número total de canais
 
 
 @app.route('/start_interruption/<int:interruption_id>', methods=['POST'])
@@ -379,6 +379,42 @@ def toggle_transmission():
 
 
 
+# Function to monitor FFmpeg stderr
+def monitor_ffmpeg_output(channel_id, process_stderr, stop_event, song_map):
+    """Monitors FFmpeg stderr to find the currently playing song."""
+    # Regex to find the line indicating a new file is being opened by concat
+    # Adjust regex based on actual FFmpeg output if needed
+    opening_regex = re.compile(r"Opening 'Songs/(.+?)\.wav' for reading")
+
+    try:
+        while not stop_event.is_set():
+            if process_stderr.closed:
+                print(f"[Monitor {channel_id}] Stderr closed.")
+                break
+            line = process_stderr.readline()
+            if not line: # End of stream
+                print(f"[Monitor {channel_id}] End of stderr stream.")
+                break
+
+            line_str = line.decode('utf-8', errors='ignore').strip()
+            # print(f"[FFmpeg {channel_id}]: {line_str}") # Optional: Log all output for debugging
+
+            match = opening_regex.search(line_str)
+            if match:
+                song_hash = match.group(1)
+                current_song_name = song_map.get(song_hash, "Unknown")
+                print(f"[Monitor {channel_id}] Playing: {current_song_name} (Hash: {song_hash})")
+                if channel_id in processes:
+                     processes[channel_id]['current_song'] = current_song_name
+                     # Optionally emit a SocketIO event here to update UI in real-time
+                     # socketio.emit('current_song_update', {'channel_id': channel_id, 'song_name': current_song_name})
+
+    except Exception as e:
+        print(f"[Monitor {channel_id}] Error reading stderr: {e}")
+    finally:
+        print(f"[Monitor {channel_id}] Monitoring stopped.")
+        if channel_id in processes:
+            processes[channel_id]['current_song'] = None # Clear current song when monitoring stops
 
 
 
@@ -392,6 +428,8 @@ def start_ffmpeg_process(channel, source, _type):
     print("type: ", _type)
     
     source = get_source_from_id(_type, source)
+    
+    song_map = {} 
     
     if _type != ChannelType.VOICE:
         
@@ -505,7 +543,6 @@ def create_default_channels():
             )
             db.session.add(new_channel)
             db.session.commit()
-            processes[new_channel.id] = {"process": None}
             print(f"{new_channel.name} started")
 
     else:
@@ -513,7 +550,6 @@ def create_default_channels():
             if os.path.exists(f"session_{channel.id}.sdp"):
                 os.remove(f"session_{channel.id}.sdp")
             index = channel.id
-            processes[index] = {"process": None}  # Uncommented to start the process
             print(f"Channel {channel.id} started")
             
             
@@ -804,6 +840,7 @@ class Channels(db.Model):
     type = db.Column(db.Enum(ChannelType), nullable=False)
     source = db.Column(db.String(200), nullable=True)
     state = db.Column(db.String(200), nullable=True)
+    current = db.Column(db.String(200), nullable=True)
 
     def __repr__(self):
         return f'<Channel {self.id}: {self.name}>'
