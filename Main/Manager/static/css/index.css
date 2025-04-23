@@ -536,6 +536,21 @@ h3 {
     animation: fadeIn 0.3s ease-in-out;
 }
 
+
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
+    background-color: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(5px);
+    z-index: 999;
+}
+
+
+
+
 /* Efeito de fundo escuro ao abrir o modal */
 .modal::before {
     content: "";
@@ -576,40 +591,107 @@ h3 {
     margin-top: 15px;
     display: flex;
     justify-content: center;
-    gap: 10px;
+    gap: 12px;
 }
 
+
 .modal-buttons button {
-    padding: 10px 15px;
+    padding: 10px 16px;
     border: none;
-    border-radius: 8px;
-    cursor: pointer;
+    border-radius: 10px;
     font-size: 14px;
-    transition: 0.3s;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s;
 }
+
+
+
+
+
+
+
+/* Estilos confirm/cancel */
+.modal-buttons .confirm { 
+    background-color: #10B981;
+    color: white;
+}
+
+.modal-buttons .confirm:hover {
+    background-color: #059669;
+    transform: translateY(-1px);
+}
+
+
 
 .modal-buttons .cancel {
     background-color: #ddd;
     color: black;
 }
 
-.modal-buttons .confirm {
-    background-color: #5dbb63;
-    color: white;
-}
-
 .modal-buttons .cancel:hover {
     background-color: #bbb;
 }
 
-.modal-buttons .confirm:hover {
-    background-color: #1a8c2b;
-}
 
 .modal-buttons .confirm:disabled {
     background-color: #888;
     cursor: not-allowed;
 }
+
+/* Ícones nos botões */
+.modal-buttons button i {
+    font-size: 16px;
+}
+
+/* Campo de formulário */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input[type="text"],
+.form-group input[type="file"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+/* Botão principal padrão (fora de modal) */
+button {
+    background-color: #5dbb63;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #1e9e31;
+}
+
+
+.modal-buttons .confirm {
+    background-color: #5dbb63;
+    color: white;
+}
+
+
+
+
+
 
 
 .close {
@@ -628,19 +710,9 @@ h3 {
 }
 
 
-button {
-    background-color: #5dbb63;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
 
-button:hover {
-    background-color: #1e9e31;
-}
+
+
 
 .modal-ok-btn {
     position: absolute;
@@ -650,65 +722,94 @@ button:hover {
     font-size: 14px;
 }
 
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-}
-
-.form-group input[type="text"], .form-group input[type="file"] {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box;
-}
 
 
 
 
+
+
+
+/* Modal moderno flutuante (centralizado) */
 .custom-modal {
-    display: none;
     position: fixed;
-    z-index: 1000;
-    left: 50%;
     top: 50%;
+    left: 50%;
     transform: translate(-50%, -50%);
-    width: 400px;
-    max-width: 90%;
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    color: black;
+    z-index: 1000;
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+
+
+/* Animação de entrada */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -60%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+/* Conteúdo estilo cartão */
+.custom-modal-content {
+    background: #ffffff;
+    padding: 25px 20px;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    width: 100%;
+    max-width: 360px;
     text-align: center;
     animation: fadeIn 0.3s ease-in-out;
+    position: relative;
 }
 
+
+
+/* Animação de fade suave */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Título do modal */
+.custom-modal-content h2 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 20px;
+}
+
+
+
+/* Botão de fechar discreto */
 .custom-modal .close {
     position: absolute;
-    top: 10px;
-    right: 15px;
-    color: #aaa;
-    font-size: 28px;
-    font-weight: bold;
+    top: 12px;
+    right: 14px;
+    font-size: 20px;
+    color: #9ca3af;
     cursor: pointer;
+    transition: 0.2s;
 }
 
 .custom-modal .close:hover {
-    color: black;
+    color: #111827;
+    transform: scale(1.1);
 }
 
-.custom-modal-content {
-    position: relative;
-    padding: 20px;
-}
 
-.custom-modal input {
+
+.custom-modal input,
+.modal input {
     width: 100%;
     padding: 10px;
     border: 2px solid #ccc;
@@ -718,47 +819,191 @@ button:hover {
     color: black;
     outline: none;
     transition: border 0.3s;
-    display: block;
     margin-top: 10px;
 }
 
-.custom-modal input:focus {
+
+.custom-modal input:focus,
+.modal input:focus {
     border-color: #00aaff;
 }
 
+
+
+/* Botões */
 .custom-modal .modal-buttons {
     margin-top: 15px;
     display: flex;
     justify-content: center;
-    gap: 10px;
+    gap: 15px;
 }
 
 .custom-modal .modal-buttons button {
-    padding: 10px 15px;
+    padding: 12px 20px;
     border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: 0.3s;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.3s, transform 0.2s;
 }
 
+.custom-modal .modal-buttons button i {
+    margin-right: 6px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Botão confirmar */
+.custom-modal .modal-buttons .confirm {
+    background-color: #10B981;
+    color: white;
+}
+
+.custom-modal .modal-buttons .confirm:hover {
+    background-color: #059669;
+    transform: translateY(-1px);
+}
+
+/* Botão cancelar */
 .custom-modal .modal-buttons .cancel {
     background-color: #ddd;
     color: black;
-}
-
-.custom-modal .modal-buttons .confirm {
-    background-color: #5dbb63;
-    color: white;
 }
 
 .custom-modal .modal-buttons .cancel:hover {
     background-color: #bbb;
 }
 
-.custom-modal .modal-buttons .confirm:hover {
-    background-color: #1a8c2b;
+
+
+
+.styled-input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    font-size: 15px;
+    background-color: #f9f9f9;
+    color: #111827;
+    outline: none;
+    transition: border 0.3s ease;
 }
+
+.styled-input:focus {
+    border-color: #00aaff;
+}
+
+
+
+
+
+
+
+#page-alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: white;
+    background-color: #2563eb; /* Azul estilo botão */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 1100;
+    animation: slideIn 0.3s ease;
+}
+
+#page-alert.success {
+    background-color: #10B981; /* Verde */
+}
+
+#page-alert.error {
+    background-color: #EF4444; /* Vermelho */
+}
+
+#page-alert .alert-icon {
+    font-size: 18px;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+
+
+
+.mostrarMensagem-message {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    background-color: #2f2f2f;
+    color: white;
+    padding: 14px 18px;
+    border-radius: 8px;
+    z-index: 9999;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: fadein 0.4s ease, fadeout 0.4s ease 3.6s;
+    pointer-events: none;
+}
+
+.mostrarMensagem-icon {
+    font-size: 18px;
+}
+
+.mostrarMensagem-success {
+    background-color: #10B981;
+}
+
+.mostrarMensagem-info {
+    background-color: #3B82F6;
+}
+
+.mostrarMensagem-error {
+    background-color: #EF4444;
+}
+
+@keyframes fadein {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeout {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-10px); }
+}
+
+
+
 
 
 .streaming-item.add-streaming {

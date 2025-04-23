@@ -212,41 +212,55 @@ function saveStream() {
 
 
 
+function showCustomModal(title, htmlContent, isRawHtml = false, callback) {
+    // Remove qualquer modal antigo
+    const existing = document.getElementById('customModal');
+    if (existing) existing.remove();
+    const oldBackdrop = document.getElementById('backdrop-custom-modal');
+    if (oldBackdrop) oldBackdrop.remove();
 
-// Função para abrir o pop-up personalizado com suporte para Enter
-function showCustomModal(title, message, showInput = false, callback) {
-    document.getElementById("modal-title").innerText = title;
-    document.getElementById("modal-message").innerText = message;
-    const inputField = document.getElementById("modal-input");
-    const modalConfirmButton = document.getElementById("modal-confirm");
+    // Fundo escurecido
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.id = 'backdrop-custom-modal';
+    document.body.appendChild(backdrop);
 
-    if (showInput) {
-        inputField.style.display = "block";
-        inputField.value = "";
-        inputField.focus(); // Focar no campo automaticamente
-    } else {
-        inputField.style.display = "none";
-    }
+    // Container do modal
+    const modalContainer = document.createElement('div');
+    modalContainer.id = 'customModal';
+    modalContainer.className = 'custom-modal';
+    modalContainer.innerHTML = `
+        <div class="custom-modal-content">
+            <span class="close" onclick="closeCustomModal()">&times;</span>
+            <h2>${title}</h2>
+            <div id="modal-message" style="margin-bottom: 15px;">
+                ${isRawHtml ? htmlContent : `<p>${htmlContent}</p>`}
+            </div>
+            <div class="modal-buttons" style="justify-content: center;">
+                <button id="modal-confirm" class="confirm">OK</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modalContainer);
 
-    document.getElementById("customModal").style.display = "block";
+    const confirmButton = modalContainer.querySelector('#modal-confirm');
+    confirmButton.onclick = () => {
+        const result = callback();
+        if (result !== false) {
+            closeCustomModal(); // Só fecha se o callback não retornar false
+        }
+    };
 
-    function confirmAction() {
-        let inputValue = showInput ? inputField.value.trim() : null;
-        closeCustomModal();
-        if (callback) callback(inputValue);
-    }
-
-    // Botão "OK" chama a ação de confirmação
-    modalConfirmButton.onclick = confirmAction;
-
-    // Enter também confirma a ação
     document.onkeydown = function (event) {
         if (event.key === "Enter") {
             event.preventDefault();
-            confirmAction();
+            confirmButton.click();
         }
     };
 }
+
+
+
 // Função para fechar o modal e remover evento de tecla
 function closeCustomModal() {
     document.getElementById("customModal").style.display = "none";
@@ -305,32 +319,42 @@ function savePlaylist(playlistName) {
     });
 }
 
-// Substituir prompt por modal para adicionar músicas
 function showAddSongsModal() {
-    // Cria modal de escolha com 2 opções: Local e Pesquisar na Web
+    // Cria o fundo com blur
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.id = 'backdrop-add-song';
+    document.body.appendChild(backdrop);
+
+    // Cria o modal
     const modalContainer = document.createElement('div');
     modalContainer.id = 'addSongChoiceModal';
     modalContainer.className = 'custom-modal';
     modalContainer.innerHTML = `
-        <div class="custom-modal-content">
-            <span class="close" onclick="closeAddSongChoiceModal()">&times;</span>
-            <h2>Escolha a origem da música</h2>
-            <div class="modal-buttons">
-                <button class="confirm" style="font-weight: bold;" onclick="openLocalSongModal()">Local</button>
-                <button class="confirm" style="font-weight: bold;" onclick="openWebSongModal()">Pesquisar na Web</button>
-            </div>
+    <div class="custom-modal-content">
+        <span class="close" onclick="closeAddSongChoiceModal()">&times;</span>
+        <h2>Escolha a origem da música</h2>
+        <div class="modal-buttons">
+            <button onclick="openLocalSongModal()">Local</button>
+            <button onclick="openWebSongModal()">Web</button>
         </div>
-    `;
+    </div>
+`;
+
+
     document.body.appendChild(modalContainer);
-    modalContainer.style.display = 'block';
 }
+
 
 function closeAddSongChoiceModal() {
     const modal = document.getElementById('addSongChoiceModal');
-    if (modal) {
-        modal.remove();
-    }
+    if (modal) modal.remove();
+
+    const backdrop = document.getElementById('backdrop-add-song');
+    if (backdrop) backdrop.remove();
 }
+
+
 
 function openLocalSongModal() {
     closeAddSongChoiceModal();
@@ -731,74 +755,128 @@ function editMicrofone(micId, currentName, currentShortcut) {
 
 // New streaming modal functions
 
-// Modal to choose streaming source (Local or Web)
+// Modal para escolher a origem do streaming (Link ou Web)
 function showAddStreamChoiceModal() {
+    // Cria o fundo escurecido com blur
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.id = 'backdrop-add-stream';
+    document.body.appendChild(backdrop);
+
+    // Cria o container do modal
     const modalContainer = document.createElement('div');
     modalContainer.id = 'addStreamChoiceModal';
     modalContainer.className = 'custom-modal';
+
     modalContainer.innerHTML = `
         <div class="custom-modal-content">
             <span class="close" onclick="closeAddStreamChoiceModal()">&times;</span>
             <h2>Escolha a origem do streaming</h2>
             <div class="modal-buttons">
-                <button class="confirm" onclick="openLinkStreamModal()">Link</button>
-                <button class="confirm" onclick="openWebStreamModal()">Pesquisar na Web</button>
+                <button onclick="openLinkStreamModal()">Link</button>
+                <button onclick="openWebStreamModal()">Pesquisar na Web</button>
             </div>
         </div>
     `;
+
     document.body.appendChild(modalContainer);
-    modalContainer.style.display = 'block';
 }
 
+// Função para fechar o modal e remover o fundo
 function closeAddStreamChoiceModal() {
     const modal = document.getElementById('addStreamChoiceModal');
-    if (modal) {
-        modal.remove();
-    }
+    if (modal) modal.remove();
+
+    const backdrop = document.getElementById('backdrop-add-stream');
+    if (backdrop) backdrop.remove();
 }
 
-// Local streaming: use file input (accepting video files)
+
+
+
 function openLinkStreamModal() {
-    closeAddStreamChoiceModal()
-    showCustomModal("Adicionar Link de Transmissão", "Enter the Streaming Name: ", true, function (streamName) {
-        if (!streamName) {
-            showCustomModal("Erro", "Streaming name is required.");
-            return;
+    closeAddStreamChoiceModal();
+
+    const html = `
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <input type="text" id="streamNameInput" placeholder="Nome do streaming" class="styled-input">
+            <input type="text" id="streamUrlInput" placeholder="URL do streaming" class="styled-input">
+        </div>
+    `;
+
+    showCustomModal("Adicionar Link de Transmissão", html, true, function () {
+        const name = document.getElementById('streamNameInput').value.trim();
+        const url = document.getElementById('streamUrlInput').value.trim();
+
+        if (!name) {
+            mostrarMensagem("O nome do streaming é obrigatório.", "error");
+            return false;
         }
 
-        showCustomModal("Adicionar Link de Transmissão", "Enter the streaming link:", true, function (streamUrl) {
-            if (!streamUrl || !isValidURL(streamUrl)) {
-                showCustomModal("Erro", "Please enter a valid link.");
-                return;
-            }
+        if (!url || !isValidURL(url)) {
+            mostrarMensagem("O link inserido não é válido.", "error");
+            return false;
+        }
 
-            fetch('/save_stream_url', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ stream_name: streamName, stream_url: streamUrl, channel_id: 2 })
+        fetch('/save_stream_url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                stream_name: name,
+                stream_url: url,
+                channel_id: 2
             })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => {
-                        throw new Error(err.error || "Erro desconhecido");
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();
-                } else {
-                    showCustomModal("Erro", data.error || "Erro ao adicionar o link de transmissão.");
-                }
-            })
-            .catch(err => {
-                console.error("Erro ao adicionar o link de transmissão:", err);
-                showCustomModal("Erro", err.message || "Erro ao comunicar com o servidor.");
-            });
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                mostrarMensagem("Streaming adicionado com sucesso!", "success");
+                closeCustomModal();
+                window.location.reload();
+            } else {
+                mostrarMensagem(data.error || "Erro ao guardar o streaming.", "error");
+            }
+        })
+        .catch(err => {
+            console.error("Erro:", err);
+            mostrarMensagem("Erro ao comunicar com o servidor.", "error");
         });
     });
 }
+
+
+
+function mostrarMensagem(mensagem, tipo = "info") {
+    const msgDiv = document.createElement("div");
+    msgDiv.className = `mostrarMensagem-message mostrarMensagem-${tipo}`;
+    msgDiv.innerHTML = `
+        <i class="fa-solid ${tipo === "success" ? "fa-circle-check" : tipo === "error" ? "fa-circle-exclamation" : "fa-circle-info"} mostrarMensagem-icon"></i>
+        ${mensagem}
+    `;
+    document.body.appendChild(msgDiv);
+    setTimeout(() => msgDiv.remove(), 4000);
+}
+
+
+
+
+
+function showPageAlert(message) {
+    const alertBox = document.getElementById("page-alert");
+    alertBox.innerText = message;
+    alertBox.style.display = "block";
+    alertBox.style.opacity = "1";
+
+    // Oculta após 4 segundos
+    setTimeout(() => {
+        alertBox.style.opacity = "0";
+        setTimeout(() => {
+            alertBox.style.display = "none";
+        }, 300);
+    }, 4000);
+}
+
+
 
 // Web search streaming: open a modal with search & results area
 function openWebStreamModal() {

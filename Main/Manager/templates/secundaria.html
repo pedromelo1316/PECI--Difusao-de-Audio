@@ -3,8 +3,10 @@
 {% block head %}
 <title>Audio Manager</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
 <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 {% endblock %}
+
 
 {% block body %}
 <nav class="navbar">
@@ -191,19 +193,24 @@
 
 -->
 
-<!-- Modal Personalizado -->
-<div id="customModal" class="custom-modal">
-    <div class="custom-modal-content">
-        <span class="close" onclick="closeCustomModal()">&times;</span>
-        <p id="modal-message">Mensagem do Pop-up</p>
-        <input type="text" id="modal-input" placeholder="Type here..." style="display: none;">
-        <div class="modal-buttons">
-            <button class="cancel" onclick="closeCustomModal()">Cancel</button>
-            <button id="modal-confirm" class="confirm" onclick="confirmCustomModal()">OK</button>
-        </div>
-    </div>
+<div id="page-alert" class="alert-message alert-error" style="display: none;">
+    <span class="alert-icon">⚠️</span>
+    <span id="alert-text"></span>
 </div>
 
+<!-- Modal reutilizável com estética unificada -->
+<div id="customModal" class="custom-modal" style="display: none;">
+    <div class="custom-modal-content">
+      <span class="close" onclick="closeCustomModal()">&times;</span>
+      <h2 id="modal-title"></h2>
+      <div id="modal-message" style="margin-bottom: 15px;"></div>
+      <input type="text" id="modal-input" style="display: none; margin-bottom: 15px;" />
+      <div class="modal-buttons">
+        <button id="modal-confirm" class="confirm">OK</button>
+      </div>
+    </div>
+  </div>
+  
 
 <div id="errorModal" class="modal">
     <div class="modal-content">
