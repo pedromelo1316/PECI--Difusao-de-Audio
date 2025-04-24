@@ -1,7 +1,7 @@
 # Importações de módulos e bibliotecas necessárias
 from enum import Enum
 from io import BytesIO
-from flask import Flask, render_template, request, redirect, flash, jsonify, send_file, url_for
+from flask import Flask, render_template, request, redirect, flash, jsonify, send_file, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
 import os
@@ -1891,37 +1891,148 @@ def import_conf():
     file_content = file.read()
     data = json.loads(file_content)
 
-    nodes = data.get("nodes", [])
-    areas = data.get("areas", [])
+    new_nodes = data.get("nodes", [])
+    new_areas = data.get("areas", [])
 
-    for area_data in areas:
-        area = Areas.query.filter_by(name=area_data['name']).first()
-        if area:
-            area.volume = area_data['volume']
-            area.channel_id = area_data['channel']
-            db.session.commit()
+    db_nodes = Nodes.query.all()
+    db_areas = Areas.query.all()
+
+    # Convert for easier lookup
+    db_nodes_by_mac = {node.mac: node for node in db_nodes}
+    db_area_names = {area.name for area in db_areas}
+    new_area_names = {area['name'] for area in new_areas}
+
+    # Output categories
+    fresh_nodes = []
+    renamed_nodes = []
+    inferred_areas = []
+    updated_areas = []
+
+    # Build inferred areas from new_nodes that aren’t in newAreas
+    for node in new_nodes:
+        node_area = node.get('area')
+        if node_area and node_area not in new_area_names:
+            inferred_areas.append({"name": node_area, "volume": 50, "channel": None})
+            new_area_names.add(node_area)  # Prevent duplicates
+
+    # Compare new_nodes to db_nodes
+    for node in new_nodes:
+        db_node = db_nodes_by_mac.get(node['mac'])
+        if not db_node:
+            fresh_nodes.append(node)
+        elif db_node.name != node['name']:
+            renamed_nodes.append({"old": db_node, "new": node})
+
+    # Track area membership changes
+    for area in new_areas + inferred_areas:
+        area_name = area['name']
+        current_nodes = [n for n in db_nodes if n.area and n.area.name == area_name]
+        future_nodes = [n for n in new_nodes if n.get('area') == area_name]
+
+        removed = [n for n in current_nodes if n.mac not in {fn['mac'] for fn in future_nodes}]
+        added = [fn for fn in future_nodes if fn['mac'] not in {n.mac for n in current_nodes}]
+
+        if added or removed:
+            updated_areas.append({
+                "area": area,
+                "added_nodes": added,
+                "removed_nodes": removed
+            })
+
+    # Separate all areas (new + inferred) into existing or new
+    existing_areas = []
+    new_areas_only = []
+
+    for area in new_areas + inferred_areas:
+        if area['name'] in db_area_names:
+            existing_areas.append(area)
         else:
-            new_area = Areas(name=area_data['name'], volume=area_data['volume'], channel_id=area_data['channel'])
-            db.session.add(new_area)
-            db.session.commit()
+            new_areas_only.append(area)
 
-    for node_data in nodes:
-        node = Nodes.query.filter_by(mac=node_data['mac']).first()
+    return render_template(
+        'import_conf.html',
+        newNodes=new_nodes,
+        freshNodes=fresh_nodes,
+        renamedNodes=renamed_nodes,
+        existingAreas=existing_areas,
+        newAreas=new_areas_only,
+        updatedAreas=updated_areas,
+        nodes=db_nodes,
+        areas=db_areas
+    )
+
+
+
+@app.route('/submit_import', methods=['POST'])
+def submit_import():
+    new_nodes = request.form.getlist('nodes')
+    renamed_nodes = request.form.getlist('renamed_nodes')
+    changes_in_existing_areas = request.form.getlist('existing_areas')
+    new_areas = request.form.getlist('new_areas')
+    process_areas = request.form.getlist('process_area[]')
+    
+    area_changes = {}
+    for area_name in process_areas:
+        added_nodes = request.form.getlist(f'area_changes[{area_name}][added_nodes][]')
+        removed_nodes = request.form.getlist(f'area_changes[{area_name}][removed_nodes][]')
+        
+        area_changes[area_name] = {
+            'added_nodes': added_nodes,
+            'removed_nodes': removed_nodes
+        }
+
+    # Process Renamed Nodes
+    for renamed_node in renamed_nodes:
+        old_name, new_name, mac = eval(renamed_node)  # Convert string tuple to actual tuple
+        node = Nodes.query.filter_by(mac=mac).first()
         if node:
-            node.name = node_data['name']
-            node.area_id = Areas.query.filter_by(name=node_data['area']).first().id if node_data['area'] else None
+            node.name = new_name
             db.session.commit()
-        else:
-            if node_data['area']:
-                area = Areas.query.filter_by(name=node_data['area']).first()
-                new_node = Nodes(name=node_data['name'], mac=node_data['mac'], area_id=area.id)
-            else:
-                new_node = Nodes(name=node_data['name'], mac=node_data['mac']) 
-            db.session.add(new_node)
-            db.session.commit()
-    print("Configuration imported")
-    return jsonify({"success": True})
-#################################################################################
+
+    # Process New Nodes
+    for new_node in new_nodes:
+        name, mac = eval(new_node)
+        if not Nodes.query.filter_by(mac=mac).first():
+            new_node_obj = Nodes(name=name, mac=mac)
+            db.session.add(new_node_obj)
+
+    # Process New Areas
+    for new_area in new_areas:
+        name, volume, _ = eval(new_area)
+        if not Areas.query.filter_by(name=name).first():
+            new_area_obj = Areas(name=name, volume=volume)
+            db.session.add(new_area_obj)
+
+    # Process Changes in Existing Areas
+    for area_name in changes_in_existing_areas:
+        area = Areas.query.filter_by(name=area_name).first()
+        if area:
+            # Update volume
+            volume = request.form.get(f'volume_{area_name}')
+            if volume:
+                area.volume = int(volume)
+                db.session.commit()
+
+    # Process Existing Areas and Node Assignments
+    for area_name, changes in area_changes.items():
+        area = Areas.query.filter_by(name=area_name).first()
+        if area:
+            # Add nodes
+            for node_mac in changes['added_nodes']:
+                node = Nodes.query.filter_by(mac=node_mac).first()
+                if node and node.area_id != area.id:
+                    node.area_id = area.id
+                    db.session.commit()
+            # Remove nodes
+            for node_mac in changes['removed_nodes']:
+                node = Nodes.query.filter_by(mac=node_mac).first()
+                if node and node.area_id == area.id:
+                    node.area_id = None
+                    db.session.commit()
+
+    db.session.commit()
+    return render_template('index.html', nodes=Nodes.query.all(), areas=Areas.query.all(), message="Importação concluída com sucesso!")
+
 #######################################
 #############
 #YOUTUBE#####
@@ -2132,6 +2243,7 @@ def download_youtube_audio(youtube_url, wav_filename):
     print(f"Downloaded and converted {youtube_url} to {wav_filename}")
     
 #################################################################################
+
 #################################################################################
 
 def shutdown_handler(stop_event):
