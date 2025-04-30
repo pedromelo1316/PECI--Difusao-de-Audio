@@ -386,10 +386,10 @@ def toggle_transmission():
 def start_ffmpeg_process(channel, source, _type):
     # Define o endereço de multicast baseado no número do canal
     multicast_address = f"rtp://239.255.{'1' if _type == ChannelType.VOICE else '0'}.{channel}:12345"
-    wan_ip = get_interface_ip('wlp4s0')
+    wan_ip = get_interface_ip('wlan0')
     
     if not wan_ip:
-        print("Error: Could not get wlp4s0 IP address")
+        print("Error: Could not get wlan0 IP address")
         return None
     
     source = get_source_from_id(_type, source)
@@ -991,16 +991,16 @@ def send_info(nodes, removed=False, suspended=False, test=False):
 
             
     msg = json.dumps(dic)
-    wan_ip = get_interface_ip('wlp4s0')
+    wan_ip = get_interface_ip('wlan0')
     
     if not wan_ip:
-        print("Error: Could not get wlp4s0 IP address")
+        print("Error: Could not get wlan0 IP address")
         return
     
-    # Envia mensagem via broadcast UDP usando wlp4s0
+    # Envia mensagem via broadcast UDP usando wlan0
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
         client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, b'wlp4s0')
+        client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, b'wlan0')
         client_socket.sendto(msg.encode('utf-8'), ('<broadcast>', 8081))
         
     print("Info sent to nodes:", nodes)
@@ -1010,16 +1010,16 @@ def send_info(nodes, removed=False, suspended=False, test=False):
 # Função que detecta novos nós na rede
 def detect_new_nodes(stop_event, msg_buffer):
     time.sleep(0.1)
-    wan_ip = get_interface_ip('wlp4s0')
+    wan_ip = get_interface_ip('wlan0')
     
     if not wan_ip:
-        print("Error: Could not get wlp4s0 IP address")
+        print("Error: Could not get wlan0 IP address")
         return
     
     # Cria um socket para escutar na porta 8080
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as server_socket:
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, b'wlp4s0')
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, b'wlan0')
         server_socket.bind((wan_ip, 8080))
         server_socket.settimeout(2)
         
@@ -2160,10 +2160,10 @@ def get_interface_ip(interface_name):
 
 def get_host_ip():
     try:
-        ip = get_interface_ip('wlp4s0')
+        ip = get_interface_ip('wlan0')
         if ip:
             return ip
-        # Fallback para o método anterior se wlp4s0 não estiver disponível
+        # Fallback para o método anterior se wlan0 não estiver disponível
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", 80))
         ip = s.getsockname()[0]
@@ -2204,11 +2204,11 @@ if __name__ == '__main__':
 
 
 
-    wan_ip = get_interface_ip('wlp4s0')
+    wan_ip = get_interface_ip('wlan0')
     if wan_ip:
         socketio.run(app, host=wan_ip, debug=False, port=5000)
     else:
-        print("Error: Could not get wlp4s0 IP address")
+        print("Error: Could not get wlan0 IP address")
         socketio.run(app, host="127.0.0.1", debug=False, port=5000)
 
 
