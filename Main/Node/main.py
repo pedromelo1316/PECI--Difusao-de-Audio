@@ -83,7 +83,7 @@ def wait_for_info(n, port=8081):
                                 '-i', 'sine=frequency=440:duration=5',
                                 '-nodisp'
                             ]
-                            ffmpeg = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            ffmpeg = subprocess.Popen(cmd)
                             print("Test tone playing...")
                             
                             # Esperar 5 segundos e parar o ffplay
@@ -161,7 +161,7 @@ def wait_for_info(n, port=8081):
                         print("SDP file not found")
                         continue
                     
-                    ffmpeg = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    ffmpeg = subprocess.Popen(cmd)
                     print("Restarting ffmpeg with new header, channel, and volume")
                     # Atualiza o header e o canal
 
