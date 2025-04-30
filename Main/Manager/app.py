@@ -383,19 +383,18 @@ def toggle_transmission():
 
 
 
-
 def start_ffmpeg_process(channel, source, _type):
     # Define o endereço de multicast baseado no número do canal
     multicast_address = f"rtp://239.255.{'1' if _type == ChannelType.VOICE else '0'}.{channel}:12345"
-    print(f"session_{channel}.sdp")
-    print("source: ", source)
-    print("type: ", _type)
+    wan_ip = get_interface_ip('wlp4s0')
+    
+    if not wan_ip:
+        print("Error: Could not get wlp4s0 IP address")
+        return None
     
     source = get_source_from_id(_type, source)
     
     if _type != ChannelType.VOICE:
-        
-        
         if not source:
             print("Source is empty")
             return None
@@ -408,69 +407,57 @@ def start_ffmpeg_process(channel, source, _type):
         if os.path.exists(f"session_{channel}.sdp"):
             os.remove(f"session_{channel}.sdp")
     
-    # Verifica o tipo de transmissão e configura o comando do ffmpeg apropriado
+    # Configuração base do FFmpeg
+    base_cmd = [
+        "ffmpeg",
+        "-hide_banner",
+        "-thread_queue_size", "512"
+    ]
+
     if _type == ChannelType.VOICE:
-        
-        cmd = [
-            "ffmpeg",
+        cmd = base_cmd + [
             "-f", "alsa",
-            "-i", f"hw:{source[0]},{source[1]}",  # Dispositivo de captura
-            "-vn",  # Sem vídeo
-            "-hide_banner",  # Oculta informações de inicialização
+            "-i", f"hw:{source[0]},{source[1]}",
+            "-vn",
             "-ar", SAMPLE_RATE,
             "-acodec", "libopus",
             "-b:a", BITRATE,
             "-ac", AUDIO_CHANNELS,
             "-f", "rtp",
             "-sdp_file", f"mic_{channel}.sdp",
+            "-ttl", "32",
+            "-localaddr", wan_ip,
             f"{multicast_address}"
         ]
-        
 
     elif _type == ChannelType.LOCAL:
-
-        # Divide o source em uma lista de músicas
         musicas = [musica.strip() for musica in source.split(",")]
-
-        # Cria um arquivo de playlist temporário para o FFmpeg
         playlist_file_path = f"Playlists/temp_playlist_{channel}.txt"
         with open(playlist_file_path, "w") as playlist_file:
             for musica in musicas:
                 playlist_file.write(f"file 'Songs/{musica}.wav'\n")
 
-        # Comando do FFmpeg para reproduzir a playlist
-        cmd = [
-            "ffmpeg",
-            "-stream_loop", "-1",  # Loop infinito
-            "-hide_banner",  # Oculta informações de inicialização
-            "-f", "concat",  # Formato de entrada como concatenação
-            "-re",  # Tempo real
-            "-i", playlist_file_path,  # Arquivo de playlist
+        cmd = base_cmd + [
+            "-stream_loop", "-1",
+            "-f", "concat",
+            "-re",
+            "-i", playlist_file_path,
             "-ar", SAMPLE_RATE,
-            "-vn",  # Sem vídeo
+            "-vn",
             "-acodec", "libopus",
             "-b:a", BITRATE,
             "-ac", AUDIO_CHANNELS,
             "-f", "rtp",
             "-sdp_file", f"session_{channel}.sdp",
+            "-ttl", "32",
+            "-localaddr", wan_ip,
             f"{multicast_address}"
         ]
         
-        
     elif _type == ChannelType.STREAMING:
-        # Transmissão via streaming com URL proveniente do yt-dlp
-        
-        ########3
-        #source = "https://www.youtube.com/live/YDvsBbKfLPA?si=TdUqXCrxJojjNDns"
-        ##############
-
-        
-        cmd = [
-            "ffmpeg",
+        cmd = base_cmd + [
             "-i", source,
-            "-vn",  # Sem vídeo
-            "-hide_banner", # Oculta informações de inicialização
-            #"-re",
+            "-vn",
             "-buffer_size", "4096",
             "-ar", SAMPLE_RATE,
             "-acodec", "libopus",
@@ -478,14 +465,17 @@ def start_ffmpeg_process(channel, source, _type):
             "-ac", AUDIO_CHANNELS,
             "-f", "rtp",
             "-sdp_file", f"session_{channel}.sdp",
+            "-ttl", "32",
+            "-localaddr", wan_ip,
             f"{multicast_address}"
         ]
-        
     else:
         return None
-    # Inicia o subprocesso do ffmpeg
+
     process = subprocess.Popen(cmd)
     return process
+
+
 
 def create_default_channels():
     
@@ -1001,21 +991,38 @@ def send_info(nodes, removed=False, suspended=False, test=False):
 
             
     msg = json.dumps(dic)
-    # Envia mensagem via broadcast UDP
+    wan_ip = get_interface_ip('wlp4s0')
+    
+    if not wan_ip:
+        print("Error: Could not get wlp4s0 IP address")
+        return
+    
+    # Envia mensagem via broadcast UDP usando wlp4s0
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
         client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, b'wlp4s0')
         client_socket.sendto(msg.encode('utf-8'), ('<broadcast>', 8081))
+        
+    print("Info sent to nodes:", nodes)
         
     print("Info sent to nodes:", nodes)
 
 # Função que detecta novos nós na rede
 def detect_new_nodes(stop_event, msg_buffer):
     time.sleep(0.1)
+    wan_ip = get_interface_ip('wlp4s0')
+    
+    if not wan_ip:
+        print("Error: Could not get wlp4s0 IP address")
+        return
+    
     # Cria um socket para escutar na porta 8080
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as server_socket:
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        server_socket.bind(('0.0.0.0', 8080))
-        server_socket.settimeout(2) 
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, b'wlp4s0')
+        server_socket.bind((wan_ip, 8080))
+        server_socket.settimeout(2)
+        
         msg_buffer.put("Detection started")
         while not stop_event.is_set():
             try:
@@ -2137,19 +2144,33 @@ def download_youtube_audio(youtube_url, wav_filename):
 def shutdown_handler(stop_event):
     stop_event.set()
     sys.exit(0)
-
-
-# Função para obter o IP local do host
-def get_host_ip():
+    
+def get_interface_ip(interface_name):
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))  # Conecta a um servidor externo
+        return socket.inet_ntoa(fcntl.ioctl(
+            s.fileno(),
+            0x8915,  # SIOCGIFADDR
+            struct.pack('256s', interface_name.encode()[:15])
+        )[20:24])
+    except Exception as e:
+        print(f"Error getting IP for interface {interface_name}: {e}")
+        return None
+
+
+def get_host_ip():
+    try:
+        ip = get_interface_ip('wlp4s0')
+        if ip:
+            return ip
+        # Fallback para o método anterior se wlp4s0 não estiver disponível
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
         ip = s.getsockname()[0]
         s.close()
         return ip
     except Exception as e:
         return f"Error: {e}"
-
 
 def remove_trash():
     # apagar ficheiros sdp, txt
@@ -2183,6 +2204,11 @@ if __name__ == '__main__':
 
 
 
-    socketio.run(app, host=get_host_ip() ,debug=False, port=5000)
+    wan_ip = get_interface_ip('wlp4s0')
+    if wan_ip:
+        socketio.run(app, host=wan_ip, debug=False, port=5000)
+    else:
+        print("Error: Could not get wlp4s0 IP address")
+        socketio.run(app, host="127.0.0.1", debug=False, port=5000)
 
 
