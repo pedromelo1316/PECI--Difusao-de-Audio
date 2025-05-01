@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Import Configuration</title>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  />
+  <style>
+    /* Basic page styles */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Full-width navbar */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background-color: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 2rem;
+      width: 100%;
+    }
+
+    /* Page content wrapper */
+    .page-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* Container style */
+    .form-container {
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+      margin: 0 auto;
+      max-width: 900px;
+    }
+
+    /* Header styles */
+    h1 {
+      font-size: 2.5rem;
+      color: #2d3748;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    /* Subheader style */
+    h2 {
+      margin-top: 2.5rem;
+      font-size: 1.5rem;
+      color: #0d6efd;
+      margin-bottom: 1rem;
+    }
+
+    /* Card styles */
+    .card {
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 1.25rem;
+      margin: 1rem 0;
+      transition: background 0.3s ease;
+      border: 1px solid #e5e7eb;
+    }
+    
+    .card:hover {
+      background: #f1f9fe;
+    }
+
+    /* Card content style */
+    label {
+      display: block;
+      cursor: pointer;
+    }
+
+    input[type="checkbox"] {
+      margin-right: 1rem;
+      transform: scale(1.2);
+    }
+
+    /* Badge styles */
+    .badge {
+      padding: 0.4rem 0.8rem;
+      border-radius: 0.6rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-left: 0.5rem;
+    }
+    
+    .badge-new {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .badge-update {
+      background-color: #ffc107;
+      color: black;
+    }
+
+    .badge-remove {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    /* Button style */
+    button {
+      background-color: #0d6efd;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      margin-top: 2rem;
+      cursor: pointer;
+      width: 100%;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0b5ed7;
+    }
+
+    /* Spacing for lists */
+    ul {
+      margin: 0.5rem 0 1rem 1.5rem;
+      padding: 0;
+      font-size: 0.9rem;
+    }
+
+    small {
+      color: #555;
+      font-size: 0.9rem;
+    }
+
+    /* Navbar components */
+    .nav-center {
+      display: flex;
+      align-items: center;
+    }
+
+    .site-logo {
+      height: 40px;
+      margin-right: 10px;
+    }
+
+    .nav-title {
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    .icon-arrow-left {
+      font-size: 1.2rem;
+      color: #333;
+    }
+
+    .logout-icon {
+      color: #333;
+    }
+
+  </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="{{ url_for('dashboard') }}" class="settings-link">
+                <i class="fa-solid fa-arrow-left icon-arrow-left"></i>
+            </a>
+        </div>
+        <div class="nav-center">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Site Logo" class="site-logo">
+            <span class="nav-title">Audio Manager</span>
+        </div>
+        <div class="nav-right">
+            <a href="{{ url_for('logout') }}" class="logout-icon">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </a>
+        </div>
+    </nav>
+
+    <div class="page-content">
+        <div class="form-container">
+            <form method="POST" action="/submit_import" id="importForm">
+                <h1><i class="fas fa-file-import"></i> Imported Configuration Summary</h1>
+
+                <h2><i class="fas fa-plus-circle"></i> New Nodes</h2>
+                {% if freshNodes %}
+                    {% for node in freshNodes %}
+                    <div class="card">
+                        <label>
+                        <input type="checkbox" name="nodes" value="{{ node.name, node.mac }}" checked class="node-checkbox" data-node-mac="{{ node.mac }}">
+                        <strong>{{ node.name }}</strong>
+                        <span class="badge badge-new">New</span><br>
+                        <small>MAC: {{ node.mac }}</small><br>
+                        {% if node.area %}
+                            <i class="fas fa-map-marker-alt"></i> Area: {{ node.area }}
+                        {% endif %}
+                        <input type="hidden" name="node_name_{{ node.mac }}" value="{{ node.name }}">
+                        <input type="hidden" name="node_mac_{{ node.mac }}" value="{{ node.mac }}">
+                        </label>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No new nodes found.</p>
+                {% endif %}
+
+                <h2><i class="fas fa-exchange-alt"></i> Renamed Nodes</h2>
+                {% if renamedNodes %}
+                    {% for pair in renamedNodes %}
+                    <div class="card">
+                        <label>
+                        <input type="checkbox" name="renamed_nodes" value="{{ pair.old.name, pair.new.name, pair.old.mac }}" checked>
+                        <i class="fas fa-sync-alt"></i>
+                        <strong>{{ pair.old.name }}</strong> ➜ <strong>{{ pair.new.name }}</strong>
+                        <span class="badge badge-update">Renamed</span><br>
+                        <small>MAC: {{ pair.old.mac }}</small>
+                        <input type="hidden" name="old_name_{{ pair.old.mac }}" value="{{ pair.old.name }}">
+                        <input type="hidden" name="new_name_{{ pair.old.mac }}" value="{{ pair.new.name }}">
+                        </label>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No renamed nodes detected.</p>
+                {% endif %}
+
+                <h2><i class="fas fa-map-marker-alt"></i> Existing Areas</h2>
+                {% if existingAreas %}
+                    {% for area in existingAreas %}
+                    <div class="card">
+                        <label>
+                        <input type="checkbox" name="existing_areas" value="{{ area.name, area.volume, area.channel if area.channel else '' }}" checked>
+                        <strong>{{ area.name }}</strong> <span class="badge badge-update">Existing Area</span><br>
+                        <small>Volume: {{ area.volume }} | Channel: {{ area.channel if area.channel else 'None' }}</small>
+                        <input type="hidden" name="area_name_{{ area.name }}" value="{{ area.name }}">
+                        <input type="hidden" name="area_volume_{{ area.name }}" value="{{ area.volume }}">
+                        <input type="hidden" name="area_channel_{{ area.name }}" value="{{ area.channel if area.channel else '' }}">
+                        </label>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No existing areas found.</p>
+                {% endif %}
+
+                <h2><i class="fas fa-plus-circle"></i> New Areas</h2>
+                {% if newAreas %}
+                    {% for area in newAreas %}
+                    <div class="card">
+                        <label>
+                        <input type="checkbox" name="new_areas" value="{{ area.name, area.volume, area.channel if area.channel else '' }}" checked>
+                        <strong>{{ area.name }}</strong> <span class="badge badge-new">New Area</span><br>
+                        <small>Volume: {{ area.volume }} | Channel: {{ area.channel if area.channel else 'None' }}</small>
+                        <input type="hidden" name="area_name_{{ area.name }}" value="{{ area.name }}">
+                        <input type="hidden" name="area_volume_{{ area.name }}" value="{{ area.volume }}">
+                        <input type="hidden" name="area_channel_{{ area.name }}" value="{{ area.channel if area.channel else '' }}">
+                        </label>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No new areas found.</p>
+                {% endif %}
+
+                <h2><i class="fas fa-arrows-alt-h"></i> Area Node Changes</h2>
+                {% if updatedAreas %}
+                    {% for item in updatedAreas %}
+                    <div class="card">
+                        <label>
+                        <input type="checkbox" name="process_area[]" value="{{ item.area.name }}" checked class="area-change-checkbox" data-macs="{% for n in item.added_nodes %}{{ n.mac }}{% if not loop.last %},{% endif %}{% endfor %}">
+                        <strong>{{ item.area.name }}</strong> <span class="badge badge-update">Changes</span>
+                        </label>
+
+                        {% if item.added_nodes %}
+                        <div>
+                            <i class="fas fa-plus-circle"></i> <strong>Nodes added:</strong>
+                            <ul>
+                            {% for n in item.added_nodes %}
+                                <li>{{ n.name }} ({{ n.mac }})</li>
+                                <input type="hidden" name="area_changes[{{ item.area.name }}][added_nodes][]" value="{{ n.mac }}">
+                            {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
+                        {% if item.removed_nodes %}
+                        <div>
+                            <i class="fas fa-minus-circle"></i> <strong>Nodes removed:</strong>
+                            <ul>
+                            {% for n in item.removed_nodes %}
+                                <li>{{ n.name }} ({{ n.mac }})</li>
+                                <input type="hidden" name="area_changes[{{ item.area.name }}][removed_nodes][]" value="{{ n.mac }}">
+                            {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No area membership changes detected.</p>
+                {% endif %}
+
+                <button type="submit"><i class="fas fa-check-circle"></i> Apply Selected Changes</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

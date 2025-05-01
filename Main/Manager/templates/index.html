@@ -100,62 +100,47 @@
 
     // Trigger the file input for importing
     function triggerImport() {
-    
+    // Create a FormData object and append the necessary data
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.json'; // Accept only JSON files
 
-        // Create a FormData object and append the necessary data
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.onchange = () => {
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-
-            // Sending the form data to the server using AJAX
-            fetch('/import_conf', {
-                method: 'POST',
-                body: formData,
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();  // Reload the page after successful upload
-                } else {
-                    console.log("Error:", data.error);
-                }
-            })
-            .catch(error => {
-                console.error("Error during file upload:", error);
-            });
-        };
-        fileInput.click();
-    }
-
-    // Handle the file import
-    function handleImport(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const formData = new FormData();
-            formData.append('file', file);  // Appending the file to FormData
-
-            // Sending the form data to the server using AJAX
-            fetch('/import_conf', {
-                method: 'POST',
-                body: formData,
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();  // Reload the page after successful upload
-                } else {
-                    console.log("Error:", data.error);
-                }
-            })
-            .catch(error => {
-                console.error("Error during file upload:", error);
-            });
-        } else {
+    fileInput.onchange = () => {
+        if (fileInput.files.length === 0) {
             console.log("No file selected.");
+            return;  // Prevent uploading if no file is selected
         }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        // Sending the form data to the server using AJAX
+        fetch('/import_conf', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => {
+            if (response.ok) {
+                // If the request was successful, update the page with the new content
+                return response.text(); // Get the HTML content from the response
+            } else {
+                throw new Error('Failed to upload file');
+            }
+        })
+        .then(html => {
+            // Update the content of the page with the new HTML (use this in a specific div)
+            document.body.innerHTML = html;  // You could also use a more targeted approach, e.g., only replacing the main content
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    };
+
+    fileInput.click();  // Trigger file dialog
     }
+
+
+
 
     // Trigger the export of config
     function triggerExport() {
