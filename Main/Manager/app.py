@@ -1,6 +1,7 @@
 # Importações de módulos e bibliotecas necessárias
 from enum import Enum
 from io import BytesIO
+import wave
 from flask import Flask, render_template, request, redirect, flash, jsonify, send_file, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
@@ -434,8 +435,17 @@ def start_ffmpeg_process(channel, source, _type):
 
         # Cria um arquivo de playlist temporário para o FFmpeg
         playlist_file_path = f"Playlists/temp_playlist_{channel}.txt"
+
+        songlist = []
+        
         with open(playlist_file_path, "w") as playlist_file:
             for musica in musicas:
+                duration = get_wav_duration(f"Playlists/Songs/{musica}.wav")
+                with app.app_context():
+                    song = db.session.query(Songs).filter(Songs.song_hash == musica).first()
+                    
+                    # Adiciona a música e sua duração à lista
+                    songlist.append((song.name, duration))
                 playlist_file.write(f"file 'Songs/{musica}.wav'\n")
 
         # Comando do FFmpeg para reproduzir a playlist
@@ -484,8 +494,65 @@ def start_ffmpeg_process(channel, source, _type):
     else:
         return None
     # Inicia o subprocesso do ffmpeg
-    process = subprocess.Popen(cmd)
+
+    # Start FFmpeg subprocess with stderr pipe
+    # Start FFmpeg subprocess with stderr pipe
+    process = subprocess.Popen(cmd, stderr=subprocess.PIPE, universal_newlines=True)
+
+    # Monitor output if LOCAL
+    if _type == ChannelType.LOCAL:
+        threading.Thread(target=monitor_ffmpeg_output, args=(process, songlist), daemon=True).start()
+
+    
+
     return process
+
+########track which song is playing
+def hms_to_seconds(t):
+    """Convert 'HH:MM:SS.ss' to total seconds."""
+    h, m, s = t.split(":")
+    return int(h) * 3600 + int(m) * 60 + float(s)
+
+def monitor_ffmpeg_output(process, songlist):
+    current_index = 0
+    time_acc = 0
+    while current_index < len(songlist):
+        current_song, duration_sec = songlist[current_index]  # duration is already a float
+        next_song = False
+        duration_sec += time_acc
+
+        for line in process.stderr:
+            line = line.strip()
+
+            if "time=" in line:
+                parts = line.split()
+                for part in parts:
+                    if part.startswith("time="):
+                        current_time_str = part.split("=")[1]
+                        current_sec = hms_to_seconds(current_time_str)
+                        
+                        print(f"Currently playing: {current_song} {current_sec} / {duration_sec:.2f}s")
+
+                        if current_sec >= duration_sec:
+                            print(f"{current_song} finished, moving to next song.")
+                            current_index += 1
+                            next_song = True
+                            time_acc = current_sec
+                            if current_index == len(songlist):
+                                current_song = 0
+                        
+            if next_song:
+                break
+
+
+def get_wav_duration(file_path):
+    with wave.open(file_path, 'r') as wav_file:
+        frames = wav_file.getnframes()
+        rate = wav_file.getframerate()
+        duration = frames / float(rate)
+    return duration
+#########
+
 
 def create_default_channels():
     
