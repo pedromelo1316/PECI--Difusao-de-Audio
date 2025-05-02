@@ -344,7 +344,9 @@ def toggle_transmission():
     channel = db.session.query(Channels).filter(Channels.id == channel_id).first()
     if channel.state == 'playing':
         channel.state = 'stopped'
-    
+        
+        processes[channel_id]['current_playing'] = {"playing": None}
+        socketio.emit('song_changed', {'channel': channel_id, 'song': None})
     elif channel.state == 'stopped':
         # Comando FFmpeg para RTP multicast
         
@@ -500,8 +502,9 @@ def start_ffmpeg_process(channel, source, _type):
     process = subprocess.Popen(cmd, stderr=subprocess.PIPE, universal_newlines=True)
 
     # Monitor output if LOCAL
+    
     if _type == ChannelType.LOCAL:
-        threading.Thread(target=monitor_ffmpeg_output, args=(process, songlist), daemon=True).start()
+        threading.Thread(target=monitor_ffmpeg_output, args=(process, songlist, channel), daemon=True).start()
 
     
 
@@ -513,15 +516,26 @@ def hms_to_seconds(t):
     h, m, s = t.split(":")
     return int(h) * 3600 + int(m) * 60 + float(s)
 
-def monitor_ffmpeg_output(process, songlist):
+def monitor_ffmpeg_output(process, songlist, channel):
     current_index = 0
     time_acc = 0
     while current_index < len(songlist):
-        current_song, duration_sec = songlist[current_index]  # duration is already a float
+        current_song, duration_sec = songlist[current_index]
+        processes[channel]['current_playing'] = {"playing": current_song}
+        socketio.emit('song_changed', {'channel': channel, 'song': current_song})
+        print(f"Now playing: {current_song} on channel {channel}")
         next_song = False
         duration_sec += time_acc
 
-        for line in process.stderr:
+        while True:
+            if process.poll() is not None:
+                print(f"Process on channel {channel} terminated. Exiting thread.")
+                return
+
+            line = process.stderr.readline()
+            if not line:
+                continue  # no output yet
+
             line = line.strip()
 
             if "time=" in line:
@@ -530,8 +544,6 @@ def monitor_ffmpeg_output(process, songlist):
                     if part.startswith("time="):
                         current_time_str = part.split("=")[1]
                         current_sec = hms_to_seconds(current_time_str)
-                        
-                        print(f"Currently playing: {current_song} {current_sec} / {duration_sec:.2f}s")
 
                         if current_sec >= duration_sec:
                             print(f"{current_song} finished, moving to next song.")
@@ -539,10 +551,11 @@ def monitor_ffmpeg_output(process, songlist):
                             next_song = True
                             time_acc = current_sec
                             if current_index == len(songlist):
-                                current_song = 0
-                        
+                                return  # Done with playlist
+                            break
             if next_song:
                 break
+
 
 
 def get_wav_duration(file_path):
@@ -572,7 +585,7 @@ def create_default_channels():
             )
             db.session.add(new_channel)
             db.session.commit()
-            processes[new_channel.id] = {"process": None}
+            processes[new_channel.id] = {"process": None, "current_playing": {"playing": None}}
             print(f"{new_channel.name} started")
 
     else:
@@ -580,7 +593,7 @@ def create_default_channels():
             if os.path.exists(f"session_{channel.id}.sdp"):
                 os.remove(f"session_{channel.id}.sdp")
             index = channel.id
-            processes[index] = {"process": None}  # Uncommented to start the process
+            processes[index] = {"process": None, "current_playing": {"playing": None}}  # Uncommented to start the process
             print(f"Channel {channel.id} started")
             
             
@@ -758,7 +771,7 @@ def save_channel_configs():
             processes[channel.id]['process'].wait()
             processes[channel.id]['process'] = None
             processes[channel.id]['process'] = start_ffmpeg_process(channel.id, channel_source, channel_type)
-            
+
                 
             if processes[channel.id]['process'] is None:
                 return jsonify({'status': 'error', 'message': 'Erro ao iniciar o processo FFmpeg'})
@@ -2042,6 +2055,21 @@ def search_youtube_live(query, max_results=30):
     except Exception as e:
         print(f"Ocorreu um erro: {e}")
     return results
+
+#################
+@app.route("/current_playing", methods=["GET"])
+def current_playing():
+    channel_id = request.args.get('channel_id')
+    if channel_id:
+        with db.session() as session:
+            channel = session.get(Channels, channel_id)
+        if channel and channel.id in processes:
+            current_song = processes[channel.id]['current_playing']["playing"]
+            return jsonify({
+                "current_song": str(current_song) if current_song else None
+            })
+    return jsonify({"current_song": None})
+
 
 @app.route("/search_suggestions", methods=["GET"])
 def search_suggestions():
