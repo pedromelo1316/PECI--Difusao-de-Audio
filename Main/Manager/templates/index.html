@@ -98,46 +98,50 @@
         sections.forEach(section => observer.observe(section));
     });
 
-    // Trigger the file input for importing
     function triggerImport() {
-    // Create a FormData object and append the necessary data
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
-    fileInput.accept = '.json'; // Accept only JSON files
+    fileInput.accept = '.json';
+
+    // Ensure the same file triggers onchange
+    fileInput.value = null;
 
     fileInput.onchange = () => {
         if (fileInput.files.length === 0) {
             console.log("No file selected.");
-            return;  // Prevent uploading if no file is selected
+            return;
         }
 
         const formData = new FormData();
         formData.append('file', fileInput.files[0]);
 
-        // Sending the form data to the server using AJAX
+        console.log("File selected:", fileInput.files[0].name);
+
         fetch('/import_conf', {
             method: 'POST',
             body: formData,
         })
         .then(response => {
             if (response.ok) {
-                // If the request was successful, update the page with the new content
-                return response.text(); // Get the HTML content from the response
+                return response.text();
             } else {
                 throw new Error('Failed to upload file');
             }
         })
         .then(html => {
-            // Update the content of the page with the new HTML (use this in a specific div)
-            document.body.innerHTML = html;  // You could also use a more targeted approach, e.g., only replacing the main content
+            document.body.innerHTML = html;
         })
         .catch(error => {
             console.error('Error:', error);
         });
+
+        fileInput.remove(); // Cleanup
     };
 
-    fileInput.click();  // Trigger file dialog
+    // Minor delay to ensure onchange is attached before click
+    setTimeout(() => fileInput.click(), 0);
     }
+
 
 
 

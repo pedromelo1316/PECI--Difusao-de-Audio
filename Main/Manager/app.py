@@ -926,14 +926,14 @@ def delete(id):
         db.session.commit()
         socketio.emit('update', {'action': 'delete', 'id': id})
         send_info([node_to_delete], removed=True)
-        return redirect('/')
+        return redirect('/index')
     except:
         return 'Houve um problema ao remover o nó'
     
 # Rota para atualizar a lista de nós (simples redirecionamento)
 @app.route('/refresh_nodes', methods=['POST'])
 def refresh_nodes():
-    return redirect('/')
+    return redirect('/index')
 
 # Rota para atualização dos dados de um nó
 @app.route('/update/<int:id>', methods=['GET', 'POST'])
@@ -944,7 +944,7 @@ def update(id):
         try:
             db.session.commit()
             socketio.emit('update', {'action': 'update', 'id': id, 'name': node.name})
-            return redirect('/')
+            return redirect('/index')
         except:
             return 'Houve um problema ao atualizar a tarefa'
     else:
@@ -1079,7 +1079,7 @@ def rename_node(id):
         node.name = new_name
         db.session.commit()
         socketio.emit('reload_page', namespace='/')
-        return redirect('/')
+        return redirect('/index')
     except Exception as e:
         return str(e), 500
 
@@ -1139,15 +1139,15 @@ def update_volume():
     area = Areas.query.filter_by(name=area_name).first()
     if not area:
         flash("Area not found", "error")
-        return redirect('/')
+        return redirect('/index')
     try:
         area.volume = new_volume
         print(f"Volume updated to {new_volume} for area {area_name}")
         db.session.commit()
         send_info(Nodes.query.filter_by(area_id=area.id).all())
-        return redirect('/')
+        return redirect('/index')
     except Exception as e:
-        return redirect('/')
+        return redirect('/index')
 
 # Rota para obter nós que não estão associados a nenhuma área
 @app.route('/get_free_nodes')
@@ -1366,18 +1366,18 @@ def update_area_channel():
     area = Areas.query.filter_by(name=area_name).first()
     if not area:
         flash("Area not found", "error")
-        return redirect('/')
+        return redirect('/index')
     try:
         area.channel_id = new_channel_id
         print(f"Channel updated to {new_channel_id} for area {area_name}")
         db.session.commit()
         send_info(Nodes.query.filter_by(area_id=area.id).all())
         socketio.emit('reload_page', namespace='/')
-        return redirect('/')
+        return redirect('/index')
     except Exception as e:
         flash(str(e), "error")
         socketio.emit('reload_page', namespace='/')
-        return redirect('/')
+        return redirect('/index')
 
 
 
