@@ -1,2 +1,5 @@
 yt_dlp
-pyaudio
+flask
+flask_sqlalchemy
+flask_socketio
+youtube-search-python
