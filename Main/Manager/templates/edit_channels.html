@@ -40,7 +40,8 @@
         <!-- Switch to activate/deactivate channel -->
         <div class="channel-switch-container">
             <label class="switch">
-                <input type="checkbox" id="channelSwitch" {% if channel.is_active %}checked{% endif %} onchange="toggleChannelStatus({{ channel.id }})">
+                <!-- Change this line in edit_channels.html -->
+                <input type="checkbox" id="channelSwitch" {% if channel.state == 'playing' %}checked{% endif %} onchange="toggleChannelStatus({{ channel.id }})">
                 <span class="slider">
                     <span class="switch-text off">OFF</span>
                     <span class="switch-text on">ON</span>
@@ -134,19 +135,29 @@
         fetch(`/toggle_transmission`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ channel_id: channelId }),
+            body: JSON.stringify({ 
+                channel_id: channelId,
+                state: isActive ? 'playing' : 'stopped' 
+            }),
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                window.location.reload();
+                // No need to reload - the state has been updated
+                // Just update UI to reflect current state
+                spinner.classList.remove('active');
+                switchElement.disabled = false;
             } else {
                 alert("Erro ao alternar o estado do canal.");
+                // Reset switch to previous state
+                switchElement.checked = !isActive;
             }
         })
         .catch(error => {
             console.error("Error during transmission toggle:", error);
             alert("Erro ao comunicar com o servidor.");
+            // Reset switch to previous state
+            switchElement.checked = !isActive;
         })
         .finally(() => {
             spinner.classList.remove('active'); // Oculta o spinner

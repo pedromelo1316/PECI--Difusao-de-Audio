@@ -204,7 +204,10 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!selectedColumn) return;
         const zoneName = selectElement.closest(".zone-box").querySelector("h3").textContent.trim();
         const columnList = selectElement.closest(".column-section").querySelector(".column-list");
-
+    
+        // Get the select container to replace it later
+        const selectContainer = selectElement.closest(".select-container");
+    
         fetch("/add_column_to_zone", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -214,9 +217,18 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(data => {
             if (data.error) {
                 alert("Error: " + data.error);
+            } else {
+                // On success, reload the page to show the updated speakers list
+                window.location.reload();
             }
         })
-        .catch(error => console.error("Error adding speaker:", error));
+        .catch(error => {
+            console.error("Error adding speaker:", error);
+            // If there's an error, at least close the dropdown by replacing it with the button
+            if (selectContainer && buttonElement) {
+                selectContainer.replaceWith(buttonElement);
+            }
+        });
     }
 
     function removeZoneColumn(columnElement) {
