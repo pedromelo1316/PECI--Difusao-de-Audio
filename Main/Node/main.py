@@ -43,6 +43,8 @@ def shutdown_handler(sig, frame):
             print("Shutdown notification sent to manager")
     except Exception as e:
         print(f"Failed to send shutdown notification: {e}")
+        
+    time.sleep(2)
     
     # Terminate ffmpeg process if running
     if ffmpeg:
