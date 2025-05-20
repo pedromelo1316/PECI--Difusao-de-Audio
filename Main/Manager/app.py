@@ -1190,45 +1190,64 @@ def detect_new_nodes(stop_event, msg_buffer):
                 continue
             data = data.decode('utf-8')
             if data:
-                # Envia confirmação para o nó
-                server_socket.sendto(b"OK", addr)
-                node_name, node_mac = data.split(',')
-                node_ip = addr[0]
+                # This would go in the Manager's app.py detect_new_nodes function
+                # Add this inside the try block that handles incoming data
 
-                try:
+                if data.startswith("SHUTDOWN"):
+                    _, node_name, node_mac = data.split(',')
+                    print(f"Received shutdown notification from {node_name} ({node_mac})")
+                    
                     with app.app_context():
-                        if db.session.query(Nodes).filter(Nodes.mac == node_mac).first():
-                            raise Exception("MAC already in use")
-                        node_name = node_name.upper()
-                        node = Nodes(name=node_name, mac=node_mac, ip=node_ip, connected=True)  #remover este area_id = 1
-                        db.session.add(node)
-                        db.session.commit()
-                    
-                    socketio.emit('update', {
-                        'action': 'add',
-                        'id': node.id,
-                        'name': node.name,
-                        'mac': node.mac,
-                        'ip': node.ip
-                    })
-                    msg_buffer.put(f"Node {node_name} connected")
-                    
-                except Exception as e:
-                    if str(e) == "Limit of nodes with the same name reached":
-                        msg_buffer.put("Limit of nodes with the same name reached")
-                        server_socket.sendto(b"Limit of nodes with the same name reached", addr)
-                    elif str(e) == "MAC already in use":
-                        with app.app_context():
-                            node = db.session.query(Nodes).filter(Nodes.mac == node_mac).first()
-                            node.ip = node_ip
-                            node.connected = True
+                        node = db.session.query(Nodes).filter(Nodes.mac == node_mac).first()
+                        if node:
+                            node.connected = False
                             db.session.commit()
+                            socketio.emit('update', {
+                                'action': 'update_status',
+                                'id': node.id,
+                                'connected': False
+                            })
+                            msg_buffer.put(f"Node {node_name} disconnected")
+                else:
+                    # Envia confirmação para o nó
+                    server_socket.sendto(b"OK", addr)
+                    node_name, node_mac = data.split(',')
+                    node_ip = addr[0]
 
-                            node_name = node.name
-                        print(f"Node {node.name} already exists, updating IP {node_ip}")
-                    else:
-                        msg_buffer.put(f"Error: {e}")
-                        server_socket.sendto(b"Error " + str(e).encode('utf-8'), addr)
+                    try:
+                        with app.app_context():
+                            if db.session.query(Nodes).filter(Nodes.mac == node_mac).first():
+                                raise Exception("MAC already in use")
+                            node_name = node_name.upper()
+                            node = Nodes(name=node_name, mac=node_mac, ip=node_ip, connected=True)  #remover este area_id = 1
+                            db.session.add(node)
+                            db.session.commit()
+                        
+                        socketio.emit('update', {
+                            'action': 'add',
+                            'id': node.id,
+                            'name': node.name,
+                            'mac': node.mac,
+                            'ip': node.ip
+                        })
+                        msg_buffer.put(f"Node {node_name} connected")
+                        
+                    except Exception as e:
+                        if str(e) == "Limit of nodes with the same name reached":
+                            msg_buffer.put("Limit of nodes with the same name reached")
+                            server_socket.sendto(b"Limit of nodes with the same name reached", addr)
+                        elif str(e) == "MAC already in use":
+                            with app.app_context():
+                                node = db.session.query(Nodes).filter(Nodes.mac == node_mac).first()
+                                node.ip = node_ip
+                                node.connected = True
+                                db.session.commit()
+
+                                node_name = node.name
+                            print(f"Node {node.name} already exists, updating IP {node_ip}")
+                        else:
+                            msg_buffer.put(f"Error: {e}")
+                            server_socket.sendto(b"Error " + str(e).encode('utf-8'), addr)
 
                 with app.app_context():
                     node = db.session.query(Nodes).filter(Nodes.mac == node_mac).first()

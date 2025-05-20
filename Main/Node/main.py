@@ -28,13 +28,31 @@ stop_event = threading.Event()
 
 
 def shutdown_handler(sig, frame):
+    global ffmpeg, stop_event
+    
+    # Send shutdown notification to manager
+    try:
+        node_name = socket.gethostname()
+        mac = ':'.join([f'{(uuid.getnode() >> i) & 0xff:02x}' for i in reversed(range(0, 48, 8))])
+        msg = f"SHUTDOWN,{node_name},{mac}"
+        
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as notify_socket:
+            notify_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            notify_socket.settimeout(1)
+            notify_socket.sendto(msg.encode('utf-8'), ('<broadcast>', 8080))
+            print("Shutdown notification sent to manager")
+    except Exception as e:
+        print(f"Failed to send shutdown notification: {e}")
+    
+    # Terminate ffmpeg process if running
     if ffmpeg:
         ffmpeg.terminate()
         ffmpeg.wait()
+    
+    # Signal threads to stop
     stop_event.set()
     print("Exiting...")
     sys.exit(0)
-
 
 
 def wait_for_info(n, port=8081):
