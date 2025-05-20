@@ -98,64 +98,53 @@
         sections.forEach(section => observer.observe(section));
     });
 
-    // Trigger the file input for importing
     function triggerImport() {
-    
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.json';
 
-        // Create a FormData object and append the necessary data
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.onchange = () => {
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
+    // Ensure the same file triggers onchange
+    fileInput.value = null;
 
-            // Sending the form data to the server using AJAX
-            fetch('/import_conf', {
-                method: 'POST',
-                body: formData,
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();  // Reload the page after successful upload
-                } else {
-                    console.log("Error:", data.error);
-                }
-            })
-            .catch(error => {
-                console.error("Error during file upload:", error);
-            });
-        };
-        fileInput.click();
-    }
-
-    // Handle the file import
-    function handleImport(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const formData = new FormData();
-            formData.append('file', file);  // Appending the file to FormData
-
-            // Sending the form data to the server using AJAX
-            fetch('/import_conf', {
-                method: 'POST',
-                body: formData,
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();  // Reload the page after successful upload
-                } else {
-                    console.log("Error:", data.error);
-                }
-            })
-            .catch(error => {
-                console.error("Error during file upload:", error);
-            });
-        } else {
+    fileInput.onchange = () => {
+        if (fileInput.files.length === 0) {
             console.log("No file selected.");
+            return;
         }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        console.log("File selected:", fileInput.files[0].name);
+
+        fetch('/import_conf', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.text();
+            } else {
+                throw new Error('Failed to upload file');
+            }
+        })
+        .then(html => {
+            document.body.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+
+        fileInput.remove(); // Cleanup
+    };
+
+    // Minor delay to ensure onchange is attached before click
+    setTimeout(() => fileInput.click(), 0);
     }
+
+
+
+
 
     // Trigger the export of config
     function triggerExport() {
