@@ -420,6 +420,37 @@
                                                                            
                                         <div class="card-content" onclick="window.location.href='{{ url_for('edit_channels', channel_id=channel.id) }}'">
                                             <span class="channel-name">{{ channel.name }}</span>
+                                            <div>
+                                                <span id="current-song-{{ channel.id }}"></span>
+                                            </div>
+                                            <script>
+                                                document.addEventListener("DOMContentLoaded", function () {
+                                                    const socket = io();  // Connects to the Socket.IO server
+                                            
+                                                    // Get the current song for the channel from the backend
+                                                    fetch(`/current_playing?channel_id={{ channel.id }}`)
+                                                        .then(response => response.json())
+                                                        .then(data => {
+                                                            const currentSongElement = document.getElementById(`current-song-{{ channel.id }}`);
+                                                            if (data.current_song) {
+                                                                currentSongElement.textContent = data.current_song;
+                                                            } else {
+                                                                currentSongElement.textContent = "";
+                                                            }
+                                                        })
+                                                        .catch(error => {
+                                                            console.error("Error fetching current playing song:", error);
+                                                        });
+                                            
+                                                    // Listen for real-time song changes via Socket.IO
+                                                    socket.on("song_changed", function (data) {
+                                                        if (data.channel == {{ channel.id }}) {
+                                                            const currentSongElement = document.getElementById(`current-song-{{ channel.id }}`);
+                                                            currentSongElement.textContent = data.song || "No song playing";
+                                                        }
+                                                    });
+                                                });
+                                            </script>
                                             <div class="channel-status">
                                                 {% if channel.state == "stopped" %}
                                                     <span class="status-indicator" style="background: #ccc;"></span>

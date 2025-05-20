@@ -1,0 +1,69 @@
+[aist#0:0/pcm_s16le @ 0x1236043f0] Guessed Channel Layout: stereo
+Input #0, concat, from 'Playlists/temp_playlist_1.txt':
+  Duration: N/A, start: 0.000000, bitrate: 1411 kb/s
+  Stream #0:0: Audio: pcm_s16le ([1][0][0][0] / 0x0001), 44100 Hz, stereo, s16, 1411 kb/s
+Stream mapping:
+  Stream #0:0 -> #0:0 (pcm_s16le (native) -> opus (libopus))
+Press [q] to stop, [?] for help
+Output #0, rtp, to 'rtp://239.255.0.1:12345':
+  Metadata:
+    encoder         : Lavf61.7.100
+  Stream #0:0: Audio: opus, 48000 Hz, mono, s16, 128 kb/s
+      Metadata:
+        encoder         : Lavc61.19.101 libopus
+size=      12KiB time=00:00:01.01 bitrate=  95.0kbits/s speed=2.03x    
+size=      20KiB time=00:00:01.55 bitrate= 104.5kbits/s speed=1.55x    
+size=      27KiB time=00:00:02.03 bitrate= 108.6kbits/s speed=1.35x    
+size=      34KiB time=00:00:02.49 bitrate= 110.9kbits/s speed=1.24x    
+size=      43KiB time=00:00:03.05 bitrate= 114.6kbits/s speed=1.21x    
+size=      51KiB time=00:00:03.51 bitrate= 119.0kbits/s speed=1.16x    
+size=      61KiB time=00:00:04.07 bitrate= 122.4kbits/s speed=1.16x    
+size=      70KiB time=00:00:04.53 bitrate= 125.9kbits/s speed=1.13x    
+size=      80KiB time=00:00:05.09 bitrate= 127.9kbits/s speed=1.12x    
+size=      88KiB time=00:00:05.55 bitrate= 130.0kbits/s speed= 1.1x    
+size=      96KiB time=00:00:06.01 bitrate= 130.8kbits/s speed=1.09x    
+size=     107KiB time=00:00:06.57 bitrate= 133.1kbits/s speed=1.09x    
+size=     115KiB time=00:00:07.03 bitrate= 134.3kbits/s speed=1.07x    
+size=     125KiB time=00:00:07.59 bitrate= 135.0kbits/s speed=1.08x    
+size=     134KiB time=00:00:08.07 bitrate= 136.0kbits/s speed=1.07x    
+size=     143KiB time=00:00:08.61 bitrate= 136.3kbits/s speed=1.07x    
+size=     152KiB time=00:00:09.09 bitrate= 137.3kbits/s speed=1.06x    
+size=     160KiB time=00:00:09.55 bitrate= 137.1kbits/s speed=1.05x    
+size=     170KiB time=00:00:10.11 bitrate= 137.8kbits/s speed=1.06x    
+size=     178KiB time=00:00:10.57 bitrate= 137.9kbits/s speed=1.05x    
+size=     188KiB time=00:00:11.13 bitrate= 138.4kbits/s speed=1.05x    
+size=     196KiB time=00:00:11.59 bitrate= 138.5kbits/s speed=1.05x    
+size=     205KiB time=00:00:12.09 bitrate= 138.9kbits/s speed=1.04x    
+size=     214KiB time=00:00:12.61 bitrate= 139.1kbits/s speed=1.04x    
+size=     222KiB time=00:00:13.07 bitrate= 139.2kbits/s speed=1.04x    
+size=     232KiB time=00:00:13.63 bitrate= 139.5kbits/s speed=1.04x    
+size=     240KiB time=00:00:14.09 bitrate= 139.8kbits/s speed=1.04x    
+size=     250KiB time=00:00:14.65 bitrate= 140.0kbits/s speed=1.04x    
+size=     259KiB time=00:00:15.11 bitrate= 140.1kbits/s speed=1.04x    
+size=     267KiB time=00:00:15.59 bitrate= 140.4kbits/s speed=1.03x    
+size=     277KiB time=00:00:16.15 bitrate= 140.4kbits/s speed=1.04x    
+size=     286KiB time=00:00:16.61 bitrate= 140.8kbits/s speed=1.03x    
+size=     295KiB time=00:00:17.17 bitrate= 140.7kbits/s speed=1.03x    
+size=     303KiB time=00:00:17.63 bitrate= 140.8kbits/s speed=1.03x    
+size=     311KiB time=00:00:18.09 bitrate= 140.9kbits/s speed=1.03x    
+size=     321KiB time=00:00:18.65 bitrate= 141.0kbits/s speed=1.03x    
+size=     329KiB time=00:00:19.11 bitrate= 140.9kbits/s speed=1.03x    
+size=     339KiB time=00:00:19.67 bitrate= 141.0kbits/s speed=1.03x    
+size=     347KiB time=00:00:20.13 bitrate= 141.1kbits/s speed=1.03x    
+size=     356KiB time=00:00:20.69 bitrate= 141.0kbits/s speed=1.03x    
+size=     365KiB time=00:00:21.15 bitrate= 141.2kbits/s speed=1.03x    
+size=     373KiB time=00:00:21.63 bitrate= 141.4kbits/s speed=1.02x    
+size=     383KiB time=00:00:22.17 bitrate= 141.6kbits/s speed=1.02x    
+size=     391KiB time=00:00:22.65 bitrate= 141.4kbits/s speed=1.02x    
+size=     401KiB time=00:00:23.19 bitrate= 141.7kbits/s speed=1.02x    
+size=     410KiB time=00:00:23.67 bitrate= 141.8kbits/s speed=1.02x    
+size=     420KiB time=00:00:24.23 bitrate= 142.0kbits/s speed=1.02x    
+size=     428KiB time=00:00:24.69 bitrate= 142.0kbits/s speed=1.02x    
+size=     437KiB time=00:00:25.15 bitrate= 142.2kbits/s speed=1.02x    
+size=     446KiB time=00:00:25.71 bitrate= 142.2kbits/s speed=1.02x    
+size=     454KiB time=00:00:26.17 bitrate= 142.1kbits/s speed=1.02x    
+size=     464KiB time=00:00:26.73 bitrate= 142.0kbits/s speed=1.02x    
+size=     472KiB time=00:00:27.19 bitrate= 142.1kbits/s speed=1.02x    
+[out#0/rtp @ 0x6000026e8000] video:0KiB audio:463KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 3.528496%
+size=     479KiB time=00:00:27.58 bitrate= 142.3kbits/s speed=1.02x    
+Exiting normally, received signal 2.

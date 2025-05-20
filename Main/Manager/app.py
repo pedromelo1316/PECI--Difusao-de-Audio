@@ -1,6 +1,7 @@
 # Importações de módulos e bibliotecas necessárias
 from enum import Enum
 from io import BytesIO
+import wave
 from flask import Flask, render_template, request, redirect, flash, jsonify, send_file, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
@@ -343,7 +344,9 @@ def toggle_transmission():
     channel = db.session.query(Channels).filter(Channels.id == channel_id).first()
     if channel.state == 'playing':
         channel.state = 'stopped'
-    
+        
+        processes[channel_id]['current_playing'] = {"playing": None}
+        socketio.emit('song_changed', {'channel': channel_id, 'song': None})
     elif channel.state == 'stopped':
         # Comando FFmpeg para RTP multicast
         
@@ -434,8 +437,17 @@ def start_ffmpeg_process(channel, source, _type):
 
         # Cria um arquivo de playlist temporário para o FFmpeg
         playlist_file_path = f"Playlists/temp_playlist_{channel}.txt"
+
+        songlist = []
+        
         with open(playlist_file_path, "w") as playlist_file:
             for musica in musicas:
+                duration = get_wav_duration(f"Playlists/Songs/{musica}.wav")
+                with app.app_context():
+                    song = db.session.query(Songs).filter(Songs.song_hash == musica).first()
+                    
+                    # Adiciona a música e sua duração à lista
+                    songlist.append((song.name, duration))
                 playlist_file.write(f"file 'Songs/{musica}.wav'\n")
 
         # Comando do FFmpeg para reproduzir a playlist
@@ -484,8 +496,76 @@ def start_ffmpeg_process(channel, source, _type):
     else:
         return None
     # Inicia o subprocesso do ffmpeg
-    process = subprocess.Popen(cmd)
+
+    # Start FFmpeg subprocess with stderr pipe
+    # Start FFmpeg subprocess with stderr pipe
+    process = subprocess.Popen(cmd, stderr=subprocess.PIPE, universal_newlines=True)
+
+    # Monitor output if LOCAL
+    
+    if _type == ChannelType.LOCAL:
+        threading.Thread(target=monitor_ffmpeg_output, args=(process, songlist, channel), daemon=True).start()
+
+    
+
     return process
+
+########track which song is playing
+def hms_to_seconds(t):
+    """Convert 'HH:MM:SS.ss' to total seconds."""
+    h, m, s = t.split(":")
+    return int(h) * 3600 + int(m) * 60 + float(s)
+
+def monitor_ffmpeg_output(process, songlist, channel):
+    current_index = 0
+    time_acc = 0
+    while current_index < len(songlist):
+        current_song, duration_sec = songlist[current_index]
+        processes[channel]['current_playing'] = {"playing": current_song}
+        socketio.emit('song_changed', {'channel': channel, 'song': current_song})
+        print(f"Now playing: {current_song} on channel {channel}")
+        next_song = False
+        duration_sec += time_acc
+
+        while True:
+            if process.poll() is not None:
+                print(f"Process on channel {channel} terminated. Exiting thread.")
+                return
+
+            line = process.stderr.readline()
+            if not line:
+                continue  # no output yet
+
+            line = line.strip()
+
+            if "time=" in line:
+                parts = line.split()
+                for part in parts:
+                    if part.startswith("time="):
+                        current_time_str = part.split("=")[1]
+                        current_sec = hms_to_seconds(current_time_str)
+
+                        if current_sec >= duration_sec:
+                            print(f"{current_song} finished, moving to next song.")
+                            current_index += 1
+                            next_song = True
+                            time_acc = current_sec
+                            if current_index == len(songlist):
+                                return  # Done with playlist
+                            break
+            if next_song:
+                break
+
+
+
+def get_wav_duration(file_path):
+    with wave.open(file_path, 'r') as wav_file:
+        frames = wav_file.getnframes()
+        rate = wav_file.getframerate()
+        duration = frames / float(rate)
+    return duration
+#########
+
 
 def create_default_channels():
     
@@ -505,7 +585,7 @@ def create_default_channels():
             )
             db.session.add(new_channel)
             db.session.commit()
-            processes[new_channel.id] = {"process": None}
+            processes[new_channel.id] = {"process": None, "current_playing": {"playing": None}}
             print(f"{new_channel.name} started")
 
     else:
@@ -513,7 +593,7 @@ def create_default_channels():
             if os.path.exists(f"session_{channel.id}.sdp"):
                 os.remove(f"session_{channel.id}.sdp")
             index = channel.id
-            processes[index] = {"process": None}  # Uncommented to start the process
+            processes[index] = {"process": None, "current_playing": {"playing": None}}  # Uncommented to start the process
             print(f"Channel {channel.id} started")
             
             
@@ -691,7 +771,7 @@ def save_channel_configs():
             processes[channel.id]['process'].wait()
             processes[channel.id]['process'] = None
             processes[channel.id]['process'] = start_ffmpeg_process(channel.id, channel_source, channel_type)
-            
+
                 
             if processes[channel.id]['process'] is None:
                 return jsonify({'status': 'error', 'message': 'Erro ao iniciar o processo FFmpeg'})
@@ -1975,6 +2055,21 @@ def search_youtube_live(query, max_results=30):
     except Exception as e:
         print(f"Ocorreu um erro: {e}")
     return results
+
+#################
+@app.route("/current_playing", methods=["GET"])
+def current_playing():
+    channel_id = request.args.get('channel_id')
+    if channel_id:
+        with db.session() as session:
+            channel = session.get(Channels, channel_id)
+        if channel and channel.id in processes:
+            current_song = processes[channel.id]['current_playing']["playing"]
+            return jsonify({
+                "current_song": str(current_song) if current_song else None
+            })
+    return jsonify({"current_song": None})
+
 
 @app.route("/search_suggestions", methods=["GET"])
 def search_suggestions():
