@@ -1096,7 +1096,7 @@ def add_area():
         new_area = Areas(name=area_name, volume=50)
         db.session.add(new_area)
         db.session.commit()
-        socketio.emit('reload_page', namespace='/')
+        socketio.emit('reload_page', namespace='/index')
         return jsonify({"success": True, "id": new_area.id, "name": new_area.name}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -1126,7 +1126,7 @@ def remove_area():
         send_info(nodes_in_area)
         flash(f"Area {area_name} removed", "success")
         
-        return redirect('/#areas')
+        return redirect('/index')
     except Exception as e:
         flash(str(e), "error")
         return jsonify({"error": str(e)}), 500
@@ -1199,7 +1199,7 @@ def add_column_to_zone():
     print(f"Column {column_name} associated with zone {zone_name}")
     db.session.commit()
     send_info([column])
-    socketio.emit('reload_page', namespace='/')
+    socketio.emit('reload_page', namespace='/index')
     return jsonify({"success": "Coluna associada com sucesso!"}), 200
 
 
@@ -1224,7 +1224,7 @@ def remove_column_from_zone():
         db.session.commit()
         send_info([column])
         print(f"Column {column_name} removed from zone {zone_name}")
-        socketio.emit('reload_page', namespace='/')
+        socketio.emit('reload_page', namespace='/index')
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
