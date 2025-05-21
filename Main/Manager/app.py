@@ -2151,8 +2151,7 @@ def submit_import():
                     db.session.commit()
 
     db.session.commit()
-    return render_template('index.html', nodes=Nodes.query.all(), areas=Areas.query.all(), channels=Channels.query.all(), message="Importação concluída com sucesso!")
-
+    return redirect('/index')
 #######################################
 #############
 #YOUTUBE#####
