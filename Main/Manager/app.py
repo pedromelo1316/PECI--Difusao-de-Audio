@@ -499,101 +499,37 @@ def start_ffmpeg_process(channel, source, _type):
 
     # Start FFmpeg subprocess with stderr pipe
     # Start FFmpeg subprocess with stderr pipe
-    process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, universal_newlines=True)
+    
+    
+    print("type: ", _type)
 
     # Monitor output if LOCAL or STREAMING
     if _type == ChannelType.LOCAL:
+        process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, universal_newlines=True)
         threading.Thread(target=monitor_ffmpeg_output, args=(process, songlist, channel), daemon=True).start()
-    elif _type == ChannelType.STREAMING:
-        streaming_name = None
-        if channel in processes and 'stream_source' in processes[channel]:
-            streaming_name = processes[channel]['stream_source']
-        threading.Thread(target=monitor_streaming_output, args=(process, channel, streaming_name), daemon=True).start()
-
+    else:
+        process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, universal_newlines=True)
+        if _type == ChannelType.STREAMING:
+            processes[channel]['current_playing'] = get_streaming_name(channel)
     return process
 
-def monitor_streaming_output(process, channel, streaming_name=None):
-    """
-    Monitor FFmpeg output for streaming sources to extract metadata
-    and update the current playing information.
-    
-    Args:
-        process: FFmpeg subprocess
-        channel: Channel ID
-        streaming_name: Name of the streaming source (if available)
-    """
-    current_title = None
-    stream_info = {}
-    
-    if streaming_name:
-        # Set initial stream info if we have a name
-        stream_info['name'] = streaming_name
-    
-    # Get the streaming source from the database if available
-    if not streaming_name and channel:
-        try:
-            # Create application context for database operations
-            with app.app_context():
-                channel_obj = db.session.query(Channels).filter(Channels.id == channel).first()
-                if channel_obj and channel_obj.source:
-                    streaming_id = channel_obj.source
-                    streaming_obj = db.session.query(Streaming).filter(Streaming.id == streaming_id).first()
-                    if streaming_obj:
-                        print("Streaming object found in DB: ", streaming_obj)
-                        streaming_name = streaming_obj.name
-                        stream_info['name'] = streaming_name
-                        # Store the streaming source name in the process dictionary
-                        processes[channel]['stream_source'] = streaming_name
-        except Exception as e:
-            print(f"Error retrieving streaming info: {e}")
-    
-    # Display format: "Streaming: [Name]" or just the name if we have it
-    display_name = f"Streaming: {streaming_name}" if streaming_name else "Streaming"
-    
-    # Set initial current playing value with the streaming source name
-    processes[channel]['current_playing'] = {"playing": display_name}
-    socketio.emit('song_changed', {'channel': channel, 'song': display_name})
-    
-    print(f"Started monitoring streaming on channel {channel} - Source: {streaming_name or 'Unknown'}")
-    
-    while process.poll() is None:  # While the process is still running
-        line = process.stderr.readline().strip()
-        if not line:
-            continue
 
-        # Extract metadata from FFmpeg output
-        if "icy-title:" in line:
-            title_part = line.split("icy-title:")[1].strip()
-            if title_part and title_part != current_title:
-                current_title = title_part
-                stream_info['title'] = current_title
-                
-                # Update the current playing information with both source and track info
-                if streaming_name:
-                    display_text = f"{streaming_name} - {current_title}" if current_title else display_name
-                else:
-                    display_text = current_title if current_title else "Streaming"
-                
-                processes[channel]['current_playing'] = {"playing": display_text}
-                socketio.emit('song_changed', {'channel': channel, 'song': display_text})
-                print(f"Now streaming: {display_text} on channel {channel}")
-        
-        # Extract other useful metadata (bitrate, sample rate, etc.)
-        if "Audio:" in line:
-            # Example: "Stream #0:0: Audio: aac (LC), 44100 Hz, stereo, fltp, 128 kb/s"
-            stream_info['audio_details'] = line.split("Audio:")[1].strip()
-            
-        if "bitrate=" in line:
-            # Parse bitrate information
-            for part in line.split():
-                if part.startswith("bitrate="):
-                    stream_info['bitrate'] = part.split("=")[1]
-                    break
+
+def get_streaming_name(channel):
+    # Obter o nome do streaming a partir do banco de dados
+    channel = db.session.query(Channels).filter(Channels.id == channel).first()
+    if not channel:
+        return None
+    else:
+        print("channel: ", channel)
+
+    stream = db.session.query(Streaming).filter(Streaming.id == channel.source).first()
+    if not stream:
+        return None
     
-    # When the process ends, clear the current playing info
-    processes[channel]['current_playing'] = {"playing": None}
-    socketio.emit('song_changed', {'channel': channel, 'song': None})
-    print(f"Streaming monitoring ended for channel {channel}")
+    return {"playing": stream.name}
+
+    
 
 ########track which song is playing
 def hms_to_seconds(t):
