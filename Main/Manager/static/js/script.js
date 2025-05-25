@@ -335,7 +335,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ channel_id: channelId, new_name: newName })
-            }).then(response => {
+            }).then (response => {
                 if (!response.ok) {
                     console.error("Error updating channel name:", response.statusText);
                     alert("Error updating channel name.");
@@ -880,30 +880,53 @@ function closeAddInterruptionModal() {
 // Function to submit the Add Interruption form
 function submitAddInterruption() {
     const form = document.getElementById('addInterruptionForm');
-    const formData = new FormData(form);
+    
+    // Get all form values
+    const name = form.querySelector('input[name="name"]').value;
+    const microphone_id = form.querySelector('select[name="microphone_id"]').value;
+    
+    // Properly collect all selected area checkboxes
+    const areas_ids = [];
+    form.querySelectorAll('input[name="areas_ids"]:checked').forEach(checkbox => {
+        areas_ids.push(checkbox.value);
+    });
+    
+    // Properly collect all selected channel checkboxes
+    const channels_ids = [];
+    form.querySelectorAll('input[name="channels_ids"]:checked').forEach(checkbox => {
+        channels_ids.push(checkbox.value);
+    });
+    
+    // Create the data object with arrays for multiple selections
+    const formData = {
+        name: name,
+        microphone_id: microphone_id,
+        areas_ids: areas_ids,
+        channels_ids: channels_ids
+    };
 
     fetch('/save_interruption', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(Object.fromEntries(formData)),
+        body: JSON.stringify(formData),
     })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Interruption added successfully!');
-                form.reset(); // Clear the form fields
-                closeAddInterruptionModal();
-                location.reload(); // Reload the page to update the list
-            } else {
-                alert('Error adding interruption: ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error adding interruption.');
-        });
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Interruption added successfully!');
+            form.reset(); // Clear the form fields
+            closeAddInterruptionModal();
+            location.reload(); // Reload the page to update the list
+        } else {
+            alert('Error adding interruption: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error adding interruption.');
+    });
 }
 
 

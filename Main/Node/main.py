@@ -43,6 +43,8 @@ def shutdown_handler(sig, frame):
             print("Shutdown notification sent to manager")
     except Exception as e:
         print(f"Failed to send shutdown notification: {e}")
+        
+    time.sleep(2)
     
     # Terminate ffmpeg process if running
     if ffmpeg:
@@ -98,8 +100,9 @@ def wait_for_info(n, port=8081):
                             cmd = [
                                 'ffplay',
                                 '-f', 'lavfi',
-                                '-i', 'sine=frequency=440:duration=5',
-                                '-nodisp'
+                                '-i', 'sine=frequency=600:sample_rate=48000,atempo=0.5,volume=0.8[a1];sine=frequency=1200:sample_rate=48000,atempo=0.5,volume=0.8[a2];[a1][a2]amix=inputs=2:duration=shortest,tremolo=f=6:d=0.8',
+                                '-nodisp',
+                                '-t', '5'  # Duração de 5 segundos
                             ]
                             ffmpeg = subprocess.Popen(cmd)
                             print("Test tone playing...")
