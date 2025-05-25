@@ -9,14 +9,14 @@ import socket
 BITRATE = "128k"
 SAMPLE_RATE = "48000"
 AUDIO_CHANNELS = "1"  # Will change dynamically in the loop
-FRAME_DURATIONS = [10, 100]  # Frame durations
-NUM_CHANNELS_LIST = [1, 5, 10, 20, 50, 100]  # Number of channels
+FRAME_DURATIONS = [80]  # Frame durations
+NUM_CHANNELS_LIST = [100]  # Number of channels
 
 source = "default"
 BROADCAST_IP = "255.255.255.255"  # Replace with the target IP address
 PORT = 5000           # Replace with the target port
 
-TIME_PER_COMB = 60
+TIME_PER_COMB = 60*5
 TIME_SLEEP = 10
 
 list_of_combinations_file = []

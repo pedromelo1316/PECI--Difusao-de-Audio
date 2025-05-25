@@ -36,7 +36,7 @@ plt.figure(figsize=(8, 5))
 for f, values in sorted(data.items()):
     values.sort()  # Ensure x-axis is sorted
     channels, packet_losses = zip(*values)
-    plt.plot(channels, packet_losses, marker='o', label=f"Frame {f} ms")
+    plt.plot(channels, packet_losses, marker='o', label=f"Frame {f} ms - Package Size: ~{int((128000 * f)/8000)}Bytes")
 
 plt.xlabel("Channel (c)")
 plt.ylabel("Packet Loss (%)")
