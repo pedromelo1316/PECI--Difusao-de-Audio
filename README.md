@@ -54,8 +54,3 @@ Access the project’s informational website:
    ```bash
    cd Main/Node
    python3 main.py
-
-
-
-
-
