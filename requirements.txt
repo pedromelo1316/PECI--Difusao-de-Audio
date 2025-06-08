@@ -3,3 +3,4 @@ flask
 flask_sqlalchemy
 flask_socketio
 youtube-search-python
+httpx==0.25.2

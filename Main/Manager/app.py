@@ -46,6 +46,129 @@ AUDIO_CHANNELS = "1"  # Mono
 NUM_CHANNELS = 3  # Número total de canais
 
 
+# Função para enviar informações atualizadas para os nós via broadcast UDP
+def send_info(nodes, removed=False, suspended=False, test=False):
+    dic = {}
+    if not removed and not suspended:
+        for node_obj in nodes: # Renomeado para evitar conflito com a variável 'node' interna
+            mac = node_obj.mac
+            area_id = node_obj.area_id
+            # Usar db.session.get() é mais eficiente para buscar por chave primária
+            area = db.session.get(Areas, area_id) if area_id is not None else None
+            channel_id = area.channel_id if area else None
+            channel = db.session.get(Channels, channel_id) if channel_id is not None else None
+            volume = (area.volume / 50) if area else 1
+            
+            # O canal normal do nó, baseado na sua área
+            node_channel_id = area.channel_id if area else None
+            
+            header_normal = None
+            header_mic = None
+            
+            #print(f"Node MAC: {mac}, Area ID: {area_id}, Area: {area.name if area else 'None'}, Node Channel ID: {node_channel_id}")
+
+            # Se existir canal normal, lê o arquivo SDP gerado para o canal normal
+            if node_channel_id is not None and processes.get(node_channel_id) is not None:
+                try:
+                    # Verifica se o processo para este canal está realmente ativo
+                    # e se o arquivo SDP existe. O 'process' em processes[channel_id] indica isso.
+                    if processes[node_channel_id].get('process'):
+                        with open(f"session_{node_channel_id}.sdp", "r") as file:
+                            header_normal = file.read()
+                    else:
+                        #print(f"Process for normal channel {node_channel_id} not active or SDP not found for node {mac}.")
+                        pass
+                except FileNotFoundError:
+                    print(f"SDP file session_{node_channel_id}.sdp not found for node {mac}.")
+                except Exception as e:
+                    print(f"Error reading session_{node_channel_id}.sdp for node {mac}: {e}")
+            
+            # Lógica para determinar header_mic
+            active_interruption_id_for_node = None
+            if area:
+                # 1. Verificar interrupções ativas associadas diretamente à ÁREA do nó
+                for interruption_instance in area.interruptions: # interruption_instance é um objeto Interruptions
+                    if interruption_instance.state == "on":
+                        # Verifica se o processo de interrupção está realmente no dict de runtime 'interruptions'
+                        if interruption_instance.id in interruptions and interruptions[interruption_instance.id].get("process"):
+                            active_interruption_id_for_node = interruption_instance.id
+                            # print(f"Node {mac} in area '{area.name}' is affected by active interruption ID {active_interruption_id_for_node} (area direct).")
+                            break # Encontrou uma interrupção ativa para a área
+                        
+                # 2. Se não encontrou pela área, e a área tem um canal, verificar interrupções ativas associadas ao CANAL da área
+                if active_interruption_id_for_node is None and channel:
+                    for interruption_instance in channel.interruptions:
+                        if interruption_instance.state == "on":
+                             # Verifica se o processo de interrupção está realmente no dict de runtime 'interruptions'
+                            if interruption_instance.id in interruptions and interruptions[interruption_instance.id].get("process"):
+                                active_interruption_id_for_node = interruption_instance.id
+                                # print(f"Node {mac} in area '{area.name}' (via channel '{area.channel.name}') is affected by active interruption ID {active_interruption_id_for_node} (channel of area).")
+                                break # Encontrou uma interrupção ativa para o canal da área
+            
+            if active_interruption_id_for_node is not None:
+                try:
+                    mic_sdp_file = f"mic_{active_interruption_id_for_node}.sdp"
+                    if os.path.exists(mic_sdp_file):
+                        with open(mic_sdp_file, "r") as file:
+                            header_mic = file.read()
+                        # print(f"Successfully read {mic_sdp_file} for node {mac}.")
+                    else:
+                        print(f"Mic SDP file {mic_sdp_file} not found for node {mac} (interruption ID {active_interruption_id_for_node}).")
+                except Exception as e:
+                    print(f"Error reading {mic_sdp_file} for node {mac}: {e}")
+
+            dic[mac] = {
+                "volume": volume, 
+                "channel": node_channel_id, # Canal normal da área do nó
+                "header_normal": header_normal, 
+                "header_mic": header_mic
+            }
+            
+    elif removed:
+        # dic = {} # já inicializado
+        for node_obj in nodes:
+            mac = node_obj.mac
+            dic[mac] = {"removed": True}
+            
+    elif suspended:
+        # dic = {} # já inicializado
+        for node_obj in nodes:
+            mac = node_obj.mac
+            dic[mac] = {"suspended": True}
+    
+    if test and not removed and not suspended: # Só adiciona 'test' se não for remoção ou suspensão
+        for node_obj in nodes:
+            mac = node_obj.mac
+            if mac in dic: # Garante que a entrada para o mac já existe
+                 dic[mac].update({"test": True})
+            else: # Caso raro, mas para segurança
+                 dic[mac] = {"test": True}
+            
+    # print("Sending info to nodes:", json.dumps(dic, indent=2)) # Usar indent para melhor leitura no log
+            
+    msg = json.dumps(dic)
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
+            client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            # Use a specific broadcast IP if known, otherwise '<broadcast>' might be problematic on some systems/networks.
+            # Consider getting the broadcast address of a specific interface if issues persist.
+            client_socket.sendto(msg.encode('utf-8'), ('<broadcast>', 8081)) 
+        # print(f"Info sent to nodes: {[n.mac for n in nodes]}")
+    except Exception as e:
+        print(f"Error sending UDP broadcast: {e}")
+
+            
+
+            
+    msg = json.dumps(dic)
+    # Envia mensagem via broadcast UDP
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
+        client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        client_socket.sendto(msg.encode('utf-8'), ('<broadcast>', 8081))
+        
+    print("Info sent to nodes:", nodes)
+
+
 @app.route('/start_interruption/<int:interruption_id>', methods=['POST'])
 def start_interruption(interruption_id):
     interruption = Interruptions.query.get(interruption_id)
@@ -124,6 +247,8 @@ def stop_interruption(interruption_id):
             interruptions[interruption_id]["process"].terminate()
             interruptions[interruption_id]["process"].wait()
             interruptions[interruption_id]["process"] = None
+            
+            del interruptions[interruption_id]
             
             
         if os.path.exists(f"mic_{interruption_id}.sdp"):
@@ -414,6 +539,8 @@ def start_ffmpeg_process(channel, source, _type):
     # Verifica o tipo de transmissão e configura o comando do ffmpeg apropriado
     if _type == ChannelType.VOICE:
         
+        print("Channel de Microfone: " + str(channel))
+        
         cmd = [
             "ffmpeg",
             "-f", "alsa",
@@ -670,8 +797,6 @@ def get_source_from_id(_type, list_ids):
             ytdl_cmd = [
             "yt-dlp",
             "-g",
-            "-f", "bestaudio",
-            "-o",
             "--no-check-certificates", 
             "--socket-timeout", "15", 
             sources[0]
@@ -1051,63 +1176,6 @@ def update(id):
     else:
         return render_template('update.html', node=node)
 
-# Função para enviar informações atualizadas para os nós via broadcast UDP
-def send_info(nodes, removed=False, suspended=False, test=False):
-    if not removed and not suspended:
-        dic = {}
-        for node in nodes:
-            mac = node.mac
-            area_id = node.area_id
-            area = db.session.get(Areas, area_id) if area_id is not None else None
-            volume = (area.volume/50) if area else 1
-            channel = area.channel_id if area else None
-            header = None
-            header_mic = None
-            
-            print("Channel ID:", channel)
-            
-            # Se existir canal, lê o arquivo SDP gerado
-            #if processes[channel] != None:
-            if channel is not None and processes.get(channel) is not None:
-                try:
-                    with open(f"session_{channel}.sdp", "r") as file:
-                        header = file.read()
-                except:
-                    pass
-                
-                try:
-                    with open(f"mic_{channel}.sdp", "r") as file:
-                        header_mic = file.read()
-                except:
-                    pass
-            
-            dic[mac] = {"volume": volume, "channel": channel, "header_normal": header, "header_mic": header_mic}
-    elif removed:
-        dic = {}
-        for node in nodes:
-            mac = node.mac
-            dic[mac] = {"removed": True}
-            
-    elif suspended:
-        dic = {}
-        for node in nodes:
-            mac = node.mac
-            dic[mac] = {"suspended": True}
-    
-    if test:
-        for node in nodes:
-            mac = node.mac
-            dic[mac].update({"test": True})
-            
-
-            
-    msg = json.dumps(dic)
-    # Envia mensagem via broadcast UDP
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
-        client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        client_socket.sendto(msg.encode('utf-8'), ('<broadcast>', 8081))
-        
-    print("Info sent to nodes:", nodes)
 
 # Função que detecta novos nós na rede
 def detect_new_nodes(stop_event, msg_buffer):

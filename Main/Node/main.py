@@ -4,12 +4,9 @@ import threading
 import time
 import node_client  # Módulo customizado para a classe node_client
 import json
-import pyaudio
 import subprocess
-import base64
 import signal
 import sys
-import numpy as np
 import os
 
 # Configurações básicas de áudio e transmissão
