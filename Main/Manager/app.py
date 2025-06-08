@@ -428,6 +428,15 @@ def get_mics():
 ############
 PLAYLISTraiz_FOLDER = 'Playlists'
 UPLOAD_FOLDER = 'Playlists/Songs'
+
+# Ensure directories exist
+if not os.path.exists(PLAYLISTraiz_FOLDER):
+    os.makedirs(PLAYLISTraiz_FOLDER)
+    print(f"Created directory: {PLAYLISTraiz_FOLDER}")
+    
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+    print(f"Created directory: {UPLOAD_FOLDER}")
 ALLOWED_EXTENSIONS = {'mp3', 'wav'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -1212,6 +1221,8 @@ def detect_new_nodes(stop_event, msg_buffer):
                                 'connected': False
                             })
                             msg_buffer.put(f"Node {node_name} disconnected")
+                        else:
+                            continue  # Node not found, skip to next iteration
                 else:
                     # Envia confirmação para o nó
                     server_socket.sendto(b"OK", addr)
